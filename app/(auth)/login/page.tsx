@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { createClient } from '@/lib/supabase'
 import {
@@ -34,6 +35,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [resetSent, setResetSent] = useState(false)
   const { signIn } = useAuth()
+  const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -46,7 +48,7 @@ export default function LoginPage() {
       setError('E-mail ou senha inválidos. Tente novamente.')
       setLoading(false)
     } else {
-      window.location.href = '/dashboard'
+      router.push('/dashboard')
     }
   }
 
