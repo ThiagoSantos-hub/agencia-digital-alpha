@@ -6,9 +6,13 @@ import { createClient } from '@/lib/supabase'
 export interface Client {
   id: string
   name: string
+  company: string | null
   email: string | null
   phone: string | null
   status: 'ativo' | 'inativo' | 'prospecto'
+  monthly_fee: number | null
+  start_date: string | null
+  payment_day: number | null
   manager_id: string | null
   created_at: string
 }
@@ -27,7 +31,6 @@ export function useClientes() {
       .from('clients')
       .select('*')
       .order('created_at', { ascending: false })
-
     if (error) {
       setError(error.message)
     } else {
@@ -47,7 +50,6 @@ export function useClientes() {
       .insert(input)
       .select()
       .single()
-
     if (!error) await fetchClients()
     return { data, error }
   }
@@ -59,7 +61,6 @@ export function useClientes() {
       .eq('id', id)
       .select()
       .single()
-
     if (!error) await fetchClients()
     return { data, error }
   }
