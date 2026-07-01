@@ -21,7 +21,6 @@ const features = [
   { icon: TrendingUp, title: 'Dashboards Inteligentes', desc: 'Visualize métricas em tempo real.' },
   { icon: MessageCircle, title: 'Integração com WhatsApp', desc: 'Atendimento e automações na prática.' },
   { icon: InfinityIcon, title: 'Gestão de Tráfego', desc: 'Acompanhe campanhas e resultados.' },
-  { icon: Users, title: 'CRM Avançado', desc: 'Gerencie leads e clientes com eficiência.' },
   { icon: BarChart2, title: 'Relatórios Automáticos', desc: 'Dados precisos para decisões melhores.' },
 ]
 
