@@ -20,7 +20,7 @@ const menuItems = [
     label: 'Clientes',
     href: '/clientes',
     icon: Users,
-    ativo: false,
+    ativo: true,
   },
   {
     label: 'Campanhas',
