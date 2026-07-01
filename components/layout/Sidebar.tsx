@@ -40,15 +40,13 @@ export function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-[#1a1a1a] border-r border-[#2a2a2a] flex flex-col">
+    <aside className="fixed left-0 top-0 h-screen w-64 bg-[#0a0f0c] border-r border-[#1a3a24] flex flex-col">
 
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-[#2a2a2a]">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
-            <span className="text-white text-sm font-bold">A</span>
-          </div>
-          <span className="text-white font-semibold text-sm">Agência Alpha</span>
+      <div className="px-6 py-5 border-b border-[#1a3a24]">
+        <div className="flex items-center gap-2">
+          <span className="text-white font-black text-lg tracking-tight">DIGITAL</span>
+          <span className="text-[#00ff88] font-black text-lg tracking-tight">ALPHA</span>
         </div>
       </div>
 
@@ -67,7 +65,7 @@ export function Sidebar() {
               >
                 <Icon size={18} />
                 <span className="text-sm">{item.label}</span>
-                <span className="ml-auto text-xs bg-[#2a2a2a] text-gray-500 px-1.5 py-0.5 rounded-md">
+                <span className="ml-auto text-xs bg-[#1a3a24]/50 text-gray-500 px-1.5 py-0.5 rounded-md">
                   Em breve
                 </span>
               </div>
@@ -80,8 +78,8 @@ export function Sidebar() {
               href={item.href}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
                 isActive
-                  ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-600/30'
-                  : 'text-gray-400 hover:text-white hover:bg-[#2a2a2a]'
+                  ? 'bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30'
+                  : 'text-gray-400 hover:text-white hover:bg-[#1a3a24]/40'
               }`}
             >
               <Icon size={18} />
@@ -92,7 +90,7 @@ export function Sidebar() {
       </nav>
 
       {/* Rodapé */}
-      <div className="px-6 py-4 border-t border-[#2a2a2a]">
+      <div className="px-6 py-4 border-t border-[#1a3a24]">
         <p className="text-xs text-gray-600">v0.1.0 — MVP</p>
       </div>
     </aside>
