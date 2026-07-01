@@ -8,29 +8,21 @@ const cards = [
     label: 'Total de Clientes',
     valor: 0,
     icon: Users,
-    cor: 'text-indigo-400',
-    bg: 'bg-indigo-600/10 border-indigo-600/20',
   },
   {
     label: 'Campanhas Ativas',
     valor: 0,
     icon: Megaphone,
-    cor: 'text-emerald-400',
-    bg: 'bg-emerald-600/10 border-emerald-600/20',
   },
   {
     label: 'Tarefas Pendentes',
     valor: 0,
     icon: CheckSquare,
-    cor: 'text-amber-400',
-    bg: 'bg-amber-600/10 border-amber-600/20',
   },
   {
     label: 'Desempenho Geral',
     valor: '—',
     icon: TrendingUp,
-    cor: 'text-purple-400',
-    bg: 'bg-purple-600/10 border-purple-600/20',
   },
 ]
 
@@ -44,10 +36,10 @@ export default function DashboardPage() {
     <div className="space-y-6">
 
       {/* Boas-vindas */}
-      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-6">
+      <div className="bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-6">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-600/20 border border-indigo-600/30 flex items-center justify-center">
-            <span className="text-indigo-400 text-lg font-bold">
+          <div className="w-12 h-12 rounded-2xl bg-[#00ff88]/10 border border-[#00ff88]/30 flex items-center justify-center">
+            <span className="text-[#00ff88] text-lg font-bold">
               {nome.charAt(0).toUpperCase()}
             </span>
           </div>
@@ -56,7 +48,8 @@ export default function DashboardPage() {
               Olá, {nome}! 👋
             </h1>
             <p className="text-gray-400 text-sm mt-0.5">
-              Você está logado como <span className="text-indigo-400 font-medium">{roleLabel}</span>
+              Você está logado como{' '}
+              <span className="text-[#00ff88] font-medium">{roleLabel}</span>
             </p>
           </div>
         </div>
@@ -69,22 +62,22 @@ export default function DashboardPage() {
           return (
             <div
               key={card.label}
-              className={`bg-[#1a1a1a] border rounded-2xl p-5 ${card.bg}`}
+              className="bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-5"
             >
               <div className="flex items-center justify-between mb-4">
                 <p className="text-gray-400 text-sm">{card.label}</p>
-                <div className={`w-8 h-8 rounded-xl ${card.bg} border flex items-center justify-center`}>
-                  <Icon size={16} className={card.cor} />
+                <div className="w-8 h-8 rounded-xl bg-[#00ff88]/10 border border-[#00ff88]/20 flex items-center justify-center">
+                  <Icon size={16} className="text-[#00ff88]" />
                 </div>
               </div>
-              <p className={`text-3xl font-bold ${card.cor}`}>{card.valor}</p>
+              <p className="text-3xl font-bold text-[#00ff88]">{card.valor}</p>
             </div>
           )
         })}
       </div>
 
       {/* Aviso de módulos em breve */}
-      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-6">
+      <div className="bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-6">
         <h3 className="text-white font-semibold mb-2">🚀 Módulos em desenvolvimento</h3>
         <p className="text-gray-400 text-sm">
           Os módulos de Clientes, Campanhas e Tarefas estão sendo implementados progressivamente.
