@@ -6,6 +6,18 @@ import { Mic, MicOff } from 'lucide-react'
 
 const AGENT_ID = 'agent_0101kwhjn4ymf3warnf5k6ktfb4y'
 
+function getSaudacao(): string {
+  const hora = new Date().toLocaleString('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    hour: 'numeric',
+    hour12: false,
+  })
+  const h = parseInt(hora)
+  if (h >= 5 && h < 12) return 'Bom dia'
+  if (h >= 12 && h < 18) return 'Boa tarde'
+  return 'Boa noite'
+}
+
 function AlphaButton() {
   const { startSession, endSession } = useConversationControls()
   const { status } = useConversationStatus()
@@ -22,6 +34,11 @@ function AlphaButton() {
         await navigator.mediaDevices.getUserMedia({ audio: true })
         await startSession({
           agentId: AGENT_ID,
+          overrides: {
+            agent: {
+              firstMessage: `${getSaudacao()}, Thiago! Sou a Alpha, sua assistente da Agência Digital Alpha. Como posso te ajudar agora?`,
+            },
+          },
           onConnect: () => setLoading(false),
           onError: () => setLoading(false),
         })
