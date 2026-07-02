@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { ConversationProvider, useConversationControls, useConversationStatus } from '@elevenlabs/react'
 import { Mic, MicOff } from 'lucide-react'
 
+const AGENT_ID = 'agent_0101kwhjn4ymf3warnf5k6ktfb4y'
+
 function AlphaButton() {
   const { startSession, endSession } = useConversationControls()
   const { status } = useConversationStatus()
@@ -19,6 +21,7 @@ function AlphaButton() {
       try {
         await navigator.mediaDevices.getUserMedia({ audio: true })
         await startSession({
+          agentId: AGENT_ID,
           onConnect: () => setLoading(false),
           onError: () => setLoading(false),
         })
@@ -62,7 +65,7 @@ function AlphaButton() {
 
 export function AlphaWidget() {
   return (
-    <ConversationProvider agentId="agent_0101kwhjn4ymf3warnf5k6ktfb4y">
+    <ConversationProvider agentId={AGENT_ID}>
       <AlphaButton />
     </ConversationProvider>
   )
