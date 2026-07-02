@@ -24,6 +24,18 @@ interface Webhook {
 const OAUTH_INTEGRATIONS = ['google_ads', 'gmail', 'google_drive', 'google_calendar', 'meta_ads']
 
 const INTEGRATION_ICONS: Record<string, string> = {
+  google_ads: 'https://www.gstatic.com/images/branding/product/2x/google_ads_48dp.png',
+  gmail: 'https://www.gstatic.com/images/branding/product/2x/gmail_2020q4_48dp.png',
+  google_drive: 'https://www.gstatic.com/images/branding/product/2x/drive_2020q4_48dp.png',
+  google_calendar: 'https://www.gstatic.com/images/branding/product/2x/calendar_2020q4_48dp.png',
+  meta_ads: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/200px-Meta_Platforms_Inc._logo.svg.png',
+  brevo: 'https://www.brevo.com/wp-content/uploads/2023/01/brevo-logo.svg',
+  openai: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/OpenAI_Logo.svg/200px-OpenAI_Logo.svg.png',
+  evolution_api: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/200px-WhatsApp.svg.png',
+  n8n: 'https://n8n.io/favicon.ico',
+}
+
+const INTEGRATION_EMOJI: Record<string, string> = {
   google_ads: '🎯',
   gmail: '📧',
   google_drive: '📁',
@@ -43,6 +55,26 @@ const WEBHOOK_EVENTS = [
   'relatorio.gerado',
 ]
 
+function IntegrationIcon({ type }: { type: string }) {
+  const [error, setError] = useState(false)
+  const src = INTEGRATION_ICONS[type]
+
+  if (!src || error) {
+    return <span className="text-2xl">{INTEGRATION_EMOJI[type] ?? '🔌'}</span>
+  }
+
+  return (
+    <img
+      src={src}
+      alt={type}
+      width={32}
+      height={32}
+      className="w-8 h-8 object-contain"
+      onError={() => setError(true)}
+    />
+  )
+}
+
 export default function IntegracoesPage() {
   const [integrations, setIntegrations] = useState<Integration[]>([])
   const [webhooks, setWebhooks] = useState<Webhook[]>([])
@@ -53,12 +85,10 @@ export default function IntegracoesPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   useEffect(() => {
-    // Verificar mensagens de redirect OAuth
     const params = new URLSearchParams(window.location.search)
     if (params.get('success') === 'google_connected') setSuccessMsg('Google conectado com sucesso!')
     if (params.get('success') === 'meta_connected') setSuccessMsg('Meta Ads conectado com sucesso!')
     if (params.get('error')) setErrorMsg('Erro ao conectar. Tente novamente.')
-
     fetchData()
   }, [])
 
@@ -121,7 +151,6 @@ export default function IntegracoesPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-8">
-      {/* Header */}
       <div>
         <h1 className="text-white text-2xl font-bold">Integrações</h1>
         <p className="text-sm mt-1" style={{ color: '#4a7a5a' }}>
@@ -129,7 +158,6 @@ export default function IntegracoesPage() {
         </p>
       </div>
 
-      {/* Mensagens */}
       {successMsg && (
         <div className="p-3 rounded-lg text-sm font-medium" style={{ backgroundColor: '#0a2a1a', color: '#00ff88', border: '1px solid #1a3a24' }}>
           ✅ {successMsg}
@@ -141,7 +169,6 @@ export default function IntegracoesPage() {
         </div>
       )}
 
-      {/* Integrações OAuth (Google + Meta) */}
       <section>
         <h2 className="text-white text-lg font-semibold mb-4">Conexões OAuth</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -154,7 +181,9 @@ export default function IntegracoesPage() {
                 style={{ backgroundColor: '#0f1f14', border: '1px solid #1a3a24' }}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">{INTEGRATION_ICONS[integration.type]}</span>
+                  <div className="w-9 h-9 flex items-center justify-center rounded-lg" style={{ backgroundColor: '#0a0f0c' }}>
+                    <IntegrationIcon type={integration.type} />
+                  </div>
                   <div>
                     <p className="text-white text-sm font-medium">{integration.label}</p>
                     <p className="text-xs mt-0.5" style={{ color: integration.status === 'connected' ? '#00ff88' : '#4a7a5a' }}>
@@ -190,7 +219,6 @@ export default function IntegracoesPage() {
         </div>
       </section>
 
-      {/* Integrações por API Key */}
       <section>
         <h2 className="text-white text-lg font-semibold mb-4">Chaves de API</h2>
         <div className="space-y-3">
@@ -204,7 +232,9 @@ export default function IntegracoesPage() {
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <span className="text-xl">{INTEGRATION_ICONS[integration.type]}</span>
+                    <div className="w-9 h-9 flex items-center justify-center rounded-lg" style={{ backgroundColor: '#0a0f0c' }}>
+                      <IntegrationIcon type={integration.type} />
+                    </div>
                     <div>
                       <p className="text-white text-sm font-medium">{integration.label}</p>
                       <p className="text-xs" style={{ color: integration.status === 'connected' ? '#00ff88' : '#4a7a5a' }}>
@@ -247,7 +277,6 @@ export default function IntegracoesPage() {
         </div>
       </section>
 
-      {/* Webhooks */}
       <section>
         <h2 className="text-white text-lg font-semibold mb-4">Webhooks</h2>
         <div className="space-y-3">
