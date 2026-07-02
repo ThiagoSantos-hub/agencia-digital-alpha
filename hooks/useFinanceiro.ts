@@ -1,6 +1,6 @@
-// hooks/useFinanceiro.ts
+// hooks/useFinanceiro.ts — v2.0.0
 // Projeto: Agência Digital Alpha
-// Módulo Financeiro — CRUD + filtros por período + totais
+// Módulo Financeiro — CRUD + recorrência por dia do mês + filtros + totais
 // Supabase client: sempre import { createClient } from '@/lib/supabase'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -24,8 +24,9 @@ export interface Lancamento {
   categoria:        string
   descricao:        string
   valor:            number
-  data_vencimento:  string   // ISO date YYYY-MM-DD
-  data_pagamento:   string | null
+  dia_vencimento:   number          // 1–31 — dia fixo do mês em que o cliente paga
+  data_vencimento:  string          // ISO date YYYY-MM-DD — calculado automaticamente
+  data_pagamento:   string | null   // preenchido só pelo sistema ao marcar como pago
   status:           StatusLancamento
   client_id:        string | null
   recorrente:       boolean
@@ -36,18 +37,24 @@ export interface Lancamento {
   client_name?:     string
 }
 
+/**
+ * LancamentoInput — o que o formulário envia.
+ *
+ * Não inclui data_vencimento nem data_pagamento:
+ *  - data_vencimento é calculada pelo hook a partir de dia_vencimento
+ *  - data_pagamento é preenchida pelo sistema em marcarComoPago()
+ */
 export interface LancamentoInput {
-  escopo:           EscopoFinanceiro
-  tipo:             TipoLancamento
-  categoria:        string
-  descricao:        string
-  valor:            number
-  data_vencimento:  string
-  data_pagamento?:  string | null
-  status?:          StatusLancamento
-  client_id?:       string | null
-  recorrente?:      boolean
-  recorrencia?:     Recorrencia | null
+  escopo:          EscopoFinanceiro
+  tipo:            TipoLancamento
+  categoria:       string
+  descricao:       string
+  valor:           number
+  dia_vencimento:  number          // 1–31
+  status?:         StatusLancamento
+  client_id?:      string | null
+  recorrente?:     boolean
+  recorrencia?:    Recorrencia | null
 }
 
 export interface Totais {
@@ -154,6 +161,57 @@ function getIntervalo(filtros: FiltrosFinanceiro): { inicio: string; fim: string
   }
 }
 
+/**
+ * Dado um dia do mês (1–31) e uma referência de ano/mês,
+ * retorna a data ISO YYYY-MM-DD correta — se o dia for maior
+ * que o último dia do mês (ex: dia 31 em fevereiro), usa o
+ * último dia do mês para não pular para o mês seguinte.
+ */
+function montarDataVencimento(dia: number, ano: number, mes: number): string {
+  const ultimoDia = new Date(ano, mes + 1, 0).getDate()
+  const diaReal   = Math.min(dia, ultimoDia)
+  const mm        = String(mes + 1).padStart(2, '0')
+  const dd        = String(diaReal).padStart(2, '0')
+  return `${ano}-${mm}-${dd}`
+}
+
+/**
+ * A partir de um dia fixo de vencimento, calcula a data do
+ * vencimento no mês corrente. Se esse dia já passou, usa o
+ * mês seguinte — assim o cadastro sempre cria o próximo
+ * vencimento relevante.
+ */
+function proximaDataVencimento(dia: number): string {
+  const hoje    = new Date()
+  const ano     = hoje.getFullYear()
+  const mes     = hoje.getMonth()
+  const diaHoje = hoje.getDate()
+
+  if (dia >= diaHoje) {
+    // O vencimento deste mês ainda não chegou (ou é hoje)
+    return montarDataVencimento(dia, ano, mes)
+  } else {
+    // O vencimento deste mês já passou → próximo é mês seguinte
+    const mesProx = mes + 1 > 11 ? 0 : mes + 1
+    const anoProx = mes + 1 > 11 ? ano + 1 : ano
+    return montarDataVencimento(dia, anoProx, mesProx)
+  }
+}
+
+/**
+ * Dado um data_vencimento ISO, retorna a data do mês seguinte
+ * mantendo o mesmo dia_vencimento (usado na renovação automática).
+ */
+function vencimentoProximoMes(dataAtual: string, dia: number): string {
+  const [anoStr, mesStr] = dataAtual.split('-')
+  const ano = parseInt(anoStr, 10)
+  const mes = parseInt(mesStr, 10) - 1   // 0-indexed
+
+  const mesProx = mes + 1 > 11 ? 0    : mes + 1
+  const anoProx = mes + 1 > 11 ? ano + 1 : ano
+  return montarDataVencimento(dia, anoProx, mesProx)
+}
+
 // ============================================================
 // HOOK PRINCIPAL
 // ============================================================
@@ -227,16 +285,31 @@ export function useFinanceiro(filtrosIniciais?: Partial<FiltrosFinanceiro>) {
   useEffect(() => { fetchLancamentos() }, [fetchLancamentos])
 
   // ── CREATE ─────────────────────────────────────────────────
+  /**
+   * Recebe LancamentoInput (com dia_vencimento, sem data_vencimento).
+   * Calcula automaticamente a data_vencimento correta para o mês.
+   */
   async function createLancamento(input: LancamentoInput): Promise<boolean> {
     setError(null)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setError('Usuário não autenticado'); return false }
 
+    const dataVencimento = proximaDataVencimento(input.dia_vencimento)
+
     const { error: err } = await supabase.from('finances').insert({
-      ...input,
-      user_id:    user.id,
-      status:     input.status ?? 'pendente',
-      recorrente: input.recorrente ?? false,
+      user_id:         user.id,
+      escopo:          input.escopo,
+      tipo:            input.tipo,
+      categoria:       input.categoria,
+      descricao:       input.descricao,
+      valor:           input.valor,
+      dia_vencimento:  input.dia_vencimento,
+      data_vencimento: dataVencimento,
+      data_pagamento:  null,
+      status:          input.status ?? 'pendente',
+      client_id:       input.client_id ?? null,
+      recorrente:      input.recorrente ?? true,    // padrão true — clientes recorrentes
+      recorrencia:     input.recorrencia ?? 'mensal',
     })
 
     if (err) { setError(err.message); return false }
@@ -245,12 +318,26 @@ export function useFinanceiro(filtrosIniciais?: Partial<FiltrosFinanceiro>) {
   }
 
   // ── UPDATE ─────────────────────────────────────────────────
-  async function updateLancamento(id: string, input: Partial<LancamentoInput>): Promise<boolean> {
+  /**
+   * Atualiza campos de um lançamento existente.
+   * Se dia_vencimento for alterado, recalcula data_vencimento.
+   */
+  async function updateLancamento(
+    id: string,
+    input: Partial<LancamentoInput> & { data_vencimento?: string; data_pagamento?: string | null; status?: StatusLancamento }
+  ): Promise<boolean> {
     setError(null)
+
+    const payload: Record<string, any> = { ...input }
+
+    // Se o dia mudou, recalcular a data_vencimento deste lançamento
+    if (input.dia_vencimento !== undefined && input.data_vencimento === undefined) {
+      payload.data_vencimento = proximaDataVencimento(input.dia_vencimento)
+    }
 
     const { error: err } = await supabase
       .from('finances')
-      .update(input)
+      .update(payload)
       .eq('id', id)
 
     if (err) { setError(err.message); return false }
@@ -259,12 +346,81 @@ export function useFinanceiro(filtrosIniciais?: Partial<FiltrosFinanceiro>) {
   }
 
   // ── MARCAR COMO PAGO ───────────────────────────────────────
-  async function marcarComoPago(id: string, dataPagamento?: string): Promise<boolean> {
+  /**
+   * 1. Marca o lançamento atual como pago (preenche data_pagamento).
+   * 2. Se for recorrente, cria automaticamente o lançamento do
+   *    próximo mês com status 'pendente' — sem nenhuma ação manual.
+   */
+  async function marcarComoPago(id: string): Promise<boolean> {
+    setError(null)
     const hoje = new Date().toISOString().split('T')[0]
-    return updateLancamento(id, {
-      status:         'pago',
-      data_pagamento: dataPagamento ?? hoje,
-    })
+
+    // Buscar o lançamento atual para copiar os dados no próximo mês
+    const { data: rows, error: fetchErr } = await supabase
+      .from('finances')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (fetchErr || !rows) {
+      setError(fetchErr?.message ?? 'Lançamento não encontrado')
+      return false
+    }
+
+    const lancamento = rows as Lancamento
+
+    // 1. Marcar como pago
+    const { error: updateErr } = await supabase
+      .from('finances')
+      .update({ status: 'pago', data_pagamento: hoje })
+      .eq('id', id)
+
+    if (updateErr) { setError(updateErr.message); return false }
+
+    // 2. Se for recorrente mensal, criar o do próximo mês automaticamente
+    if (lancamento.recorrente && lancamento.recorrencia === 'mensal') {
+      const proximaData = vencimentoProximoMes(
+        lancamento.data_vencimento,
+        lancamento.dia_vencimento
+      )
+
+      // Verificar se já existe lançamento para esse cliente nessa data
+      // (evita duplicatas caso marcarComoPago seja chamado duas vezes)
+      const { data: existente } = await supabase
+        .from('finances')
+        .select('id')
+        .eq('user_id',         lancamento.user_id)
+        .eq('client_id',       lancamento.client_id)
+        .eq('data_vencimento', proximaData)
+        .eq('escopo',          lancamento.escopo)
+        .maybeSingle()
+
+      if (!existente) {
+        const { error: insertErr } = await supabase.from('finances').insert({
+          user_id:         lancamento.user_id,
+          escopo:          lancamento.escopo,
+          tipo:            lancamento.tipo,
+          categoria:       lancamento.categoria,
+          descricao:       lancamento.descricao,
+          valor:           lancamento.valor,
+          dia_vencimento:  lancamento.dia_vencimento,
+          data_vencimento: proximaData,
+          data_pagamento:  null,
+          status:          'pendente',
+          client_id:       lancamento.client_id,
+          recorrente:      true,
+          recorrencia:     'mensal',
+        })
+
+        if (insertErr) {
+          // Não desfaz o pagamento — só loga o erro da renovação
+          console.error('[useFinanceiro] Erro ao criar renovação mensal:', insertErr.message)
+        }
+      }
+    }
+
+    await fetchLancamentos()
+    return true
   }
 
   // ── DELETE ─────────────────────────────────────────────────
