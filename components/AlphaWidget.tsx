@@ -17,6 +17,10 @@ export function AlphaWidget() {
   }, [])
 
   return (
-    <elevenlabs-convai agent-id="agent_0101kwhjn4ymf3warnf5k6ktfb4y"></elevenlabs-convai>
-  ) as unknown as JSX.Element
+    <div
+      dangerouslySetInnerHTML={{
+        __html: '<elevenlabs-convai agent-id="agent_0101kwhjn4ymf3warnf5k6ktfb4y"></elevenlabs-convai>',
+      }}
+    />
+  )
 }
