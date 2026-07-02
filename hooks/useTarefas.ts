@@ -15,7 +15,7 @@ export interface Tarefa {
   campaign_id: string | null
   created_at: string
   client?: { id: string; name: string } | null
-  assignee?: { id: string; full_name: string } | null
+  assignee?: { id: string; name: string } | null
 }
 
 export interface TarefaInput {
@@ -40,7 +40,7 @@ export function useTarefas() {
     setError(null)
     const { data, error } = await supabase
       .from('tasks')
-      .select(`*, client:clients(id, name), assignee:profiles(id, full_name)`)
+      .select(`*, client:clients(id, name), assignee:profiles(id, name)`)
       .order('created_at', { ascending: false })
     if (error) setError(error.message)
     else setTarefas(data || [])
