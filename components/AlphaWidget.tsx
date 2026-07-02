@@ -1,45 +1,31 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
+import { ConversationProvider, useConversationControls, useConversationStatus } from '@elevenlabs/react'
 import { Mic, MicOff } from 'lucide-react'
 
-export function AlphaWidget() {
-  const [active, setActive] = useState(false)
+function AlphaButton() {
+  const { startSession, endSession } = useConversationControls()
+  const { status } = useConversationStatus()
   const [loading, setLoading] = useState(false)
-  const convRef = useRef<unknown>(null)
 
-  useEffect(() => {
-    return () => {
-      if (convRef.current) {
-        (convRef.current as { endSession: () => void }).endSession()
+  const active = status === 'connected'
+
+  const handleClick = async () => {
+    if (active) {
+      await endSession()
+    } else {
+      setLoading(true)
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true })
+        await startSession({
+          onConnect: () => setLoading(false),
+          onError: () => setLoading(false),
+        })
+      } catch {
+        setLoading(false)
       }
     }
-  }, [])
-
-  const startCall = async () => {
-    setLoading(true)
-    try {
-      const { Conversation } = await import('@11labs/client')
-      await navigator.mediaDevices.getUserMedia({ audio: true })
-      const conv = await Conversation.startSession({
-        agentId: 'agent_0101kwhjn4ymf3warnf5k6ktfb4y',
-        onConnect: () => { setActive(true); setLoading(false) },
-        onDisconnect: () => { setActive(false); setLoading(false) },
-        onError: (err: unknown) => { console.error(err); setLoading(false) },
-      })
-      convRef.current = conv
-    } catch (err) {
-      console.error(err)
-      setLoading(false)
-    }
-  }
-
-  const endCall = async () => {
-    if (convRef.current) {
-      await (convRef.current as { endSession: () => void }).endSession()
-      convRef.current = null
-    }
-    setActive(false)
   }
 
   return (
@@ -54,7 +40,7 @@ export function AlphaWidget() {
         </div>
       )}
       <button
-        onClick={active ? endCall : startCall}
+        onClick={handleClick}
         disabled={loading}
         className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all disabled:opacity-50"
         style={{
@@ -71,5 +57,13 @@ export function AlphaWidget() {
         }
       </button>
     </div>
+  )
+}
+
+export function AlphaWidget() {
+  return (
+    <ConversationProvider agentId="agent_0101kwhjn4ymf3warnf5k6ktfb4y">
+      <AlphaButton />
+    </ConversationProvider>
   )
 }
