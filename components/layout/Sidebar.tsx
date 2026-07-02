@@ -26,7 +26,7 @@ const menuItems = [
     label: 'Campanhas',
     href: '/campanhas',
     icon: Megaphone,
-    ativo: false,
+    ativo: true,
   },
   {
     label: 'Tarefas',
