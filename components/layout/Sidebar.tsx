@@ -1,5 +1,4 @@
 'use client'
-
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -7,6 +6,7 @@ import {
   Users,
   Megaphone,
   CheckSquare,
+  Plug,
 } from 'lucide-react'
 
 const menuItems = [
@@ -29,6 +29,12 @@ const menuItems = [
     ativo: true,
   },
   {
+    label: 'Integrações',
+    href: '/integracoes',
+    icon: Plug,
+    ativo: true,
+  },
+  {
     label: 'Tarefas',
     href: '/tarefas',
     icon: CheckSquare,
@@ -41,7 +47,6 @@ export function Sidebar() {
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-[#0a0f0c] border-r border-[#1a3a24] flex flex-col">
-
       {/* Logo */}
       <div className="px-6 py-5 border-b border-[#1a3a24]">
         <div className="flex items-center gap-2">
