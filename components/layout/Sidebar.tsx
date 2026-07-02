@@ -38,7 +38,7 @@ const menuItems = [
     label: 'Tarefas',
     href: '/tarefas',
     icon: CheckSquare,
-    ativo: false,
+    ativo: true,
   },
 ]
 
