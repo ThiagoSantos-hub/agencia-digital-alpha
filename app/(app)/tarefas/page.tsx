@@ -43,7 +43,7 @@ const EMPTY_FORM: TarefaInput = {
 }
 
 export default function TarefasPage() {
-  const { tarefas, loading, error, createTarefa, updateTarefa, deleteTarefa } = useTarefas()
+  const { tarefas, usuarios, loading, error, createTarefa, updateTarefa, deleteTarefa } = useTarefas()
   const [modalOpen, setModalOpen] = useState(false)
   const [editando, setEditando] = useState<Tarefa | null>(null)
   const [form, setForm] = useState<TarefaInput>(EMPTY_FORM)
@@ -171,7 +171,7 @@ export default function TarefasPage() {
           <table className="w-full text-sm">
             <thead style={{ background: '#0f1a14', borderBottom: '1px solid #1a3a24' }}>
               <tr>
-                {['Título', 'Cliente', 'Prioridade', 'Prazo', 'Status', 'Ações'].map(h => (
+                {['Título', 'Responsável', 'Prioridade', 'Prazo', 'Status', 'Ações'].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
@@ -187,7 +187,7 @@ export default function TarefasPage() {
                     <div className="font-medium text-white">{t.title}</div>
                     {t.description && <div className="text-gray-500 text-xs mt-0.5 truncate max-w-xs">{t.description}</div>}
                   </td>
-                  <td className="px-4 py-3 text-gray-400">{t.client?.name || '—'}</td>
+                  <td className="px-4 py-3 text-gray-400">{t.assignee?.name || '—'}</td>
                   <td className="px-4 py-3">
                     <span className={`font-medium text-sm ${PRIORITY_COLORS[t.priority]}`}>
                       {PRIORITY_LABELS[t.priority]}
@@ -256,6 +256,24 @@ export default function TarefasPage() {
                   className="w-full px-3 py-2 rounded-lg text-sm text-white placeholder-gray-500 outline-none resize-none"
                   style={{ background: '#0a0f0c', border: '1px solid #1a3a24' }}
                 />
+              </div>
+
+              {/* Responsável */}
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Responsável</label>
+                <select
+                  value={form.assignee_id || ''}
+                  onChange={e => setForm(f => ({ ...f, assignee_id: e.target.value || null }))}
+                  className="w-full px-3 py-2 rounded-lg text-sm text-white outline-none"
+                  style={{ background: '#0a0f0c', border: '1px solid #1a3a24' }}
+                >
+                  <option value="">— Sem responsável —</option>
+                  {usuarios.map(u => (
+                    <option key={u.id} value={u.id}>
+                      {u.name || 'Sem nome'} ({u.role === 'admin' ? 'Admin' : 'Gestor'})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
