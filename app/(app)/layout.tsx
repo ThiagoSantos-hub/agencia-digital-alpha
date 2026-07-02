@@ -5,19 +5,14 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { Header } from '@/components/layout/Header'
+import { AlphaWidget } from '@/components/AlphaWidget'
 
-export default function AppLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login')
-    }
+    if (!loading && !user) router.push('/login')
   }, [user, loading, router])
 
   if (loading) {
@@ -35,10 +30,9 @@ export default function AppLayout({
       <Sidebar />
       <div className="flex-1 flex flex-col ml-64">
         <Header />
-        <main className="flex-1 p-6">
-          {children}
-        </main>
+        <main className="flex-1 p-6">{children}</main>
       </div>
+      <AlphaWidget />
     </div>
   )
 }
