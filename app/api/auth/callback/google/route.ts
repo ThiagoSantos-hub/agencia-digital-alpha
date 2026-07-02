@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -37,8 +37,10 @@ export async function GET(request: NextRequest) {
 
     const expiryDate = new Date(Date.now() + tokens.expires_in * 1000)
 
-    // Salvar tokens na tabela integrations
-    const supabase = await createClient()
+    // Salvar tokens na tabela integrations para todas as integrações Google
+    const supabase = createClient()
+
+    const googleIntegrations = ['google_ads', 'gmail', 'google_drive', 'google_calendar']
 
     const { error: dbError } = await supabase
       .from('integrations')
@@ -50,7 +52,7 @@ export async function GET(request: NextRequest) {
         connected_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
-      .eq('type', 'google_ads')
+      .in('type', googleIntegrations)
 
     if (dbError) {
       console.error('Erro ao salvar token no Supabase:', dbError)
@@ -58,21 +60,6 @@ export async function GET(request: NextRequest) {
         new URL('/integracoes?error=google_db_failed', request.url)
       )
     }
-
-    // Atualizar também Gmail, Drive e Calendar com os mesmos tokens
-    const googleIntegrations = ['gmail', 'google_drive', 'google_calendar']
-
-    await supabase
-      .from('integrations')
-      .update({
-        status: 'connected',
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token ?? null,
-        token_expiry: expiryDate.toISOString(),
-        connected_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .in('type', googleIntegrations)
 
     return NextResponse.redirect(
       new URL('/integracoes?success=google_connected', request.url)
