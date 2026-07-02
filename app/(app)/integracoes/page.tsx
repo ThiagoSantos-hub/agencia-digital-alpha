@@ -325,7 +325,7 @@ export default function IntegracoesPage() {
                     Desconectar
                   </button>
                 ) : (
-                  
+                  <a
                     href={
                       ['google_ads', 'gmail', 'google_drive', 'google_calendar'].includes(integration.type)
                         ? '/api/integrations/connect/google'
