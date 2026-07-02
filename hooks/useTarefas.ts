@@ -3,6 +3,12 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 
+export interface Profile {
+  id: string
+  name: string | null
+  role: 'admin' | 'manager'
+}
+
 export interface Tarefa {
   id: string
   title: string
@@ -15,7 +21,7 @@ export interface Tarefa {
   campaign_id: string | null
   created_at: string
   client?: { id: string; name: string } | null
-  assignee?: { id: string; name: string } | null
+  assignee?: { id: string; name: string | null } | null
 }
 
 export interface TarefaInput {
@@ -31,9 +37,18 @@ export interface TarefaInput {
 
 export function useTarefas() {
   const [tarefas, setTarefas] = useState<Tarefa[]>([])
+  const [usuarios, setUsuarios] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
+
+  const fetchUsuarios = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, name, role')
+      .order('name', { ascending: true })
+    setUsuarios(data || [])
+  }
 
   const fetchTarefas = async () => {
     setLoading(true)
@@ -65,7 +80,10 @@ export function useTarefas() {
     await fetchTarefas()
   }
 
-  useEffect(() => { fetchTarefas() }, [])
+  useEffect(() => {
+    fetchTarefas()
+    fetchUsuarios()
+  }, [])
 
-  return { tarefas, loading, error, createTarefa, updateTarefa, deleteTarefa, refetch: fetchTarefas }
+  return { tarefas, usuarios, loading, error, createTarefa, updateTarefa, deleteTarefa, refetch: fetchTarefas }
 }
