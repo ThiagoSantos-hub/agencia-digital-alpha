@@ -235,11 +235,6 @@ function ModalEditarCliente({ client, onClose }: { client: Client; onClose: () =
 function ModalConfirmarExclusao({ client, onClose, onConfirm }: { client: Client; onClose: () => void; onConfirm: () => void }) {
   const [loading, setLoading] = useState(false)
 
-  const handleConfirm = async () => {
-    setLoading(true)
-    await onConfirm()
-  }
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -250,18 +245,16 @@ function ModalConfirmarExclusao({ client, onClose, onConfirm }: { client: Client
             <X size={18} />
           </button>
         </div>
-
         <p className="text-gray-400 text-sm">
           Tem certeza que deseja excluir <span className="text-white font-medium">{client.name}</span>
           {client.company ? <> ({client.company})</> : ''}? Esta ação não pode ser desfeita.
         </p>
-
         <div className="flex gap-3 pt-1">
           <button onClick={onClose} disabled={loading}
             className="flex-1 py-2.5 rounded-xl text-sm font-medium text-gray-400 bg-[#0f0f0f] border border-[#2a2a2a] hover:text-white transition-colors">
             Cancelar
           </button>
-          <button onClick={handleConfirm} disabled={loading}
+          <button onClick={async () => { setLoading(true); await onConfirm() }} disabled={loading}
             className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white flex items-center justify-center gap-2 transition-colors">
             {loading ? <><Loader2 size={14} className="animate-spin" /> Excluindo...</> : 'Excluir'}
           </button>
@@ -355,7 +348,10 @@ export default function ClientesPage() {
                   return (
                     <tr key={client.id} className="border-b border-[#2a2a2a] last:border-0 hover:bg-white/[0.02] transition-colors">
                       <td className="px-5 py-3.5">
-                        <p className="text-white font-medium">{client.name}</p>
+                        <a href={`/clientes/${client.id}`}
+                          className="text-white font-medium hover:text-indigo-400 transition-colors cursor-pointer">
+                          {client.name}
+                        </a>
                         {client.company && <p className="text-gray-500 text-xs mt-0.5">{client.company}</p>}
                       </td>
                       <td className="px-5 py-3.5">
