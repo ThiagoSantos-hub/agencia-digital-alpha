@@ -33,6 +33,7 @@ const INTEGRATION_ICONS: Record<string, string> = {
   openai: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/OpenAI_Logo.svg/200px-OpenAI_Logo.svg.png',
   evolution_api: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/200px-WhatsApp.svg.png',
   n8n: 'https://n8n.io/favicon.ico',
+  elevenlabs: 'https://elevenlabs.io/favicon.ico',
 }
 
 const INTEGRATION_EMOJI: Record<string, string> = {
@@ -45,7 +46,10 @@ const INTEGRATION_EMOJI: Record<string, string> = {
   openai: '🤖',
   evolution_api: '💬',
   n8n: '⚡',
+  elevenlabs: '🎙️',
 }
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://agencia-digital-alpha.vercel.app'
 
 const WEBHOOK_EVENTS = [
   'cliente.criado',
@@ -72,6 +76,109 @@ function IntegrationIcon({ type }: { type: string }) {
       className="w-8 h-8 object-contain"
       onError={() => setError(true)}
     />
+  )
+}
+
+function ElevenLabsCard({
+  integration,
+  onSave,
+  onDisconnect,
+  saving,
+}: {
+  integration: Integration
+  onSave: (apiKey: string, agentId: string) => void
+  onDisconnect: () => void
+  saving: boolean
+}) {
+  const [apiKey, setApiKey] = useState('')
+  const [agentId, setAgentId] = useState(integration.config?.agent_id || '')
+  const [copied, setCopied] = useState(false)
+  const webhookUrl = `${APP_URL}/api/elevenlabs/webhook`
+
+  function copyWebhook() {
+    navigator.clipboard.writeText(webhookUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <div className="rounded-xl p-4" style={{ backgroundColor: '#0f1f14', border: '1px solid #1a3a24' }}>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 flex items-center justify-center rounded-lg" style={{ backgroundColor: '#0a0f0c' }}>
+            <IntegrationIcon type="elevenlabs" />
+          </div>
+          <div>
+            <p className="text-white text-sm font-medium">{integration.label}</p>
+            <p className="text-xs" style={{ color: integration.status === 'connected' ? '#00ff88' : '#4a7a5a' }}>
+              {integration.status === 'connected' ? 'Conectado' : 'Desconectado'}
+            </p>
+          </div>
+        </div>
+        {integration.status === 'connected' && (
+          <button
+            onClick={onDisconnect}
+            className="text-xs px-3 py-1.5 rounded-lg"
+            style={{ backgroundColor: '#1a0a0a', color: '#ff4444', border: '1px solid #3a1a1a' }}
+          >
+            Remover
+          </button>
+        )}
+      </div>
+
+      {integration.status !== 'connected' ? (
+        <div className="space-y-2">
+          <input
+            type="password"
+            placeholder="API Key do ElevenLabs (xi-api-key)"
+            value={apiKey}
+            onChange={e => setApiKey(e.target.value)}
+            className="w-full text-sm px-3 py-2 rounded-lg outline-none"
+            style={{ backgroundColor: '#0a0f0c', color: 'white', border: '1px solid #1a3a24' }}
+          />
+          <input
+            type="text"
+            placeholder="Agent ID (criado no ElevenAgents)"
+            value={agentId}
+            onChange={e => setAgentId(e.target.value)}
+            className="w-full text-sm px-3 py-2 rounded-lg outline-none"
+            style={{ backgroundColor: '#0a0f0c', color: 'white', border: '1px solid #1a3a24' }}
+          />
+          <button
+            onClick={() => onSave(apiKey, agentId)}
+            disabled={saving || !apiKey || !agentId}
+            className="w-full text-xs px-4 py-2 rounded-lg font-medium disabled:opacity-50"
+            style={{ backgroundColor: '#00ff88', color: '#0a0f0c' }}
+          >
+            {saving ? 'Salvando...' : 'Salvar e conectar'}
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <p className="text-xs" style={{ color: '#4a7a5a' }}>
+            Agent ID: <span className="text-white">{integration.config?.agent_id}</span>
+          </p>
+          <div className="flex items-center gap-2">
+            <input
+              readOnly
+              value={webhookUrl}
+              className="flex-1 text-xs px-3 py-2 rounded-lg outline-none"
+              style={{ backgroundColor: '#0a0f0c', color: '#4a7a5a', border: '1px solid #1a3a24' }}
+            />
+            <button
+              onClick={copyWebhook}
+              className="text-xs px-3 py-2 rounded-lg"
+              style={{ backgroundColor: '#0a0f0c', color: '#00ff88', border: '1px solid #1a3a24' }}
+            >
+              {copied ? 'Copiado!' : 'Copiar'}
+            </button>
+          </div>
+          <p className="text-[11px]" style={{ color: '#4a7a5a' }}>
+            Cole essa URL no painel ElevenLabs em Agent → Webhooks → Post-call transcription.
+          </p>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -125,6 +232,22 @@ export default function IntegracoesPage() {
   async function disconnect(type: string) {
     await fetch(`/api/integrations?type=${type}`, { method: 'DELETE' })
     fetchData()
+  }
+
+  async function saveElevenLabs(apiKey: string, agentId: string) {
+    setSavingKey('elevenlabs')
+    const res = await fetch('/api/integrations', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'elevenlabs', access_token: apiKey, config: { agent_id: agentId } }),
+    })
+    if (res.ok) {
+      setSuccessMsg('ElevenLabs conectado com sucesso!')
+      fetchData()
+    } else {
+      setErrorMsg('Erro ao salvar ElevenLabs.')
+    }
+    setSavingKey(null)
   }
 
   async function saveWebhook(slot: number, field: string, value: string | boolean) {
@@ -202,7 +325,7 @@ export default function IntegracoesPage() {
                     Desconectar
                   </button>
                 ) : (
-                  <a
+                  
                     href={
                       ['google_ads', 'gmail', 'google_drive', 'google_calendar'].includes(integration.type)
                         ? '/api/integrations/connect/google'
@@ -223,7 +346,18 @@ export default function IntegracoesPage() {
         <h2 className="text-white text-lg font-semibold mb-4">Chaves de API</h2>
         <div className="space-y-3">
           {integrations
-            .filter(i => !OAUTH_INTEGRATIONS.includes(i.type))
+            .filter(i => i.type === 'elevenlabs')
+            .map(integration => (
+              <ElevenLabsCard
+                key={integration.type}
+                integration={integration}
+                onSave={saveElevenLabs}
+                onDisconnect={() => disconnect('elevenlabs')}
+                saving={savingKey === 'elevenlabs'}
+              />
+            ))}
+          {integrations
+            .filter(i => !OAUTH_INTEGRATIONS.includes(i.type) && i.type !== 'elevenlabs')
             .map(integration => (
               <div
                 key={integration.type}
