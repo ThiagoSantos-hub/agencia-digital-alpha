@@ -164,6 +164,7 @@ export default function FinanceiroPage() {
     totais: totaisBrutos,
     loading,
     refetch,
+    atualizarFiltros,
     createLancamento,
     updateLancamento,
     marcarComoPago,
@@ -176,6 +177,11 @@ export default function FinanceiroPage() {
     dataInicio: periodoInicio,
     dataFim: periodoFim,
   })
+
+  // Atualiza o filtro de escopo no hook sempre que o botão Agência/Pessoal mudar
+  useEffect(() => {
+    atualizarFiltros({ escopo: escopoAtivo })
+  }, [escopoAtivo])
 
   useEffect(() => {
     async function checkPerfil() {
