@@ -29,11 +29,9 @@ export function useClientes() {
   const supabase = useMemo(() => createClient(), [])
 
   const fetchClients = useCallback(async () => {
-    // Não resetamos o loading se já temos dados, para evitar o "pisca" e lentidão visual
     if (clients.length === 0) setLoading(true)
     
     try {
-      // 1. Buscar clientes e finanças em paralelo para ganhar tempo
       const [clientsRes, financesRes] = await Promise.all([
         supabase
           .from('clients')
@@ -56,10 +54,8 @@ export function useClientes() {
       hoje.setHours(0, 0, 0, 0)
 
       const processedClients = (clientsData ?? []).map((client: any) => {
-        // Se o cliente já está inativo, mantém inativo
         if (client.status === 'inativo') return client
 
-        // Encontrar lançamentos deste cliente
         const clientFinances = (financesData ?? []).filter(f => f.client_id === client.id)
         
         let maiorAtraso = 0
@@ -69,7 +65,6 @@ export function useClientes() {
           const vencimento = new Date(f.data_vencimento)
           vencimento.setHours(0, 0, 0, 0)
           
-          // Lógica corrigida: se a data de vencimento passou E não está pago, está atrasado
           if (vencimento < hoje || f.status === 'atrasado') {
             temAtrasado = true
             const diffTime = Math.abs(hoje.getTime() - vencimento.getTime())
@@ -78,7 +73,6 @@ export function useClientes() {
           }
         })
 
-        // Prioridade para o status 'atrasado' se houver pendência financeira
         return {
           ...client,
           status: temAtrasado ? 'atrasado' : client.status,
@@ -112,6 +106,14 @@ export function useClientes() {
       .single()
     
     if (!error && data) {
+      // Atualizar UI instantaneamente
+      const newClient: Client = {
+        ...data,
+        dias_atraso: 0
+      }
+      setClients(prev => [newClient, ...prev])
+
+      // Criar lançamento financeiro se houver mensalidade
       if (data.monthly_fee && data.payment_day) {
         const hoje = new Date()
         const dataVencimento = new Date(hoje.getFullYear(), hoje.getMonth(), data.payment_day).toISOString().split('T')[0]
@@ -131,7 +133,6 @@ export function useClientes() {
           recorrencia: 'mensal'
         })
       }
-      await fetchClients()
     }
     return { data, error }
   }
@@ -153,6 +154,21 @@ export function useClientes() {
       .single()
     
     if (!error && data) {
+      // Atualizar UI instantaneamente
+      setClients(prev => 
+        prev.map(c => c.id === id ? { ...data, dias_atraso: c.dias_atraso || 0 } : c)
+      )
+
+      // Se o cliente foi marcado como inativo, remover lançamentos financeiros pendentes
+      if (payload.status === 'inativo') {
+        await supabase
+          .from('finances')
+          .delete()
+          .eq('client_id', id)
+          .eq('status', 'pendente')
+      }
+
+      // Atualizar lançamentos financeiros se mensalidade ou dia mudou
       if (input.monthly_fee !== undefined || input.payment_day !== undefined) {
         await supabase.from('finances')
           .update({
@@ -164,14 +180,22 @@ export function useClientes() {
           .eq('status', 'pendente')
           .eq('recorrente', true)
       }
-      await fetchClients()
     }
     return { data, error }
   }
 
   const deleteCliente = async (id: string) => {
     const { error } = await supabase.from('clients').delete().eq('id', id)
-    if (!error) await fetchClients()
+    if (!error) {
+      // Atualizar UI instantaneamente
+      setClients(prev => prev.filter(c => c.id !== id))
+      
+      // Remover lançamentos financeiros associados
+      await supabase
+        .from('finances')
+        .delete()
+        .eq('client_id', id)
+    }
     return { error }
   }
 

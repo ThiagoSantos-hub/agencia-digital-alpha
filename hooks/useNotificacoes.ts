@@ -1,9 +1,9 @@
-// hooks/useNotificacoes.ts
+// hooks/useNotificacoes.ts — v2.1.0
 // Projeto: Agência Digital Alpha
-// Módulo Notificações — busca, marcar lida, limpar todas
+// Módulo Notificações — busca otimizada, marcar lida, limpar todas
 // Supabase client: sempre import { createClient } from '@/lib/supabase'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase'
 
 // ============================================================
@@ -27,21 +27,36 @@ export interface Notificacao {
   created_at: string
 }
 
+// Cache global para notificações
+let cachedNotificacoes: Notificacao[] | null = null
+let cacheTimestamp = 0
+const CACHE_DURATION = 30000 // 30 segundos
+
 // ============================================================
 // HOOK
 // ============================================================
 
 export function useNotificacoes() {
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
-  const [notificacoes, setNotificacoes] = useState<Notificacao[]>([])
+  const [notificacoes, setNotificacoes] = useState<Notificacao[]>(cachedNotificacoes ?? [])
   const [naoLidas,     setNaoLidas]     = useState(0)
-  const [loading,      setLoading]      = useState(true)
+  const [loading,      setLoading]      = useState(!cachedNotificacoes)
   const [error,        setError]        = useState<string | null>(null)
 
   // ── FETCH ──────────────────────────────────────────────────
   const fetchNotificacoes = useCallback(async () => {
-    setLoading(true)
+    const now = Date.now()
+    
+    // Usar cache se ainda for válido
+    if (cachedNotificacoes && (now - cacheTimestamp) < CACHE_DURATION) {
+      setNotificacoes(cachedNotificacoes)
+      setNaoLidas(cachedNotificacoes.filter(n => !n.lida).length)
+      setLoading(false)
+      return
+    }
+
+    if (notificacoes.length === 0) setLoading(true)
     setError(null)
 
     try {
@@ -54,6 +69,9 @@ export function useNotificacoes() {
       if (err) throw err
 
       const lista = (data ?? []) as Notificacao[]
+      cachedNotificacoes = lista
+      cacheTimestamp = now
+      
       setNotificacoes(lista)
       setNaoLidas(lista.filter(n => !n.lida).length)
     } catch (e: any) {
@@ -61,7 +79,7 @@ export function useNotificacoes() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [supabase, notificacoes.length])
 
   useEffect(() => {
     fetchNotificacoes()
@@ -72,12 +90,15 @@ export function useNotificacoes() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'notifications' },
-        () => { fetchNotificacoes() }
+        () => { 
+          cachedNotificacoes = null // Invalidar cache
+          fetchNotificacoes() 
+        }
       )
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [fetchNotificacoes])
+  }, [fetchNotificacoes, supabase])
 
   // ── MARCAR UMA COMO LIDA ───────────────────────────────────
   async function marcarComoLida(id: string): Promise<boolean> {
@@ -87,7 +108,14 @@ export function useNotificacoes() {
       .eq('id', id)
 
     if (err) { setError(err.message); return false }
-    await fetchNotificacoes()
+    
+    // Atualizar UI instantaneamente
+    setNotificacoes(prev => 
+      prev.map(n => n.id === id ? { ...n, lida: true } : n)
+    )
+    setNaoLidas(prev => Math.max(0, prev - 1))
+    cachedNotificacoes = null // Invalidar cache
+    
     return true
   }
 
@@ -103,23 +131,16 @@ export function useNotificacoes() {
       .eq('lida', false)
 
     if (err) { setError(err.message); return false }
-    await fetchNotificacoes()
+    
+    // Atualizar UI instantaneamente
+    setNotificacoes(prev => prev.map(n => ({ ...n, lida: true })))
+    setNaoLidas(0)
+    cachedNotificacoes = null // Invalidar cache
+    
     return true
   }
 
-  // ── DELETAR UMA ────────────────────────────────────────────
-  async function deletarNotificacao(id: string): Promise<boolean> {
-    const { error: err } = await supabase
-      .from('notifications')
-      .delete()
-      .eq('id', id)
-
-    if (err) { setError(err.message); return false }
-    await fetchNotificacoes()
-    return true
-  }
-
-  // ── LIMPAR TODAS ───────────────────────────────────────────
+  // ── LIMPAR TODAS ────────────────────────────────────────────
   async function limparTodas(): Promise<boolean> {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return false
@@ -130,7 +151,12 @@ export function useNotificacoes() {
       .eq('user_id', user.id)
 
     if (err) { setError(err.message); return false }
-    await fetchNotificacoes()
+    
+    // Atualizar UI instantaneamente
+    setNotificacoes([])
+    setNaoLidas(0)
+    cachedNotificacoes = null // Invalidar cache
+    
     return true
   }
 
@@ -139,10 +165,9 @@ export function useNotificacoes() {
     naoLidas,
     loading,
     error,
-    refetch:              fetchNotificacoes,
+    refetch: fetchNotificacoes,
     marcarComoLida,
     marcarTodasComoLidas,
-    deletarNotificacao,
     limparTodas,
   }
 }
