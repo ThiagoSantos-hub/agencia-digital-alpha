@@ -192,14 +192,42 @@ export default function FinanceiroPage() {
 
   useEffect(() => {
     if (!isAdmin) return
-    supabase.from('clients').select('id, name').order('name')
+    // [INTEGRAÇÃO] Buscar clientes com mensalidades para preencher o financeiro
+    supabase.from('clients').select('id, name, monthly_fee, payment_day').order('name')
       .then(({ data }) => setClientes(data ?? []))
   }, [isAdmin])
+
+  // [INTEGRAÇÃO] Ao selecionar um cliente no modal, preencher valor e dia automaticamente
+  function handleSelecionarCliente(clientId: string | null) {
+    const cliente = clientes.find(c => c.id === clientId)
+    if (cliente && modalTipo === 'receita') {
+      setFormInput(p => ({
+        ...p,
+        client_id: clientId,
+        valor: (cliente as any).monthly_fee ?? p.valor,
+        dia_vencimento: (cliente as any).payment_day ?? p.dia_vencimento,
+        descricao: `Mensalidade - ${cliente.name}`,
+        categoria: 'Mensalidade de cliente',
+        recorrente: true,
+        recorrencia: 'mensal'
+      }))
+    } else {
+      setFormInput(p => ({ ...p, client_id: clientId }))
+    }
+  }
 
   // ─── Listagem filtrada ───────────────────────────────────────────────────────
 
   const listagem = useMemo(() => {
     return lancamentos.filter(l => {
+      // Filtro por Mês (Importante: Lançamentos avulsos só no mês deles, recorrentes em todos)
+      const dataVenc = new Date(l.data_vencimento + 'T00:00:00')
+      const mesLancamento = dataVenc.getMonth()
+      const anoLancamento = dataVenc.getFullYear()
+      
+      const noMesCorreto = l.recorrente || (mesLancamento === mesAtivo && anoLancamento === anoAtivo)
+      if (!noMesCorreto) return false
+
       const tipoOk =
         abaFiltro === 'todas' ||
         (abaFiltro === 'receitas' && l.tipo === 'receita') ||
@@ -209,7 +237,7 @@ export default function FinanceiroPage() {
         l.categoria.toLowerCase().includes(busca.toLowerCase())
       return tipoOk && buscaOk
     })
-  }, [lancamentos, abaFiltro, busca])
+  }, [lancamentos, abaFiltro, busca, mesAtivo, anoAtivo])
 
   const agrupados = useMemo(() => {
     const grupos: Record<string, Lancamento[]> = {}
@@ -525,7 +553,7 @@ export default function FinanceiroPage() {
       {modalAberto && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setModalAberto(false)} />
-          <div className="relative w-full max-w-md bg-[#0d1510] border border-[#1a3a24] rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+          <div className="relative w-full max-w-md bg-[#0d1510] border border-[#1a3a24] rounded-2xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
             <div className={`flex items-center justify-between px-6 py-4 border-b ${modalTipo === 'receita' ? 'border-[#00ff88]/20' : 'border-red-500/20'}`}
               style={{ background: modalTipo === 'receita' ? 'rgba(0,255,136,0.05)' : 'rgba(239,68,68,0.05)' }}>
               <div className="flex items-center gap-2">
@@ -580,7 +608,7 @@ export default function FinanceiroPage() {
               {isAdmin && escopoAtivo === 'agencia' && (
                 <div>
                   <label className="text-xs font-medium text-gray-400 mb-1.5 block">Cliente vinculado (opcional)</label>
-                  <select value={formInput.client_id ?? ''} onChange={e => setFormInput(p => ({ ...p, client_id: e.target.value || null }))}
+                  <select value={formInput.client_id ?? ''} onChange={e => handleSelecionarCliente(e.target.value || null)}
                     className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00ff88]/40 appearance-none">
                     <option value="">Nenhum</option>
                     {clientes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -648,13 +676,13 @@ export default function FinanceiroPage() {
               </div>
             </div>
 
-            <div className="px-6 py-5 border-t border-[#1a3a24] bg-[#0d1510] shrink-0">
+            <div className="px-6 py-4 border-t border-[#1a3a24] bg-[#0d1510] shrink-0 z-10">
               <div className="flex flex-col gap-2">
                 <button onClick={handleSalvar} disabled={salvando}
-                  className={`w-full py-3 rounded-xl text-sm font-bold shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 ${modalTipo === 'receita' ? 'bg-[#00ff88] text-[#0a0f0c] hover:bg-[#00dd77] shadow-[#00ff88]/10' : 'bg-red-500 text-white hover:bg-red-600 shadow-red-500/10'}`}>
+                  className={`w-full py-3.5 rounded-xl text-sm font-bold shadow-lg transition-all active:scale-[0.95] disabled:opacity-50 ${modalTipo === 'receita' ? 'bg-[#00ff88] text-[#0a0f0c] hover:bg-[#00dd77] shadow-[#00ff88]/10' : 'bg-red-500 text-white hover:bg-red-600 shadow-red-500/10'}`}>
                   {salvando ? 'Salvando...' : `Salvar ${modalTipo === 'receita' ? 'Receita' : 'Despesa'}`}
                 </button>
-                <button onClick={() => setModalAberto(false)} className="w-full py-2 rounded-xl text-sm font-medium text-gray-500 hover:text-white transition-colors">
+                <button onClick={() => setModalAberto(false)} className="w-full py-2.5 text-sm font-medium text-gray-500 hover:text-white transition-colors">
                   Cancelar
                 </button>
               </div>
