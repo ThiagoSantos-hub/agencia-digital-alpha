@@ -538,8 +538,8 @@ export default function ClientesPage() {
         )}
 
         <div className="space-y-12">
-          {renderTable(filteredActive, 'Clientes Ativos e Atrasados')}
-          {renderTable(filteredInactive, 'Clientes Inativos')}
+          {renderTable(activeClients, 'Clientes Ativos e Atrasados')}
+          {renderTable(inactiveClients, 'Clientes Inativos')}
         </div>
       </div>
     </>
