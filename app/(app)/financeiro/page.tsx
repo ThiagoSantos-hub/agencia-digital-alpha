@@ -1,5 +1,5 @@
 'use client'
-// app/(app)/financeiro/page.tsx — v1.0.0
+// app/(app)/financeiro/page.tsx — v2.0.0
 // Módulo Financeiro — Dashboard + Listagem + Modal CRUD
 // Projeto: Agência Digital Alpha
 
@@ -17,7 +17,7 @@ import {
 } from '@/hooks/useFinanceiro'
 import {
   TrendingUp, TrendingDown, PiggyBank, Wallet,
-  Plus, Search, Filter, Pencil, Trash2, CheckCircle2,
+  Plus, Search, Pencil, Trash2, CheckCircle2,
   ChevronDown, X, AlertCircle, Calendar,
 } from 'lucide-react'
 
@@ -52,17 +52,18 @@ const labelPeriodo: Record<PeriodoFiltro, string> = {
 }
 
 // ── Valores iniciais do modal ─────────────────────────────────
+// MUDANÇA: trocado data_vencimento por dia_vencimento (número)
 const inputVazio: LancamentoInput = {
-  escopo:          'agencia',
-  tipo:            'receita',
-  categoria:       '',
-  descricao:       '',
-  valor:           0,
-  data_vencimento: '',
-  status:          'pendente',
-  client_id:       null,
-  recorrente:      false,
-  recorrencia:     null,
+  escopo:         'agencia',
+  tipo:           'receita',
+  categoria:      '',
+  descricao:      '',
+  valor:          0,
+  dia_vencimento: 1,   // dia do mês (1–31)
+  status:         'pendente',
+  client_id:      null,
+  recorrente:     true,   // padrão true — maioria são mensalidades
+  recorrencia:    'mensal',
 }
 
 // ═════════════════════════════════════════════════════════════
@@ -72,7 +73,7 @@ export default function FinanceiroPage() {
   const supabase = createClient()
 
   // Controle de escopo por perfil
-  const [isAdmin, setIsAdmin]   = useState(false)
+  const [isAdmin, setIsAdmin]         = useState(false)
   const [escopoAtivo, setEscopoAtivo] = useState<EscopoFinanceiro>('agencia')
 
   // Clientes para o dropdown
@@ -85,11 +86,11 @@ export default function FinanceiroPage() {
   const [filtroStatus,  setFiltroStatus]  = useState<StatusLancamento | 'todos'>('todos')
 
   // Modal
-  const [modalAberto,    setModalAberto]    = useState(false)
-  const [editando,       setEditando]       = useState<Lancamento | null>(null)
-  const [formInput,      setFormInput]      = useState<LancamentoInput>(inputVazio)
-  const [salvando,       setSalvando]       = useState(false)
-  const [erroModal,      setErroModal]      = useState<string | null>(null)
+  const [modalAberto, setModalAberto] = useState(false)
+  const [editando,    setEditando]    = useState<Lancamento | null>(null)
+  const [formInput,   setFormInput]   = useState<LancamentoInput>(inputVazio)
+  const [salvando,    setSalvando]    = useState(false)
+  const [erroModal,   setErroModal]   = useState<string | null>(null)
 
   // Confirmação de exclusão
   const [deletandoId, setDeletandoId] = useState<string | null>(null)
@@ -99,9 +100,7 @@ export default function FinanceiroPage() {
     totais,
     loading,
     error,
-    filtros,
     atualizarFiltros,
-    refetch,
     createLancamento,
     updateLancamento,
     marcarComoPago,
@@ -160,31 +159,34 @@ export default function FinanceiroPage() {
   }
 
   // ── Abrir modal (editar) ──────────────────────────────────
+  // MUDANÇA: usa dia_vencimento em vez de data_vencimento
   function abrirModalEditar(l: Lancamento) {
     setEditando(l)
     setFormInput({
-      escopo:          l.escopo,
-      tipo:            l.tipo,
-      categoria:       l.categoria,
-      descricao:       l.descricao,
-      valor:           l.valor,
-      data_vencimento: l.data_vencimento,
-      data_pagamento:  l.data_pagamento,
-      status:          l.status,
-      client_id:       l.client_id,
-      recorrente:      l.recorrente,
-      recorrencia:     l.recorrencia,
+      escopo:         l.escopo,
+      tipo:           l.tipo,
+      categoria:      l.categoria,
+      descricao:      l.descricao,
+      valor:          l.valor,
+      dia_vencimento: l.dia_vencimento ?? 1,
+      status:         l.status,
+      client_id:      l.client_id,
+      recorrente:     l.recorrente,
+      recorrencia:    l.recorrencia,
     })
     setErroModal(null)
     setModalAberto(true)
   }
 
   // ── Salvar (criar ou editar) ──────────────────────────────
+  // MUDANÇA: validação trocada — dia_vencimento no lugar de data_vencimento
   async function handleSalvar() {
-    if (!formInput.descricao.trim()) { setErroModal('Informe a descrição.'); return }
-    if (!formInput.categoria)        { setErroModal('Selecione a categoria.'); return }
+    if (!formInput.descricao.trim())  { setErroModal('Informe a descrição.'); return }
+    if (!formInput.categoria)         { setErroModal('Selecione a categoria.'); return }
     if (!formInput.valor || formInput.valor <= 0) { setErroModal('Informe um valor válido.'); return }
-    if (!formInput.data_vencimento)  { setErroModal('Informe a data de vencimento.'); return }
+    if (!formInput.dia_vencimento || formInput.dia_vencimento < 1 || formInput.dia_vencimento > 31) {
+      setErroModal('Informe um dia válido (1 a 31).'); return
+    }
 
     setSalvando(true)
     setErroModal(null)
@@ -425,7 +427,7 @@ export default function FinanceiroPage() {
                         <p className="text-gray-500 text-xs mt-0.5">👤 {l.client_name}</p>
                       )}
                       {l.recorrente && (
-                        <p className="text-gray-600 text-xs mt-0.5">🔄 {l.recorrencia}</p>
+                        <p className="text-gray-600 text-xs mt-0.5">🔄 todo dia {l.dia_vencimento}</p>
                       )}
                     </td>
                     {/* Tipo */}
@@ -445,7 +447,7 @@ export default function FinanceiroPage() {
                         {l.tipo === 'receita' ? '+' : '-'}{fmtBRL(l.valor)}
                       </span>
                     </td>
-                    {/* Vencimento */}
+                    {/* Vencimento — mostra o dia fixo + a data do mês atual */}
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-1.5 text-gray-400 text-xs">
                         <Calendar size={12} />
@@ -583,7 +585,7 @@ export default function FinanceiroPage() {
                 <input
                   value={formInput.descricao}
                   onChange={e => setFormInput(p => ({ ...p, descricao: e.target.value }))}
-                  placeholder="Ex: Mensalidade junho — Cliente João"
+                  placeholder="Ex: Mensalidade — Cliente João"
                   className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff88]/40"
                 />
               </div>
@@ -602,42 +604,26 @@ export default function FinanceiroPage() {
                 />
               </div>
 
-              {/* Datas */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-2 block">Vencimento</label>
-                  <input
-                    type="date"
-                    value={formInput.data_vencimento}
-                    onChange={e => setFormInput(p => ({ ...p, data_vencimento: e.target.value }))}
-                    className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#00ff88]/40"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-2 block">Pagamento</label>
-                  <input
-                    type="date"
-                    value={formInput.data_pagamento ?? ''}
-                    onChange={e => setFormInput(p => ({ ...p, data_pagamento: e.target.value || null }))}
-                    className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#00ff88]/40"
-                  />
-                </div>
-              </div>
-
-              {/* Status */}
+              {/* DIA DO MÊS — substitui os dois campos de data */}
               <div>
-                <label className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-2 block">Status</label>
-                <div className="relative">
-                  <select
-                    value={formInput.status ?? 'pendente'}
-                    onChange={e => setFormInput(p => ({ ...p, status: e.target.value as StatusLancamento }))}
-                    className="w-full appearance-none bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2.5 pr-8 text-sm text-white focus:outline-none focus:border-[#00ff88]/40"
-                  >
-                    <option value="pendente">Pendente</option>
-                    <option value="pago">Pago</option>
-                    <option value="atrasado">Atrasado</option>
-                  </select>
-                  <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                <label className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-2 block">
+                  Dia do mês que paga
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={formInput.dia_vencimento || ''}
+                    onChange={e => setFormInput(p => ({ ...p, dia_vencimento: parseInt(e.target.value) || 1 }))}
+                    placeholder="Ex: 5"
+                    className="w-28 bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff88]/40"
+                  />
+                  <span className="text-gray-500 text-sm">
+                    {formInput.dia_vencimento
+                      ? `Todo dia ${formInput.dia_vencimento} de cada mês`
+                      : 'Informe o dia (1 a 31)'}
+                  </span>
                 </div>
               </div>
 
@@ -659,36 +645,22 @@ export default function FinanceiroPage() {
                 </div>
               )}
 
-              {/* Recorrência */}
+              {/* Recorrência — checkbox simplificado, mensal por padrão */}
               <div className="flex items-center gap-3 bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-3">
                 <input
                   type="checkbox"
                   id="recorrente"
-                  checked={formInput.recorrente ?? false}
+                  checked={formInput.recorrente ?? true}
                   onChange={e => setFormInput(p => ({
                     ...p,
-                    recorrente: e.target.checked,
+                    recorrente:  e.target.checked,
                     recorrencia: e.target.checked ? 'mensal' : null,
                   }))}
                   className="accent-[#00ff88] w-4 h-4"
                 />
                 <label htmlFor="recorrente" className="text-sm text-gray-300 cursor-pointer flex-1">
-                  Lançamento recorrente
+                  Renovar automaticamente todo mês
                 </label>
-                {formInput.recorrente && (
-                  <div className="relative">
-                    <select
-                      value={formInput.recorrencia ?? 'mensal'}
-                      onChange={e => setFormInput(p => ({ ...p, recorrencia: e.target.value as any }))}
-                      className="appearance-none bg-[#1a3a24]/40 border border-[#1a3a24] rounded-lg px-3 py-1.5 pr-7 text-xs text-white focus:outline-none"
-                    >
-                      <option value="mensal">Mensal</option>
-                      <option value="semanal">Semanal</option>
-                      <option value="anual">Anual</option>
-                    </select>
-                    <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
-                  </div>
-                )}
               </div>
 
               {/* Erro */}
