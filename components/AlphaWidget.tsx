@@ -113,22 +113,17 @@ function AlphaButton({ userName }: { userName: string }) {
 
 export function AlphaWidget() {
   const [userName, setUserName] = useState<string | null>(null)
-  const [agora, setAgora] = useState('')
+  const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
-    setAgora(new Date().toLocaleString('pt-BR', {
-      timeZone: 'America/Fortaleza',
-      weekday: 'long',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }))
-
     const supabase = createClient()
     supabase.auth.getUser().then(async ({ data }) => {
-      if (!data.user) { setUserName(''); return }
+      if (!data.user) { 
+        setUserName('')
+        setUserId(null)
+        return 
+      }
+      setUserId(data.user.id)
       const { data: profile } = await supabase
         .from('profiles')
         .select('name')
@@ -138,13 +133,33 @@ export function AlphaWidget() {
     })
   }, [])
 
+  const handleDisconnect = useCallback(async (conversation: any) => {
+    console.log('Alpha desconectada')
+    if (!userId || !conversation?.transcript || conversation.transcript.length === 0) return
+
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('conversations')
+        .insert({
+          user_id: userId,
+          transcript: conversation.transcript
+        })
+      
+      if (error) throw error
+      console.log('Conversa salva com sucesso na memória da Alpha')
+    } catch (err) {
+      console.error('Erro ao salvar conversa no Supabase:', err)
+    }
+  }, [userId])
+
   if (userName === null) return null
 
   return (
     <ConversationProvider
       agentId={AGENT_ID}
       onConnect={() => console.log('Alpha conectada')}
-      onDisconnect={() => console.log('Alpha desconectada')}
+      onDisconnect={handleDisconnect}
       onError={(error) => console.error('Erro Alpha:', error)}
     >
       <AlphaButton userName={userName} />
