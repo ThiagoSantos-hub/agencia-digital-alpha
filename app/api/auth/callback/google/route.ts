@@ -1,19 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase'
 
+const VALID_TYPES = ['google_ads', 'gmail', 'google_drive', 'google_calendar']
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
   const error = searchParams.get('error')
+  const type = searchParams.get('state')
 
   if (error || !code) {
-    return NextResponse.redirect(
-      new URL('/integracoes?error=google_auth_failed', request.url)
-    )
+    return NextResponse.redirect(new URL('/integracoes?error=google_auth_failed', request.url))
+  }
+
+  if (!type || !VALID_TYPES.includes(type)) {
+    return NextResponse.redirect(new URL('/integracoes?error=google_invalid_type', request.url))
   }
 
   try {
-    // Trocar o code pelos tokens
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -25,22 +29,27 @@ export async function GET(request: NextRequest) {
         grant_type: 'authorization_code',
       }),
     })
-
     const tokens = await tokenResponse.json()
-
     if (!tokenResponse.ok || tokens.error) {
-      console.error('Erro ao trocar token Google:', tokens)
-      return NextResponse.redirect(
-        new URL('/integracoes?error=google_token_failed', request.url)
-      )
+      return NextResponse.redirect(new URL('/integracoes?error=google_token_failed', request.url))
+    }
+
+    // Busca qual e-mail Google foi usado nessa conexão
+    let connectedEmail: string | null = null
+    try {
+      const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: { Authorization: `Bearer ${tokens.access_token}` },
+      })
+      if (userInfoRes.ok) {
+        const userInfo = await userInfoRes.json()
+        connectedEmail = userInfo.email ?? null
+      }
+    } catch {
+      // se falhar, segue sem e-mail — não bloqueia a conexão
     }
 
     const expiryDate = new Date(Date.now() + tokens.expires_in * 1000)
-
-    // Salvar tokens na tabela integrations para todas as integrações Google
     const supabase = createClient()
-
-    const googleIntegrations = ['google_ads', 'gmail', 'google_drive', 'google_calendar']
 
     const { error: dbError } = await supabase
       .from('integrations')
@@ -50,24 +59,17 @@ export async function GET(request: NextRequest) {
         refresh_token: tokens.refresh_token ?? null,
         token_expiry: expiryDate.toISOString(),
         connected_at: new Date().toISOString(),
+        config: connectedEmail ? { connected_email: connectedEmail } : {},
         updated_at: new Date().toISOString(),
       })
-      .in('type', googleIntegrations)
+      .eq('type', type) // <- só atualiza o serviço específico, não os 4 juntos
 
     if (dbError) {
-      console.error('Erro ao salvar token no Supabase:', dbError)
-      return NextResponse.redirect(
-        new URL('/integracoes?error=google_db_failed', request.url)
-      )
+      return NextResponse.redirect(new URL('/integracoes?error=google_db_failed', request.url))
     }
 
-    return NextResponse.redirect(
-      new URL('/integracoes?success=google_connected', request.url)
-    )
-  } catch (err) {
-    console.error('Erro inesperado no callback Google:', err)
-    return NextResponse.redirect(
-      new URL('/integracoes?error=google_unexpected', request.url)
-    )
+    return NextResponse.redirect(new URL(`/integracoes?success=google_connected&service=${type}`, request.url))
+  } catch {
+    return NextResponse.redirect(new URL('/integracoes?error=google_unexpected', request.url))
   }
 }
