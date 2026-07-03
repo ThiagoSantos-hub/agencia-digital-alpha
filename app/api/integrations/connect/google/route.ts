@@ -1,12 +1,24 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
-export async function GET() {
+// Escopo específico de cada serviço — cada um pede só o que precisa
+const SCOPES: Record<string, string> = {
+  google_ads: 'https://www.googleapis.com/auth/adwords',
+  gmail: 'https://www.googleapis.com/auth/gmail.readonly',
+  google_drive: 'https://www.googleapis.com/auth/drive.readonly',
+  google_calendar: 'https://www.googleapis.com/auth/calendar.readonly',
+}
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const type = searchParams.get('type')
+
+  if (!type || !SCOPES[type]) {
+    return NextResponse.redirect(new URL('/integracoes?error=google_invalid_type', request.url))
+  }
+
   const scopes = [
     'https://www.googleapis.com/auth/userinfo.email',
-    'https://www.googleapis.com/auth/adwords',
-    'https://www.googleapis.com/auth/gmail.readonly',
-    'https://www.googleapis.com/auth/drive.readonly',
-    'https://www.googleapis.com/auth/calendar.readonly',
+    SCOPES[type],
   ].join(' ')
 
   const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
@@ -15,7 +27,10 @@ export async function GET() {
   authUrl.searchParams.set('response_type', 'code')
   authUrl.searchParams.set('scope', scopes)
   authUrl.searchParams.set('access_type', 'offline')
-  authUrl.searchParams.set('prompt', 'consent')
+  // consent -> garante refresh_token sempre | select_account -> força a tela de escolha de conta
+  authUrl.searchParams.set('prompt', 'consent select_account')
+  // state carrega qual serviço está sendo conectado, pro callback saber onde salvar
+  authUrl.searchParams.set('state', type)
 
   return NextResponse.redirect(authUrl.toString())
 }
