@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { ConversationProvider, useConversationControls, useConversationStatus } from '@elevenlabs/react'
 import { Mic, MicOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
@@ -10,7 +10,6 @@ function AlphaButton({ userName }: { userName: string }) {
   const { startSession, endSession } = useConversationControls()
   const { status } = useConversationStatus()
   const [loading, setLoading] = useState(false)
-  const iniciando = useRef(false)
   const active = status === 'connected'
 
   const handleClick = async () => {
@@ -18,8 +17,10 @@ function AlphaButton({ userName }: { userName: string }) {
       await endSession()
       return
     }
-    if (iniciando.current) return
-    iniciando.current = true
+    
+    // Previne múltiplos cliques enquanto está carregando
+    if (loading) return
+    
     setLoading(true)
     try {
       const supabase = createClient()
@@ -50,13 +51,12 @@ function AlphaButton({ userName }: { userName: string }) {
             }).join('\n\n')
           },
         },
-        onConnect: () => { setLoading(false); iniciando.current = false },
-        onDisconnect: () => { iniciando.current = false },
-        onError: () => { setLoading(false); iniciando.current = false },
+        onConnect: () => { setLoading(false) },
+        onDisconnect: () => { /* Sem ação necessária */ },
+        onError: () => { setLoading(false) },
       })
     } catch {
       setLoading(false)
-      iniciando.current = false
     }
   }
 
