@@ -525,7 +525,7 @@ export default function FinanceiroPage() {
       {modalAberto && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setModalAberto(false)} />
-          <div className="relative w-full max-w-md bg-[#0d1510] border border-[#1a3a24] rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+          <div className="relative w-full max-w-md bg-[#0d1510] border border-[#1a3a24] rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
             <div className={`flex items-center justify-between px-6 py-4 border-b ${modalTipo === 'receita' ? 'border-[#00ff88]/20' : 'border-red-500/20'}`}
               style={{ background: modalTipo === 'receita' ? 'rgba(0,255,136,0.05)' : 'rgba(239,68,68,0.05)' }}>
               <div className="flex items-center gap-2">
@@ -648,12 +648,16 @@ export default function FinanceiroPage() {
               </div>
             </div>
 
-            <div className="px-6 py-6 border-t border-[#1a3a24] space-y-3 mt-auto bg-[#0d1510] rounded-b-2xl">
-              <button onClick={handleSalvar} disabled={salvando}
-                className={`w-full py-3.5 rounded-xl text-sm font-bold shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 ${modalTipo === 'receita' ? 'bg-[#00ff88] text-[#0a0f0c] hover:bg-[#00dd77] shadow-[#00ff88]/10' : 'bg-red-500 text-white hover:bg-red-600 shadow-red-500/10'}`}>
-                {salvando ? 'Salvando...' : `Salvar ${modalTipo === 'receita' ? 'Receita' : 'Despesa'}`}
-              </button>
-              <button onClick={() => setModalAberto(false)} className="w-full py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:text-white transition-colors">Cancelar</button>
+            <div className="px-6 py-5 border-t border-[#1a3a24] bg-[#0d1510] shrink-0">
+              <div className="flex flex-col gap-2">
+                <button onClick={handleSalvar} disabled={salvando}
+                  className={`w-full py-3 rounded-xl text-sm font-bold shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 ${modalTipo === 'receita' ? 'bg-[#00ff88] text-[#0a0f0c] hover:bg-[#00dd77] shadow-[#00ff88]/10' : 'bg-red-500 text-white hover:bg-red-600 shadow-red-500/10'}`}>
+                  {salvando ? 'Salvando...' : `Salvar ${modalTipo === 'receita' ? 'Receita' : 'Despesa'}`}
+                </button>
+                <button onClick={() => setModalAberto(false)} className="w-full py-2 rounded-xl text-sm font-medium text-gray-500 hover:text-white transition-colors">
+                  Cancelar
+                </button>
+              </div>
             </div>
           </div>
         </div>
