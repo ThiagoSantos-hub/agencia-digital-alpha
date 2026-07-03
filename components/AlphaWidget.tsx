@@ -12,13 +12,11 @@ function AlphaButton({ userName }: { userName: string }) {
   const [loading, setLoading] = useState(false)
   const active = status === 'connected'
   
-  // Usar ref para o userName para evitar re-registros desnecessários da ferramenta
   const userNameRef = useRef(userName)
   useEffect(() => {
     userNameRef.current = userName
   }, [userName])
 
-  // Registro da ferramenta
   useConversationClientTool(
     'buscar_memoria',
     useCallback(async ({ dias }: { dias?: number }) => {
@@ -30,17 +28,17 @@ function AlphaButton({ userName }: { userName: string }) {
         
         const { data, error } = await supabase
           .from('conversations')
-          .select('start_time, transcript')
-          .gte('start_time', desde.toISOString())
-          .order('start_time', { ascending: false })
+          .select('created_at, transcript')
+          .gte('created_at', desde.toISOString())
+          .order('created_at', { ascending: false })
           .limit(10)
 
         if (error) throw error
         if (!data || data.length === 0) return 'Nenhuma conversa encontrada neste período.'
 
         return data.map((c) => {
-          const dataConversa = c.start_time
-            ? new Date(c.start_time).toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' })
+          const dataConversa = c.created_at
+            ? new Date(c.created_at).toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' })
             : 'data desconhecida'
           const transcricao = Array.isArray(c.transcript)
             ? c.transcript.map((t: { role: string; message: string }) =>
@@ -65,10 +63,7 @@ function AlphaButton({ userName }: { userName: string }) {
     
     setLoading(true)
     try {
-      // Garante permissão e contexto de áudio antes de iniciar
       await navigator.mediaDevices.getUserMedia({ audio: true })
-      
-      // Inicia a sessão
       await startSession({
         agentId: AGENT_ID,
       })
@@ -78,7 +73,6 @@ function AlphaButton({ userName }: { userName: string }) {
     }
   }, [active, loading, startSession, endSession])
 
-  // Reset loading quando conectar
   useEffect(() => {
     if (status === 'connected' || status === 'disconnected') {
       setLoading(false)
