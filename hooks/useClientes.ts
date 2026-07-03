@@ -16,6 +16,9 @@ export interface Client {
   manager_id: string | null
   inativo_em: string | null
   created_at: string
+  // Meta Ads
+  meta_ad_account_id: string | null
+  show_campaigns: boolean
   // Campos virtuais calculados
   dias_atraso?: number
 }
@@ -106,14 +109,12 @@ export function useClientes() {
       .single()
     
     if (!error && data) {
-      // Atualizar UI instantaneamente
       const newClient: Client = {
         ...data,
         dias_atraso: 0
       }
       setClients(prev => [newClient, ...prev])
 
-      // Criar lançamento financeiro se houver mensalidade
       if (data.monthly_fee && data.payment_day) {
         const hoje = new Date()
         const dataVencimento = new Date(hoje.getFullYear(), hoje.getMonth(), data.payment_day).toISOString().split('T')[0]
@@ -140,7 +141,6 @@ export function useClientes() {
   const updateCliente = async (id: string, input: Partial<ClientInput>) => {
     const payload = { ...input }
     
-    // Buscar cliente atual para saber se está sendo reativado
     const clienteAtual = clients.find(c => c.id === id)
     const estaReativando = clienteAtual?.status === 'inativo' && (payload.status === 'ativo' || payload.status === 'atrasado')
 
@@ -158,12 +158,10 @@ export function useClientes() {
       .single()
     
     if (!error && data) {
-      // Atualizar UI instantaneamente
       setClients(prev => 
         prev.map(c => c.id === id ? { ...data, dias_atraso: c.dias_atraso || 0 } : c)
       )
 
-      // Se o cliente foi marcado como inativo, remover lançamentos financeiros pendentes
       if (payload.status === 'inativo') {
         await supabase
           .from('finances')
@@ -172,12 +170,10 @@ export function useClientes() {
           .eq('status', 'pendente')
       }
 
-      // Se o cliente está sendo reativado, recriar lançamentos financeiros
       if (estaReativando && data.monthly_fee && data.payment_day) {
         const hoje = new Date()
         const dataVencimento = new Date(hoje.getFullYear(), hoje.getMonth(), data.payment_day).toISOString().split('T')[0]
         
-        // Verificar se já existe lançamento para este mês
         const { data: existente } = await supabase
           .from('finances')
           .select('id')
@@ -203,7 +199,6 @@ export function useClientes() {
         }
       }
 
-      // Atualizar lançamentos financeiros se mensalidade ou dia mudou
       if (input.monthly_fee !== undefined || input.payment_day !== undefined) {
         await supabase.from('finances')
           .update({
@@ -222,10 +217,7 @@ export function useClientes() {
   const deleteCliente = async (id: string) => {
     const { error } = await supabase.from('clients').delete().eq('id', id)
     if (!error) {
-      // Atualizar UI instantaneamente
       setClients(prev => prev.filter(c => c.id !== id))
-      
-      // Remover lançamentos financeiros associados
       await supabase
         .from('finances')
         .delete()

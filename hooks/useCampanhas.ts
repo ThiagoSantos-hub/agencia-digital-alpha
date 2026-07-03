@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase'
 
 export interface Campaign {
@@ -12,6 +12,7 @@ export interface Campaign {
   start_date: string | null
   end_date: string | null
   budget: number | null
+  meta_campaign_id?: string | null
   created_at: string
 }
 
@@ -24,60 +25,64 @@ export interface CampaignMetric {
   updated_at: string
 }
 
-export const METRICS_DISPONIVEIS = [
-  { key: 'alcance',      label: 'Alcance'          },
-  { key: 'impressoes',   label: 'Impressões'       },
-  { key: 'cliques',      label: 'Cliques'          },
-  { key: 'ctr',          label: 'CTR (%)'          },
-  { key: 'cpm',          label: 'CPM (R$)'         },
-  { key: 'cpc',          label: 'CPC (R$)'         },
-  { key: 'conversoes',   label: 'Conversões'       },
-  { key: 'roas',         label: 'ROAS'             },
-  { key: 'valor_gasto',  label: 'Valor Gasto (R$)' },
-  { key: 'resultado',    label: 'Resultado'        },
-  { key: 'frequencia',   label: 'Frequência'       },
-  { key: 'leads',        label: 'Leads'            },
-]
-
-export function useCampanhas(clientId?: string) {
+export function useCampanhas() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
-  const fetchCampaigns = useCallback(async () => {
+  const fetchCampaigns = useCallback(async (clientId?: string, dateRange?: { start: string, end: string }) => {
     setLoading(true)
-    let query = supabase
-      .from('campaigns')
-      .select('*')
-      .order('created_at', { ascending: false })
+    try {
+      // 1. Buscar integração do Meta Ads para pegar o token
+      const { data: integration } = await supabase
+        .from('integrations')
+        .select('access_token')
+        .eq('type', 'meta_ads')
+        .eq('status', 'connected')
+        .maybeSingle()
 
-    if (clientId) {
-      query = query.eq('client_id', clientId)
-    }
+      // 2. Buscar campanhas locais do banco
+      let query = supabase
+        .from('campaigns')
+        .select('*')
+        .order('created_at', { ascending: false })
 
-    const { data, error } = await query
+      if (clientId) query = query.eq('client_id', clientId)
 
-    if (error) {
-      setError(error.message)
-    } else {
-      setCampaigns(data ?? [])
+      const { data: localCampaigns, error: localError } = await query
+      if (localError) throw localError
+
+      // 3. Se houver token e clientId com meta_ad_account_id, buscar dados REAIS do Meta Ads
+      // Nota: Aqui estamos preparando a estrutura para a chamada de API real
+      // Por enquanto, vamos retornar os dados locais, mas a lógica de sync será via API route
+      
+      setCampaigns(localCampaigns ?? [])
       setError(null)
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
-  }, [supabase, clientId])
+  }, [supabase])
 
-  useEffect(() => {
-    fetchCampaigns()
-  }, [fetchCampaigns])
-
-  // Leitura de métricas
-  const fetchMetrics = async (campaignId: string): Promise<CampaignMetric[]> => {
+  const fetchMetrics = useCallback(async (campaignId: string, dateRange?: { start: string, end: string }): Promise<CampaignMetric[]> => {
     const { data } = await supabase
       .from('campaign_metrics')
       .select('*')
       .eq('campaign_id', campaignId)
     return data ?? []
+  }, [supabase])
+
+  const syncMetaCampaigns = async (clientId: string, adAccountId: string) => {
+    // Chamada para a API route que fará o sync real com o Meta
+    const res = await fetch('/api/campaigns/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientId, adAccountId })
+    })
+    if (res.ok) await fetchCampaigns(clientId)
+    return res.ok
   }
 
   return {
@@ -86,5 +91,6 @@ export function useCampanhas(clientId?: string) {
     error,
     refetch: fetchCampaigns,
     fetchMetrics,
+    syncMetaCampaigns
   }
 }

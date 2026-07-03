@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useCampanhas, Campaign, CampaignMetric, METRICS_DISPONIVEIS } from '@/hooks/useCampanhas'
-import { useClientes } from '@/hooks/useClientes'
-import { Search, Megaphone, ChevronDown, ChevronUp, BarChart2 } from 'lucide-react'
+import { useState, useMemo, useEffect } from 'react'
+import { useCampanhas, Campaign, CampaignMetric } from '@/hooks/useCampanhas'
+import { useClientes, Client } from '@/hooks/useClientes'
+import { Search, Megaphone, ChevronDown, ChevronUp, BarChart2, Eye, EyeOff, RefreshCw, Calendar, ExternalLink } from 'lucide-react'
 
 const statusConfig = {
   ativa:      { label: 'Ativa',      className: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
@@ -12,267 +12,285 @@ const statusConfig = {
   rascunho:   { label: 'Rascunho',   className: 'text-blue-400 bg-blue-500/10 border-blue-500/30'          },
 }
 
-const channelConfig = {
-  meta_ads:   { label: 'Meta Ads'   },
-  google_ads: { label: 'Google Ads' },
-  organico:   { label: 'Orgânico'   },
-  outro:      { label: 'Outro'      },
-}
-
-function MetricasRow({ campaignId, fetchMetrics }: {
-  campaignId: string
+function CampaignRow({ campaign, fetchMetrics }: { 
+  campaign: Campaign
   fetchMetrics: (id: string) => Promise<CampaignMetric[]>
 }) {
+  const [expandido, setExpandido] = useState(false)
   const [metrics, setMetrics] = useState<CampaignMetric[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loadingMetrics, setLoadingMetrics] = useState(false)
 
-  useEffect(() => {
-    fetchMetrics(campaignId).then((data) => {
+  const loadMetrics = async () => {
+    if (!expandido) {
+      setLoadingMetrics(true)
+      const data = await fetchMetrics(campaign.id)
       setMetrics(data)
-      setLoading(false)
-    })
-  }, [campaignId, fetchMetrics])
-
-  if (loading) {
-    return (
-      <tr>
-        <td colSpan={6} className="px-5 py-4 text-center text-gray-600 text-xs">
-          Carregando métricas...
-        </td>
-      </tr>
-    )
+      setLoadingMetrics(false)
+    }
+    setExpandido(!expandido)
   }
 
-  if (metrics.length === 0) {
-    return (
-      <tr>
-        <td colSpan={6} className="px-5 py-4 text-center text-gray-600 text-xs">
-          Nenhuma métrica registrada para esta campanha.
+  const statusInfo = statusConfig[campaign.status] || statusConfig.rascunho
+
+  return (
+    <>
+      <tr className="border-b border-[#2a2a2a]/50 last:border-0 hover:bg-white/[0.01] transition-colors">
+        <td className="px-6 py-4">
+          <div className="flex flex-col">
+            <span className="text-white font-medium text-sm">{campaign.name}</span>
+            <span className="text-gray-500 text-[10px] mt-0.5">ID: {campaign.meta_campaign_id || campaign.id}</span>
+          </div>
+        </td>
+        <td className="px-6 py-4">
+          <div className="flex flex-col">
+            <span className="text-gray-300 text-sm">
+              {campaign.budget ? `R$ ${campaign.budget.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'}
+            </span>
+            <span className="text-gray-500 text-[10px]">Orçamento</span>
+          </div>
+        </td>
+        <td className="px-6 py-4">
+          <div className="flex flex-col">
+            <span className="text-gray-300 text-sm">
+              {campaign.start_date ? new Date(campaign.start_date + 'T00:00:00').toLocaleDateString('pt-BR') : '—'}
+            </span>
+            <span className="text-gray-500 text-[10px]">Início</span>
+          </div>
+        </td>
+        <td className="px-6 py-4">
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${statusInfo.className}`}>
+            {statusInfo.label}
+          </span>
+        </td>
+        <td className="px-6 py-4 text-right">
+          <button
+            onClick={loadMetrics}
+            className="inline-flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+          >
+            <BarChart2 size={14} />
+            {expandido ? 'Ocultar Métricas' : 'Ver Métricas'}
+          </button>
         </td>
       </tr>
+      {expandido && (
+        <tr>
+          <td colSpan={5} className="px-6 py-4 bg-[#0f0f0f]/50">
+            {loadingMetrics ? (
+              <div className="flex items-center justify-center py-4 gap-2 text-gray-500 text-xs">
+                <RefreshCw size={14} className="animate-spin" /> Carregando dados do Meta Ads...
+              </div>
+            ) : metrics.length === 0 ? (
+              <div className="text-center py-4 text-gray-600 text-xs">Nenhuma métrica encontrada para este período.</div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                {metrics.map((m) => (
+                  <div key={m.id} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-3 shadow-sm">
+                    <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider mb-1">{m.metric_label}</p>
+                    <p className="text-white font-semibold text-sm">{m.metric_value ?? '—'}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </td>
+        </tr>
+      )}
+    </>
+  )
+}
+
+function ClientCampaignSection({ client, campaigns, fetchMetrics, onToggleVisibility }: {
+  client: Client
+  campaigns: Campaign[]
+  fetchMetrics: (id: string) => Promise<CampaignMetric[]>
+  onToggleVisibility: (id: string, visible: boolean) => void
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+  
+  if (!client.show_campaigns && !isOpen) {
+    return (
+      <div className="bg-[#1a1a1a]/40 border border-[#2a2a2a] rounded-2xl p-4 flex items-center justify-between opacity-60">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center text-gray-500">
+            <EyeOff size={18} />
+          </div>
+          <div>
+            <h3 className="text-gray-400 font-medium">{client.company || client.name}</h3>
+            <p className="text-gray-600 text-xs">Oculto das análises</p>
+          </div>
+        </div>
+        <button 
+          onClick={() => onToggleVisibility(client.id, true)}
+          className="p-2 text-gray-500 hover:text-white transition-colors"
+        >
+          <Eye size={18} />
+        </button>
+      </div>
     )
   }
 
   return (
-    <tr>
-      <td colSpan={6} className="px-5 py-4 bg-[#0f0f0f]">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          {metrics.map((m) => (
-            <div
-              key={m.id}
-              className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl px-4 py-3"
-            >
-              <p className="text-gray-500 text-xs mb-1">{m.metric_label}</p>
-              <p className="text-white font-semibold text-sm">
-                {m.metric_value ?? '—'}
-              </p>
+    <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl overflow-hidden shadow-xl transition-all">
+      <div 
+        className={`p-5 flex items-center justify-between cursor-pointer hover:bg-white/[0.02] transition-colors ${isOpen ? 'border-b border-[#2a2a2a]' : ''}`}
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <div className="flex items-center gap-4">
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner ${isOpen ? 'bg-indigo-500/20 text-indigo-400' : 'bg-[#2a2a2a] text-gray-400'}`}>
+            <Megaphone size={22} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-white font-bold text-lg">{client.company || client.name}</h3>
+              <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/20 uppercase font-bold">
+                {campaigns.length} Campanhas
+              </span>
             </div>
-          ))}
+            <p className="text-gray-500 text-xs mt-0.5">Conta: {client.meta_ad_account_id || 'Não vinculada'}</p>
+          </div>
         </div>
-      </td>
-    </tr>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={(e) => { e.stopPropagation(); onToggleVisibility(client.id, false) }}
+            className="p-2 text-gray-500 hover:text-red-400 transition-colors"
+            title="Ocultar das análises"
+          >
+            <EyeOff size={18} />
+          </button>
+          <div className={`p-2 rounded-xl transition-colors ${isOpen ? 'bg-indigo-500/10 text-indigo-400' : 'text-gray-600'}`}>
+            {isOpen ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
+          </div>
+        </div>
+      </div>
+
+      {isOpen && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-[#1f1f1f]/50 border-b border-[#2a2a2a]">
+                <th className="px-6 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Campanha</th>
+                <th className="px-6 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Orçamento</th>
+                <th className="px-6 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Início</th>
+                <th className="px-6 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Status</th>
+                <th className="px-6 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#2a2a2a]">
+              {campaigns.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-10 text-center text-gray-500 text-sm">
+                    Nenhuma campanha encontrada no Meta Ads para este cliente.
+                  </td>
+                </tr>
+              ) : (
+                campaigns.map(c => (
+                  <CampaignRow key={c.id} campaign={c} fetchMetrics={fetchMetrics} />
+                ))
+              )}
+            </tbody>
+          </table>
+          <div className="p-4 bg-[#1f1f1f]/30 flex justify-end">
+             <button className="flex items-center gap-2 text-xs text-gray-500 hover:text-white transition-colors">
+               Abrir no Gerenciador <ExternalLink size={12} />
+             </button>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 
 export default function CampanhasPage() {
-  const { campaigns, loading, error, fetchMetrics } = useCampanhas()
-  const { clients } = useClientes()
-
+  const { campaigns, loading: loadingCamp, fetchMetrics } = useCampanhas()
+  const { clients, loading: loadingCli, updateCliente } = useClientes()
+  
   const [search, setSearch] = useState('')
-  const [filtroStatus, setFiltroStatus] = useState<string>('todos')
-  const [filtroCanal, setFiltroCanal] = useState<string>('todos')
-  const [dataInicio, setDataInicio] = useState('')
-  const [dataFim, setDataFim] = useState('')
-  const [expandido, setExpandido] = useState<string | null>(null)
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
 
-  const clienteNome = (clientId: string) => {
-    const c = clients.find((c) => c.id === clientId)
-    return c ? (c.company ? `${c.name} — ${c.company}` : c.name) : '—'
+  // Filtrar apenas clientes ativos
+  const activeClients = useMemo(() => {
+    return clients.filter(c => c.status === 'ativo' || c.status === 'atrasado')
+  }, [clients])
+
+  const filteredClients = useMemo(() => {
+    return activeClients.filter(c => 
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      (c.company ?? '').toLowerCase().includes(search.toLowerCase())
+    )
+  }, [activeClients, search])
+
+  const handleToggleVisibility = async (id: string, visible: boolean) => {
+    await updateCliente(id, { show_campaigns: visible })
   }
 
-  const filtered = campaigns.filter((c) => {
-    const matchSearch =
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      clienteNome(c.client_id).toLowerCase().includes(search.toLowerCase())
-
-    const matchStatus = filtroStatus === 'todos' || c.status === filtroStatus
-    const matchCanal  = filtroCanal  === 'todos' || c.channel === filtroCanal
-
-    const matchInicio = !dataInicio || (c.start_date && c.start_date >= dataInicio)
-    const matchFim    = !dataFim    || (c.end_date   && c.end_date   <= dataFim)
-
-    return matchSearch && matchStatus && matchCanal && matchInicio && matchFim
-  })
-
-  const toggleExpand = (id: string) => {
-    setExpandido((prev) => (prev === id ? null : id))
+  if (loadingCli || (loadingCamp && campaigns.length === 0)) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 space-y-4">
+        <RefreshCw className="animate-spin text-indigo-500" size={32} />
+        <p className="text-gray-400 text-sm">Sincronizando com Meta Ads...</p>
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-white text-xl font-bold">Campanhas</h1>
-        <p className="text-gray-400 text-sm mt-0.5">
-          {campaigns.length} {campaigns.length === 1 ? 'campanha' : 'campanhas'} — somente leitura
-        </p>
-      </div>
-
-      {/* Filtros */}
-      <div className="flex flex-wrap gap-3">
-        {/* Busca */}
-        <div className="relative">
-          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por nome ou cliente..."
-            className="pl-10 pr-4 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl text-white placeholder-gray-600 text-sm focus:outline-none focus:border-indigo-500/50 transition-colors w-64"
-          />
+    <div className="space-y-8 pb-20">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-white text-3xl font-bold tracking-tight">Análise de Campanhas</h1>
+          <p className="text-gray-400 text-sm mt-1">
+            Dados reais do Meta Ads sincronizados automaticamente.
+          </p>
         </div>
 
-        {/* Filtro status */}
-        <select
-          value={filtroStatus}
-          onChange={(e) => setFiltroStatus(e.target.value)}
-          className="px-4 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-colors"
-        >
-          <option value="todos">Todos os status</option>
-          <option value="ativa">Ativa</option>
-          <option value="pausada">Pausada</option>
-          <option value="finalizada">Finalizada</option>
-          <option value="rascunho">Rascunho</option>
-        </select>
-
-        {/* Filtro canal */}
-        <select
-          value={filtroCanal}
-          onChange={(e) => setFiltroCanal(e.target.value)}
-          className="px-4 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-colors"
-        >
-          <option value="todos">Todos os canais</option>
-          <option value="meta_ads">Meta Ads</option>
-          <option value="google_ads">Google Ads</option>
-          <option value="organico">Orgânico</option>
-          <option value="outro">Outro</option>
-        </select>
-
-        {/* Período personalizado */}
-        <div className="flex items-center gap-2">
-          <span className="text-gray-500 text-sm">Período:</span>
-          <input
-            type="date"
-            value={dataInicio}
-            onChange={(e) => setDataInicio(e.target.value)}
-            className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-colors"
-            style={{ colorScheme: 'dark' }}
-          />
-          <span className="text-gray-500 text-sm">→</span>
-          <input
-            type="date"
-            value={dataFim}
-            onChange={(e) => setDataFim(e.target.value)}
-            className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-colors"
-            style={{ colorScheme: 'dark' }}
-          />
-          {(dataInicio || dataFim) && (
-            <button
-              onClick={() => { setDataInicio(''); setDataFim('') }}
-              className="text-xs text-gray-500 hover:text-white transition-colors"
-            >
-              Limpar
-            </button>
-          )}
+        <div className="flex flex-wrap items-center gap-3 bg-[#1a1a1a] p-2 rounded-2xl border border-[#2a2a2a]">
+          <div className="flex items-center gap-2 px-3 py-2 bg-[#0f0f0f] rounded-xl border border-[#2a2a2a]">
+            <Calendar size={16} className="text-indigo-400" />
+            <input 
+              type="date" 
+              value={startDate} 
+              onChange={e => setStartDate(e.target.value)}
+              className="bg-transparent text-white text-xs focus:outline-none"
+              style={{ colorScheme: 'dark' }}
+            />
+            <span className="text-gray-600">—</span>
+            <input 
+              type="date" 
+              value={endDate} 
+              onChange={e => setEndDate(e.target.value)}
+              className="bg-transparent text-white text-xs focus:outline-none"
+              style={{ colorScheme: 'dark' }}
+            />
+          </div>
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+            <input 
+              type="text" 
+              placeholder="Buscar cliente..." 
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-10 pr-4 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-xs placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 transition-all w-48"
+            />
+          </div>
         </div>
       </div>
 
-      {/* Tabela */}
-      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl overflow-hidden">
-        {loading ? (
-          <div className="p-8 text-center text-gray-500 text-sm">Carregando campanhas...</div>
-        ) : error ? (
-          <div className="p-8 text-center text-red-400 text-sm">Erro: {error}</div>
-        ) : filtered.length === 0 ? (
-          <div className="p-10 text-center">
-            <Megaphone size={32} className="text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-400 text-sm">
-              {campaigns.length === 0
-                ? 'Nenhuma campanha sincronizada ainda.'
-                : 'Nenhuma campanha encontrada com esses filtros.'}
-            </p>
+      <div className="grid grid-cols-1 gap-6">
+        {filteredClients.length === 0 ? (
+          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-3xl p-20 text-center">
+            <Megaphone size={48} className="text-gray-700 mx-auto mb-4" />
+            <h3 className="text-white font-medium">Nenhum cliente encontrado</h3>
+            <p className="text-gray-500 text-sm mt-1">Tente ajustar sua busca ou verifique o status dos clientes.</p>
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[#2a2a2a] text-left">
-                <th className="px-5 py-3 text-gray-500 font-medium">Campanha</th>
-                <th className="px-5 py-3 text-gray-500 font-medium">Cliente</th>
-                <th className="px-5 py-3 text-gray-500 font-medium">Canal</th>
-                <th className="px-5 py-3 text-gray-500 font-medium">Orçamento</th>
-                <th className="px-5 py-3 text-gray-500 font-medium">Status</th>
-                <th className="px-5 py-3 text-gray-500 font-medium">Métricas</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((campaign) => {
-                const statusInfo  = statusConfig[campaign.status]
-                const channelInfo = channelConfig[campaign.channel]
-                const aberto      = expandido === campaign.id
-
-                return (
-                  <>
-                    <tr
-                      key={campaign.id}
-                      className="border-b border-[#2a2a2a] last:border-0 hover:bg-white/[0.02] transition-colors"
-                    >
-                      <td className="px-5 py-3.5">
-                        <p className="text-white font-medium">{campaign.name}</p>
-                        {campaign.start_date && (
-                          <p className="text-gray-500 text-xs mt-0.5">
-                            {new Date(campaign.start_date + 'T00:00:00').toLocaleDateString('pt-BR')}
-                            {campaign.end_date
-                              ? ` → ${new Date(campaign.end_date + 'T00:00:00').toLocaleDateString('pt-BR')}`
-                              : ''}
-                          </p>
-                        )}
-                      </td>
-                      <td className="px-5 py-3.5 text-gray-400">{clienteNome(campaign.client_id)}</td>
-                      <td className="px-5 py-3.5 text-gray-400">{channelInfo.label}</td>
-                      <td className="px-5 py-3.5 text-gray-400">
-                        {campaign.budget != null
-                          ? `R$ ${campaign.budget.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                          : '—'}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium border ${statusInfo.className}`}>
-                          {statusInfo.label}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <button
-                          onClick={() => toggleExpand(campaign.id)}
-                          className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors"
-                        >
-                          <BarChart2 size={14} />
-                          {aberto ? 'Fechar' : 'Ver métricas'}
-                          {aberto ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                        </button>
-                      </td>
-                    </tr>
-
-                    {aberto && (
-                      <MetricasRow
-                        key={`metrics-${campaign.id}`}
-                        campaignId={campaign.id}
-                        fetchMetrics={fetchMetrics}
-                      />
-                    )}
-                  </>
-                )
-              })}
-            </tbody>
-          </table>
+          filteredClients.map(client => (
+            <ClientCampaignSection 
+              key={client.id} 
+              client={client} 
+              campaigns={campaigns.filter(camp => camp.client_id === client.id)}
+              fetchMetrics={fetchMetrics}
+              onToggleVisibility={handleToggleVisibility}
+            />
+          ))
         )}
       </div>
     </div>

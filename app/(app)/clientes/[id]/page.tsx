@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase'
 import { Client } from '@/hooks/useClientes'
 import {
   ArrowLeft, Pencil, Trash2, Loader2, X,
-  Building2, Mail, Phone, CalendarDays, DollarSign, CreditCard, Clock
+  Building2, Mail, Phone, CalendarDays, DollarSign, CreditCard, Clock, Target, Eye, EyeOff
 } from 'lucide-react'
 
 const statusConfig = {
@@ -66,7 +66,6 @@ export default function ClientePerfilPage() {
 
   useEffect(() => {
     async function fetch() {
-      // 1. Buscar cliente
       const { data: clientData } = await supabase
         .from('clients')
         .select('*')
@@ -78,7 +77,6 @@ export default function ClientePerfilPage() {
         return
       }
 
-      // 2. Buscar financeiro para calcular atraso se estiver ativo
       let finalStatus = clientData.status
       let diasAtraso = 0
 
@@ -152,7 +150,6 @@ export default function ClientePerfilPage() {
       )}
 
       <div className="max-w-2xl space-y-6">
-        {/* Header */}
         <div className="flex items-center gap-3">
           <button onClick={() => router.push('/clientes')}
             className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/5 transition-colors">
@@ -171,7 +168,6 @@ export default function ClientePerfilPage() {
           </button>
         </div>
 
-        {/* Card principal */}
         <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-6 space-y-1">
           <div className="flex items-start justify-between mb-4">
             <div>
@@ -211,15 +207,37 @@ export default function ClientePerfilPage() {
             value={client.payment_day != null ? `Dia ${client.payment_day}` : null} />
         </div>
 
-        {/* Seções futuras */}
-        <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-6">
-          <h3 className="text-white font-medium text-sm mb-3">Campanhas</h3>
-          <p className="text-gray-500 text-sm">Nenhuma campanha vinculada ainda.</p>
+        {/* Meta Ads Integration Info */}
+        <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-6 space-y-4">
+          <h3 className="text-white font-semibold text-sm flex items-center gap-2">
+            <Target size={16} className="text-indigo-400" />
+            Integração Meta Ads
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs text-gray-500 mb-1">ID da Conta de Anúncios</p>
+              <p className="text-sm text-white font-mono">{client.meta_ad_account_id || 'Não configurado'}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Visibilidade em Campanhas</p>
+              <div className="flex items-center gap-2">
+                {client.show_campaigns ? (
+                  <span className="flex items-center gap-1 text-xs text-emerald-400">
+                    <Eye size={14} /> Visível
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-xs text-gray-500">
+                    <EyeOff size={14} /> Oculto
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-6">
-          <h3 className="text-white font-medium text-sm mb-3">Tarefas</h3>
-          <p className="text-gray-500 text-sm">Nenhuma tarefa vinculada ainda.</p>
+          <h3 className="text-white font-medium text-sm mb-3">Campanhas Ativas</h3>
+          <p className="text-gray-500 text-sm">Use a aba de Campanhas para ver os dados reais do Meta Ads.</p>
         </div>
       </div>
     </>
