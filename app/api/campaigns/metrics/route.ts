@@ -1,27 +1,26 @@
 import { createServerClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 
-// Todas as métricas disponíveis no Meta Ads
-export const ALL_META_METRICS = [
-  { key: 'impressions',                           label: 'Impressões'           },
-  { key: 'reach',                                 label: 'Alcance'              },
-  { key: 'clicks',                                label: 'Cliques'              },
-  { key: 'ctr',                                   label: 'CTR'                  },
-  { key: 'spend',                                 label: 'Gasto Total'          },
-  { key: 'cpm',                                   label: 'CPM'                  },
-  { key: 'cpc',                                   label: 'CPC'                  },
-  { key: 'frequency',                             label: 'Frequência'           },
-  { key: 'actions_lead',                          label: 'Leads'                },
-  { key: 'actions_purchase',                      label: 'Compras'              },
-  { key: 'actions_whatsapp',                      label: 'Mensagens WhatsApp'   },
-  { key: 'actions_link_click',                    label: 'Cliques no Link'      },
-  { key: 'actions_page_engagement',               label: 'Engajamento'          },
-  { key: 'actions_post_engagement',               label: 'Engajamento no Post'  },
-  { key: 'actions_video_view',                    label: 'Visualizações de Vídeo'},
-  { key: 'actions_omni_purchase',                 label: 'Compras (Omni)'       },
-  { key: 'cost_per_action_lead',                  label: 'Custo por Lead'       },
-  { key: 'cost_per_action_purchase',              label: 'Custo por Compra'     },
-  { key: 'cost_per_action_whatsapp',              label: 'Custo por WhatsApp'   },
+const ALL_META_METRICS = [
+  { key: 'impressions',                label: 'Impressões'            },
+  { key: 'reach',                      label: 'Alcance'               },
+  { key: 'clicks',                     label: 'Cliques'               },
+  { key: 'ctr',                        label: 'CTR'                   },
+  { key: 'spend',                      label: 'Gasto Total'           },
+  { key: 'cpm',                        label: 'CPM'                   },
+  { key: 'cpc',                        label: 'CPC'                   },
+  { key: 'frequency',                  label: 'Frequência'            },
+  { key: 'actions_lead',               label: 'Leads'                 },
+  { key: 'actions_purchase',           label: 'Compras'               },
+  { key: 'actions_whatsapp',           label: 'Mensagens WhatsApp'    },
+  { key: 'actions_link_click',         label: 'Cliques no Link'       },
+  { key: 'actions_page_engagement',    label: 'Engajamento'           },
+  { key: 'actions_post_engagement',    label: 'Engajamento no Post'   },
+  { key: 'actions_video_view',         label: 'Visualizações de Vídeo'},
+  { key: 'actions_omni_purchase',      label: 'Compras (Omni)'        },
+  { key: 'cost_per_action_lead',       label: 'Custo por Lead'        },
+  { key: 'cost_per_action_purchase',   label: 'Custo por Compra'      },
+  { key: 'cost_per_action_whatsapp',   label: 'Custo por WhatsApp'    },
 ]
 
 export async function GET() {
@@ -38,7 +37,6 @@ export async function POST(req: Request) {
 
     const supabase = createServerClient()
 
-    // 1. Buscar token do Meta Ads
     const { data: integration } = await supabase
       .from('integrations')
       .select('access_token')
@@ -50,7 +48,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Meta Ads não conectado' }, { status: 400 })
     }
 
-    // 2. Montar período — padrão últimos 30 dias
     const hoje = new Date()
     const trintaDiasAtras = new Date(hoje)
     trintaDiasAtras.setDate(hoje.getDate() - 30)
@@ -59,7 +56,6 @@ export async function POST(req: Request) {
     const inicio = dateStart || fmt(trintaDiasAtras)
     const fim    = dateEnd   || fmt(hoje)
 
-    // 3. Buscar insights da campanha no Meta Ads com período customizado
     const fields = 'impressions,reach,clicks,ctr,spend,cpm,cpc,frequency,actions,cost_per_action_type'
     const metaUrl = new URL(`https://graph.facebook.com/v19.0/${metaCampaignId}/insights`)
     metaUrl.searchParams.set('fields', fields)
@@ -70,19 +66,14 @@ export async function POST(req: Request) {
     const metaData = await metaRes.json()
 
     if (metaData.error) {
-      console.error('Erro Meta Ads insights:', metaData.error)
       return NextResponse.json({ error: metaData.error.message }, { status: 400 })
     }
 
     const insight = metaData.data?.[0]
-    if (!insight) {
-      return NextResponse.json({ metrics: [] })
-    }
+    if (!insight) return NextResponse.json({ metrics: [] })
 
-    // 4. Extrair valores de actions e cost_per_action_type
     const getAction = (key: string) =>
       insight.actions?.find((a: any) => a.action_type === key)?.value ?? null
-
     const getCost = (key: string) =>
       insight.cost_per_action_type?.find((a: any) => a.action_type === key)?.value ?? null
 
@@ -95,52 +86,48 @@ export async function POST(req: Request) {
     const fmtPct = (v: string | null) =>
       v ? `${parseFloat(v).toFixed(2)}%` : null
 
-    // Mapa completo de todas as métricas disponíveis
     const allValues: Record<string, string | null> = {
-      impressions:                 fmtNum(insight.impressions),
-      reach:                       fmtNum(insight.reach),
-      clicks:                      fmtNum(insight.clicks),
-      ctr:                         fmtPct(insight.ctr),
-      spend:                       fmtBRL(insight.spend),
-      cpm:                         fmtBRL(insight.cpm),
-      cpc:                         fmtBRL(insight.cpc),
-      frequency:                   fmtDec(insight.frequency),
-      actions_lead:                fmtNum(getAction('lead')),
-      actions_purchase:            fmtNum(getAction('purchase')),
-      actions_whatsapp:            fmtNum(getAction('onsite_conversion.messaging_conversation_started_7d')),
-      actions_link_click:          fmtNum(getAction('link_click')),
-      actions_page_engagement:     fmtNum(getAction('page_engagement')),
-      actions_post_engagement:     fmtNum(getAction('post_engagement')),
-      actions_video_view:          fmtNum(getAction('video_view')),
-      actions_omni_purchase:       fmtNum(getAction('omni_purchase')),
-      cost_per_action_lead:        fmtBRL(getCost('lead')),
-      cost_per_action_purchase:    fmtBRL(getCost('purchase')),
-      cost_per_action_whatsapp:    fmtBRL(getCost('onsite_conversion.messaging_conversation_started_7d')),
+      impressions:               fmtNum(insight.impressions),
+      reach:                     fmtNum(insight.reach),
+      clicks:                    fmtNum(insight.clicks),
+      ctr:                       fmtPct(insight.ctr),
+      spend:                     fmtBRL(insight.spend),
+      cpm:                       fmtBRL(insight.cpm),
+      cpc:                       fmtBRL(insight.cpc),
+      frequency:                 fmtDec(insight.frequency),
+      actions_lead:              fmtNum(getAction('lead')),
+      actions_purchase:          fmtNum(getAction('purchase')),
+      actions_whatsapp:          fmtNum(getAction('onsite_conversion.messaging_conversation_started_7d')),
+      actions_link_click:        fmtNum(getAction('link_click')),
+      actions_page_engagement:   fmtNum(getAction('page_engagement')),
+      actions_post_engagement:   fmtNum(getAction('post_engagement')),
+      actions_video_view:        fmtNum(getAction('video_view')),
+      actions_omni_purchase:     fmtNum(getAction('omni_purchase')),
+      cost_per_action_lead:      fmtBRL(getCost('lead')),
+      cost_per_action_purchase:  fmtBRL(getCost('purchase')),
+      cost_per_action_whatsapp:  fmtBRL(getCost('onsite_conversion.messaging_conversation_started_7d')),
     }
 
-    // 5. Filtrar apenas as métricas selecionadas (ou todas se não configurado)
-    const keys = selectedMetrics?.length
+    const keys: string[] = selectedMetrics?.length
       ? selectedMetrics
-      : ['impressions', 'reach', 'clicks', 'ctr', 'spend', 'cpm', 'cpc', 'actions_lead']
+      : ['impressions', 'reach', 'clicks', 'ctr', 'spend', 'cpm', 'cpc']
 
     const agora = new Date().toISOString()
 
     const result = keys
       .map((key: string) => {
         const meta = ALL_META_METRICS.find(m => m.key === key)
-        const value = allValues[key] ?? null
         return {
           id:           `${campaignId}-${key}`,
           campaign_id:  campaignId,
           metric_key:   key,
           metric_label: meta?.label ?? key,
-          metric_value: value,
+          metric_value: allValues[key] ?? null,
           updated_at:   agora,
         }
       })
       .filter((m: any) => m.metric_value !== null)
 
-    // 6. Salvar no banco como cache
     for (const m of result) {
       await supabase.from('campaign_metrics').upsert({
         campaign_id:  m.campaign_id,
