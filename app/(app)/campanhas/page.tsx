@@ -113,6 +113,28 @@ function CampaignCard({ campaign, fetchMetrics, fetchAllMetricOptions, saveSelec
   const [modalAberto, setModalAberto] = useState(false)
   const [allOptions, setAllOptions] = useState<MetaMetricOption[]>([])
 
+  // Recarrega métricas automaticamente quando a data muda e o painel está aberto
+  useEffect(() => {
+    if (!expandido) return
+    let cancelled = false
+    const reload = async () => {
+      setLoadingMetrics(true)
+      const data = await fetchMetrics(
+        campaign.id,
+        campaign.meta_campaign_id || '',
+        campaign.selected_metrics ?? undefined,
+        dateStart || undefined,
+        dateEnd || undefined,
+      )
+      if (!cancelled) {
+        setMetrics(data)
+        setLoadingMetrics(false)
+      }
+    }
+    reload()
+    return () => { cancelled = true }
+  }, [dateStart, dateEnd])
+
   const loadMetrics = async () => {
     if (!expandido) {
       setLoadingMetrics(true)
