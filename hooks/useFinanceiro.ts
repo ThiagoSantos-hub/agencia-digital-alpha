@@ -62,6 +62,10 @@ export interface Totais {
   gasto:        number
   investimento: number
   saldo:        number
+  receita_paga: number
+  receita_pendente: number
+  gasto_pago: number
+  gasto_pendente: number
 }
 
 export interface FiltrosFinanceiro {
@@ -220,7 +224,16 @@ export function useFinanceiro(filtrosIniciais?: Partial<FiltrosFinanceiro>) {
   const supabase = createClient()
 
   const [lancamentos, setLancamentos] = useState<Lancamento[]>([])
-  const [totais,      setTotais]      = useState<Totais>({ receita: 0, gasto: 0, investimento: 0, saldo: 0 })
+  const [totais,      setTotais]      = useState<Totais>({ 
+    receita: 0, 
+    gasto: 0, 
+    investimento: 0, 
+    saldo: 0,
+    receita_paga: 0,
+    receita_pendente: 0,
+    gasto_pago: 0,
+    gasto_pendente: 0
+  })
   const [loading,     setLoading]     = useState(true)
   const [error,       setError]       = useState<string | null>(null)
 
@@ -266,11 +279,32 @@ export function useFinanceiro(filtrosIniciais?: Partial<FiltrosFinanceiro>) {
       setLancamentos(lista)
 
       // Calcular totais
-      const t: Totais = { receita: 0, gasto: 0, investimento: 0, saldo: 0 }
+      const t: Totais = { 
+        receita: 0, 
+        gasto: 0, 
+        investimento: 0, 
+        saldo: 0,
+        receita_paga: 0,
+        receita_pendente: 0,
+        gasto_pago: 0,
+        gasto_pendente: 0
+      }
       lista.forEach(l => {
-        if (l.tipo === 'receita')      t.receita      += l.valor
-        if (l.tipo === 'gasto')        t.gasto        += l.valor
-        if (l.tipo === 'investimento') t.investimento += l.valor
+        if (l.tipo === 'receita') {
+          t.receita += l.valor
+          if (l.status === 'pago') t.receita_paga += l.valor
+          else t.receita_pendente += l.valor
+        }
+        if (l.tipo === 'gasto') {
+          t.gasto += l.valor
+          if (l.status === 'pago') t.gasto_pago += l.valor
+          else t.gasto_pendente += l.valor
+        }
+        if (l.tipo === 'investimento') {
+          t.investimento += l.valor
+          if (l.status === 'pago') t.gasto_pago += l.valor
+          else t.gasto_pendente += l.valor
+        }
       })
       t.saldo = t.receita - t.gasto - t.investimento
       setTotais(t)

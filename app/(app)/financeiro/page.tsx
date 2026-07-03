@@ -323,31 +323,74 @@ export default function FinanceiroPage() {
         </div>
       )}
 
-      {/* [BUG F-2 CORRIGIDO] .receita / .gasto / .investimento (singular) */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        {[
-          { label: 'Receitas',      valor: totais?.receita      ?? 0, icon: TrendingUp,   cor: '#00ff88', bg: 'bg-[#00ff88]/5 border-[#00ff88]/20' },
-          { label: 'Gastos',        valor: totais?.gasto        ?? 0, icon: TrendingDown, cor: '#ef4444', bg: 'bg-red-500/5 border-red-500/20' },
-          { label: 'Investimentos', valor: totais?.investimento  ?? 0, icon: PiggyBank,   cor: '#3b82f6', bg: 'bg-blue-500/5 border-blue-500/20' },
-          { label: 'Saldo',         valor: (totais?.receita ?? 0) - (totais?.gasto ?? 0) - (totais?.investimento ?? 0), icon: Wallet, cor: '#f59e0b', bg: 'bg-amber-500/5 border-amber-500/20' },
-        ].map(c => {
-          const Icon = c.icon
-          const negativo = c.label === 'Saldo' && c.valor < 0
-          return (
-            <div key={c.label} className={`rounded-2xl border p-5 ${c.bg}`}>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-gray-400 text-xs font-medium uppercase tracking-wider">{c.label}</span>
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: c.cor + '20' }}>
-                  <Icon size={16} style={{ color: c.cor }} />
-                </div>
-              </div>
-              <p className={`text-2xl font-bold ${negativo ? 'text-red-400' : 'text-white'}`}>
-                {fmtBRL(c.valor)}
-              </p>
-              <p className="text-gray-600 text-xs mt-1">{MESES[mesAtivo]} {anoAtivo}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Card Receitas */}
+        <div className="bg-[#0d1510] border border-[#1a3a24] rounded-3xl p-6 shadow-xl">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2 text-[#00ff88]">
+              <TrendingUp size={18} />
+              <span className="text-sm font-medium uppercase tracking-wider">Receitas</span>
             </div>
-          )
-        })}
+          </div>
+          <div className="flex items-baseline gap-2 mb-1">
+            <div className="w-10 h-10 rounded-full bg-[#00ff88]/10 border border-[#00ff88]/20 flex items-center justify-center">
+              <TrendingUp size={20} className="text-[#00ff88]" />
+            </div>
+            <span className="text-3xl font-bold text-white">{fmtBRL(totais.receita)}</span>
+          </div>
+          <p className="text-gray-500 text-xs mb-6">1 de {MESES[mesAtivo]} - {ultimoDia} de {MESES[mesAtivo]}</p>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl p-4">
+              <div className="flex items-center gap-2 text-[#00ff88] mb-1">
+                <CheckCircle2 size={14} />
+                <span className="text-xs font-medium">Recebido</span>
+              </div>
+              <p className="text-lg font-bold text-white">{fmtBRL(totais.receita_paga)}</p>
+            </div>
+            <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl p-4">
+              <div className="flex items-center gap-2 text-amber-400 mb-1">
+                <RotateCcw size={14} />
+                <span className="text-xs font-medium">A receber</span>
+              </div>
+              <p className="text-lg font-bold text-white">{fmtBRL(totais.receita_pendente)}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card Despesas */}
+        <div className="bg-[#0d1510] border border-[#1a3a24] rounded-3xl p-6 shadow-xl">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2 text-red-400">
+              <TrendingDown size={18} />
+              <span className="text-sm font-medium uppercase tracking-wider">Despesas</span>
+            </div>
+          </div>
+          <div className="flex items-baseline gap-2 mb-1">
+            <div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+              <TrendingDown size={20} className="text-red-400" />
+            </div>
+            <span className="text-3xl font-bold text-white">{fmtBRL(totais.gasto + totais.investimento)}</span>
+          </div>
+          <p className="text-gray-500 text-xs mb-6">1 de {MESES[mesAtivo]} - {ultimoDia} de {MESES[mesAtivo]}</p>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl p-4">
+              <div className="flex items-center gap-2 text-emerald-500 mb-1">
+                <CheckCircle2 size={14} />
+                <span className="text-xs font-medium">Pago</span>
+              </div>
+              <p className="text-lg font-bold text-white">{fmtBRL(totais.gasto_pago)}</p>
+            </div>
+            <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl p-4">
+              <div className="flex items-center gap-2 text-red-400 mb-1">
+                <RotateCcw size={14} />
+                <span className="text-xs font-medium">A pagar</span>
+              </div>
+              <p className="text-lg font-bold text-white">{fmtBRL(totais.gasto_pendente)}</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="flex gap-6">
@@ -605,12 +648,12 @@ export default function FinanceiroPage() {
               </div>
             </div>
 
-            <div className="px-6 py-4 border-t border-[#1a3a24] space-y-2">
+            <div className="px-6 py-6 border-t border-[#1a3a24] space-y-3 mt-auto bg-[#0d1510] rounded-b-2xl">
               <button onClick={handleSalvar} disabled={salvando}
-                className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 ${modalTipo === 'receita' ? 'bg-[#00ff88] text-[#0a0f0c] hover:bg-[#00dd77]' : 'bg-red-500 text-white hover:bg-red-600'}`}>
+                className={`w-full py-3.5 rounded-xl text-sm font-bold shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 ${modalTipo === 'receita' ? 'bg-[#00ff88] text-[#0a0f0c] hover:bg-[#00dd77] shadow-[#00ff88]/10' : 'bg-red-500 text-white hover:bg-red-600 shadow-red-500/10'}`}>
                 {salvando ? 'Salvando...' : `Salvar ${modalTipo === 'receita' ? 'Receita' : 'Despesa'}`}
               </button>
-              <button onClick={() => setModalAberto(false)} className="w-full py-2.5 rounded-xl text-sm text-gray-400 hover:text-white transition-colors">Cancelar</button>
+              <button onClick={() => setModalAberto(false)} className="w-full py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:text-white transition-colors">Cancelar</button>
             </div>
           </div>
         </div>
