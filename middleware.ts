@@ -3,7 +3,6 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
-
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -27,11 +26,11 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/campanhas') ||
     request.nextUrl.pathname.startsWith('/tarefas') ||
     request.nextUrl.pathname.startsWith('/integracoes') ||
-    request.nextUrl.pathname.startsWith('/financeiro')
+    request.nextUrl.pathname.startsWith('/financeiro') ||
+    request.nextUrl.pathname.startsWith('/perfil')
 
   if (!user && isAppRoute) return NextResponse.redirect(new URL('/login', request.url))
   if (user && isAuthRoute) return NextResponse.redirect(new URL('/dashboard', request.url))
-
   return supabaseResponse
 }
 
@@ -43,6 +42,7 @@ export const config = {
     '/tarefas/:path*',
     '/integracoes/:path*',
     '/financeiro/:path*',
+    '/perfil/:path*',
     '/login',
   ],
 }
