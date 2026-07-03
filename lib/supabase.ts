@@ -1,34 +1,9 @@
-import { createBrowserClient, createServerClient as createSupabaseServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createBrowserClient } from '@supabase/ssr'
 
-// ─── Client-side (componentes e hooks no browser) ────────────────────────────
+// Client-side: use em componentes, hooks e páginas do browser
 export function createClient() {
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-}
-
-// ─── Server-side (API routes, Server Components, middleware) ─────────────────
-// Use esta função em qualquer arquivo que rode no servidor (app/api/**/route.ts).
-// Ela lê e escreve cookies corretamente, garantindo que a sessão do usuário
-// seja preservada e que as chaves não sejam expostas no bundle do cliente.
-export function createServerClient() {
-  const cookieStore = cookies()
-  return createSupabaseServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options)
-          })
-        },
-      },
-    }
   )
 }
