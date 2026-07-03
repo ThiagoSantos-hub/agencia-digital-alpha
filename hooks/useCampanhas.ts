@@ -65,7 +65,7 @@ export function useCampanhas() {
     return data ?? []
   }, [supabase])
 
-  const syncMetaCampaigns = async (clientId: string, adAccountId: string) => {
+  const syncMetaCampaigns = useCallback(async (clientId: string, adAccountId: string) => {
     if (!adAccountId) return false
     
     try {
@@ -76,7 +76,7 @@ export function useCampanhas() {
       })
       
       if (res.ok) {
-        await fetchCampaigns(clientId)
+        await fetchCampaigns()
         return true
       }
       return false
@@ -84,7 +84,38 @@ export function useCampanhas() {
       console.error('Erro ao sincronizar:', err)
       return false
     }
-  }
+  }, [fetchCampaigns])
+
+  const syncAllMetaCampaigns = useCallback(async () => {
+    setLoading(true)
+    try {
+      // 1. Buscar todos os clientes que têm ID de conta do Meta
+      const { data: clients } = await supabase
+        .from('clients')
+        .select('id, meta_ad_account_id')
+        .not('meta_ad_account_id', 'is', null)
+
+      if (!clients || clients.length === 0) {
+        console.log('Nenhum cliente com Meta Ad Account ID encontrado')
+        return
+      }
+
+      // 2. Sincronizar um por um
+      for (const client of clients) {
+        await fetch('/api/campaigns/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clientId: client.id, adAccountId: client.meta_ad_account_id })
+        })
+      }
+
+      await fetchCampaigns()
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [supabase, fetchCampaigns])
 
   return {
     campaigns,
@@ -92,6 +123,7 @@ export function useCampanhas() {
     error,
     refetch: fetchCampaigns,
     fetchMetrics,
-    syncMetaCampaigns
+    syncMetaCampaigns,
+    syncAllMetaCampaigns
   }
 }

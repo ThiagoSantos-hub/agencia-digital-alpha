@@ -96,7 +96,7 @@ function CampaignCard({ campaign, fetchMetrics }: {
 }
 
 export default function CampanhasPage() {
-  const { campaigns, loading, fetchMetrics, refetch } = useCampanhas()
+  const { campaigns, loading, fetchMetrics, syncAllMetaCampaigns } = useCampanhas()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('todas')
   const [startDate, setStartDate] = useState('')
@@ -122,11 +122,12 @@ export default function CampanhasPage() {
 
         <div className="flex items-center gap-3">
           <button 
-            onClick={() => refetch()}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] text-gray-300 hover:text-white rounded-2xl text-sm font-medium transition-all"
+            onClick={() => syncAllMetaCampaigns()}
+            disabled={loading}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-medium transition-all ${loading ? 'bg-indigo-500/20 text-indigo-400' : 'bg-[#1a1a1a] border border-[#2a2a2a] text-gray-300 hover:text-white'}`}
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-            Sincronizar Meta
+            {loading ? 'Sincronizando...' : 'Sincronizar Meta'}
           </button>
         </div>
       </div>
