@@ -1,9 +1,9 @@
 'use client'
 // app/(app)/financeiro/page.tsx — v2.0.0
-// Módulo Financeiro — Dashboard + Listagem + Modal CRUD
+// Módulo Financeiro — Visual inspirado no Grana Zen
 // Projeto: Agência Digital Alpha
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase'
 import {
   useFinanceiro,
@@ -18,101 +18,159 @@ import {
 import {
   TrendingUp, TrendingDown, PiggyBank, Wallet,
   Plus, Search, Pencil, Trash2, CheckCircle2,
-  ChevronDown, X, AlertCircle, Calendar,
+  ChevronLeft, ChevronRight, X, AlertCircle,
+  RotateCcw, User, RepeatIcon, Pin,
 } from 'lucide-react'
 
-// ── Helpers de formatação ─────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
 const fmtBRL = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 const fmtData = (d: string) =>
   new Date(d + 'T00:00:00').toLocaleDateString('pt-BR')
 
-// ── Cores por tipo ────────────────────────────────────────────
-const corTipo: Record<TipoLancamento, string> = {
-  receita:      'text-[#00ff88] bg-[#00ff88]/10 border-[#00ff88]/20',
-  gasto:        'text-red-400 bg-red-400/10 border-red-400/20',
-  investimento: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
-}
-const corStatus: Record<StatusLancamento, string> = {
-  pendente: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
-  pago:     'text-[#00ff88] bg-[#00ff88]/10 border-[#00ff88]/20',
-  atrasado: 'text-red-400 bg-red-400/10 border-red-400/20',
-}
+const MESES = [
+  'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+  'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro',
+]
 
-const labelTipo: Record<TipoLancamento, string> = {
-  receita: 'Receita', gasto: 'Gasto', investimento: 'Investimento',
-}
-const labelStatus: Record<StatusLancamento, string> = {
-  pendente: 'Pendente', pago: 'Pago', atrasado: 'Atrasado',
-}
-const labelPeriodo: Record<PeriodoFiltro, string> = {
-  semana: 'Esta semana', mes: 'Este mês', '6meses': 'Últimos 6 meses',
-  ano: 'Este ano', personalizado: 'Personalizado',
-}
+// Cores para o gráfico de pizza por categoria
+const PALETTE = [
+  '#00ff88','#00cc6a','#4ade80','#86efac',
+  '#f59e0b','#ef4444','#8b5cf6','#3b82f6','#06b6d4',
+]
 
-// ── Valores iniciais do modal ─────────────────────────────────
-// MUDANÇA: trocado data_vencimento por dia_vencimento (número)
+// ─── Tipos ───────────────────────────────────────────────────────────────────
+
+type AbaFiltro = 'todas' | 'receitas' | 'despesas'
+
 const inputVazio: LancamentoInput = {
-  escopo:         'agencia',
-  tipo:           'receita',
-  categoria:      '',
-  descricao:      '',
-  valor:          0,
-  dia_vencimento: 1,   // dia do mês (1–31)
-  status:         'pendente',
-  client_id:      null,
-  recorrente:     true,   // padrão true — maioria são mensalidades
-  recorrencia:    'mensal',
+  escopo: 'agencia',
+  tipo: 'receita',
+  categoria: '',
+  descricao: '',
+  valor: 0,
+  data_vencimento: '',
+  status: 'pendente',
+  client_id: null,
+  recorrente: false,
+  recorrencia: null,
 }
 
-// ═════════════════════════════════════════════════════════════
-// COMPONENTE PRINCIPAL
-// ═════════════════════════════════════════════════════════════
+// ─── Mini gráfico de pizza SVG ────────────────────────────────────────────────
+
+function PieChart({ data }: { data: { label: string; value: number; color: string }[] }) {
+  const total = data.reduce((s, d) => s + d.value, 0)
+  if (total === 0) return null
+
+  let cumAngle = -Math.PI / 2
+  const cx = 80, cy = 80, r = 65, inner = 42
+
+  const slices = data.map((d, i) => {
+    const angle = (d.value / total) * 2 * Math.PI
+    const x1 = cx + r * Math.cos(cumAngle)
+    const y1 = cy + r * Math.sin(cumAngle)
+    cumAngle += angle
+    const x2 = cx + r * Math.cos(cumAngle)
+    const y2 = cy + r * Math.sin(cumAngle)
+    const large = angle > Math.PI ? 1 : 0
+    const xi1 = cx + inner * Math.cos(cumAngle - angle)
+    const yi1 = cy + inner * Math.sin(cumAngle - angle)
+    const xi2 = cx + inner * Math.cos(cumAngle)
+    const yi2 = cy + inner * Math.sin(cumAngle)
+    return {
+      d: `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} L ${xi2} ${yi2} A ${inner} ${inner} 0 ${large} 0 ${xi1} ${yi1} Z`,
+      color: d.color,
+      label: d.label,
+      pct: Math.round((d.value / total) * 100),
+      value: d.value,
+    }
+  })
+
+  return (
+    <div className="flex flex-col gap-4">
+      <svg viewBox="0 0 160 160" className="w-40 h-40 mx-auto">
+        {slices.map((s, i) => (
+          <path key={i} d={s.d} fill={s.color} opacity={0.9} />
+        ))}
+        <text x={cx} y={cy - 6} textAnchor="middle" fill="#fff" fontSize="10" fontWeight="600">Total</text>
+        <text x={cx} y={cy + 8} textAnchor="middle" fill="#00ff88" fontSize="9">
+          {fmtBRL(total)}
+        </text>
+      </svg>
+      <div className="space-y-1.5">
+        {slices.map((s, i) => (
+          <div key={i} className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: s.color }} />
+              <span className="text-gray-400 truncate max-w-[110px]">{s.label}</span>
+            </div>
+            <div className="flex items-center gap-2 text-right">
+              <span className="text-gray-500">{s.pct}%</span>
+              <span className="text-white font-medium">{fmtBRL(s.value)}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Componente principal ─────────────────────────────────────────────────────
+
 export default function FinanceiroPage() {
   const supabase = createClient()
 
-  // Controle de escopo por perfil
-  const [isAdmin, setIsAdmin]         = useState(false)
+  // Perfil e escopo
+  const [isAdmin, setIsAdmin] = useState(false)
   const [escopoAtivo, setEscopoAtivo] = useState<EscopoFinanceiro>('agencia')
-
-  // Clientes para o dropdown
   const [clientes, setClientes] = useState<{ id: string; name: string }[]>([])
 
-  // Busca e filtros locais
-  const [busca,         setBusca]         = useState('')
-  const [filtroPeriodo, setFiltroPeriodo] = useState<PeriodoFiltro>('mes')
-  const [filtroTipo,    setFiltroTipo]    = useState<TipoLancamento | 'todos'>('todos')
-  const [filtroStatus,  setFiltroStatus]  = useState<StatusLancamento | 'todos'>('todos')
+  // Navegação de mês
+  const hoje = new Date()
+  const [mesAtivo, setMesAtivo] = useState(hoje.getMonth())   // 0-11
+  const [anoAtivo, setAnoAtivo] = useState(hoje.getFullYear())
+
+  // Filtros de listagem
+  const [abaFiltro, setAbaFiltro] = useState<AbaFiltro>('todas')
+  const [busca, setBusca] = useState('')
 
   // Modal
   const [modalAberto, setModalAberto] = useState(false)
-  const [editando,    setEditando]    = useState<Lancamento | null>(null)
-  const [formInput,   setFormInput]   = useState<LancamentoInput>(inputVazio)
-  const [salvando,    setSalvando]    = useState(false)
-  const [erroModal,   setErroModal]   = useState<string | null>(null)
+  const [modalTipo, setModalTipo] = useState<'receita' | 'despesa'>('receita')
+  const [editando, setEditando] = useState<Lancamento | null>(null)
+  const [formInput, setFormInput] = useState<LancamentoInput>(inputVazio)
+  const [salvando, setSalvando] = useState(false)
+  const [erroModal, setErroModal] = useState<string | null>(null)
 
-  // Confirmação de exclusão
+  // Exclusão
   const [deletandoId, setDeletandoId] = useState<string | null>(null)
+
+  // Hook financeiro — periodo customizado pelo mês selecionado
+  const periodoInicio = `${anoAtivo}-${String(mesAtivo + 1).padStart(2, '0')}-01`
+  const ultimoDia = new Date(anoAtivo, mesAtivo + 1, 0).getDate()
+  const periodoFim = `${anoAtivo}-${String(mesAtivo + 1).padStart(2, '0')}-${ultimoDia}`
 
   const {
     lancamentos,
     totais,
     loading,
-    error,
-    atualizarFiltros,
+    refetch,
     createLancamento,
     updateLancamento,
     marcarComoPago,
     deleteLancamento,
   } = useFinanceiro({
-    periodo: filtroPeriodo,
-    escopo:  escopoAtivo,
-    tipo:    filtroTipo,
-    status:  filtroStatus,
+    periodo: 'personalizado' as PeriodoFiltro,
+    escopo: escopoAtivo,
+    tipo: 'todos' as TipoLancamento | 'todos',
+    status: 'todos' as StatusLancamento | 'todos',
+    dataInicio: periodoInicio,
+    dataFim: periodoFim,
   })
 
-  // ── Detectar perfil ───────────────────────────────────────
+  // Perfil
   useEffect(() => {
     async function checkPerfil() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -126,593 +184,585 @@ export default function FinanceiroPage() {
     checkPerfil()
   }, [])
 
-  // ── Buscar clientes (Admin) ───────────────────────────────
   useEffect(() => {
     if (!isAdmin) return
     supabase.from('clients').select('id, name').order('name')
       .then(({ data }) => setClientes(data ?? []))
   }, [isAdmin])
 
-  // ── Sincronizar filtros com hook ──────────────────────────
-  useEffect(() => {
-    atualizarFiltros({
-      periodo: filtroPeriodo,
-      escopo:  escopoAtivo,
-      tipo:    filtroTipo,
-      status:  filtroStatus,
+  // ─── Listagem filtrada ───────────────────────────────────────────────────────
+
+  const listagem = useMemo(() => {
+    return lancamentos.filter(l => {
+      const tipoOk =
+        abaFiltro === 'todas' ||
+        (abaFiltro === 'receitas' && l.tipo === 'receita') ||
+        (abaFiltro === 'despesas' && (l.tipo === 'gasto' || l.tipo === 'investimento'))
+      const buscaOk =
+        l.descricao.toLowerCase().includes(busca.toLowerCase()) ||
+        l.categoria.toLowerCase().includes(busca.toLowerCase())
+      return tipoOk && buscaOk
     })
-  }, [filtroPeriodo, escopoAtivo, filtroTipo, filtroStatus])
+  }, [lancamentos, abaFiltro, busca])
 
-  // ── Listagem filtrada por busca ───────────────────────────
-  const listagem = lancamentos.filter(l =>
-    l.descricao.toLowerCase().includes(busca.toLowerCase()) ||
-    l.categoria.toLowerCase().includes(busca.toLowerCase()) ||
-    (l.client_name ?? '').toLowerCase().includes(busca.toLowerCase())
-  )
+  // Agrupados por categoria
+  const agrupados = useMemo(() => {
+    const grupos: Record<string, Lancamento[]> = {}
+    listagem.forEach(l => {
+      if (!grupos[l.categoria]) grupos[l.categoria] = []
+      grupos[l.categoria].push(l)
+    })
+    return grupos
+  }, [listagem])
 
-  // ── Abrir modal (criar) ───────────────────────────────────
-  function abrirModalCriar() {
+  // Dados para o gráfico — só gastos
+  const dadosPizza = useMemo(() => {
+    const gastos = lancamentos.filter(l => l.tipo === 'gasto' || l.tipo === 'investimento')
+    const porCat: Record<string, number> = {}
+    gastos.forEach(l => { porCat[l.categoria] = (porCat[l.categoria] ?? 0) + l.valor })
+    return Object.entries(porCat)
+      .sort((a, b) => b[1] - a[1])
+      .map(([label, value], i) => ({ label, value, color: PALETTE[i % PALETTE.length] }))
+  }, [lancamentos])
+
+  // ─── Ações ───────────────────────────────────────────────────────────────────
+
+  function navMes(dir: -1 | 1) {
+    setMesAtivo(prev => {
+      let m = prev + dir
+      if (m < 0) { setAnoAtivo(a => a - 1); return 11 }
+      if (m > 11) { setAnoAtivo(a => a + 1); return 0 }
+      return m
+    })
+  }
+
+  function abrirModalCriar(tipo: 'receita' | 'despesa') {
     setEditando(null)
-    setFormInput({ ...inputVazio, escopo: escopoAtivo })
+    setModalTipo(tipo)
+    setFormInput({
+      ...inputVazio,
+      escopo: escopoAtivo,
+      tipo: tipo === 'receita' ? 'receita' : 'gasto',
+    })
     setErroModal(null)
     setModalAberto(true)
   }
 
-  // ── Abrir modal (editar) ──────────────────────────────────
-  // MUDANÇA: usa dia_vencimento em vez de data_vencimento
   function abrirModalEditar(l: Lancamento) {
     setEditando(l)
+    setModalTipo(l.tipo === 'receita' ? 'receita' : 'despesa')
     setFormInput({
-      escopo:         l.escopo,
-      tipo:           l.tipo,
-      categoria:      l.categoria,
-      descricao:      l.descricao,
-      valor:          l.valor,
-      dia_vencimento: l.dia_vencimento ?? 1,
-      status:         l.status,
-      client_id:      l.client_id,
-      recorrente:     l.recorrente,
-      recorrencia:    l.recorrencia,
+      escopo: l.escopo,
+      tipo: l.tipo,
+      categoria: l.categoria,
+      descricao: l.descricao,
+      valor: l.valor,
+      data_vencimento: l.data_vencimento,
+      data_pagamento: l.data_pagamento,
+      status: l.status,
+      client_id: l.client_id,
+      recorrente: l.recorrente,
+      recorrencia: l.recorrencia,
     })
     setErroModal(null)
     setModalAberto(true)
   }
 
-  // ── Salvar (criar ou editar) ──────────────────────────────
-  // MUDANÇA: validação trocada — dia_vencimento no lugar de data_vencimento
   async function handleSalvar() {
-    if (!formInput.descricao.trim())  { setErroModal('Informe a descrição.'); return }
-    if (!formInput.categoria)         { setErroModal('Selecione a categoria.'); return }
+    if (!formInput.descricao.trim()) { setErroModal('Informe a descrição.'); return }
+    if (!formInput.categoria) { setErroModal('Selecione a categoria.'); return }
     if (!formInput.valor || formInput.valor <= 0) { setErroModal('Informe um valor válido.'); return }
-    if (!formInput.dia_vencimento || formInput.dia_vencimento < 1 || formInput.dia_vencimento > 31) {
-      setErroModal('Informe um dia válido (1 a 31).'); return
-    }
+    if (!formInput.data_vencimento) { setErroModal('Informe a data de vencimento.'); return }
 
     setSalvando(true)
     setErroModal(null)
 
-    let ok = false
-    if (editando) {
-      ok = await updateLancamento(editando.id, formInput)
-    } else {
-      ok = await createLancamento(formInput)
-    }
+    const ok = editando
+      ? await updateLancamento(editando.id, formInput)
+      : await createLancamento(formInput)
 
     setSalvando(false)
     if (ok) setModalAberto(false)
-    else    setErroModal('Erro ao salvar. Tente novamente.')
+    else setErroModal('Erro ao salvar. Tente novamente.')
   }
 
-  // ── Excluir ───────────────────────────────────────────────
   async function handleDeletar(id: string) {
     await deleteLancamento(id)
     setDeletandoId(null)
   }
 
-  // ── Categorias disponíveis no form ────────────────────────
   const categorias = CATEGORIAS[formInput.escopo]?.[formInput.tipo] ?? []
 
-  // ─────────────────────────────────────────────────────────
-  // RENDER
-  // ─────────────────────────────────────────────────────────
+  // ─── Render ───────────────────────────────────────────────────────────────────
+
   return (
     <div className="p-6 space-y-6">
 
-      {/* ── CABEÇALHO ── */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-white text-xl font-bold">Financeiro</h1>
-          <p className="text-gray-500 text-sm mt-0.5">
-            Controle completo de receitas, gastos e investimentos
-          </p>
-        </div>
-        <button
-          onClick={abrirModalCriar}
-          className="flex items-center gap-2 bg-[#00ff88] text-[#0a0f0c] font-semibold text-sm px-4 py-2.5 rounded-xl hover:bg-[#00e87a] transition-colors"
-        >
-          <Plus size={16} />
-          Novo Lançamento
-        </button>
-      </div>
-
-      {/* ── ABAS ESCOPO (só Admin vê ambas) ── */}
+      {/* Cabeçalho com abas de escopo */}
       {isAdmin && (
-        <div className="flex gap-2 bg-[#0f1a14] border border-[#1a3a24] rounded-xl p-1 w-fit">
-          {(['agencia', 'pessoal'] as EscopoFinanceiro[]).map(s => (
+        <div className="flex gap-2">
+          {(['agencia', 'pessoal'] as EscopoFinanceiro[]).map(e => (
             <button
-              key={s}
-              onClick={() => setEscopoAtivo(s)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                escopoAtivo === s
-                  ? 'bg-[#00ff88] text-[#0a0f0c]'
-                  : 'text-gray-400 hover:text-white'
-              }`}
+              key={e}
+              onClick={() => setEscopoAtivo(e)}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${escopoAtivo === e
+                ? 'bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30'
+                : 'text-gray-400 border border-[#1a3a24] hover:border-[#00ff88]/30 hover:text-white'}`}
             >
-              {s === 'agencia' ? '🏢 Agência' : '👤 Pessoal'}
+              {e === 'agencia' ? '🏢 Agência' : '👤 Pessoal'}
             </button>
           ))}
         </div>
       )}
 
-      {/* ── CARDS DE TOTAIS ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Receita */}
-        <div className="bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-gray-400 text-xs font-medium uppercase tracking-wider">Receitas</span>
-            <div className="w-8 h-8 bg-[#00ff88]/10 rounded-xl flex items-center justify-center">
-              <TrendingUp size={16} className="text-[#00ff88]" />
+      {/* Cards de totais */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        {[
+          { label: 'Receitas', valor: totais?.receitas ?? 0, icon: TrendingUp, cor: '#00ff88', bg: 'bg-[#00ff88]/5 border-[#00ff88]/20' },
+          { label: 'Gastos', valor: totais?.gastos ?? 0, icon: TrendingDown, cor: '#ef4444', bg: 'bg-red-500/5 border-red-500/20' },
+          { label: 'Investimentos', valor: totais?.investimentos ?? 0, icon: PiggyBank, cor: '#3b82f6', bg: 'bg-blue-500/5 border-blue-500/20' },
+          { label: 'Saldo', valor: (totais?.receitas ?? 0) - (totais?.gastos ?? 0) - (totais?.investimentos ?? 0), icon: Wallet, cor: '#f59e0b', bg: 'bg-amber-500/5 border-amber-500/20' },
+        ].map(c => {
+          const Icon = c.icon
+          const negativo = c.label === 'Saldo' && c.valor < 0
+          return (
+            <div key={c.label} className={`rounded-2xl border p-5 ${c.bg}`}>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-gray-400 text-xs font-medium uppercase tracking-wider">{c.label}</span>
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: c.cor + '20' }}>
+                  <Icon size={16} style={{ color: c.cor }} />
+                </div>
+              </div>
+              <p className={`text-2xl font-bold ${negativo ? 'text-red-400' : 'text-white'}`}>
+                {fmtBRL(c.valor)}
+              </p>
+              <p className="text-gray-600 text-xs mt-1">
+                {MESES[mesAtivo]} {anoAtivo}
+              </p>
             </div>
-          </div>
-          <p className="text-[#00ff88] text-2xl font-bold">{fmtBRL(totais.receita)}</p>
-          <p className="text-gray-600 text-xs mt-1">{labelPeriodo[filtroPeriodo]}</p>
-        </div>
-
-        {/* Gastos */}
-        <div className="bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-gray-400 text-xs font-medium uppercase tracking-wider">Gastos</span>
-            <div className="w-8 h-8 bg-red-400/10 rounded-xl flex items-center justify-center">
-              <TrendingDown size={16} className="text-red-400" />
-            </div>
-          </div>
-          <p className="text-red-400 text-2xl font-bold">{fmtBRL(totais.gasto)}</p>
-          <p className="text-gray-600 text-xs mt-1">{labelPeriodo[filtroPeriodo]}</p>
-        </div>
-
-        {/* Investimentos */}
-        <div className="bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-gray-400 text-xs font-medium uppercase tracking-wider">Investimentos</span>
-            <div className="w-8 h-8 bg-blue-400/10 rounded-xl flex items-center justify-center">
-              <PiggyBank size={16} className="text-blue-400" />
-            </div>
-          </div>
-          <p className="text-blue-400 text-2xl font-bold">{fmtBRL(totais.investimento)}</p>
-          <p className="text-gray-600 text-xs mt-1">{labelPeriodo[filtroPeriodo]}</p>
-        </div>
-
-        {/* Saldo */}
-        <div className={`border rounded-2xl p-5 ${
-          totais.saldo >= 0
-            ? 'bg-[#0f1a14] border-[#1a3a24]'
-            : 'bg-red-950/20 border-red-900/30'
-        }`}>
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-gray-400 text-xs font-medium uppercase tracking-wider">Saldo</span>
-            <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-              totais.saldo >= 0 ? 'bg-[#00ff88]/10' : 'bg-red-400/10'
-            }`}>
-              <Wallet size={16} className={totais.saldo >= 0 ? 'text-[#00ff88]' : 'text-red-400'} />
-            </div>
-          </div>
-          <p className={`text-2xl font-bold ${totais.saldo >= 0 ? 'text-[#00ff88]' : 'text-red-400'}`}>
-            {fmtBRL(totais.saldo)}
-          </p>
-          <p className="text-gray-600 text-xs mt-1">{labelPeriodo[filtroPeriodo]}</p>
-        </div>
+          )
+        })}
       </div>
 
-      {/* ── FILTROS ── */}
-      <div className="flex flex-wrap gap-3">
-        {/* Busca */}
-        <div className="relative flex-1 min-w-[200px]">
-          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
-          <input
-            value={busca}
-            onChange={e => setBusca(e.target.value)}
-            placeholder="Buscar lançamento..."
-            className="w-full bg-[#0f1a14] border border-[#1a3a24] rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff88]/40"
-          />
-        </div>
+      {/* Painel principal: listagem + gráfico */}
+      <div className="flex gap-6">
 
-        {/* Período */}
-        <div className="relative">
-          <select
-            value={filtroPeriodo}
-            onChange={e => setFiltroPeriodo(e.target.value as PeriodoFiltro)}
-            className="appearance-none bg-[#0f1a14] border border-[#1a3a24] rounded-xl px-4 py-2.5 pr-8 text-sm text-white focus:outline-none focus:border-[#00ff88]/40 cursor-pointer"
-          >
-            {(Object.keys(labelPeriodo) as PeriodoFiltro[]).filter(p => p !== 'personalizado').map(p => (
-              <option key={p} value={p}>{labelPeriodo[p]}</option>
+        {/* Coluna esquerda: listagem */}
+        <div className="flex-1 bg-[#0d1510] border border-[#1a3a24] rounded-2xl overflow-hidden">
+
+          {/* Controles do mês */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-[#1a3a24]">
+            <div className="flex items-center gap-3">
+              <button onClick={() => navMes(-1)} className="w-7 h-7 rounded-lg border border-[#1a3a24] flex items-center justify-center text-gray-400 hover:text-white hover:border-[#00ff88]/40 transition-colors">
+                <ChevronLeft size={14} />
+              </button>
+              <span className="text-white font-semibold text-sm">{MESES[mesAtivo]}</span>
+              <button onClick={() => navMes(1)} className="w-7 h-7 rounded-lg border border-[#1a3a24] flex items-center justify-center text-gray-400 hover:text-white hover:border-[#00ff88]/40 transition-colors">
+                <ChevronRight size={14} />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => abrirModalCriar('receita')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30 text-xs font-medium hover:bg-[#00ff88]/20 transition-colors"
+              >
+                <TrendingUp size={13} /> Receita
+              </button>
+              <button
+                onClick={() => abrirModalCriar('despesa')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 text-red-400 border border-red-500/30 text-xs font-medium hover:bg-red-500/20 transition-colors"
+              >
+                <TrendingDown size={13} /> Despesa
+              </button>
+            </div>
+          </div>
+
+          {/* Abas Todas / Receitas / Despesas */}
+          <div className="flex border-b border-[#1a3a24]">
+            {([['todas', 'Todas'], ['receitas', 'Receitas'], ['despesas', 'Despesas']] as [AbaFiltro, string][]).map(([val, label]) => (
+              <button
+                key={val}
+                onClick={() => setAbaFiltro(val)}
+                className={`flex-1 py-2.5 text-sm font-medium transition-colors ${abaFiltro === val
+                  ? 'text-[#00ff88] border-b-2 border-[#00ff88]'
+                  : 'text-gray-500 hover:text-gray-300'}`}
+              >
+                {label}
+              </button>
             ))}
-          </select>
-          <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
-        </div>
-
-        {/* Tipo */}
-        <div className="relative">
-          <select
-            value={filtroTipo}
-            onChange={e => setFiltroTipo(e.target.value as TipoLancamento | 'todos')}
-            className="appearance-none bg-[#0f1a14] border border-[#1a3a24] rounded-xl px-4 py-2.5 pr-8 text-sm text-white focus:outline-none focus:border-[#00ff88]/40 cursor-pointer"
-          >
-            <option value="todos">Todos os tipos</option>
-            <option value="receita">Receitas</option>
-            <option value="gasto">Gastos</option>
-            <option value="investimento">Investimentos</option>
-          </select>
-          <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
-        </div>
-
-        {/* Status */}
-        <div className="relative">
-          <select
-            value={filtroStatus}
-            onChange={e => setFiltroStatus(e.target.value as StatusLancamento | 'todos')}
-            className="appearance-none bg-[#0f1a14] border border-[#1a3a24] rounded-xl px-4 py-2.5 pr-8 text-sm text-white focus:outline-none focus:border-[#00ff88]/40 cursor-pointer"
-          >
-            <option value="todos">Todos os status</option>
-            <option value="pendente">Pendentes</option>
-            <option value="pago">Pagos</option>
-            <option value="atrasado">Atrasados</option>
-          </select>
-          <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
-        </div>
-      </div>
-
-      {/* ── TABELA DE LANÇAMENTOS ── */}
-      <div className="bg-[#0f1a14] border border-[#1a3a24] rounded-2xl overflow-hidden">
-        {/* Cabeçalho */}
-        <div className="px-5 py-4 border-b border-[#1a3a24] flex items-center justify-between">
-          <span className="text-white font-semibold text-sm">
-            Lançamentos
-            {listagem.length > 0 && (
-              <span className="ml-2 text-gray-500 font-normal">({listagem.length})</span>
-            )}
-          </span>
-        </div>
-
-        {/* Estado de erro */}
-        {error && (
-          <div className="flex items-center gap-2 px-5 py-4 text-red-400 text-sm">
-            <AlertCircle size={15} /> {error}
           </div>
-        )}
 
-        {/* Estado de loading */}
-        {loading && !error && (
-          <div className="py-16 text-center text-gray-500 text-sm">Carregando lançamentos...</div>
-        )}
-
-        {/* Estado vazio */}
-        {!loading && !error && listagem.length === 0 && (
-          <div className="py-16 text-center">
-            <Wallet size={32} className="mx-auto text-gray-700 mb-3" />
-            <p className="text-gray-400 font-medium text-sm">Nenhum lançamento encontrado</p>
-            <p className="text-gray-600 text-xs mt-1">Clique em "Novo Lançamento" para começar</p>
+          {/* Busca */}
+          <div className="px-5 py-3 border-b border-[#1a3a24]">
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
+              <input
+                value={busca}
+                onChange={e => setBusca(e.target.value)}
+                placeholder="Pesquisar por descrição ou categoria..."
+                className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl pl-8 pr-4 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff88]/40"
+              />
+            </div>
           </div>
-        )}
 
-        {/* Tabela */}
-        {!loading && listagem.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[#1a3a24]">
-                  {['Descrição', 'Tipo', 'Categoria', 'Valor', 'Vencimento', 'Status', 'Ações'].map(h => (
-                    <th key={h} className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {listagem.map((l, i) => (
-                  <tr key={l.id} className={`border-b border-[#1a3a24]/50 last:border-0 hover:bg-[#1a3a24]/20 transition-colors ${i % 2 === 0 ? '' : 'bg-[#0a0f0c]/30'}`}>
-                    {/* Descrição */}
-                    <td className="px-5 py-3">
-                      <p className="text-white font-medium">{l.descricao}</p>
-                      {l.client_name && (
-                        <p className="text-gray-500 text-xs mt-0.5">👤 {l.client_name}</p>
-                      )}
-                      {l.recorrente && (
-                        <p className="text-gray-600 text-xs mt-0.5">🔄 todo dia {l.dia_vencimento}</p>
-                      )}
-                    </td>
-                    {/* Tipo */}
-                    <td className="px-5 py-3">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium border ${corTipo[l.tipo]}`}>
-                        {labelTipo[l.tipo]}
-                      </span>
-                    </td>
-                    {/* Categoria */}
-                    <td className="px-5 py-3 text-gray-400 text-xs">{l.categoria}</td>
-                    {/* Valor */}
-                    <td className="px-5 py-3">
-                      <span className={`font-semibold ${
-                        l.tipo === 'receita' ? 'text-[#00ff88]' :
-                        l.tipo === 'gasto'   ? 'text-red-400' : 'text-blue-400'
-                      }`}>
-                        {l.tipo === 'receita' ? '+' : '-'}{fmtBRL(l.valor)}
-                      </span>
-                    </td>
-                    {/* Vencimento — mostra o dia fixo + a data do mês atual */}
-                    <td className="px-5 py-3">
-                      <div className="flex items-center gap-1.5 text-gray-400 text-xs">
-                        <Calendar size={12} />
-                        {fmtData(l.data_vencimento)}
+          {/* Listagem agrupada por categoria */}
+          <div className="divide-y divide-[#1a3a24]">
+            {loading ? (
+              <div className="py-16 text-center text-gray-600 text-sm">Carregando...</div>
+            ) : Object.keys(agrupados).length === 0 ? (
+              <div className="py-16 text-center">
+                <Wallet size={32} className="mx-auto text-gray-700 mb-3" />
+                <p className="text-gray-600 text-sm">Nenhum lançamento encontrado.</p>
+                <p className="text-gray-700 text-xs mt-1">Adicione uma receita ou despesa acima.</p>
+              </div>
+            ) : (
+              Object.entries(agrupados).map(([categoria, items]) => {
+                const totalGrupo = items.reduce((s, i) => s + i.valor, 0)
+                const pendentes = items.filter(i => i.status === 'pendente').length
+                const isReceita = items[0]?.tipo === 'receita'
+                return (
+                  <div key={categoria}>
+                    {/* Cabeçalho do grupo */}
+                    <div className="flex items-center justify-between px-5 py-3 bg-[#0a0f0c]/60">
+                      <div className="flex items-center gap-2">
+                        <span className="text-white text-sm font-semibold">{categoria}</span>
+                        <span className="text-gray-600 text-xs">({items.length})</span>
                       </div>
-                      {l.data_pagamento && (
-                        <p className="text-gray-600 text-xs mt-0.5">Pago: {fmtData(l.data_pagamento)}</p>
-                      )}
-                    </td>
-                    {/* Status */}
-                    <td className="px-5 py-3">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium border ${corStatus[l.status]}`}>
-                        {labelStatus[l.status]}
-                      </span>
-                    </td>
-                    {/* Ações */}
-                    <td className="px-5 py-3">
-                      <div className="flex items-center gap-1">
-                        {l.status !== 'pago' && (
-                          <button
-                            onClick={() => marcarComoPago(l.id)}
-                            title="Marcar como pago"
-                            className="p-1.5 rounded-lg text-gray-500 hover:text-[#00ff88] hover:bg-[#00ff88]/10 transition-colors"
-                          >
-                            <CheckCircle2 size={15} />
-                          </button>
+                      <div className="flex items-center gap-3">
+                        {pendentes > 0 && (
+                          <span className="text-xs text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20">
+                            {pendentes} pendente{pendentes > 1 ? 's' : ''}
+                          </span>
                         )}
-                        <button
-                          onClick={() => abrirModalEditar(l)}
-                          title="Editar"
-                          className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-[#1a3a24]/40 transition-colors"
-                        >
-                          <Pencil size={15} />
-                        </button>
-                        <button
-                          onClick={() => setDeletandoId(l.id)}
-                          title="Excluir"
-                          className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-400/10 transition-colors"
-                        >
-                          <Trash2 size={15} />
-                        </button>
+                        <span className={`text-sm font-semibold ${isReceita ? 'text-[#00ff88]' : 'text-red-400'}`}>
+                          {isReceita ? '+' : '-'}{fmtBRL(totalGrupo)}
+                        </span>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+
+                    {/* Itens do grupo */}
+                    {items.map(l => (
+                      <div key={l.id} className={`flex items-center justify-between px-5 py-3.5 hover:bg-[#1a3a24]/20 transition-colors border-l-2 ${l.tipo === 'receita' ? 'border-l-[#00ff88]/40' : l.tipo === 'investimento' ? 'border-l-blue-500/40' : 'border-l-red-500/40'}`}>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white text-sm font-medium truncate">{l.descricao}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {l.client_name && (
+                              <span className="text-gray-600 text-xs flex items-center gap-1">
+                                <User size={10} /> {l.client_name}
+                              </span>
+                            )}
+                            {l.recorrente && (
+                              <span className="text-gray-600 text-xs flex items-center gap-1">
+                                <RepeatIcon size={10} /> {l.recorrencia}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 ml-4">
+                          {/* Status badge */}
+                          <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${l.status === 'pago'
+                            ? 'text-[#00ff88] bg-[#00ff88]/10 border-[#00ff88]/20'
+                            : l.status === 'atrasado'
+                              ? 'text-red-400 bg-red-400/10 border-red-400/20'
+                              : 'text-amber-400 bg-amber-400/10 border-amber-400/20'}`}>
+                            {l.status === 'pago' ? 'Pago' : l.status === 'atrasado' ? 'Atrasado' : 'Pendente'}
+                          </span>
+
+                          {/* Valor e data */}
+                          <div className="text-right min-w-[100px]">
+                            <p className={`text-sm font-semibold ${l.tipo === 'receita' ? 'text-[#00ff88]' : 'text-red-400'}`}>
+                              {fmtBRL(l.valor)}
+                            </p>
+                            <p className="text-gray-600 text-xs">{fmtData(l.data_vencimento)}</p>
+                          </div>
+
+                          {/* Ações */}
+                          <div className="flex items-center gap-1">
+                            {l.status !== 'pago' && (
+                              <button
+                                onClick={() => marcarComoPago(l.id)}
+                                className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-600 hover:text-[#00ff88] hover:bg-[#00ff88]/10 transition-colors"
+                                title="Marcar como pago"
+                              >
+                                <CheckCircle2 size={15} />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => abrirModalEditar(l)}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-600 hover:text-white hover:bg-[#1a3a24] transition-colors"
+                              title="Editar"
+                            >
+                              <Pencil size={13} />
+                            </button>
+                            <button
+                              onClick={() => setDeletandoId(l.id)}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                              title="Excluir"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })
+            )}
           </div>
-        )}
+        </div>
+
+        {/* Coluna direita: gráfico */}
+        <div className="w-72 flex-shrink-0">
+          <div className="bg-[#0d1510] border border-[#1a3a24] rounded-2xl p-5 sticky top-6">
+            <h3 className="text-white text-sm font-semibold mb-1">Despesas</h3>
+            <p className="text-gray-600 text-xs mb-5">
+              {String(periodoInicio).slice(8)}/{String(mesAtivo + 1).padStart(2, '0')} — {String(periodoFim).slice(8)}/{String(mesAtivo + 1).padStart(2, '0')}
+            </p>
+            {dadosPizza.length > 0 ? (
+              <PieChart data={dadosPizza} />
+            ) : (
+              <div className="py-12 text-center">
+                <PiggyBank size={28} className="mx-auto text-gray-700 mb-2" />
+                <p className="text-gray-600 text-xs">Sem despesas no período</p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* ══════════════════════════════════════════════════════
-          MODAL — CRIAR / EDITAR LANÇAMENTO
-      ══════════════════════════════════════════════════════ */}
+      {/* ─── Modal criar/editar ──────────────────────────────────────────────── */}
       {modalAberto && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setModalAberto(false)} />
-          <div className="relative w-full max-w-lg bg-[#0f1a14] border border-[#1a3a24] rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
-            {/* Cabeçalho */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-[#1a3a24]">
-              <h2 className="text-white font-semibold">
-                {editando ? 'Editar Lançamento' : 'Novo Lançamento'}
-              </h2>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setModalAberto(false)} />
+          <div className="relative w-full max-w-md bg-[#0d1510] border border-[#1a3a24] rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+
+            {/* Header do modal */}
+            <div className={`flex items-center justify-between px-6 py-4 border-b ${modalTipo === 'receita' ? 'border-[#00ff88]/20' : 'border-red-500/20'}`}
+              style={{ background: modalTipo === 'receita' ? 'rgba(0,255,136,0.05)' : 'rgba(239,68,68,0.05)' }}>
+              <div className="flex items-center gap-2">
+                {modalTipo === 'receita'
+                  ? <TrendingUp size={16} className="text-[#00ff88]" />
+                  : <TrendingDown size={16} className="text-red-400" />}
+                <h2 className="text-white font-semibold text-sm">
+                  {editando ? 'Editar' : 'Adicionar'} {modalTipo === 'receita' ? 'Receita' : 'Despesa'}
+                </h2>
+              </div>
               <button onClick={() => setModalAberto(false)} className="text-gray-500 hover:text-white transition-colors">
                 <X size={18} />
               </button>
             </div>
 
-            {/* Corpo */}
+            {/* Corpo do modal */}
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
 
-              {/* Escopo (só Admin vê) */}
-              {isAdmin && (
-                <div>
-                  <label className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-2 block">Escopo</label>
-                  <div className="flex gap-2">
-                    {(['agencia', 'pessoal'] as EscopoFinanceiro[]).map(s => (
-                      <button
-                        key={s}
-                        onClick={() => setFormInput(p => ({ ...p, escopo: s, categoria: '' }))}
-                        className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition-colors ${
-                          formInput.escopo === s
-                            ? 'bg-[#00ff88]/10 border-[#00ff88]/40 text-[#00ff88]'
-                            : 'border-[#1a3a24] text-gray-400 hover:text-white'
-                        }`}
-                      >
-                        {s === 'agencia' ? '🏢 Agência' : '👤 Pessoal'}
-                      </button>
-                    ))}
-                  </div>
+              {erroModal && (
+                <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5 text-red-400 text-sm">
+                  <AlertCircle size={15} /> {erroModal}
                 </div>
               )}
 
-              {/* Tipo */}
-              <div>
-                <label className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-2 block">Tipo</label>
-                <div className="flex gap-2">
-                  {(['receita', 'gasto', 'investimento'] as TipoLancamento[]).map(t => (
-                    <button
-                      key={t}
-                      onClick={() => setFormInput(p => ({ ...p, tipo: t, categoria: '' }))}
-                      className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition-colors ${
-                        formInput.tipo === t
-                          ? t === 'receita'      ? 'bg-[#00ff88]/10 border-[#00ff88]/40 text-[#00ff88]'
-                          : t === 'gasto'        ? 'bg-red-400/10 border-red-400/40 text-red-400'
-                          :                        'bg-blue-400/10 border-blue-400/40 text-blue-400'
-                          : 'border-[#1a3a24] text-gray-400 hover:text-white'
-                      }`}
-                    >
-                      {labelTipo[t]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Categoria */}
-              <div>
-                <label className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-2 block">Categoria</label>
-                <div className="relative">
-                  <select
-                    value={formInput.categoria}
-                    onChange={e => setFormInput(p => ({ ...p, categoria: e.target.value }))}
-                    className="w-full appearance-none bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2.5 pr-8 text-sm text-white focus:outline-none focus:border-[#00ff88]/40"
-                  >
-                    <option value="">Selecione...</option>
-                    {categorias.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                  <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* Descrição */}
-              <div>
-                <label className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-2 block">Descrição</label>
-                <input
-                  value={formInput.descricao}
-                  onChange={e => setFormInput(p => ({ ...p, descricao: e.target.value }))}
-                  placeholder="Ex: Mensalidade — Cliente João"
-                  className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff88]/40"
-                />
-              </div>
-
               {/* Valor */}
               <div>
-                <label className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-2 block">Valor (R$)</label>
+                <label className="text-xs font-medium text-gray-400 mb-1.5 block">Valor</label>
                 <input
                   type="number"
                   min="0"
                   step="0.01"
                   value={formInput.valor || ''}
                   onChange={e => setFormInput(p => ({ ...p, valor: parseFloat(e.target.value) || 0 }))}
-                  placeholder="0,00"
-                  className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff88]/40"
+                  placeholder="R$ 0,00"
+                  className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none focus:border-[#00ff88]/40"
                 />
               </div>
 
-              {/* DIA DO MÊS — substitui os dois campos de data */}
+              {/* Descrição */}
               <div>
-                <label className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-2 block">
-                  Dia do mês que paga
-                </label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="number"
-                    min="1"
-                    max="31"
-                    value={formInput.dia_vencimento || ''}
-                    onChange={e => setFormInput(p => ({ ...p, dia_vencimento: parseInt(e.target.value) || 1 }))}
-                    placeholder="Ex: 5"
-                    className="w-28 bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff88]/40"
-                  />
-                  <span className="text-gray-500 text-sm">
-                    {formInput.dia_vencimento
-                      ? `Todo dia ${formInput.dia_vencimento} de cada mês`
-                      : 'Informe o dia (1 a 31)'}
-                  </span>
-                </div>
+                <label className="text-xs font-medium text-gray-400 mb-1.5 block">Descrição</label>
+                <input
+                  value={formInput.descricao}
+                  onChange={e => setFormInput(p => ({ ...p, descricao: e.target.value }))}
+                  placeholder="Ex: Mensalidade cliente"
+                  className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none focus:border-[#00ff88]/40"
+                />
               </div>
 
-              {/* Cliente (só agência) */}
-              {formInput.escopo === 'agencia' && isAdmin && clientes.length > 0 && (
+              {/* Tipo (só para despesa — gasto ou investimento) */}
+              {modalTipo === 'despesa' && (
                 <div>
-                  <label className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-2 block">Cliente (opcional)</label>
-                  <div className="relative">
-                    <select
-                      value={formInput.client_id ?? ''}
-                      onChange={e => setFormInput(p => ({ ...p, client_id: e.target.value || null }))}
-                      className="w-full appearance-none bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2.5 pr-8 text-sm text-white focus:outline-none focus:border-[#00ff88]/40"
-                    >
-                      <option value="">Sem vínculo</option>
-                      {clientes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
-                    <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                  <label className="text-xs font-medium text-gray-400 mb-1.5 block">Tipo</label>
+                  <div className="flex gap-2">
+                    {(['gasto', 'investimento'] as TipoLancamento[]).map(t => (
+                      <button
+                        key={t}
+                        onClick={() => setFormInput(p => ({ ...p, tipo: t, categoria: '' }))}
+                        className={`flex-1 py-2 rounded-xl text-xs font-medium border transition-colors ${formInput.tipo === t
+                          ? 'border-[#00ff88]/40 text-[#00ff88] bg-[#00ff88]/10'
+                          : 'border-[#1a3a24] text-gray-500 hover:border-[#1a3a24]'}`}
+                      >
+                        {t === 'gasto' ? 'Gasto' : 'Investimento'}
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
 
-              {/* Recorrência — checkbox simplificado, mensal por padrão */}
-              <div className="flex items-center gap-3 bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-3">
-                <input
-                  type="checkbox"
-                  id="recorrente"
-                  checked={formInput.recorrente ?? true}
-                  onChange={e => setFormInput(p => ({
-                    ...p,
-                    recorrente:  e.target.checked,
-                    recorrencia: e.target.checked ? 'mensal' : null,
-                  }))}
-                  className="accent-[#00ff88] w-4 h-4"
-                />
-                <label htmlFor="recorrente" className="text-sm text-gray-300 cursor-pointer flex-1">
-                  Renovar automaticamente todo mês
-                </label>
+              {/* Categoria */}
+              <div>
+                <label className="text-xs font-medium text-gray-400 mb-1.5 block">Categoria</label>
+                <select
+                  value={formInput.categoria}
+                  onChange={e => setFormInput(p => ({ ...p, categoria: e.target.value }))}
+                  className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00ff88]/40 appearance-none"
+                >
+                  <option value="">Escolha uma categoria</option>
+                  {categorias.map((c: string) => <option key={c} value={c}>{c}</option>)}
+                </select>
               </div>
 
-              {/* Erro */}
-              {erroModal && (
-                <div className="flex items-center gap-2 bg-red-400/10 border border-red-400/20 rounded-xl px-4 py-3 text-red-400 text-sm">
-                  <AlertCircle size={15} /> {erroModal}
+              {/* Cliente vinculado (Admin + agência) */}
+              {isAdmin && escopoAtivo === 'agencia' && (
+                <div>
+                  <label className="text-xs font-medium text-gray-400 mb-1.5 block">Cliente vinculado (opcional)</label>
+                  <select
+                    value={formInput.client_id ?? ''}
+                    onChange={e => setFormInput(p => ({ ...p, client_id: e.target.value || null }))}
+                    className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00ff88]/40 appearance-none"
+                  >
+                    <option value="">Nenhum</option>
+                    {clientes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
                 </div>
               )}
+
+              {/* Status — Não foi paga/recebida */}
+              <div className="flex items-center justify-between bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2">
+                  {modalTipo === 'receita'
+                    ? <TrendingUp size={15} className="text-gray-500" />
+                    : <TrendingDown size={15} className="text-gray-500" />}
+                  <div>
+                    <p className="text-white text-xs font-medium">
+                      {modalTipo === 'receita' ? 'Não Foi Recebida' : 'Não Foi Paga'}
+                    </p>
+                    <p className="text-gray-600 text-xs">Status do pagamento/recebimento</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setFormInput(p => ({ ...p, status: p.status === 'pendente' ? 'pago' : 'pendente' }))}
+                  className={`w-10 h-6 rounded-full transition-colors relative ${formInput.status === 'pendente' ? 'bg-[#00ff88]' : 'bg-[#1a3a24]'}`}
+                >
+                  <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${formInput.status === 'pendente' ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                </button>
+              </div>
+
+              {/* Data de vencimento */}
+              <div>
+                <label className="text-xs font-medium text-gray-400 mb-1.5 block">Data de Vencimento</label>
+                <input
+                  type="date"
+                  value={formInput.data_vencimento}
+                  onChange={e => setFormInput(p => ({ ...p, data_vencimento: e.target.value }))}
+                  className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00ff88]/40"
+                />
+              </div>
+
+              {/* Despesa/Receita Fixa */}
+              <div className="flex items-center justify-between bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <Pin size={15} className="text-gray-500" />
+                  <div>
+                    <p className="text-white text-xs font-medium">
+                      {modalTipo === 'receita' ? 'Receita Fixa' : 'Despesa Fixa'}
+                    </p>
+                    <p className="text-gray-600 text-xs">
+                      Classifica como uma {modalTipo === 'receita' ? 'receita' : 'despesa'} fixa
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setFormInput(p => ({ ...p, recorrente: !p.recorrente }))}
+                  className={`w-10 h-6 rounded-full transition-colors relative ${formInput.recorrente ? 'bg-[#00ff88]' : 'bg-[#1a3a24]'}`}
+                >
+                  <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${formInput.recorrente ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                </button>
+              </div>
+
+              {/* Repetir transação */}
+              {formInput.recorrente && (
+                <div>
+                  <label className="text-xs font-medium text-gray-400 mb-1.5 block">Repetir</label>
+                  <div className="flex gap-2">
+                    {(['mensal', 'semanal', 'anual'] as const).map(r => (
+                      <button
+                        key={r}
+                        onClick={() => setFormInput(p => ({ ...p, recorrencia: r }))}
+                        className={`flex-1 py-2 rounded-xl text-xs font-medium border transition-colors ${formInput.recorrencia === r
+                          ? 'border-[#00ff88]/40 text-[#00ff88] bg-[#00ff88]/10'
+                          : 'border-[#1a3a24] text-gray-500'}`}
+                      >
+                        {r.charAt(0).toUpperCase() + r.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Pessoa responsável */}
+              <div className="flex items-center gap-2 bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-3">
+                <User size={15} className="text-gray-500" />
+                <div>
+                  <p className="text-white text-xs font-medium">Pessoa Responsável</p>
+                  <p className="text-gray-600 text-xs">Thiago Santos</p>
+                </div>
+              </div>
+
             </div>
 
-            {/* Rodapé */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#1a3a24]">
-              <button
-                onClick={() => setModalAberto(false)}
-                className="px-4 py-2.5 rounded-xl text-sm text-gray-400 hover:text-white hover:bg-[#1a3a24]/40 transition-colors"
-              >
-                Cancelar
-              </button>
+            {/* Footer do modal */}
+            <div className="px-6 py-4 border-t border-[#1a3a24] space-y-2">
               <button
                 onClick={handleSalvar}
                 disabled={salvando}
-                className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#00ff88] text-[#0a0f0c] hover:bg-[#00e87a] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 ${modalTipo === 'receita'
+                  ? 'bg-[#00ff88] text-[#0a0f0c] hover:bg-[#00dd77]'
+                  : 'bg-red-500 text-white hover:bg-red-600'}`}
               >
-                {salvando ? 'Salvando...' : editando ? 'Salvar alterações' : 'Criar lançamento'}
+                {salvando ? 'Salvando...' : `Salvar ${modalTipo === 'receita' ? 'Receita' : 'Despesa'}`}
+              </button>
+              <button
+                onClick={() => setModalAberto(false)}
+                className="w-full py-2.5 rounded-xl text-sm text-gray-400 hover:text-white transition-colors"
+              >
+                Cancelar
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ══════════════════════════════════════════════════════
-          MODAL — CONFIRMAR EXCLUSÃO
-      ══════════════════════════════════════════════════════ */}
+      {/* ─── Modal de confirmação de exclusão ─────────────────────────────── */}
       {deletandoId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setDeletandoId(null)} />
-          <div className="relative w-full max-w-sm bg-[#0f1a14] border border-[#1a3a24] rounded-2xl shadow-2xl p-6">
-            <div className="w-12 h-12 bg-red-400/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Trash2 size={22} className="text-red-400" />
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setDeletandoId(null)} />
+          <div className="relative w-full max-w-sm bg-[#0d1510] border border-red-500/30 rounded-2xl p-6 shadow-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
+              <Trash2 size={20} className="text-red-400" />
             </div>
-            <h3 className="text-white font-semibold text-center mb-2">Excluir lançamento?</h3>
+            <h3 className="text-white font-semibold text-center mb-1">Excluir lançamento?</h3>
             <p className="text-gray-500 text-sm text-center mb-6">Esta ação não pode ser desfeita.</p>
             <div className="flex gap-3">
               <button
                 onClick={() => setDeletandoId(null)}
-                className="flex-1 py-2.5 rounded-xl text-sm text-gray-400 hover:text-white border border-[#1a3a24] hover:bg-[#1a3a24]/40 transition-colors"
+                className="flex-1 py-2.5 rounded-xl border border-[#1a3a24] text-gray-400 text-sm hover:text-white transition-colors"
               >
                 Cancelar
               </button>
               <button
                 onClick={() => handleDeletar(deletandoId)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-colors"
+                className="flex-1 py-2.5 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 text-sm hover:bg-red-500/30 transition-colors font-medium"
               >
                 Excluir
               </button>
