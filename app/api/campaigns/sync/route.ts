@@ -4,6 +4,11 @@ import { NextResponse } from 'next/server'
 export async function POST(req: Request) {
   try {
     const { clientId, adAccountId } = await req.json()
+
+    if (!clientId || !adAccountId) {
+      return NextResponse.json({ error: 'clientId e adAccountId são obrigatórios' }, { status: 400 })
+    }
+
     const supabase = createServerClient()
 
     // 1. Buscar token do Meta Ads
@@ -18,18 +23,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Meta Ads não conectado ou token não encontrado' }, { status: 400 })
     }
 
-    // 2. Chamar API do Meta para buscar campanhas reais
+    // 2. Garantir prefixo act_ no adAccountId
+    const accountId = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`
+
+    // 3. Chamar API do Meta para buscar campanhas reais
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 20000) // 20 segundos
+    const timeoutId = setTimeout(() => controller.abort(), 20000)
 
     const metaRes = await fetch(
-      `https://graph.facebook.com/v19.0/${adAccountId}/campaigns?fields=id,name,status,start_time,stop_time,daily_budget,lifetime_budget&access_token=${integration.access_token}`,
+      `https://graph.facebook.com/v19.0/${accountId}/campaigns?fields=id,name,status,start_time,stop_time,daily_budget,lifetime_budget&access_token=${integration.access_token}`,
       { signal: controller.signal }
     )
-    
+
     clearTimeout(timeoutId)
     const metaData = await metaRes.json()
-    
+
     if (metaData.error) {
       console.error('Erro na API do Meta:', metaData.error)
       return NextResponse.json({ error: metaData.error.message }, { status: 400 })
@@ -37,31 +45,35 @@ export async function POST(req: Request) {
 
     const campaigns = metaData.data || []
 
-    // 3. Sincronizar com o banco local
+    const statusMap: Record<string, string> = {
+      'ACTIVE':      'ativa',
+      'PAUSED':      'pausada',
+      'ARCHIVED':    'finalizada',
+      'IN_PROCESS':  'rascunho',
+      'WITH_ERRORS': 'rascunho',
+    }
+
+    // 4. Sincronizar com o banco local
+    // onConflict: 'meta_campaign_id' agora funciona pois a migration 008 criou a constraint UNIQUE
     for (const camp of campaigns) {
-      const budget = camp.daily_budget ? parseFloat(camp.daily_budget) / 100 : 
-                     camp.lifetime_budget ? parseFloat(camp.lifetime_budget) / 100 : null
-      
-      const statusMap: Record<string, string> = {
-        'ACTIVE': 'ativa',
-        'PAUSED': 'pausada',
-        'ARCHIVED': 'finalizada',
-        'IN_PROCESS': 'rascunho',
-        'WITH_ERRORS': 'rascunho'
-      }
+      const budget = camp.daily_budget
+        ? parseFloat(camp.daily_budget) / 100
+        : camp.lifetime_budget
+          ? parseFloat(camp.lifetime_budget) / 100
+          : null
 
       const { error: upsertError } = await supabase.from('campaigns').upsert({
-        client_id: clientId,
-        meta_campaign_id: camp.id,
-        name: camp.name,
-        status: statusMap[camp.status] || 'rascunho',
-        channel: 'meta_ads',
-        budget: budget,
-        start_date: camp.start_time ? camp.start_time.split('T')[0] : null,
-        end_date: camp.stop_time ? camp.stop_time.split('T')[0] : null
+        client_id:          clientId,
+        meta_campaign_id:   camp.id,
+        name:               camp.name,
+        status:             statusMap[camp.status] || 'rascunho',
+        channel:            'meta_ads',
+        budget:             budget,
+        start_date:         camp.start_time ? camp.start_time.split('T')[0] : null,
+        end_date:           camp.stop_time  ? camp.stop_time.split('T')[0]  : null,
       }, { onConflict: 'meta_campaign_id' })
 
-      if (upsertError) console.error('Erro ao salvar campanha no banco:', upsertError)
+      if (upsertError) console.error('Erro ao salvar campanha:', upsertError)
     }
 
     return NextResponse.json({ success: true, count: campaigns.length })
