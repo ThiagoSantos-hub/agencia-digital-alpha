@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-// [BUG F-3 CORRIGIDO] Trocado createClient (browser) por createServerClient.
-// createBrowserClient não funciona em API routes — roda no servidor sem acesso
-// ao DOM, expõe a sessão incorretamente e não lida com cookies de autenticação.
-import { createServerClient } from '@/lib/supabase'
+import { createServerClient } from '@/lib/supabase-server'
 
 // GET — lista todas as integrações
 export async function GET() {
