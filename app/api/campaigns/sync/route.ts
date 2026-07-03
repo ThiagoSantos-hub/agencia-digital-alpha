@@ -1,10 +1,10 @@
-import { createClient } from '@/lib/supabase'
+import { createServerClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
   try {
     const { clientId, adAccountId } = await req.json()
-    const supabase = createClient()
+    const supabase = createServerClient()
 
     // 1. Buscar token do Meta Ads
     const { data: integration } = await supabase
@@ -15,13 +15,12 @@ export async function POST(req: Request) {
       .maybeSingle()
 
     if (!integration?.access_token) {
-      return NextResponse.json({ error: 'Meta Ads não conectado' }, { status: 400 })
+      return NextResponse.json({ error: 'Meta Ads não conectado ou token não encontrado' }, { status: 400 })
     }
 
     // 2. Chamar API do Meta para buscar campanhas reais
-    // Documentação: https://developers.facebook.com/docs/marketing-api/reference/ad-account/campaigns/
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 15000) // 15 segundos de timeout
+    const timeoutId = setTimeout(() => controller.abort(), 20000) // 20 segundos
 
     const metaRes = await fetch(
       `https://graph.facebook.com/v19.0/${adAccountId}/campaigns?fields=id,name,status,start_time,stop_time,daily_budget,lifetime_budget&access_token=${integration.access_token}`,
@@ -30,7 +29,11 @@ export async function POST(req: Request) {
     
     clearTimeout(timeoutId)
     const metaData = await metaRes.json()
-    if (metaData.error) throw new Error(metaData.error.message)
+    
+    if (metaData.error) {
+      console.error('Erro na API do Meta:', metaData.error)
+      return NextResponse.json({ error: metaData.error.message }, { status: 400 })
+    }
 
     const campaigns = metaData.data || []
 
@@ -47,7 +50,7 @@ export async function POST(req: Request) {
         'WITH_ERRORS': 'rascunho'
       }
 
-      await supabase.from('campaigns').upsert({
+      const { error: upsertError } = await supabase.from('campaigns').upsert({
         client_id: clientId,
         meta_campaign_id: camp.id,
         name: camp.name,
@@ -57,6 +60,8 @@ export async function POST(req: Request) {
         start_date: camp.start_time ? camp.start_time.split('T')[0] : null,
         end_date: camp.stop_time ? camp.stop_time.split('T')[0] : null
       }, { onConflict: 'meta_campaign_id' })
+
+      if (upsertError) console.error('Erro ao salvar campanha no banco:', upsertError)
     }
 
     return NextResponse.json({ success: true, count: campaigns.length })

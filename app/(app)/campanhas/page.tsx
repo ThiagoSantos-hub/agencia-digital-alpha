@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { useCampanhas, Campaign, CampaignMetric } from '@/hooks/useCampanhas'
-import { Search, Megaphone, ChevronDown, ChevronUp, BarChart2, RefreshCw, Calendar, ExternalLink, Filter } from 'lucide-react'
+import { Search, Megaphone, ChevronDown, ChevronUp, BarChart2, RefreshCw, Calendar, ExternalLink, Filter, AlertTriangle } from 'lucide-react'
 
 const statusConfig = {
   ativa:      { label: 'Ativa',      className: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
@@ -96,11 +96,12 @@ function CampaignCard({ campaign, fetchMetrics }: {
 }
 
 export default function CampanhasPage() {
-  const { campaigns, loading, fetchMetrics, syncAllMetaCampaigns } = useCampanhas()
+  const { campaigns, loading, error, syncAllMetaCampaigns, fetchMetrics } = useCampanhas()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('todas')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [localError, setLocalError] = useState<string | null>(null)
 
   const filteredCampaigns = useMemo(() => {
     return campaigns.filter(c => {
@@ -109,6 +110,15 @@ export default function CampanhasPage() {
       return matchesSearch && matchesStatus
     })
   }, [campaigns, search, statusFilter])
+
+  const handleSync = async () => {
+    setLocalError(null)
+    try {
+      await syncAllMetaCampaigns()
+    } catch (err: any) {
+      setLocalError(err.message || 'Falha na sincronização')
+    }
+  }
 
   return (
     <div className="space-y-8 pb-20">
@@ -122,7 +132,7 @@ export default function CampanhasPage() {
 
         <div className="flex items-center gap-3">
           <button 
-            onClick={() => syncAllMetaCampaigns()}
+            onClick={handleSync}
             disabled={loading}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-medium transition-all ${loading ? 'bg-indigo-500/20 text-indigo-400' : 'bg-[#1a1a1a] border border-[#2a2a2a] text-gray-300 hover:text-white'}`}
           >
@@ -131,6 +141,16 @@ export default function CampanhasPage() {
           </button>
         </div>
       </div>
+
+      {(error || localError) && (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex items-start gap-3 text-red-400">
+          <AlertTriangle size={20} className="shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="text-sm font-bold">Erro na Sincronização</p>
+            <p className="text-xs opacity-80">{error || localError}. Verifique sua conexão com o Meta Ads nas Integrações.</p>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-4 bg-[#1a1a1a] p-3 rounded-2xl border border-[#2a2a2a] shadow-lg">
         <div className="relative flex-1 min-w-[200px]">
