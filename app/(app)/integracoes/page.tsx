@@ -22,6 +22,7 @@ interface Webhook {
 }
 
 const OAUTH_INTEGRATIONS = ['google_ads', 'gmail', 'google_drive', 'google_calendar', 'meta_ads']
+const GOOGLE_INTEGRATIONS = ['google_ads', 'gmail', 'google_drive', 'google_calendar']
 
 const INTEGRATION_ICONS: Record<string, string> = {
   google_ads: 'https://www.gstatic.com/images/branding/product/2x/google_ads_48dp.png',
@@ -50,34 +51,6 @@ const INTEGRATION_EMOJI: Record<string, string> = {
 }
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://agencia-digital-alpha.vercel.app'
-
-const WEBHOOK_EVENTS = [
-  'cliente.criado',
-  'cliente.atualizado',
-  'campanha.criada',
-  'campanha.atualizada',
-  'relatorio.gerado',
-]
-
-function IntegrationIcon({ type }: { type: string }) {
-  const [error, setError] = useState(false)
-  const src = INTEGRATION_ICONS[type]
-
-  if (!src || error) {
-    return <span className="text-2xl">{INTEGRATION_EMOJI[type] ?? '🔌'}</span>
-  }
-
-  return (
-    <img
-      src={src}
-      alt={type}
-      width={32}
-      height={32}
-      className="w-8 h-8 object-contain"
-      onError={() => setError(true)}
-    />
-  )
-}
 
 function ElevenLabsCard({
   integration,
@@ -182,6 +155,34 @@ function ElevenLabsCard({
   )
 }
 
+const WEBHOOK_EVENTS = [
+  'cliente.criado',
+  'cliente.atualizado',
+  'campanha.criada',
+  'campanha.atualizada',
+  'relatorio.gerado',
+]
+
+function IntegrationIcon({ type }: { type: string }) {
+  const [error, setError] = useState(false)
+  const src = INTEGRATION_ICONS[type]
+
+  if (!src || error) {
+    return <span className="text-2xl">{INTEGRATION_EMOJI[type] ?? '🔌'}</span>
+  }
+
+  return (
+    <img
+      src={src}
+      alt={type}
+      width={32}
+      height={32}
+      className="w-8 h-8 object-contain"
+      onError={() => setError(true)}
+    />
+  )
+}
+
 export default function IntegracoesPage() {
   const [integrations, setIntegrations] = useState<Integration[]>([])
   const [webhooks, setWebhooks] = useState<Webhook[]>([])
@@ -193,7 +194,14 @@ export default function IntegracoesPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    if (params.get('success') === 'google_connected') setSuccessMsg('Google conectado com sucesso!')
+    if (params.get('success') === 'google_connected') {
+      const service = params.get('service')
+      setSuccessMsg(
+        service
+          ? `Conta Google conectada com sucesso em ${service.replace('_', ' ')}!`
+          : 'Google conectado com sucesso!'
+      )
+    }
     if (params.get('success') === 'meta_connected') setSuccessMsg('Meta Ads conectado com sucesso!')
     if (params.get('error')) setErrorMsg('Erro ao conectar. Tente novamente.')
     fetchData()
@@ -294,6 +302,9 @@ export default function IntegracoesPage() {
 
       <section>
         <h2 className="text-white text-lg font-semibold mb-4">Conexões OAuth</h2>
+        <p className="text-xs mb-4" style={{ color: '#4a7a5a' }}>
+          Cada serviço do Google pode ser conectado com uma conta diferente. Ao clicar em "Conectar", o Google vai pedir para você escolher a conta.
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {integrations
             .filter(i => OAUTH_INTEGRATIONS.includes(i.type))
@@ -314,6 +325,11 @@ export default function IntegracoesPage() {
                         ? `Conectado${integration.connected_at ? ' em ' + new Date(integration.connected_at).toLocaleDateString('pt-BR') : ''}`
                         : 'Desconectado'}
                     </p>
+                    {integration.status === 'connected' && integration.config?.connected_email && (
+                      <p className="text-xs mt-0.5" style={{ color: '#4a7a5a' }}>
+                        {integration.config.connected_email}
+                      </p>
+                    )}
                   </div>
                 </div>
                 {integration.status === 'connected' ? (
@@ -327,8 +343,8 @@ export default function IntegracoesPage() {
                 ) : (
                   <a
                     href={
-                      ['google_ads', 'gmail', 'google_drive', 'google_calendar'].includes(integration.type)
-                        ? '/api/integrations/connect/google'
+                      GOOGLE_INTEGRATIONS.includes(integration.type)
+                        ? `/api/integrations/connect/google?type=${integration.type}`
                         : '/api/integrations/connect/meta'
                     }
                     className="text-xs px-3 py-1.5 rounded-lg font-medium transition-colors"
