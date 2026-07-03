@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { useClientes, Client } from '@/hooks/useClientes'
 import { useAuth } from '@/hooks/useAuth'
-import { Search, Users, UserPlus, X, Loader2, Pencil, Trash2, Download, Upload, AlertCircle, Clock } from 'lucide-react'
+import { Search, UserPlus, X, Loader2, Pencil, Trash2, Download, Upload, AlertCircle, Clock, CheckCircle2, Ban } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
 type ClienteForm = {
@@ -131,7 +131,7 @@ function ModalNovoCliente({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60"
       onClick={(e) => e.target === e.currentTarget && onClose()}
       onKeyDown={(e) => e.key === 'Escape' && onClose()}>
-      <div className="w-full max-w-md bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-md bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="flex items-center justify-between">
           <h2 className="text-white font-semibold text-base">Novo Cliente</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors p-1 rounded-lg">
@@ -205,7 +205,7 @@ function ModalEditarCliente({ client, onClose }: { client: Client; onClose: () =
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60"
       onClick={(e) => e.target === e.currentTarget && onClose()}
       onKeyDown={(e) => e.key === 'Escape' && onClose()}>
-      <div className="w-full max-w-md bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-md bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="flex items-center justify-between">
           <h2 className="text-white font-semibold text-base">Editar Cliente</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors p-1 rounded-lg">
@@ -240,7 +240,7 @@ function ModalConfirmarExclusao({ client, onClose, onConfirm }: { client: Client
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="w-full max-w-sm bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-6 space-y-4">
+      <div className="w-full max-w-sm bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-6 space-y-4 shadow-2xl">
         <div className="flex items-center justify-between">
           <h2 className="text-white font-semibold text-base">Excluir Cliente</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors p-1 rounded-lg">
@@ -267,29 +267,38 @@ function ModalConfirmarExclusao({ client, onClose, onConfirm }: { client: Client
 }
 
 export default function ClientesPage() {
-  const { clients, loading, error, deleteCliente, createCliente } = useClientes()
+  const { clients, loading, error, deleteCliente, createCliente, updateCliente } = useClientes()
   const { profile } = useAuth()
   const [search, setSearch] = useState('')
   const [modalNovo, setModalNovo] = useState(false)
   const [clienteEditando, setClienteEditando] = useState<Client | null>(null)
   const [clienteExcluindo, setClienteExcluindo] = useState<Client | null>(null)
+  const [loadingStatus, setLoadingStatus] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const activeClients = clients.filter(c => c.status !== 'inativo')
-  const inactiveClients = clients.filter(c => c.status === 'inativo')
+  // Memoizar filtros para performance
+  const { activeClients, inactiveClients } = useMemo(() => {
+    const filterFn = (c: Client) =>
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      (c.company ?? '').toLowerCase().includes(search.toLowerCase()) ||
+      (c.email ?? '').toLowerCase().includes(search.toLowerCase())
 
-  const filterFn = (c: Client) =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    (c.company ?? '').toLowerCase().includes(search.toLowerCase()) ||
-    (c.email ?? '').toLowerCase().includes(search.toLowerCase())
-
-  const filteredActive = activeClients.filter(filterFn)
-  const filteredInactive = inactiveClients.filter(filterFn)
+    return {
+      activeClients: clients.filter(c => c.status !== 'inativo' && filterFn(c)),
+      inactiveClients: clients.filter(c => c.status === 'inativo' && filterFn(c))
+    }
+  }, [clients, search])
 
   const handleExcluir = async () => {
     if (!clienteExcluindo) return
     await deleteCliente(clienteExcluindo.id)
     setClienteExcluindo(null)
+  }
+
+  const handleQuickStatusChange = async (client: Client, newStatus: 'ativo' | 'inativo' | 'atrasado') => {
+    setLoadingStatus(client.id)
+    await updateCliente(client.id, { status: newStatus })
+    setLoadingStatus(null)
   }
 
   const exportToExcel = () => {
@@ -351,19 +360,19 @@ export default function ClientesPage() {
           {list.length}
         </span>
       </h2>
-      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl overflow-hidden">
+      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse table-fixed">
             <thead>
               <tr className="border-b border-[#2a2a2a] bg-[#1f1f1f]/50">
-                <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Cliente / Empresa</th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Contato</th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Financeiro</th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
+                <th className="w-[25%] px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Cliente / Empresa</th>
+                <th className="w-[15%] px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Contato</th>
+                <th className="w-[15%] px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Financeiro</th>
+                <th className="w-[25%] px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status / Ações Rápidas</th>
                 {title.includes('Inativo') && (
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Inativado em</th>
+                  <th className="w-[12%] px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Inativado em</th>
                 )}
-                <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">Ações</th>
+                <th className="w-[8%] px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right pr-12">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#2a2a2a]">
@@ -377,35 +386,65 @@ export default function ClientesPage() {
                 list.map((client) => (
                   <tr key={client.id} className="group hover:bg-white/[0.02] transition-colors">
                     <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="text-white font-medium text-sm">{client.name}</span>
-                        <span className="text-gray-500 text-xs">{client.company || '—'}</span>
+                      <div className="flex flex-col truncate">
+                        <span className="text-white font-medium text-sm truncate">{client.name}</span>
+                        <span className="text-gray-500 text-xs truncate">{client.company || '—'}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col truncate">
+                        <span className="text-gray-300 text-sm truncate">{client.email || '—'}</span>
+                        <span className="text-gray-500 text-xs truncate">{client.phone || '—'}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
-                        <span className="text-gray-300 text-sm">{client.email || '—'}</span>
-                        <span className="text-gray-500 text-xs">{client.phone || '—'}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="text-white text-sm">
+                        <span className="text-white text-sm font-medium">
                           {client.monthly_fee ? `R$ ${client.monthly_fee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'}
                         </span>
                         <span className="text-gray-500 text-xs">Dia {client.payment_day || '—'}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex flex-col gap-1.5">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium border ${statusConfig[client.status].className}`}>
-                          {statusConfig[client.status].label}
-                        </span>
-                        {client.status === 'atrasado' && client.dias_atraso && (
-                          <span className="flex items-center gap-1 text-[10px] text-amber-500 font-medium">
-                            <Clock size={10} /> {client.dias_atraso} dias
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${statusConfig[client.status].className}`}>
+                            {statusConfig[client.status].label}
                           </span>
-                        )}
+                          {client.status === 'atrasado' && client.dias_atraso && (
+                            <span className="flex items-center gap-1 text-[10px] text-amber-500 font-bold bg-amber-500/10 px-2 py-0.5 rounded-full">
+                              <Clock size={10} /> {client.dias_atraso} dias
+                            </span>
+                          )}
+                        </div>
+                        {/* Botões de Troca Rápida */}
+                        <div className="flex items-center gap-1">
+                          {client.status !== 'ativo' && (
+                            <button 
+                              onClick={() => handleQuickStatusChange(client, 'ativo')}
+                              disabled={loadingStatus === client.id}
+                              className="p-1 text-emerald-500 hover:bg-emerald-500/10 rounded transition-colors disabled:opacity-50" title="Ativar">
+                              <CheckCircle2 size={14} />
+                            </button>
+                          )}
+                          {client.status !== 'atrasado' && client.status !== 'inativo' && (
+                            <button 
+                              onClick={() => handleQuickStatusChange(client, 'atrasado')}
+                              disabled={loadingStatus === client.id}
+                              className="p-1 text-amber-500 hover:bg-amber-500/10 rounded transition-colors disabled:opacity-50" title="Marcar Atrasado">
+                              <AlertCircle size={14} />
+                            </button>
+                          )}
+                          {client.status !== 'inativo' && (
+                            <button 
+                              onClick={() => handleQuickStatusChange(client, 'inativo')}
+                              disabled={loadingStatus === client.id}
+                              className="p-1 text-gray-500 hover:bg-gray-500/10 rounded transition-colors disabled:opacity-50" title="Inativar">
+                              <Ban size={14} />
+                            </button>
+                          )}
+                          {loadingStatus === client.id && <Loader2 size={12} className="animate-spin text-gray-500" />}
+                        </div>
                       </div>
                     </td>
                     {title.includes('Inativo') && (
@@ -413,8 +452,8 @@ export default function ClientesPage() {
                         {client.inativo_em ? new Date(client.inativo_em).toLocaleDateString('pt-BR') : '—'}
                       </td>
                     )}
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <td className="px-6 py-4 text-right pr-12">
+                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onClick={() => setClienteEditando(client)}
                           className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all" title="Editar">
                           <Pencil size={16} />
@@ -456,7 +495,7 @@ export default function ClientesPage() {
         />
       )}
 
-      <div className="space-y-8">
+      <div className="space-y-8 pb-20">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-white text-2xl font-bold">Gestão de Clientes</h1>
@@ -498,7 +537,7 @@ export default function ClientesPage() {
           </div>
         )}
 
-        <div className="space-y-10">
+        <div className="space-y-12">
           {renderTable(filteredActive, 'Clientes Ativos e Atrasados')}
           {renderTable(filteredInactive, 'Clientes Inativos')}
         </div>

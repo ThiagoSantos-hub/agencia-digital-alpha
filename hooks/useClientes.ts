@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase'
 
 export interface Client {
@@ -26,27 +26,31 @@ export function useClientes() {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const fetchClients = useCallback(async () => {
-    setLoading(true)
+    // Não resetamos o loading se já temos dados, para evitar o "pisca" e lentidão visual
+    if (clients.length === 0) setLoading(true)
+    
     try {
-      // 1. Buscar clientes
-      const { data: clientsData, error: clientsError } = await supabase
-        .from('clients')
-        .select('*')
-        .order('created_at', { ascending: false })
+      // 1. Buscar clientes e finanças em paralelo para ganhar tempo
+      const [clientsRes, financesRes] = await Promise.all([
+        supabase
+          .from('clients')
+          .select('*')
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('finances')
+          .select('client_id, data_vencimento, status')
+          .eq('tipo', 'receita')
+          .in('status', ['pendente', 'atrasado'])
+      ])
 
-      if (clientsError) throw clientsError
+      if (clientsRes.error) throw clientsRes.error
+      if (financesRes.error) throw financesRes.error
 
-      // 2. Buscar lançamentos financeiros pendentes ou atrasados para calcular status automático
-      const { data: financesData, error: financesError } = await supabase
-        .from('finances')
-        .select('client_id, data_vencimento, status')
-        .eq('tipo', 'receita')
-        .in('status', ['pendente', 'atrasado'])
-
-      if (financesError) throw financesError
+      const clientsData = clientsRes.data
+      const financesData = financesRes.data
 
       const hoje = new Date()
       hoje.setHours(0, 0, 0, 0)
@@ -65,6 +69,7 @@ export function useClientes() {
           const vencimento = new Date(f.data_vencimento)
           vencimento.setHours(0, 0, 0, 0)
           
+          // Lógica corrigida: se a data de vencimento passou E não está pago, está atrasado
           if (vencimento < hoje || f.status === 'atrasado') {
             temAtrasado = true
             const diffTime = Math.abs(hoje.getTime() - vencimento.getTime())
@@ -73,9 +78,10 @@ export function useClientes() {
           }
         })
 
+        // Prioridade para o status 'atrasado' se houver pendência financeira
         return {
           ...client,
-          status: temAtrasado ? 'atrasado' : 'ativo',
+          status: temAtrasado ? 'atrasado' : client.status,
           dias_atraso: temAtrasado ? maiorAtraso : 0
         }
       })
@@ -87,7 +93,7 @@ export function useClientes() {
     } finally {
       setLoading(false)
     }
-  }, [supabase])
+  }, [supabase, clients.length])
 
   useEffect(() => {
     fetchClients()
@@ -133,7 +139,6 @@ export function useClientes() {
   const updateCliente = async (id: string, input: Partial<ClientInput>) => {
     const payload = { ...input }
     
-    // Lógica para data de inativação
     if (payload.status === 'inativo') {
       payload.inativo_em = new Date().toISOString()
     } else if (payload.status === 'ativo' || payload.status === 'atrasado') {

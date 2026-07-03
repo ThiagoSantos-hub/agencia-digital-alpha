@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { ConversationProvider, useConversationControls, useConversationStatus, useConversationClientTool } from '@elevenlabs/react'
 import { Mic, MicOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
@@ -17,11 +17,12 @@ function AlphaButton({ userName }: { userName: string }) {
     userNameRef.current = userName
   }, [userName])
 
+  const supabase = useMemo(() => createClient(), [])
+
   useConversationClientTool(
     'buscar_memoria',
     useCallback(async ({ dias }: { dias?: number }) => {
       try {
-        const supabase = createClient()
         const limite = dias ?? 7
         const desde = new Date()
         desde.setDate(desde.getDate() - limite)
@@ -50,7 +51,7 @@ function AlphaButton({ userName }: { userName: string }) {
         console.error('Erro na ferramenta buscar_memoria:', err)
         return 'Erro ao buscar memórias.'
       }
-    }, [])
+    }, [supabase])
   )
 
   const handleClick = useCallback(async () => {
@@ -80,9 +81,9 @@ function AlphaButton({ userName }: { userName: string }) {
   }, [status])
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+    <div className="fixed bottom-6 right-6 z-[60] flex flex-col items-end gap-3 pointer-events-none">
       {active && (
-        <div className="bg-[#0f1a14] border border-[#00ff88]/30 rounded-2xl p-4 shadow-2xl w-48">
+        <div className="bg-[#0f1a14] border border-[#00ff88]/30 rounded-2xl p-4 shadow-2xl w-48 pointer-events-auto">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-2 h-2 rounded-full bg-[#00ff88] animate-pulse" />
             <span className="text-[#00ff88] text-sm font-semibold">Alpha ativa</span>
@@ -93,7 +94,7 @@ function AlphaButton({ userName }: { userName: string }) {
       <button
         onClick={handleClick}
         disabled={loading}
-        className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all disabled:opacity-50"
+        className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all disabled:opacity-50 pointer-events-auto hover:scale-110 active:scale-95"
         style={{
           backgroundColor: active ? '#0f1a14' : '#00ff88',
           border: '2px solid #00ff88',
@@ -114,9 +115,9 @@ function AlphaButton({ userName }: { userName: string }) {
 export function AlphaWidget() {
   const [userName, setUserName] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
-    const supabase = createClient()
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) { 
         setUserName('')
@@ -131,14 +132,13 @@ export function AlphaWidget() {
         .single()
       setUserName(profile?.name ?? data.user.email ?? '')
     })
-  }, [])
+  }, [supabase])
 
   const handleDisconnect = useCallback(async (conversation: any) => {
     console.log('Alpha desconectada')
     if (!userId || !conversation?.transcript || conversation.transcript.length === 0) return
 
     try {
-      const supabase = createClient()
       const { error } = await supabase
         .from('conversations')
         .insert({
@@ -151,7 +151,7 @@ export function AlphaWidget() {
     } catch (err) {
       console.error('Erro ao salvar conversa no Supabase:', err)
     }
-  }, [userId])
+  }, [userId, supabase])
 
   if (userName === null) return null
 

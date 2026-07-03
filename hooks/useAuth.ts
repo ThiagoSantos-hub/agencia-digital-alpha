@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { createClient } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
 
@@ -11,61 +11,78 @@ interface Profile {
   role: 'admin' | 'manager'
 }
 
+// Cache global simples para o perfil durante a sessão
+let cachedProfile: Profile | null = null
+
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const [profile, setProfile] = useState<Profile | null>(cachedProfile)
+  const [loading, setLoading] = useState(!cachedProfile)
+  const supabase = useMemo(() => createClient(), [])
 
-  // Evita buscar o perfil mais de uma vez para o mesmo user id
   const fetchingProfileFor = useRef<string | null>(null)
 
   const fetchProfile = async (userId: string) => {
-    if (fetchingProfileFor.current === userId) return
+    if (fetchingProfileFor.current === userId || cachedProfile?.id === userId) return
     fetchingProfileFor.current = userId
 
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
 
-    setProfile(data)
-    fetchingProfileFor.current = null
+      if (data) {
+        cachedProfile = data
+        setProfile(data)
+      }
+    } finally {
+      fetchingProfileFor.current = null
+    }
   }
 
   useEffect(() => {
-    // Usa getSession (cache local) em vez de getUser (round-trip ao servidor)
-    // getSession é suficiente para obter o user no client-side
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        fetchProfile(session.user.id).finally(() => setLoading(false))
+    // 1. Tentar pegar sessão imediata (síncrono se já carregado pelo Supabase)
+    const initializeAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      const initialUser = session?.user ?? null
+      setUser(initialUser)
+      
+      if (initialUser) {
+        if (cachedProfile?.id === initialUser.id) {
+          setLoading(false)
+        } else {
+          await fetchProfile(initialUser.id)
+          setLoading(false)
+        }
       } else {
         setLoading(false)
       }
-    })
+    }
 
-    // onAuthStateChange cuida de login/logout em tempo real
+    initializeAuth()
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         const newUser = session?.user ?? null
         setUser(newUser)
 
         if (newUser) {
-          await fetchProfile(newUser.id)
+          if (cachedProfile?.id !== newUser.id) {
+            await fetchProfile(newUser.id)
+          }
         } else {
+          cachedProfile = null
           setProfile(null)
           fetchingProfileFor.current = null
         }
-
-        // Só tira o loading se ainda estiver true (evita piscar na troca de estado)
         setLoading(false)
       }
     )
 
     return () => subscription.unsubscribe()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [supabase])
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -73,6 +90,7 @@ export function useAuth() {
   }
 
   const signOut = async () => {
+    cachedProfile = null
     setProfile(null)
     await supabase.auth.signOut()
   }
