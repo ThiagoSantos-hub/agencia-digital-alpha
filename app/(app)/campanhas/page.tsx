@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { useCampanhas, Campaign, CampaignMetric } from '@/hooks/useCampanhas'
-import { Search, Megaphone, ChevronDown, ChevronUp, BarChart2, RefreshCw, Calendar, ExternalLink, Filter, AlertTriangle } from 'lucide-react'
+import { useClientes } from '@/hooks/useClientes'
+import { Search, Megaphone, BarChart2, RefreshCw, Calendar, ExternalLink, Filter, AlertTriangle, ChevronDown, ChevronUp, User } from 'lucide-react'
 
 const statusConfig = {
   ativa:      { label: 'Ativa',      className: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
@@ -11,9 +12,9 @@ const statusConfig = {
   rascunho:   { label: 'Rascunho',   className: 'text-blue-400 bg-blue-500/10 border-blue-500/30'          },
 }
 
-function CampaignCard({ campaign, fetchMetrics }: { 
+function CampaignCard({ campaign, fetchMetrics }: {
   campaign: Campaign
-  fetchMetrics: (id: string) => Promise<CampaignMetric[]>
+  fetchMetrics: (id: string, metaCampaignId: string) => Promise<CampaignMetric[]>
 }) {
   const [expandido, setExpandido] = useState(false)
   const [metrics, setMetrics] = useState<CampaignMetric[]>([])
@@ -22,7 +23,7 @@ function CampaignCard({ campaign, fetchMetrics }: {
   const loadMetrics = async () => {
     if (!expandido) {
       setLoadingMetrics(true)
-      const data = await fetchMetrics(campaign.id)
+      const data = await fetchMetrics(campaign.id, campaign.meta_campaign_id || '')
       setMetrics(data)
       setLoadingMetrics(false)
     }
@@ -85,10 +86,77 @@ function CampaignCard({ campaign, fetchMetrics }: {
             </div>
           )}
           <div className="mt-4 flex justify-end">
-            <button className="flex items-center gap-1.5 text-[10px] font-bold text-gray-600 hover:text-white transition-colors uppercase tracking-widest">
+            <a
+              href={`https://www.facebook.com/adsmanager/manage/campaigns?act=${campaign.meta_campaign_id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-[10px] font-bold text-gray-600 hover:text-white transition-colors uppercase tracking-widest"
+            >
               Abrir no Gerenciador <ExternalLink size={12} />
-            </button>
+            </a>
           </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ClienteAccordion({ clienteId, clienteNome, campaigns, fetchMetrics, statusFilter, search }: {
+  clienteId: string
+  clienteNome: string
+  campaigns: Campaign[]
+  fetchMetrics: (id: string, metaCampaignId: string) => Promise<CampaignMetric[]>
+  statusFilter: string
+  search: string
+}) {
+  const [aberto, setAberto] = useState(false)
+
+  const campanhasFiltradas = useMemo(() => {
+    return campaigns.filter(c => {
+      const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase())
+      const matchesStatus = statusFilter === 'todas' || c.status === statusFilter
+      return matchesSearch && matchesStatus
+    })
+  }, [campaigns, search, statusFilter])
+
+  if (campanhasFiltradas.length === 0) return null
+
+  const ativas = campanhasFiltradas.filter(c => c.status === 'ativa').length
+
+  return (
+    <div className="bg-[#111] border border-[#2a2a2a] rounded-2xl overflow-hidden">
+      {/* Header do cliente */}
+      <button
+        onClick={() => setAberto(!aberto)}
+        className="w-full flex items-center justify-between px-6 py-4 hover:bg-[#1a1a1a] transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+            <User size={16} className="text-indigo-400" />
+          </div>
+          <div className="text-left">
+            <p className="text-white font-bold text-sm">{clienteNome}</p>
+            <p className="text-gray-500 text-xs">{campanhasFiltradas.length} campanha{campanhasFiltradas.length !== 1 ? 's' : ''} • {ativas} ativa{ativas !== 1 ? 's' : ''}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-indigo-400 text-xs font-bold bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-full">
+            {campanhasFiltradas.length}
+          </span>
+          {aberto ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+        </div>
+      </button>
+
+      {/* Campanhas do cliente */}
+      {aberto && (
+        <div className="px-4 pb-4 space-y-3 border-t border-[#2a2a2a] pt-4">
+          {campanhasFiltradas.map(campaign => (
+            <CampaignCard
+              key={campaign.id}
+              campaign={campaign}
+              fetchMetrics={fetchMetrics}
+            />
+          ))}
         </div>
       )}
     </div>
@@ -97,19 +165,28 @@ function CampaignCard({ campaign, fetchMetrics }: {
 
 export default function CampanhasPage() {
   const { campaigns, loading, error, syncAllMetaCampaigns, fetchMetrics } = useCampanhas()
+  const { clients } = useClientes()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('todas')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [localError, setLocalError] = useState<string | null>(null)
 
-  const filteredCampaigns = useMemo(() => {
-    return campaigns.filter(c => {
-      const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase())
-      const matchesStatus = statusFilter === 'todas' || c.status === statusFilter
-      return matchesSearch && matchesStatus
+  // Agrupar campanhas por cliente
+  const campanhasPorCliente = useMemo(() => {
+    const grupos: Record<string, { nome: string; campaigns: Campaign[] }> = {}
+    campaigns.forEach(c => {
+      if (!grupos[c.client_id]) {
+        const cliente = clients.find(cl => cl.id === c.client_id)
+        grupos[c.client_id] = {
+          nome: cliente?.name ?? `Cliente ${c.client_id.slice(0, 8)}`,
+          campaigns: [],
+        }
+      }
+      grupos[c.client_id].campaigns.push(c)
     })
-  }, [campaigns, search, statusFilter])
+    return grupos
+  }, [campaigns, clients])
 
   const handleSync = async () => {
     setLocalError(null)
@@ -131,7 +208,7 @@ export default function CampanhasPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={handleSync}
             disabled={loading}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-medium transition-all ${loading ? 'bg-indigo-500/20 text-indigo-400' : 'bg-[#1a1a1a] border border-[#2a2a2a] text-gray-300 hover:text-white'}`}
@@ -155,9 +232,9 @@ export default function CampanhasPage() {
       <div className="flex flex-wrap items-center gap-4 bg-[#1a1a1a] p-3 rounded-2xl border border-[#2a2a2a] shadow-lg">
         <div className="relative flex-1 min-w-[200px]">
           <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input 
-            type="text" 
-            placeholder="Buscar campanha pelo nome..." 
+          <input
+            type="text"
+            placeholder="Buscar campanha pelo nome..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full pl-12 pr-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 transition-all"
@@ -166,7 +243,7 @@ export default function CampanhasPage() {
 
         <div className="flex items-center gap-2 px-4 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl">
           <Filter size={16} className="text-indigo-400" />
-          <select 
+          <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
             className="bg-transparent text-white text-sm focus:outline-none cursor-pointer"
@@ -180,17 +257,17 @@ export default function CampanhasPage() {
 
         <div className="flex items-center gap-2 px-4 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl">
           <Calendar size={16} className="text-indigo-400" />
-          <input 
-            type="date" 
-            value={startDate} 
+          <input
+            type="date"
+            value={startDate}
             onChange={e => setStartDate(e.target.value)}
             className="bg-transparent text-white text-sm focus:outline-none"
             style={{ colorScheme: 'dark' }}
           />
           <span className="text-gray-600">—</span>
-          <input 
-            type="date" 
-            value={endDate} 
+          <input
+            type="date"
+            value={endDate}
             onChange={e => setEndDate(e.target.value)}
             className="bg-transparent text-white text-sm focus:outline-none"
             style={{ colorScheme: 'dark' }}
@@ -204,18 +281,22 @@ export default function CampanhasPage() {
             <RefreshCw size={32} className="animate-spin text-indigo-500" />
             <p className="text-gray-500 text-sm">Buscando campanhas no Meta Ads...</p>
           </div>
-        ) : filteredCampaigns.length === 0 ? (
+        ) : Object.keys(campanhasPorCliente).length === 0 ? (
           <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-3xl p-20 text-center">
             <Megaphone size={48} className="text-gray-700 mx-auto mb-4" />
             <h3 className="text-white font-medium text-lg">Nenhuma campanha encontrada</h3>
             <p className="text-gray-500 text-sm mt-1">Verifique sua conexão com o Meta Ads ou tente outro filtro.</p>
           </div>
         ) : (
-          filteredCampaigns.map(campaign => (
-            <CampaignCard 
-              key={campaign.id} 
-              campaign={campaign} 
-              fetchMetrics={fetchMetrics} 
+          Object.entries(campanhasPorCliente).map(([clienteId, { nome, campaigns: cams }]) => (
+            <ClienteAccordion
+              key={clienteId}
+              clienteId={clienteId}
+              clienteNome={nome}
+              campaigns={cams}
+              fetchMetrics={fetchMetrics}
+              statusFilter={statusFilter}
+              search={search}
             />
           ))
         )}
