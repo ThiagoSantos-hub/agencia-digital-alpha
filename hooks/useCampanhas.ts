@@ -1,5 +1,4 @@
 'use client'
-
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase'
 
@@ -38,12 +37,9 @@ export function useCampanhas() {
         .from('campaigns')
         .select('*')
         .order('created_at', { ascending: false })
-
       if (clientId) query = query.eq('client_id', clientId)
-
       const { data, error: localError } = await query
       if (localError) throw localError
-      
       setCampaigns(data ?? [])
       setError(null)
     } catch (err: any) {
@@ -57,24 +53,45 @@ export function useCampanhas() {
     fetchCampaigns()
   }, [fetchCampaigns])
 
-  const fetchMetrics = useCallback(async (campaignId: string): Promise<CampaignMetric[]> => {
-    const { data } = await supabase
-      .from('campaign_metrics')
-      .select('*')
-      .eq('campaign_id', campaignId)
-    return data ?? []
+  // Busca métricas reais do Meta Ads via API route
+  const fetchMetrics = useCallback(async (campaignId: string, metaCampaignId: string): Promise<CampaignMetric[]> => {
+    if (!metaCampaignId) {
+      // Sem ID Meta, retorna métricas salvas no banco
+      const { data } = await supabase
+        .from('campaign_metrics')
+        .select('*')
+        .eq('campaign_id', campaignId)
+      return data ?? []
+    }
+
+    try {
+      const res = await fetch('/api/campaigns/metrics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ campaignId, metaCampaignId }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error)
+      return json.metrics ?? []
+    } catch (err) {
+      console.error('Erro ao buscar métricas:', err)
+      // Fallback: retorna métricas salvas no banco
+      const { data } = await supabase
+        .from('campaign_metrics')
+        .select('*')
+        .eq('campaign_id', campaignId)
+      return data ?? []
+    }
   }, [supabase])
 
   const syncMetaCampaigns = useCallback(async (clientId: string, adAccountId: string) => {
     if (!adAccountId) return false
-    
     try {
       const res = await fetch('/api/campaigns/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clientId, adAccountId })
+        body: JSON.stringify({ clientId, adAccountId }),
       })
-      
       if (res.ok) {
         await fetchCampaigns()
         return true
@@ -89,7 +106,6 @@ export function useCampanhas() {
   const syncAllMetaCampaigns = useCallback(async () => {
     setLoading(true)
     try {
-      // 1. Buscar todos os clientes que têm ID de conta do Meta
       const { data: clients } = await supabase
         .from('clients')
         .select('id, meta_ad_account_id')
@@ -100,15 +116,13 @@ export function useCampanhas() {
         return
       }
 
-      // 2. Sincronizar um por um
       for (const client of clients) {
         await fetch('/api/campaigns/sync', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ clientId: client.id, adAccountId: client.meta_ad_account_id })
+          body: JSON.stringify({ clientId: client.id, adAccountId: client.meta_ad_account_id }),
         })
       }
-
       await fetchCampaigns()
     } catch (err: any) {
       setError(err.message)
@@ -124,6 +138,6 @@ export function useCampanhas() {
     refetch: fetchCampaigns,
     fetchMetrics,
     syncMetaCampaigns,
-    syncAllMetaCampaigns
+    syncAllMetaCampaigns,
   }
 }
