@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { ConversationProvider, useConversationControls, useConversationStatus } from '@elevenlabs/react'
 import { Mic, MicOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
@@ -10,13 +10,17 @@ function AlphaButton({ userName }: { userName: string }) {
   const { startSession, endSession } = useConversationControls()
   const { status } = useConversationStatus()
   const [loading, setLoading] = useState(false)
+  const sessionStarted = useRef(false)
   const active = status === 'connected'
 
   const handleClick = useCallback(async () => {
     if (active) {
+      sessionStarted.current = false
       await endSession()
       return
     }
+    if (sessionStarted.current) return
+    sessionStarted.current = true
     setLoading(true)
     try {
       const supabase = createClient()
@@ -69,10 +73,18 @@ function AlphaButton({ userName }: { userName: string }) {
           },
         },
         onConnect: () => setLoading(false),
-        onError: () => setLoading(false),
+        onDisconnect: () => {
+          setLoading(false)
+          sessionStarted.current = false
+        },
+        onError: () => {
+          setLoading(false)
+          sessionStarted.current = false
+        },
       })
     } catch {
       setLoading(false)
+      sessionStarted.current = false
     }
   }, [active, userName, startSession, endSession])
 
@@ -109,12 +121,12 @@ function AlphaButton({ userName }: { userName: string }) {
 }
 
 export function AlphaWidget() {
-  const [userName, setUserName] = useState('')
+  const [userName, setUserName] = useState<string | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(async ({ data }) => {
-      if (!data.user) return
+      if (!data.user) { setUserName(''); return }
       const { data: profile } = await supabase
         .from('profiles')
         .select('name')
@@ -123,6 +135,8 @@ export function AlphaWidget() {
       setUserName(profile?.name ?? data.user.email ?? '')
     })
   }, [])
+
+  if (userName === null) return null
 
   return (
     <ConversationProvider agentId={AGENT_ID}>
