@@ -203,8 +203,23 @@ export default function FinanceiroPage() {
   // ─── Listagem filtrada ───────────────────────────────────────────────────────
 
   const listagem = useMemo(() => {
-    return lancamentos.filter(l => {
-      // Filtro por Mês (Importante: Lançamentos avulsos só no mês deles, recorrentes em todos)
+    return lancamentos.map(l => {
+      // Se for recorrente e estivermos vendo um mês DIFERENTE do mês original do lançamento
+      const dataVencOriginal = new Date(l.data_vencimento + 'T00:00:00')
+      const mesOriginal = dataVencOriginal.getMonth()
+      const anoOriginal = dataVencOriginal.getFullYear()
+
+      const ehMesDiferente = mesOriginal !== mesAtivo || anoOriginal !== anoAtivo
+
+      if (l.recorrente && ehMesDiferente) {
+        // Criamos uma "projeção" para o mês atual: status sempre pendente
+        return { ...l, status: 'pendente' as StatusLancamento, data_pagamento: null }
+      }
+      return l
+    }).filter(l => {
+      // Filtro por Mês: 
+      // 1. Se for avulso, só aparece no mês dele.
+      // 2. Se for recorrente, aparece em todos os meses (mas a projeção acima garante status pendente nos futuros).
       const dataVenc = new Date(l.data_vencimento + 'T00:00:00')
       const mesLancamento = dataVenc.getMonth()
       const anoLancamento = dataVenc.getFullYear()
@@ -601,8 +616,8 @@ export default function FinanceiroPage() {
                   </div>
                 </div>
                 <button onClick={() => setEditStatus(s => s === 'pendente' ? 'pago' : 'pendente')}
-                  className={`w-10 h-6 rounded-full transition-colors relative ${editStatus === 'pendente' ? 'bg-[#00ff88]' : 'bg-[#1a3a24]'}`}>
-                  <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${editStatus === 'pendente' ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                  className={`w-11 h-6 rounded-full transition-colors relative flex items-center px-1 ${editStatus === 'pago' ? 'bg-[#00ff88]' : 'bg-[#1a3a24]'}`}>
+                  <div className={`w-4 h-4 bg-white rounded-full shadow-md transition-all duration-200 transform ${editStatus === 'pago' ? 'translate-x-5' : 'translate-x-0'}`} />
                 </button>
               </div>
 
@@ -623,8 +638,8 @@ export default function FinanceiroPage() {
                   </div>
                 </div>
                 <button onClick={() => setFormInput(p => ({ ...p, recorrente: !p.recorrente }))}
-                  className={`w-10 h-6 rounded-full transition-colors relative ${formInput.recorrente ? 'bg-[#00ff88]' : 'bg-[#1a3a24]'}`}>
-                  <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${formInput.recorrente ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                  className={`w-11 h-6 rounded-full transition-colors relative flex items-center px-1 ${formInput.recorrente ? 'bg-[#00ff88]' : 'bg-[#1a3a24]'}`}>
+                  <div className={`w-4 h-4 bg-white rounded-full shadow-md transition-all duration-200 transform ${formInput.recorrente ? 'translate-x-5' : 'translate-x-0'}`} />
                 </button>
               </div>
 
