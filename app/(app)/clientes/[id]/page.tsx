@@ -6,13 +6,13 @@ import { createClient } from '@/lib/supabase'
 import { Client } from '@/hooks/useClientes'
 import {
   ArrowLeft, Pencil, Trash2, Loader2, X,
-  Building2, Mail, Phone, CalendarDays, DollarSign, CreditCard
+  Building2, Mail, Phone, CalendarDays, DollarSign, CreditCard, Clock
 } from 'lucide-react'
 
 const statusConfig = {
   ativo:     { label: 'Ativo',     className: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
+  atrasado:  { label: 'Atrasado',  className: 'text-amber-400 bg-amber-500/10 border-amber-500/30'      },
   inativo:   { label: 'Inativo',   className: 'text-gray-400 bg-gray-500/10 border-gray-500/30'         },
-  prospecto: { label: 'Prospecto', className: 'text-amber-400 bg-amber-500/10 border-amber-500/30'      },
 }
 
 function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | null }) {
@@ -66,12 +66,49 @@ export default function ClientePerfilPage() {
 
   useEffect(() => {
     async function fetch() {
-      const { data } = await supabase
+      // 1. Buscar cliente
+      const { data: clientData } = await supabase
         .from('clients')
         .select('*')
         .eq('id', id)
         .single()
-      setClient(data ?? null)
+      
+      if (!clientData) {
+        setLoading(false)
+        return
+      }
+
+      // 2. Buscar financeiro para calcular atraso se estiver ativo
+      let finalStatus = clientData.status
+      let diasAtraso = 0
+
+      if (clientData.status !== 'inativo') {
+        const { data: finances } = await supabase
+          .from('finances')
+          .select('data_vencimento, status')
+          .eq('client_id', id)
+          .eq('tipo', 'receita')
+          .in('status', ['pendente', 'atrasado'])
+        
+        const hoje = new Date()
+        hoje.setHours(0, 0, 0, 0)
+
+        finances?.forEach(f => {
+          const vencimento = new Date(f.data_vencimento)
+          vencimento.setHours(0, 0, 0, 0)
+          if (vencimento < hoje || f.status === 'atrasado') {
+            finalStatus = 'atrasado'
+            const diffDays = Math.ceil(Math.abs(hoje.getTime() - vencimento.getTime()) / (1000 * 60 * 60 * 24))
+            if (diffDays > diasAtraso) diasAtraso = diffDays
+          }
+        })
+      }
+
+      setClient({
+        ...clientData,
+        status: finalStatus,
+        dias_atraso: diasAtraso
+      })
       setLoading(false)
     }
     fetch()
@@ -141,9 +178,16 @@ export default function ClientePerfilPage() {
               <h2 className="text-white text-lg font-semibold">{client.name}</h2>
               {client.company && <p className="text-gray-400 text-sm mt-0.5">{client.company}</p>}
             </div>
-            <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium border ${statusInfo.className}`}>
-              {statusInfo.label}
-            </span>
+            <div className="flex flex-col items-end gap-2">
+              <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium border ${statusInfo.className}`}>
+                {statusInfo.label}
+              </span>
+              {client.status === 'atrasado' && client.dias_atraso && (
+                <span className="flex items-center gap-1 text-xs text-amber-500 font-medium">
+                  <Clock size={12} /> {client.dias_atraso} dias de atraso
+                </span>
+              )}
+            </div>
           </div>
 
           <InfoRow icon={<Building2 size={15} />} label="Empresa" value={client.company} />
@@ -153,6 +197,12 @@ export default function ClientePerfilPage() {
             value={client.start_date
               ? new Date(client.start_date + 'T00:00:00').toLocaleDateString('pt-BR')
               : null} />
+          {client.status === 'inativo' && (
+            <InfoRow icon={<CalendarDays size={15} />} label="Data de inativação"
+              value={client.inativo_em
+                ? new Date(client.inativo_em).toLocaleDateString('pt-BR')
+                : null} />
+          )}
           <InfoRow icon={<DollarSign size={15} />} label="Mensalidade"
             value={client.monthly_fee != null
               ? `R$ ${client.monthly_fee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
