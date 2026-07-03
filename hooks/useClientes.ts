@@ -238,7 +238,7 @@ export function useClientes() {
     clients,
     loading,
     error,
-    refetch: fetchClientes,
+    refetch: fetchClients,
     createCliente,
     updateCliente,
     deleteCliente,
