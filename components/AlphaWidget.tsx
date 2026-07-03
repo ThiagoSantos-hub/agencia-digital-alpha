@@ -1,6 +1,6 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { ConversationProvider, useConversationControls, useConversationStatus } from '@elevenlabs/react'
+import { useState, useEffect, useCallback } from 'react'
+import { ConversationProvider, useConversationControls, useConversationStatus, useConversationClientTool } from '@elevenlabs/react'
 import { Mic, MicOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
@@ -12,53 +12,61 @@ function AlphaButton({ userName }: { userName: string }) {
   const [loading, setLoading] = useState(false)
   const active = status === 'connected'
 
-  const handleClick = async () => {
+  // Registro da ferramenta usando o hook dedicado para garantir que o cliente a reconheça corretamente
+  useConversationClientTool({
+    name: 'buscar_memoria',
+    description: 'Busca conversas anteriores para lembrar do contexto.',
+    handler: async ({ dias }: { dias?: number }) => {
+      const supabase = createClient()
+      const limite = dias ?? 7
+      const desde = new Date()
+      desde.setDate(desde.getDate() - limite)
+      
+      const { data } = await supabase
+        .from('conversations')
+        .select('start_time, transcript')
+        .gte('start_time', desde.toISOString())
+        .order('start_time', { ascending: false })
+        .limit(10)
+
+      if (!data || data.length === 0) return 'Nenhuma conversa encontrada neste período.'
+
+      return data.map((c) => {
+        const dataConversa = c.start_time
+          ? new Date(c.start_time).toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' })
+          : 'data desconhecida'
+        const transcricao = Array.isArray(c.transcript)
+          ? c.transcript.map((t: { role: string; message: string }) =>
+              `${t.role === 'agent' ? 'Alpha' : userName}: ${t.message}`).join('\n')
+          : 'sem transcrição'
+        return `--- ${dataConversa} ---\n${transcricao}`
+      }).join('\n\n')
+    },
+  })
+
+  const handleClick = useCallback(async () => {
     if (active) {
       await endSession()
       return
     }
     
-    // Previne múltiplos cliques enquanto está carregando
     if (loading) return
     
     setLoading(true)
     try {
-      const supabase = createClient()
+      // Solicita permissão de microfone explicitamente antes de iniciar
       await navigator.mediaDevices.getUserMedia({ audio: true })
+      
       await startSession({
         agentId: AGENT_ID,
-        clientTools: {
-          buscar_memoria: async ({ dias }: { dias?: number }) => {
-            const limite = dias ?? 7
-            const desde = new Date()
-            desde.setDate(desde.getDate() - limite)
-            const { data } = await supabase
-              .from('conversations')
-              .select('start_time, transcript')
-              .gte('start_time', desde.toISOString())
-              .order('start_time', { ascending: false })
-              .limit(10)
-            if (!data || data.length === 0) return 'Nenhuma conversa encontrada neste período.'
-            return data.map((c) => {
-              const dataConversa = c.start_time
-                ? new Date(c.start_time).toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' })
-                : 'data desconhecida'
-              const transcricao = Array.isArray(c.transcript)
-                ? c.transcript.map((t: { role: string; message: string }) =>
-                    `${t.role === 'agent' ? 'Alpha' : userName}: ${t.message}`).join('\n')
-                : 'sem transcrição'
-              return `--- ${dataConversa} ---\n${transcricao}`
-            }).join('\n\n')
-          },
-        },
-        onConnect: () => { setLoading(false) },
-        onDisconnect: () => { /* Sem ação necessária */ },
-        onError: () => { setLoading(false) },
+        // As ferramentas já estão registradas via useConversationClientTool
       })
-    } catch {
+    } catch (error) {
+      console.error('Erro ao iniciar sessão:', error)
+    } finally {
       setLoading(false)
     }
-  }
+  }, [active, loading, startSession, endSession])
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
@@ -94,17 +102,20 @@ function AlphaButton({ userName }: { userName: string }) {
 
 export function AlphaWidget() {
   const [userName, setUserName] = useState<string | null>(null)
-  const agora = new Date().toLocaleString('pt-BR', {
-    timeZone: 'America/Fortaleza',
-    weekday: 'long',
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  const [agora, setAgora] = useState('')
 
   useEffect(() => {
+    // Atualiza a hora apenas no cliente para evitar erros de hidratação
+    setAgora(new Date().toLocaleString('pt-BR', {
+      timeZone: 'America/Fortaleza',
+      weekday: 'long',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }))
+
     const supabase = createClient()
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) { setUserName(''); return }
