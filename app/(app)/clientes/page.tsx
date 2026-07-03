@@ -79,37 +79,35 @@ function FormFields({ form, set }: { form: ClienteForm; set: (f: keyof ClienteFo
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-gray-400">Data de entrada</label>
-          <input type="date" value={form.start_date}
-            onChange={(e) => set('start_date', e.target.value)}
-            className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-colors" />
-        </div>
-        <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-gray-400">Status</label>
-          <select value={form.status} onChange={(e) => set('status', e.target.value as ClienteForm['status'])}
-            className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-colors">
-            <option value="ativo">Ativo</option>
-            <option value="atrasado">Atrasado</option>
-            <option value="inativo">Inativo</option>
-          </select>
-        </div>
+      <div className="space-y-1.5">
+        <label className="block text-xs font-medium text-gray-400">Data de entrada</label>
+        <input type="date" value={form.start_date}
+          onChange={(e) => set('start_date', e.target.value)}
+          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-colors" />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-gray-400">Telefone</label>
-          <input type="tel" placeholder="(85) 99999-9999" value={form.phone}
-            onChange={(e) => set('phone', e.target.value)}
-            className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 transition-colors" />
-        </div>
-        <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-gray-400">E-mail</label>
-          <input type="email" placeholder="contato@empresa.com" value={form.email}
-            onChange={(e) => set('email', e.target.value)}
-            className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 transition-colors" />
-        </div>
+      <div className="space-y-1.5">
+        <label className="block text-xs font-medium text-gray-400">Status</label>
+        <select value={form.status} onChange={(e) => set('status', e.target.value as ClienteForm['status'])}
+          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-colors">
+          <option value="ativo">Ativo</option>
+          <option value="atrasado">Atrasado</option>
+          <option value="inativo">Inativo</option>
+        </select>
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="block text-xs font-medium text-gray-400">Telefone</label>
+        <input type="tel" placeholder="(85) 99999-9999" value={form.phone}
+          onChange={(e) => set('phone', e.target.value)}
+          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 transition-colors" />
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="block text-xs font-medium text-gray-400">E-mail da empresa</label>
+        <input type="email" placeholder="contato@empresa.com" value={form.email}
+          onChange={(e) => set('email', e.target.value)}
+          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 transition-colors" />
       </div>
     </div>
   )
@@ -367,39 +365,36 @@ export default function ClientesPage() {
           {list.length}
         </span>
       </div>
-      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-3xl overflow-hidden shadow-xl">
+      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left border-collapse">
             <thead>
               <tr className="border-b border-[#2a2a2a] bg-[#1f1f1f]/50">
-                <th className="px-6 py-4 text-gray-500 font-bold text-[10px] uppercase tracking-widest">Cliente / Empresa</th>
-                <th className="px-6 py-4 text-gray-500 font-bold text-[10px] uppercase tracking-widest">Contato</th>
-                <th className="px-6 py-4 text-gray-500 font-bold text-[10px] uppercase tracking-widest">Financeiro</th>
-                <th className="px-6 py-4 text-gray-500 font-bold text-[10px] uppercase tracking-widest">Status</th>
-                {title.includes('Inativos') && <th className="px-6 py-4 text-gray-500 font-bold text-[10px] uppercase tracking-widest">Inativado em</th>}
-                <th className="px-6 py-4 text-gray-500 font-bold text-[10px] uppercase tracking-widest text-right">Ações</th>
+                <th className="px-5 py-3 text-gray-500 font-medium">CLIENTE / EMPRESA</th>
+                <th className="px-5 py-3 text-gray-500 font-medium">CONTATO</th>
+                <th className="px-5 py-3 text-gray-500 font-medium">FINANCEIRO</th>
+                <th className="px-5 py-3 text-gray-500 font-medium">STATUS</th>
+                {title.includes('Inativos') && <th className="px-5 py-3 text-gray-500 font-medium">INATIVADO EM</th>}
+                <th className="px-5 py-3 text-gray-500 font-medium text-right pr-12">AÇÕES</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#2a2a2a]/50">
               {list.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
-                    <div className="flex flex-col items-center gap-2 text-gray-600">
-                      <Search size={24} />
-                      <p className="text-sm">Nenhum cliente encontrado nesta seção.</p>
-                    </div>
+                  <td colSpan={6} className="px-5 py-10 text-center text-gray-600">
+                    Nenhum cliente encontrado nesta seção.
                   </td>
                 </tr>
               ) : (
                 list.map((c) => (
-                  <tr key={c.id} className="hover:bg-white/[0.01] transition-colors group">
-                    <td className="px-6 py-4">
+                  <tr key={c.id} className="hover:bg-white/[0.02] transition-colors group">
+                    <td className="px-5 py-4">
                       <div className="flex flex-col">
-                        <span className="text-white font-bold text-sm group-hover:text-indigo-400 transition-colors">{c.name}</span>
+                        <span className="text-white font-bold text-sm">{c.name}</span>
                         <span className="text-gray-500 text-xs">{c.company || '—'}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-5 py-4">
                       <div className="flex flex-col gap-0.5">
                         <span className="text-gray-400 text-xs flex items-center gap-1.5">
                           {c.phone || '—'}
@@ -407,7 +402,7 @@ export default function ClientesPage() {
                         <span className="text-gray-600 text-[10px]">{c.email || '—'}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-5 py-4">
                       <div className="flex flex-col">
                         <span className="text-white font-medium text-sm">
                           {c.monthly_fee ? `R$ ${c.monthly_fee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'}
@@ -415,44 +410,44 @@ export default function ClientesPage() {
                         <span className="text-gray-500 text-[10px]">Dia {c.payment_day || '—'}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-5 py-4">
                       <div className="flex flex-col gap-1.5">
                         <span className={`inline-flex items-center w-fit px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${statusConfig[c.status].className}`}>
                           {statusConfig[c.status].label}
                         </span>
                         {c.status === 'atrasado' && c.dias_atraso && (
-                          <span className="text-amber-500 text-[10px] font-bold flex items-center gap-1 animate-pulse">
+                          <span className="text-amber-500 text-[10px] font-bold flex items-center gap-1">
                             <Clock size={10} /> {c.dias_atraso} dias
                           </span>
                         )}
                       </div>
                     </td>
                     {title.includes('Inativos') && (
-                      <td className="px-6 py-4 text-gray-400 text-xs">
+                      <td className="px-5 py-4 text-gray-400 text-xs">
                         {c.inativo_em ? new Date(c.inativo_em).toLocaleDateString('pt-BR') : '—'}
                       </td>
                     )}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="flex items-center bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-1 mr-2">
+                    <td className="px-5 py-4 pr-12">
+                      <div className="flex items-center justify-end gap-1">
+                        <div className="flex items-center bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-0.5 mr-2">
                           <button onClick={() => handleQuickStatus(c.id, 'ativo')} title="Marcar como Ativo"
-                            className={`p-1.5 rounded-lg transition-all ${c.status === 'ativo' ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-600 hover:text-emerald-400'}`}>
-                            <CheckCircle2 size={14} />
+                            className={`p-1 rounded-lg transition-all ${c.status === 'ativo' ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-600 hover:text-emerald-400'}`}>
+                            <CheckCircle2 size={13} />
                           </button>
                           <button onClick={() => handleQuickStatus(c.id, 'atrasado')} title="Marcar como Atrasado"
-                            className={`p-1.5 rounded-lg transition-all ${c.status === 'atrasado' ? 'bg-amber-500/20 text-amber-400' : 'text-gray-600 hover:text-amber-400'}`}>
-                            <Clock size={14} />
+                            className={`p-1 rounded-lg transition-all ${c.status === 'atrasado' ? 'bg-amber-500/20 text-amber-400' : 'text-gray-600 hover:text-amber-400'}`}>
+                            <Clock size={13} />
                           </button>
                           <button onClick={() => handleQuickStatus(c.id, 'inativo')} title="Marcar como Inativo"
-                            className={`p-1.5 rounded-lg transition-all ${c.status === 'inativo' ? 'bg-gray-500/20 text-gray-400' : 'text-gray-600 hover:text-white'}`}>
-                            <Ban size={14} />
+                            className={`p-1 rounded-lg transition-all ${c.status === 'inativo' ? 'bg-gray-500/20 text-gray-400' : 'text-gray-600 hover:text-white'}`}>
+                            <Ban size={13} />
                           </button>
                         </div>
                         <button onClick={() => setClienteEditar(c)} className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all">
-                          <Pencil size={16} />
+                          <Pencil size={15} />
                         </button>
                         <button onClick={() => setClienteExcluir(c)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/5 rounded-xl transition-all">
-                          <Trash2 size={16} />
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </td>
@@ -468,21 +463,21 @@ export default function ClientesPage() {
 
   return (
     <div className="space-y-8 pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-white text-3xl font-bold tracking-tight">Gestão de Clientes</h1>
+          <h1 className="text-white text-2xl font-bold">Gestão de Clientes</h1>
           <p className="text-gray-400 text-sm mt-1">Gerencie seus clientes ativos, atrasados e o histórico de inativos.</p>
         </div>
         <div className="flex items-center gap-3">
           <input type="file" ref={fileInputRef} onChange={handleImport} accept=".xlsx,.xls" className="hidden" />
-          <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-4 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] text-gray-300 hover:text-white rounded-2xl text-sm font-medium transition-all">
-            <Upload size={16} /> Importar
+          <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-3 py-2 bg-[#1a1a1a] border border-[#2a2a2a] text-gray-400 hover:text-white rounded-xl text-sm transition-all">
+            <Upload size={15} /> Importar
           </button>
-          <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] text-gray-300 hover:text-white rounded-2xl text-sm font-medium transition-all">
-            <Download size={16} /> Exportar
+          <button onClick={handleExport} className="flex items-center gap-2 px-3 py-2 bg-[#1a1a1a] border border-[#2a2a2a] text-gray-400 hover:text-white rounded-xl text-sm transition-all">
+            <Download size={15} /> Exportar
           </button>
-          <button onClick={() => setModalNovo(true)} className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl text-sm font-bold transition-all shadow-lg shadow-indigo-500/20">
-            <UserPlus size={18} /> Novo Cliente
+          <button onClick={() => setModalNovo(true)} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-500/20">
+            <UserPlus size={16} /> Novo Cliente
           </button>
         </div>
       </div>
