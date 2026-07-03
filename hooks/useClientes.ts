@@ -140,6 +140,10 @@ export function useClientes() {
   const updateCliente = async (id: string, input: Partial<ClientInput>) => {
     const payload = { ...input }
     
+    // Buscar cliente atual para saber se está sendo reativado
+    const clienteAtual = clients.find(c => c.id === id)
+    const estaReativando = clienteAtual?.status === 'inativo' && (payload.status === 'ativo' || payload.status === 'atrasado')
+
     if (payload.status === 'inativo') {
       payload.inativo_em = new Date().toISOString()
     } else if (payload.status === 'ativo' || payload.status === 'atrasado') {
@@ -166,6 +170,37 @@ export function useClientes() {
           .delete()
           .eq('client_id', id)
           .eq('status', 'pendente')
+      }
+
+      // Se o cliente está sendo reativado, recriar lançamentos financeiros
+      if (estaReativando && data.monthly_fee && data.payment_day) {
+        const hoje = new Date()
+        const dataVencimento = new Date(hoje.getFullYear(), hoje.getMonth(), data.payment_day).toISOString().split('T')[0]
+        
+        // Verificar se já existe lançamento para este mês
+        const { data: existente } = await supabase
+          .from('finances')
+          .select('id')
+          .eq('client_id', id)
+          .eq('data_vencimento', dataVencimento)
+          .maybeSingle()
+
+        if (!existente) {
+          await supabase.from('finances').insert({
+            user_id: data.manager_id,
+            client_id: data.id,
+            escopo: 'agencia',
+            tipo: 'receita',
+            categoria: 'Mensalidade de cliente',
+            descricao: `Mensalidade - ${data.name}`,
+            valor: data.monthly_fee,
+            dia_vencimento: data.payment_day,
+            data_vencimento: dataVencimento,
+            status: 'pendente',
+            recorrente: true,
+            recorrencia: 'mensal'
+          })
+        }
       }
 
       // Atualizar lançamentos financeiros se mensalidade ou dia mudou
@@ -203,7 +238,7 @@ export function useClientes() {
     clients,
     loading,
     error,
-    refetch: fetchClients,
+    refetch: fetchClientes,
     createCliente,
     updateCliente,
     deleteCliente,
