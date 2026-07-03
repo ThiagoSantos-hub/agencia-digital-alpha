@@ -161,7 +161,7 @@ export default function FinanceiroPage() {
 
   const {
     lancamentos,
-    totais,
+    totais: totaisBrutos,
     loading,
     refetch,
     createLancamento,
@@ -203,30 +203,32 @@ export default function FinanceiroPage() {
   // ─── Listagem filtrada ───────────────────────────────────────────────────────
 
   const listagem = useMemo(() => {
-    return lancamentos.map(l => {
-      // Se for recorrente e estivermos vendo um mês DIFERENTE do mês original do lançamento
-      const dataVencOriginal = new Date(l.data_vencimento + 'T00:00:00')
-      const mesOriginal = dataVencOriginal.getMonth()
-      const anoOriginal = dataVencOriginal.getFullYear()
-
-      const ehMesDiferente = mesOriginal !== mesAtivo || anoOriginal !== anoAtivo
-
-      if (l.recorrente && ehMesDiferente) {
-        // Criamos uma "projeção" para o mês atual: status sempre pendente
-        return { ...l, status: 'pendente' as StatusLancamento, data_pagamento: null }
-      }
-      return l
-    }).filter(l => {
-      // Filtro por Mês: 
-      // 1. Se for avulso, só aparece no mês dele.
-      // 2. Se for recorrente, aparece em todos os meses (mas a projeção acima garante status pendente nos futuros).
+    // 1. Primeiro, filtramos apenas os lançamentos que devem aparecer no mês selecionado
+    const filtradosPorMes = lancamentos.filter(l => {
       const dataVenc = new Date(l.data_vencimento + 'T00:00:00')
       const mesLancamento = dataVenc.getMonth()
       const anoLancamento = dataVenc.getFullYear()
-      
-      const noMesCorreto = l.recorrente || (mesLancamento === mesAtivo && anoLancamento === anoAtivo)
-      if (!noMesCorreto) return false
 
+      return l.recorrente || (mesLancamento === mesAtivo && anoLancamento === anoAtivo)
+    })
+
+    // 2. Ajustamos status para recorrências e corrigimos a data
+    return filtradosPorMes.map(l => {
+      const dataVencOriginal = new Date(l.data_vencimento + 'T00:00:00')
+      const mesOriginal = dataVencOriginal.getMonth()
+      const anoOriginal = dataVencOriginal.getFullYear()
+      const ehMesDiferente = mesOriginal !== mesAtivo || anoOriginal !== anoAtivo
+
+      if (l.recorrente && ehMesDiferente) {
+        return { 
+          ...l, 
+          status: 'pendente' as StatusLancamento, 
+          data_pagamento: null,
+          data_vencimento: `${anoAtivo}-${String(mesAtivo + 1).padStart(2, '0')}-${String(l.dia_vencimento).padStart(2, '0')}`
+        }
+      }
+      return l
+    }).filter(l => {
       const tipoOk =
         abaFiltro === 'todas' ||
         (abaFiltro === 'receitas' && l.tipo === 'receita') ||
@@ -237,6 +239,28 @@ export default function FinanceiroPage() {
       return tipoOk && buscaOk
     })
   }, [lancamentos, abaFiltro, busca, mesAtivo, anoAtivo])
+
+  // [INTELIGÊNCIA] Recalcular totais baseados na listagem projetada (não nos brutos do banco)
+  const totais = useMemo(() => {
+    const t = { receita: 0, gasto: 0, investimento: 0, saldo: 0, receita_paga: 0, receita_pendente: 0, gasto_pago: 0, gasto_pendente: 0 }
+    listagem.forEach(l => {
+      if (l.tipo === 'receita') {
+        t.receita += l.valor
+        if (l.status === 'pago') t.receita_paga += l.valor
+        else t.receita_pendente += l.valor
+      } else if (l.tipo === 'gasto') {
+        t.gasto += l.valor
+        if (l.status === 'pago') t.gasto_pago += l.valor
+        else t.gasto_pendente += l.valor
+      } else if (l.tipo === 'investimento') {
+        t.investimento += l.valor
+        if (l.status === 'pago') t.gasto_pago += l.valor
+        else t.gasto_pendente += l.valor
+      }
+    })
+    t.saldo = t.receita - t.gasto - t.investimento
+    return t
+  }, [listagem])
 
   const agrupados = useMemo(() => {
     const grupos: Record<string, Lancamento[]> = {}
