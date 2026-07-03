@@ -1,7 +1,10 @@
 'use client'
-// app/(app)/financeiro/page.tsx — v2.0.0
+// app/(app)/financeiro/page.tsx — v2.0.1
 // Módulo Financeiro — Visual inspirado no Grana Zen
 // Projeto: Agência Digital Alpha
+// CORREÇÕES v2.0.1:
+//   [BUG F-1] inputVazio: removidos campos data_vencimento e status (não pertencem a LancamentoInput)
+//   [BUG F-2] Cards de totais: corrigido acesso de .receitas/.gastos/.investimentos para .receita/.gasto/.investimento
 
 import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase'
@@ -45,14 +48,15 @@ const PALETTE = [
 
 type AbaFiltro = 'todas' | 'receitas' | 'despesas'
 
+// [BUG F-1 CORRIGIDO] Removidos data_vencimento e status — não pertencem a LancamentoInput.
+// data_vencimento é calculado automaticamente pelo hook a partir de dia_vencimento.
+// status é preenchido pelo sistema, não pelo formulário de criação.
 const inputVazio: LancamentoInput = {
   escopo: 'agencia',
   tipo: 'receita',
   categoria: '',
   descricao: '',
   valor: 0,
-  data_vencimento: '',
-  status: 'pendente',
   client_id: null,
   recorrente: false,
   recorrencia: null,
@@ -316,12 +320,13 @@ export default function FinanceiroPage() {
       )}
 
       {/* Cards de totais */}
+      {/* [BUG F-2 CORRIGIDO] Propriedades corrigidas para singular: .receita / .gasto / .investimento */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         {[
-          { label: 'Receitas', valor: totais?.receitas ?? 0, icon: TrendingUp, cor: '#00ff88', bg: 'bg-[#00ff88]/5 border-[#00ff88]/20' },
-          { label: 'Gastos', valor: totais?.gastos ?? 0, icon: TrendingDown, cor: '#ef4444', bg: 'bg-red-500/5 border-red-500/20' },
-          { label: 'Investimentos', valor: totais?.investimentos ?? 0, icon: PiggyBank, cor: '#3b82f6', bg: 'bg-blue-500/5 border-blue-500/20' },
-          { label: 'Saldo', valor: (totais?.receitas ?? 0) - (totais?.gastos ?? 0) - (totais?.investimentos ?? 0), icon: Wallet, cor: '#f59e0b', bg: 'bg-amber-500/5 border-amber-500/20' },
+          { label: 'Receitas',      valor: totais?.receita      ?? 0, icon: TrendingUp, cor: '#00ff88', bg: 'bg-[#00ff88]/5 border-[#00ff88]/20' },
+          { label: 'Gastos',        valor: totais?.gasto        ?? 0, icon: TrendingDown, cor: '#ef4444', bg: 'bg-red-500/5 border-red-500/20' },
+          { label: 'Investimentos', valor: totais?.investimento  ?? 0, icon: PiggyBank, cor: '#3b82f6', bg: 'bg-blue-500/5 border-blue-500/20' },
+          { label: 'Saldo',         valor: (totais?.receita ?? 0) - (totais?.gasto ?? 0) - (totais?.investimento ?? 0), icon: Wallet, cor: '#f59e0b', bg: 'bg-amber-500/5 border-amber-500/20' },
         ].map(c => {
           const Icon = c.icon
           const negativo = c.label === 'Saldo' && c.valor < 0
@@ -663,7 +668,7 @@ export default function FinanceiroPage() {
                 <label className="text-xs font-medium text-gray-400 mb-1.5 block">Data de Vencimento</label>
                 <input
                   type="date"
-                  value={formInput.data_vencimento}
+                  value={formInput.data_vencimento ?? ''}
                   onChange={e => setFormInput(p => ({ ...p, data_vencimento: e.target.value }))}
                   className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00ff88]/40"
                 />
