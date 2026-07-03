@@ -27,22 +27,13 @@ export interface CampaignMetric {
 
 export function useCampanhas() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const supabase = useMemo(() => createClient(), [])
 
-  const fetchCampaigns = useCallback(async (clientId?: string, dateRange?: { start: string, end: string }) => {
+  const fetchCampaigns = useCallback(async (clientId?: string) => {
     setLoading(true)
     try {
-      // 1. Buscar integração do Meta Ads para pegar o token
-      const { data: integration } = await supabase
-        .from('integrations')
-        .select('access_token')
-        .eq('type', 'meta_ads')
-        .eq('status', 'connected')
-        .maybeSingle()
-
-      // 2. Buscar campanhas locais do banco
       let query = supabase
         .from('campaigns')
         .select('*')
@@ -50,14 +41,10 @@ export function useCampanhas() {
 
       if (clientId) query = query.eq('client_id', clientId)
 
-      const { data: localCampaigns, error: localError } = await query
+      const { data, error: localError } = await query
       if (localError) throw localError
-
-      // 3. Se houver token e clientId com meta_ad_account_id, buscar dados REAIS do Meta Ads
-      // Nota: Aqui estamos preparando a estrutura para a chamada de API real
-      // Por enquanto, vamos retornar os dados locais, mas a lógica de sync será via API route
       
-      setCampaigns(localCampaigns ?? [])
+      setCampaigns(data ?? [])
       setError(null)
     } catch (err: any) {
       setError(err.message)
@@ -66,7 +53,11 @@ export function useCampanhas() {
     }
   }, [supabase])
 
-  const fetchMetrics = useCallback(async (campaignId: string, dateRange?: { start: string, end: string }): Promise<CampaignMetric[]> => {
+  useEffect(() => {
+    fetchCampaigns()
+  }, [fetchCampaigns])
+
+  const fetchMetrics = useCallback(async (campaignId: string): Promise<CampaignMetric[]> => {
     const { data } = await supabase
       .from('campaign_metrics')
       .select('*')
@@ -75,14 +66,24 @@ export function useCampanhas() {
   }, [supabase])
 
   const syncMetaCampaigns = async (clientId: string, adAccountId: string) => {
-    // Chamada para a API route que fará o sync real com o Meta
-    const res = await fetch('/api/campaigns/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clientId, adAccountId })
-    })
-    if (res.ok) await fetchCampaigns(clientId)
-    return res.ok
+    if (!adAccountId) return false
+    
+    try {
+      const res = await fetch('/api/campaigns/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId, adAccountId })
+      })
+      
+      if (res.ok) {
+        await fetchCampaigns(clientId)
+        return true
+      }
+      return false
+    } catch (err) {
+      console.error('Erro ao sincronizar:', err)
+      return false
+    }
   }
 
   return {

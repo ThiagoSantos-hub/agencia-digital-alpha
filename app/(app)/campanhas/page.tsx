@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useCampanhas, Campaign, CampaignMetric } from '@/hooks/useCampanhas'
 import { useClientes, Client } from '@/hooks/useClientes'
-import { Search, Megaphone, ChevronDown, ChevronUp, BarChart2, Eye, EyeOff, RefreshCw, Calendar, ExternalLink } from 'lucide-react'
+import { Search, Megaphone, ChevronDown, ChevronUp, BarChart2, Eye, EyeOff, RefreshCw, Calendar, ExternalLink, AlertCircle } from 'lucide-react'
 
 const statusConfig = {
   ativa:      { label: 'Ativa',      className: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
@@ -98,14 +98,24 @@ function CampaignRow({ campaign, fetchMetrics }: {
   )
 }
 
-function ClientCampaignSection({ client, campaigns, fetchMetrics, onToggleVisibility }: {
+function ClientCampaignSection({ client, campaigns, fetchMetrics, onToggleVisibility, onSync }: {
   client: Client
   campaigns: Campaign[]
   fetchMetrics: (id: string) => Promise<CampaignMetric[]>
   onToggleVisibility: (id: string, visible: boolean) => void
+  onSync: (clientId: string, adAccountId: string) => Promise<void>
 }) {
   const [isOpen, setIsOpen] = useState(false)
+  const [syncing, setSyncing] = useState(false)
   
+  const handleSync = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!client.meta_ad_account_id) return
+    setSyncing(true)
+    await onSync(client.id, client.meta_ad_account_id)
+    setSyncing(false)
+  }
+
   if (!client.show_campaigns && !isOpen) {
     return (
       <div className="bg-[#1a1a1a]/40 border border-[#2a2a2a] rounded-2xl p-4 flex items-center justify-between opacity-60">
@@ -145,10 +155,23 @@ function ClientCampaignSection({ client, campaigns, fetchMetrics, onToggleVisibi
                 {campaigns.length} Campanhas
               </span>
             </div>
-            <p className="text-gray-500 text-xs mt-0.5">Conta: {client.meta_ad_account_id || 'Não vinculada'}</p>
+            <p className="text-gray-500 text-xs mt-0.5 flex items-center gap-2">
+              Conta: {client.meta_ad_account_id || 'Não vinculada'}
+              {!client.meta_ad_account_id && <AlertCircle size={12} className="text-amber-500" />}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-4">
+          {client.meta_ad_account_id && (
+            <button 
+              onClick={handleSync}
+              disabled={syncing}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${syncing ? 'bg-indigo-500/10 text-indigo-400' : 'bg-[#0f0f0f] border border-[#2a2a2a] text-gray-400 hover:text-white'}`}
+            >
+              <RefreshCw size={14} className={syncing ? 'animate-spin' : ''} />
+              {syncing ? 'Sincronizando...' : 'Sincronizar Meta'}
+            </button>
+          )}
           <button 
             onClick={(e) => { e.stopPropagation(); onToggleVisibility(client.id, false) }}
             className="p-2 text-gray-500 hover:text-red-400 transition-colors"
@@ -178,7 +201,14 @@ function ClientCampaignSection({ client, campaigns, fetchMetrics, onToggleVisibi
               {campaigns.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-10 text-center text-gray-500 text-sm">
-                    Nenhuma campanha encontrada no Meta Ads para este cliente.
+                    {syncing ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <RefreshCw size={16} className="animate-spin text-indigo-500" />
+                        Buscando campanhas no Meta Ads...
+                      </div>
+                    ) : (
+                      <>Nenhuma campanha encontrada no Meta Ads para este cliente.</>
+                    )}
                   </td>
                 </tr>
               ) : (
@@ -200,14 +230,13 @@ function ClientCampaignSection({ client, campaigns, fetchMetrics, onToggleVisibi
 }
 
 export default function CampanhasPage() {
-  const { campaigns, loading: loadingCamp, fetchMetrics } = useCampanhas()
+  const { campaigns, loading: loadingCamp, fetchMetrics, syncMetaCampaigns } = useCampanhas()
   const { clients, loading: loadingCli, updateCliente } = useClientes()
   
   const [search, setSearch] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
 
-  // Filtrar apenas clientes ativos
   const activeClients = useMemo(() => {
     return clients.filter(c => c.status === 'ativo' || c.status === 'atrasado')
   }, [clients])
@@ -223,11 +252,15 @@ export default function CampanhasPage() {
     await updateCliente(id, { show_campaigns: visible })
   }
 
-  if (loadingCli || (loadingCamp && campaigns.length === 0)) {
+  const handleSync = async (clientId: string, adAccountId: string) => {
+    await syncMetaCampaigns(clientId, adAccountId)
+  }
+
+  if (loadingCli) {
     return (
       <div className="flex flex-col items-center justify-center py-20 space-y-4">
         <RefreshCw className="animate-spin text-indigo-500" size={32} />
-        <p className="text-gray-400 text-sm">Sincronizando com Meta Ads...</p>
+        <p className="text-gray-400 text-sm">Carregando dados...</p>
       </div>
     )
   }
@@ -289,6 +322,7 @@ export default function CampanhasPage() {
               campaigns={campaigns.filter(camp => camp.client_id === client.id)}
               fetchMetrics={fetchMetrics}
               onToggleVisibility={handleToggleVisibility}
+              onSync={handleSync}
             />
           ))
         )}

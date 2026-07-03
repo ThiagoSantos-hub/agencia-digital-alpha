@@ -20,10 +20,15 @@ export async function POST(req: Request) {
 
     // 2. Chamar API do Meta para buscar campanhas reais
     // Documentação: https://developers.facebook.com/docs/marketing-api/reference/ad-account/campaigns/
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 15000) // 15 segundos de timeout
+
     const metaRes = await fetch(
-      `https://graph.facebook.com/v19.0/${adAccountId}/campaigns?fields=id,name,status,start_time,stop_time,daily_budget,lifetime_budget&access_token=${integration.access_token}`
+      `https://graph.facebook.com/v19.0/${adAccountId}/campaigns?fields=id,name,status,start_time,stop_time,daily_budget,lifetime_budget&access_token=${integration.access_token}`,
+      { signal: controller.signal }
     )
     
+    clearTimeout(timeoutId)
     const metaData = await metaRes.json()
     if (metaData.error) throw new Error(metaData.error.message)
 
