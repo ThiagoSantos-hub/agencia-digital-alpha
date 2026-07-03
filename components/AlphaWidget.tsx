@@ -12,11 +12,10 @@ function AlphaButton({ userName }: { userName: string }) {
   const [loading, setLoading] = useState(false)
   const active = status === 'connected'
 
-  // Registro da ferramenta usando o hook dedicado para garantir que o cliente a reconheça corretamente
-  useConversationClientTool({
-    name: 'buscar_memoria',
-    description: 'Busca conversas anteriores para lembrar do contexto.',
-    handler: async ({ dias }: { dias?: number }) => {
+  // Registro da ferramenta usando o hook dedicado com assinatura correta (nome, handler)
+  useConversationClientTool(
+    'buscar_memoria',
+    useCallback(async ({ dias }: { dias?: number }) => {
       const supabase = createClient()
       const limite = dias ?? 7
       const desde = new Date()
@@ -41,8 +40,8 @@ function AlphaButton({ userName }: { userName: string }) {
           : 'sem transcrição'
         return `--- ${dataConversa} ---\n${transcricao}`
       }).join('\n\n')
-    },
-  })
+    }, [userName])
+  )
 
   const handleClick = useCallback(async () => {
     if (active) {
@@ -59,11 +58,9 @@ function AlphaButton({ userName }: { userName: string }) {
       
       await startSession({
         agentId: AGENT_ID,
-        // As ferramentas já estão registradas via useConversationClientTool
       })
     } catch (error) {
       console.error('Erro ao iniciar sessão:', error)
-    } finally {
       setLoading(false)
     }
   }, [active, loading, startSession, endSession])
