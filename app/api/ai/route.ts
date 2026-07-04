@@ -1,17 +1,19 @@
-// app/api/ai/route.ts — v1.1.0
-// Endpoint POST do módulo Alpha AI
+// app/api/ai/route.ts — v1.2.0
+// Correção: trocado createClient (browser) por createServerClient (server)
+// O browser client não lê cookies em API Routes — causava erro 401
+
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient }  from '@/lib/supabase'
-import { alphaAI }       from '@/lib/ai/AIService'
-import { memoryService } from '@/lib/ai/MemoryService'
-import { voiceService }  from '@/lib/ai/VoiceService'
-import { crmTools }      from '@/lib/ai/CRMToolsService'
-import type { Message }  from '@/lib/ai/types'
+import { createServerClient } from '@/lib/supabase-server'  // ← CORRIGIDO
+import { alphaAI }            from '@/lib/ai/AIService'
+import { memoryService }      from '@/lib/ai/MemoryService'
+import { voiceService }       from '@/lib/ai/VoiceService'
+import { crmTools }           from '@/lib/ai/CRMToolsService'
+import type { Message }       from '@/lib/ai/types'
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Autenticação
-    const supabase = createClient()
+    // 1. Autenticação — server client lê cookies corretamente
+    const supabase = createServerClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
@@ -19,7 +21,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Parse do body
     const body = await req.json()
-    const mensagem: string    = body.mensagem   ?? ''
+    const mensagem:   string  = body.mensagem   ?? ''
     const incluirVoz: boolean = body.incluirVoz ?? false
 
     if (!mensagem.trim()) {
