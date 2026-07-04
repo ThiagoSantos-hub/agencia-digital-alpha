@@ -426,7 +426,7 @@ export default function ClientesPage() {
                           {statusConfig[c.status].label}
                         </span>
                         {/* CORREÇÃO: > 0 evita que o React renderize o número 0 na tela */}
-                        {c.status === 'atrasado' && c.dias_atraso > 0 && (
+                        {(c.status === 'atrasado') && ((c.dias_atraso ?? 0) > 0) && (
                           <span className="text-amber-500 text-[10px] font-bold flex items-center gap-1">
                             <Clock size={10} /> {c.dias_atraso} dias
                           </span>
