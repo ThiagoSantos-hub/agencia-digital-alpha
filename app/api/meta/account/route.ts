@@ -24,8 +24,8 @@ export async function GET(req: NextRequest) {
 
     const accountId = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`
 
-    // Apenas campos confirmados como válidos na API pública do Meta
-    const fields = 'balance,currency,funding_source_details'
+    // Buscar todos os campos financeiros disponíveis
+    const fields = 'balance,currency,funding_source_details,amount_spent,spend_cap,account_status'
     const metaUrl = new URL(`https://graph.facebook.com/v19.0/${accountId}`)
     metaUrl.searchParams.set('fields', fields)
     metaUrl.searchParams.set('access_token', integration.access_token)
@@ -38,25 +38,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: metaData.error.message }, { status: 400 })
     }
 
-    const currency = metaData.currency ?? 'BRL'
+    // Retornar raw para debug — remover depois
+    return NextResponse.json({ raw: metaData })
 
-    const fmtBRL = (centavos: number | string | null | undefined) => {
-      if (centavos === null || centavos === undefined) return null
-      const valor = typeof centavos === 'string' ? parseFloat(centavos) : centavos
-      return (valor / 100).toLocaleString('pt-BR', { style: 'currency', currency })
-    }
-
-    const funding = metaData.funding_source_details
-    const temCartao = funding?.type === 1
-
-    const saldo = fmtBRL(metaData.balance)
-
-    return NextResponse.json({
-      saldo,
-      fundos: null,
-      temCartao: temCartao ?? false,
-      currency,
-    })
   } catch (error: any) {
     console.error('Erro ao buscar conta Meta:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
