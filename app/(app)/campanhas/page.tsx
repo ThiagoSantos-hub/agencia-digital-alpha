@@ -17,13 +17,10 @@ const statusConfig = {
   rascunho:   { label: 'Rascunho',   className: 'text-blue-400 bg-blue-500/10 border-blue-500/30'          },
 }
 
-// ─── Dados financeiros da conta Meta ────────────────────────────────────────
-
 interface MetaAccountInfo {
   saldo: string | null
   fundos: string | null
   temCartao: boolean
-  isPrepay: boolean
 }
 
 function useMetaAccount(adAccountId: string | null) {
@@ -46,8 +43,6 @@ function useMetaAccount(adAccountId: string | null) {
 
   return { info, loading }
 }
-
-// ─── Modal de seleção de métricas ────────────────────────────────────────────
 
 function MetricSelectorModal({ campaign, allOptions, onSave, onClose }: {
   campaign: Campaign
@@ -90,15 +85,8 @@ function MetricSelectorModal({ campaign, allOptions, onSave, onClose }: {
             {allOptions.map(opt => {
               const ativo = selected.includes(opt.key)
               return (
-                <button
-                  key={opt.key}
-                  onClick={() => toggle(opt.key)}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-xl border text-left text-xs font-medium transition-all ${
-                    ativo
-                      ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-300'
-                      : 'bg-[#1a1a1a] border-[#2a2a2a] text-gray-400 hover:text-white hover:border-[#3a3a3a]'
-                  }`}
-                >
+                <button key={opt.key} onClick={() => toggle(opt.key)}
+                  className={`flex items-center justify-between px-3 py-2.5 rounded-xl border text-left text-xs font-medium transition-all ${ativo ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-300' : 'bg-[#1a1a1a] border-[#2a2a2a] text-gray-400 hover:text-white hover:border-[#3a3a3a]'}`}>
                   <span>{opt.label}</span>
                   {ativo && <Check size={12} className="text-indigo-400 shrink-0 ml-2" />}
                 </button>
@@ -107,9 +95,7 @@ function MetricSelectorModal({ campaign, allOptions, onSave, onClose }: {
           </div>
         </div>
         <div className="px-6 py-4 border-t border-[#2a2a2a] flex gap-3">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-[#2a2a2a] text-gray-400 text-sm hover:text-white transition-colors">
-            Cancelar
-          </button>
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-[#2a2a2a] text-gray-400 text-sm hover:text-white transition-colors">Cancelar</button>
           <button onClick={handleSave} disabled={saving || selected.length === 0}
             className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors">
             {saving ? 'Salvando...' : `Salvar (${selected.length})`}
@@ -119,8 +105,6 @@ function MetricSelectorModal({ campaign, allOptions, onSave, onClose }: {
     </div>
   )
 }
-
-// ─── Card de campanha ─────────────────────────────────────────────────────────
 
 function CampaignCard({ campaign, fetchMetrics, fetchAllMetricOptions, saveSelectedMetrics, dateStart, dateEnd }: {
   campaign: Campaign
@@ -141,13 +125,7 @@ function CampaignCard({ campaign, fetchMetrics, fetchAllMetricOptions, saveSelec
     let cancelled = false
     const reload = async () => {
       setLoadingMetrics(true)
-      const data = await fetchMetrics(
-        campaign.id,
-        campaign.meta_campaign_id || '',
-        campaign.selected_metrics ?? undefined,
-        dateStart || undefined,
-        dateEnd || undefined,
-      )
+      const data = await fetchMetrics(campaign.id, campaign.meta_campaign_id || '', campaign.selected_metrics ?? undefined, dateStart || undefined, dateEnd || undefined)
       if (!cancelled) { setMetrics(data); setLoadingMetrics(false) }
     }
     reload()
@@ -157,13 +135,7 @@ function CampaignCard({ campaign, fetchMetrics, fetchAllMetricOptions, saveSelec
   const loadMetrics = async () => {
     if (!expandido) {
       setLoadingMetrics(true)
-      const data = await fetchMetrics(
-        campaign.id,
-        campaign.meta_campaign_id || '',
-        campaign.selected_metrics ?? undefined,
-        dateStart || undefined,
-        dateEnd || undefined,
-      )
+      const data = await fetchMetrics(campaign.id, campaign.meta_campaign_id || '', campaign.selected_metrics ?? undefined, dateStart || undefined, dateEnd || undefined)
       setMetrics(data)
       setLoadingMetrics(false)
     }
@@ -202,9 +174,7 @@ function CampaignCard({ campaign, fetchMetrics, fetchAllMetricOptions, saveSelec
             <div>
               <h3 className="text-white font-bold text-base leading-tight">{campaign.name}</h3>
               <div className="flex items-center gap-3 mt-1">
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusInfo.className}`}>
-                  {statusInfo.label}
-                </span>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusInfo.className}`}>{statusInfo.label}</span>
                 <span className="text-gray-500 text-[10px]">ID: {campaign.meta_campaign_id || campaign.id}</span>
               </div>
             </div>
@@ -212,17 +182,12 @@ function CampaignCard({ campaign, fetchMetrics, fetchAllMetricOptions, saveSelec
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
               <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider">Orçamento Diário</p>
-              <p className="text-white font-semibold text-sm">
-                {campaign.budget ? `R$ ${campaign.budget.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'}
-              </p>
+              <p className="text-white font-semibold text-sm">{campaign.budget ? `R$ ${campaign.budget.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'}</p>
             </div>
-            <button onClick={abrirConfig}
-              className="w-8 h-8 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] flex items-center justify-center text-gray-500 hover:text-indigo-400 hover:border-indigo-500/30 transition-all"
-              title="Configurar métricas">
+            <button onClick={abrirConfig} className="w-8 h-8 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] flex items-center justify-center text-gray-500 hover:text-indigo-400 hover:border-indigo-500/30 transition-all" title="Configurar métricas">
               <Settings2 size={14} />
             </button>
-            <button onClick={loadMetrics}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${expandido ? 'bg-indigo-600 text-white' : 'bg-[#0f0f0f] border border-[#2a2a2a] text-gray-400 hover:text-white'}`}>
+            <button onClick={loadMetrics} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${expandido ? 'bg-indigo-600 text-white' : 'bg-[#0f0f0f] border border-[#2a2a2a] text-gray-400 hover:text-white'}`}>
               <BarChart2 size={14} />
               {expandido ? 'Ocultar Métricas' : 'Ver Métricas'}
             </button>
@@ -250,8 +215,7 @@ function CampaignCard({ campaign, fetchMetrics, fetchAllMetricOptions, saveSelec
               </div>
             )}
             <div className="mt-4 flex justify-end">
-              <a href={`https://www.facebook.com/adsmanager/manage/campaigns?act=${campaign.meta_campaign_id}`}
-                target="_blank" rel="noopener noreferrer"
+              <a href={`https://www.facebook.com/adsmanager/manage/campaigns?act=${campaign.meta_campaign_id}`} target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-1.5 text-[10px] font-bold text-gray-600 hover:text-white transition-colors uppercase tracking-widest">
                 Abrir no Gerenciador <ExternalLink size={12} />
               </a>
@@ -259,20 +223,12 @@ function CampaignCard({ campaign, fetchMetrics, fetchAllMetricOptions, saveSelec
           </div>
         )}
       </div>
-
       {modalAberto && (
-        <MetricSelectorModal
-          campaign={campaign}
-          allOptions={allOptions}
-          onSave={handleSaveMetrics}
-          onClose={() => setModalAberto(false)}
-        />
+        <MetricSelectorModal campaign={campaign} allOptions={allOptions} onSave={handleSaveMetrics} onClose={() => setModalAberto(false)} />
       )}
     </>
   )
 }
-
-// ─── Accordion por cliente ────────────────────────────────────────────────────
 
 function ClienteAccordion({ clienteId, clienteNome, adAccountId, campaigns, fetchMetrics, fetchAllMetricOptions, saveSelectedMetrics, statusFilter, search, dateStart, dateEnd }: {
   clienteId: string
@@ -304,23 +260,17 @@ function ClienteAccordion({ clienteId, clienteNome, adAccountId, campaigns, fetc
 
   return (
     <div className="bg-[#111] border border-[#2a2a2a] rounded-2xl overflow-hidden">
-      <button
-        onClick={() => setAberto(!aberto)}
-        className="w-full flex items-center justify-between px-6 py-4 hover:bg-[#1a1a1a] transition-colors"
-      >
+      <button onClick={() => setAberto(!aberto)} className="w-full flex items-center justify-between px-6 py-4 hover:bg-[#1a1a1a] transition-colors">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center">
             <User size={16} className="text-indigo-400" />
           </div>
           <div className="text-left">
             <p className="text-white font-bold text-sm">{clienteNome}</p>
-            <p className="text-gray-500 text-xs">
-              {campanhasFiltradas.length} campanha{campanhasFiltradas.length !== 1 ? 's' : ''} • {ativas} ativa{ativas !== 1 ? 's' : ''}
-            </p>
+            <p className="text-gray-500 text-xs">{campanhasFiltradas.length} campanha{campanhasFiltradas.length !== 1 ? 's' : ''} • {ativas} ativa{ativas !== 1 ? 's' : ''}</p>
           </div>
         </div>
 
-        {/* Saldo, fundos e cartão — sempre visível */}
         <div className="flex items-center gap-3 mr-4">
           {metaLoading ? (
             <RefreshCw size={12} className="animate-spin text-gray-600" />
@@ -349,9 +299,7 @@ function ClienteAccordion({ clienteId, clienteNome, adAccountId, campaigns, fetc
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="text-indigo-400 text-xs font-bold bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-full">
-            {campanhasFiltradas.length}
-          </span>
+          <span className="text-indigo-400 text-xs font-bold bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-full">{campanhasFiltradas.length}</span>
           {aberto ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
         </div>
       </button>
@@ -359,23 +307,13 @@ function ClienteAccordion({ clienteId, clienteNome, adAccountId, campaigns, fetc
       {aberto && (
         <div className="px-4 pb-4 space-y-3 border-t border-[#2a2a2a] pt-4">
           {campanhasFiltradas.map(campaign => (
-            <CampaignCard
-              key={campaign.id}
-              campaign={campaign}
-              fetchMetrics={fetchMetrics}
-              fetchAllMetricOptions={fetchAllMetricOptions}
-              saveSelectedMetrics={saveSelectedMetrics}
-              dateStart={dateStart}
-              dateEnd={dateEnd}
-            />
+            <CampaignCard key={campaign.id} campaign={campaign} fetchMetrics={fetchMetrics} fetchAllMetricOptions={fetchAllMetricOptions} saveSelectedMetrics={saveSelectedMetrics} dateStart={dateStart} dateEnd={dateEnd} />
           ))}
         </div>
       )}
     </div>
   )
 }
-
-// ─── Página principal ─────────────────────────────────────────────────────────
 
 export default function CampanhasPage() {
   const { campaigns, loading, error, syncAllMetaCampaigns, fetchMetrics, fetchAllMetricOptions, saveSelectedMetrics } = useCampanhas()
@@ -416,9 +354,7 @@ export default function CampanhasPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-white text-3xl font-bold tracking-tight">Campanhas Ativas</h1>
-          <p className="text-gray-400 text-sm mt-1">
-            Visualização direta de anúncios sincronizados com seu Meta Ads.
-          </p>
+          <p className="text-gray-400 text-sm mt-1">Visualização direta de anúncios sincronizados com seu Meta Ads.</p>
         </div>
         <button onClick={handleSync} disabled={loading}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-medium transition-all ${loading ? 'bg-indigo-500/20 text-indigo-400' : 'bg-[#1a1a1a] border border-[#2a2a2a] text-gray-300 hover:text-white'}`}>
@@ -440,14 +376,12 @@ export default function CampanhasPage() {
       <div className="flex flex-wrap items-center gap-4 bg-[#1a1a1a] p-3 rounded-2xl border border-[#2a2a2a] shadow-lg">
         <div className="relative flex-1 min-w-[200px]">
           <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input type="text" placeholder="Buscar campanha pelo nome..." value={search}
-            onChange={e => setSearch(e.target.value)}
+          <input type="text" placeholder="Buscar campanha pelo nome..." value={search} onChange={e => setSearch(e.target.value)}
             className="w-full pl-12 pr-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 transition-all" />
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl">
           <Filter size={16} className="text-indigo-400" />
-          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
-            className="bg-transparent text-white text-sm focus:outline-none cursor-pointer">
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="bg-transparent text-white text-sm focus:outline-none cursor-pointer">
             <option value="todas">Todos os Status</option>
             <option value="ativa">Ativas</option>
             <option value="pausada">Pausadas</option>
@@ -456,11 +390,9 @@ export default function CampanhasPage() {
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl">
           <Calendar size={16} className="text-indigo-400" />
-          <input type="date" value={dateStart} onChange={e => setDateStart(e.target.value)}
-            className="bg-transparent text-white text-sm focus:outline-none" style={{ colorScheme: 'dark' }} />
+          <input type="date" value={dateStart} onChange={e => setDateStart(e.target.value)} className="bg-transparent text-white text-sm focus:outline-none" style={{ colorScheme: 'dark' }} />
           <span className="text-gray-600">—</span>
-          <input type="date" value={dateEnd} onChange={e => setDateEnd(e.target.value)}
-            className="bg-transparent text-white text-sm focus:outline-none" style={{ colorScheme: 'dark' }} />
+          <input type="date" value={dateEnd} onChange={e => setDateEnd(e.target.value)} className="bg-transparent text-white text-sm focus:outline-none" style={{ colorScheme: 'dark' }} />
         </div>
       </div>
 
@@ -478,20 +410,9 @@ export default function CampanhasPage() {
           </div>
         ) : (
           Object.entries(campanhasPorCliente).map(([clienteId, { nome, adAccountId, campaigns: cams }]) => (
-            <ClienteAccordion
-              key={clienteId}
-              clienteId={clienteId}
-              clienteNome={nome}
-              adAccountId={adAccountId}
-              campaigns={cams}
-              fetchMetrics={fetchMetrics}
-              fetchAllMetricOptions={fetchAllMetricOptions}
-              saveSelectedMetrics={saveSelectedMetrics}
-              statusFilter={statusFilter}
-              search={search}
-              dateStart={dateStart}
-              dateEnd={dateEnd}
-            />
+            <ClienteAccordion key={clienteId} clienteId={clienteId} clienteNome={nome} adAccountId={adAccountId} campaigns={cams}
+              fetchMetrics={fetchMetrics} fetchAllMetricOptions={fetchAllMetricOptions} saveSelectedMetrics={saveSelectedMetrics}
+              statusFilter={statusFilter} search={search} dateStart={dateStart} dateEnd={dateEnd} />
           ))
         )}
       </div>
