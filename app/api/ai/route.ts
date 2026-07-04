@@ -1,14 +1,12 @@
-// app/api/ai/route.ts
+// app/api/ai/route.ts — v1.1.0
 // Endpoint POST do módulo Alpha AI
-// Orquestra: alphaAI (AIService) + MemoryService + CRMToolsService + VoiceService
-
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient }    from '@/lib/supabase'
-import { alphaAI }         from '@/lib/ai/AIService'
-import { memoryService }   from '@/lib/ai/MemoryService'
-import { voiceService }    from '@/lib/ai/VoiceService'
-import { crmTools }        from '@/lib/ai/CRMToolsService'
-import type { Message }    from '@/lib/ai/types'
+import { createClient }  from '@/lib/supabase'
+import { alphaAI }       from '@/lib/ai/AIService'
+import { memoryService } from '@/lib/ai/MemoryService'
+import { voiceService }  from '@/lib/ai/VoiceService'
+import { crmTools }      from '@/lib/ai/CRMToolsService'
+import type { Message }  from '@/lib/ai/types'
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,52 +26,41 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Mensagem vazia' }, { status: 400 })
     }
 
-    // 3. Recuperar histórico do Supabase via MemoryService
+    // 3. Recuperar histórico
     const historico: Message[] = await memoryService.recuperar(user.id)
 
     // 4. Montar mensagem do usuário
     const novaMensagem: Message = { role: 'user', content: mensagem }
     const mensagensParaIA: Message[] = [...historico, novaMensagem]
 
-    // 5. Buscar tools do CRM
+    // 5. Tools do CRM
     const tools = crmTools.getTools()
 
-    // 6. Chamar AIService — método chat() com tool calling automático
+    // 6. Chamar AIService
     const resposta = await alphaAI.chat(mensagensParaIA, tools)
     const respostaTexto = resposta.text
 
-    // 7. Montar mensagem do assistente para salvar no histórico
+    // 7. Salvar histórico (máx 50 mensagens)
     const mensagemAssistente: Message = { role: 'assistant', content: respostaTexto }
-
-    // 8. Salvar histórico atualizado (máx 50 mensagens)
-    const historicoAtualizado: Message[] = [
+    await memoryService.salvar(user.id, [
       ...mensagensParaIA,
       mensagemAssistente,
-    ].slice(-50)
-    await memoryService.salvar(user.id, historicoAtualizado)
+    ].slice(-50))
 
-    // 9. Gerar áudio opcional (ElevenLabs TTS)
+    // 8. Gerar áudio opcional
     let audioBase64: string | null = null
     if (incluirVoz) {
       try {
-        const audioBuffer = await voiceService.sintetizar(respostaTexto)
-        audioBase64 = Buffer.from(audioBuffer).toString('base64')
+        audioBase64 = await voiceService.sintetizarBase64(respostaTexto)
       } catch {
         audioBase64 = null
       }
     }
 
-    // 10. Retornar
-    return NextResponse.json({
-      resposta: respostaTexto,
-      audio:    audioBase64,
-    })
+    return NextResponse.json({ resposta: respostaTexto, audio: audioBase64 })
 
   } catch (err: any) {
     console.error('[api/ai] Erro interno:', err)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
   }
 }
