@@ -54,7 +54,9 @@ export class ElevenLabsProvider implements VoiceProvider {
 
   async transcrever(audioBuffer: Buffer, mimeType: string): Promise<string> {
     const formData = new FormData()
-    const blob = new Blob([audioBuffer], { type: mimeType })
+    // Converte Buffer para Uint8Array para compatibilidade com Blob no ambiente browser/edge
+    const uint8Array = new Uint8Array(audioBuffer)
+    const blob = new Blob([uint8Array], { type: mimeType })
     formData.append('file',     blob, 'audio.webm')
     formData.append('model',    'whisper-1')
     formData.append('language', 'pt')
