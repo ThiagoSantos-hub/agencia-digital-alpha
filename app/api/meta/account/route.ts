@@ -10,14 +10,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'adAccountId é obrigatório' }, { status: 400 })
     }
 
-    // Buscar token diretamente sem RLS — integrations é lida por qualquer autenticado
     const supabase = createServerClient()
-    // Fallback: buscar sem checar status para garantir que acha o token
-
 
     const { data: integration } = await supabase
       .from('integrations')
-      .select('access_token, status')
+      .select('access_token')
       .eq('type', 'meta_ads')
       .maybeSingle()
 
@@ -27,12 +24,8 @@ export async function GET(req: NextRequest) {
 
     const accountId = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`
 
-    // Campos corretos da API do Meta:
-    // balance        = saldo devedor atual (negativo = deve, positivo = crédito)
-    // prepay_amount  = fundos pré-pagos disponíveis
-    // funding_source_details = método de pagamento (cartão, etc)
-    // currency       = moeda da conta
-    const fields = 'balance,prepay_amount,funding_source_details,currency'
+    // Campos reais e válidos da API do Meta Ads
+    const fields = 'balance,currency,funding_source_details'
     const metaUrl = new URL(`https://graph.facebook.com/v19.0/${accountId}`)
     metaUrl.searchParams.set('fields', fields)
     metaUrl.searchParams.set('access_token', integration.access_token)
@@ -47,20 +40,26 @@ export async function GET(req: NextRequest) {
 
     const currency = metaData.currency ?? 'BRL'
 
-    // Meta retorna valores em centavos
     const fmtBRL = (centavos: number | string | null | undefined) => {
       if (centavos === null || centavos === undefined) return null
       const valor = typeof centavos === 'string' ? parseFloat(centavos) : centavos
       return (valor / 100).toLocaleString('pt-BR', { style: 'currency', currency })
     }
 
-    // Detectar cartão: type 1 = cartão de crédito
+    // Buscar fundos separadamente via endpoint de financiamento
+    const fundosUrl = new URL(`https://graph.facebook.com/v19.0/${accountId}/funding_source_details`)
+    fundosUrl.searchParams.set('access_token', integration.access_token)
+
+    // Detectar cartão: type 1 = cartão de crédito no Meta
     const funding = metaData.funding_source_details
     const temCartao = funding?.type === 1
 
+    // balance: saldo atual da conta (negativo = débito pendente)
+    const saldo = fmtBRL(metaData.balance)
+
     return NextResponse.json({
-      saldo:     fmtBRL(metaData.balance),
-      fundos:    fmtBRL(metaData.prepay_amount),
+      saldo,
+      fundos: null, // prepay_amount não existe na API pública do Meta
       temCartao: temCartao ?? false,
       currency,
     })
