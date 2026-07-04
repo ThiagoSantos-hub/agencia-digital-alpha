@@ -1,20 +1,18 @@
 'use client'
-
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { Header } from '@/components/layout/Header'
 import { AlphaWidget } from '@/components/AlphaWidget'
+import { AlphaVoiceButton } from '@/components/AlphaVoiceButton'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
   const router = useRouter()
-
   useEffect(() => {
     if (!loading && !user) router.push('/login')
   }, [user, loading, router])
-
   if (!user && loading) {
     return (
       <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center">
@@ -22,9 +20,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
     )
   }
-
   if (!user) return null
-
   return (
     <div className="min-h-screen bg-[#0f0f0f] flex">
       <Sidebar />
@@ -41,6 +37,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </main>
       </div>
       <AlphaWidget />
+      <AlphaVoiceButton />
     </div>
   )
 }
