@@ -292,7 +292,6 @@ function ModalConfirmarExclusao({ name, onClose, onConfirm }: { name: string; on
 export default function ClientesPage() {
   const { clients, loading, deleteCliente, updateCliente } = useClientes()
   const [search, setSearch] = useState('')
-  // [FEATURE] Ocultar/mostrar valores financeiros na tabela
   const [valoresVisiveis, setValoresVisiveis] = useState(true)
   const [modalNovo, setModalNovo] = useState(false)
   const [clienteEditar, setClienteEditar] = useState<Client | null>(null)
@@ -369,7 +368,6 @@ export default function ClientesPage() {
                 <th className="px-5 py-3 text-gray-500 font-medium">CLIENTE / EMPRESA</th>
                 <th className="px-5 py-3 text-gray-500 font-medium">CONTATO</th>
                 <th className="px-5 py-3 text-gray-500 font-medium">
-                  {/* [FEATURE] Olhinho ao lado de FINANCEIRO */}
                   <div className="flex items-center gap-2">
                     FINANCEIRO
                     <button
@@ -412,7 +410,6 @@ export default function ClientesPage() {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex flex-col">
-                        {/* [FEATURE] Valor mascarado quando olhinho fechado */}
                         <span className="text-white font-medium text-sm">
                           {c.monthly_fee
                             ? (valoresVisiveis
@@ -428,7 +425,8 @@ export default function ClientesPage() {
                         <span className={`inline-flex items-center w-fit px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${statusConfig[c.status].className}`}>
                           {statusConfig[c.status].label}
                         </span>
-                        {c.status === 'atrasado' && c.dias_atraso && (
+                        {/* CORREÇÃO: > 0 evita que o React renderize o número 0 na tela */}
+                        {c.status === 'atrasado' && c.dias_atraso > 0 && (
                           <span className="text-amber-500 text-[10px] font-bold flex items-center gap-1">
                             <Clock size={10} /> {c.dias_atraso} dias
                           </span>
