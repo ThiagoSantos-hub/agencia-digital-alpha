@@ -20,6 +20,7 @@ const statusConfig = {
 interface MetaAccountInfo {
   saldo: string | null
   temCartao: boolean
+  contaBloqueada: boolean
 }
 
 function useMetaAccount(adAccountId: string | null) {
@@ -265,7 +266,12 @@ function ClienteAccordion({ clienteId, clienteNome, adAccountId, campaigns, fetc
             <User size={16} className="text-indigo-400" />
           </div>
           <div className="text-left">
-            <p className="text-white font-bold text-sm">{clienteNome}</p>
+            <div className="flex items-center gap-2">
+              <p className={}>{clienteNome}</p>
+              {metaInfo?.contaBloqueada && (
+                <span className="text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/30 px-2 py-0.5 rounded-full">Conta bloqueada</span>
+              )}
+            </div>
             <p className="text-gray-500 text-xs">{campanhasFiltradas.length} campanha{campanhasFiltradas.length !== 1 ? 's' : ''} • {ativas} ativa{ativas !== 1 ? 's' : ''}</p>
           </div>
         </div>
@@ -275,6 +281,12 @@ function ClienteAccordion({ clienteId, clienteNome, adAccountId, campaigns, fetc
             <RefreshCw size={12} className="animate-spin text-gray-600" />
           ) : metaInfo ? (
             <>
+              {metaInfo.contaBloqueada && (
+                <div className="flex items-center gap-1.5 bg-red-500/20 border border-red-500/40 px-2.5 py-1 rounded-full">
+                  <AlertTriangle size={11} className="text-red-400" />
+                  <span className="text-red-400 text-[10px] font-bold">Conta Bloqueada</span>
+                </div>
+              )}
               {metaInfo.temCartao && (
                 <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
                   <CreditCard size={11} className="text-emerald-400" />
