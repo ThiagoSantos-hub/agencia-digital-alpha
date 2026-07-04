@@ -1,7 +1,6 @@
-// app/api/ai/route.ts — v1.4.0
-// Correção: passa supabase autenticado para crmTools.getTools()
-// assim as queries do CRM funcionam com RLS corretamente
-
+// app/api/ai/route.ts — v1.5.0
+// Correção: histórico filtrado para excluir mensagens tool e assistant com rawToolCalls
+// Evita erro 400 da OpenAI: "messages with role 'tool' must be a response to a preceeding message with 'tool_calls'"
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
 import { alphaAI }            from '@/lib/ai/AIService'
@@ -23,34 +22,43 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const mensagem:   string  = body.mensagem   ?? ''
     const incluirVoz: boolean = body.incluirVoz ?? false
-
     if (!mensagem.trim()) {
       return NextResponse.json({ error: 'Mensagem vazia' }, { status: 400 })
     }
 
-    // 3. Recuperar histórico — apenas user e assistant
+    // 3. Recuperar histórico
+    // [FIX v1.5] Filtra mensagens tool e assistant com rawToolCalls —
+    // esses pares só fazem sentido dentro de uma única chamada à API,
+    // não devem ser persistidos no histórico entre conversas.
     const historicoRaw: Message[] = await memoryService.recuperar(user.id)
     const historico = historicoRaw.filter(
-      m => m.role === 'user' || m.role === 'assistant'
+      m => (m.role === 'user') ||
+           (m.role === 'assistant' && !m.rawToolCalls)
     )
 
     // 4. Montar mensagem do usuário
     const novaMensagem: Message = { role: 'user', content: mensagem }
     const mensagensParaIA: Message[] = [...historico, novaMensagem]
 
-    // 5. Tools do CRM — passa supabase autenticado para as queries funcionarem
+    // 5. Tools do CRM
     const tools = crmTools.getTools(supabase)
 
     // 6. Chamar AIService
     const resposta = await alphaAI.chat(mensagensParaIA, tools)
     const respostaTexto = resposta.text
 
-    // 7. Salvar histórico
+    // 7. Salvar histórico — apenas user e assistant limpos (sem rawToolCalls)
+    // [FIX v1.5] mensagensParaIA pode conter assistants intermediários com rawToolCalls
+    // gerados dentro do loop de tool calling — filtramos antes de salvar.
     const mensagemAssistente: Message = { role: 'assistant', content: respostaTexto }
-    await memoryService.salvar(user.id, [
-      ...mensagensParaIA,
+    const historicoParaSalvar = [
+      ...mensagensParaIA.filter(
+        m => (m.role === 'user') ||
+             (m.role === 'assistant' && !m.rawToolCalls)
+      ),
       mensagemAssistente,
-    ].slice(-50))
+    ].slice(-50)
+    await memoryService.salvar(user.id, historicoParaSalvar)
 
     // 8. Gerar áudio opcional
     let audioBase64: string | null = null
@@ -63,6 +71,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ resposta: respostaTexto, audio: audioBase64 })
+
   } catch (err: any) {
     console.error('[api/ai] Erro interno:', err)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
