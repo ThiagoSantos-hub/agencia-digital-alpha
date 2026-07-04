@@ -44,7 +44,7 @@ function fmtBRL(v: number): string {
   return `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
 }
 
-// ─── Handlers por ação ────────────────────────────────────────────────────────
+// ─── Handlers ────────────────────────────────────────────────────────────────
 
 async function getClientes() {
   const { data, error } = await supabase
@@ -54,11 +54,10 @@ async function getClientes() {
 
   if (error) return { erro: error.message }
 
-  const ativos    = data.filter(c => c.status === 'ativo')
-  const atrasados = data.filter(c => c.status === 'atrasado')
-  const inativos  = data.filter(c => c.status === 'inativo')
+  const ativos     = data.filter(c => c.status === 'ativo')
+  const atrasados  = data.filter(c => c.status === 'atrasado')
+  const inativos   = data.filter(c => c.status === 'inativo')
   const prospectos = data.filter(c => c.status === 'prospecto')
-
   const receitaMensal = ativos.reduce((s, c) => s + (c.monthly_fee ?? 0), 0)
 
   return {
@@ -73,12 +72,14 @@ async function getClientes() {
       empresa: c.company,
       mensalidade: c.monthly_fee ? fmtBRL(c.monthly_fee) : null,
       dia_pagamento: c.payment_day,
+      telefone: c.phone,
     })),
     lista_atrasados: atrasados.map(c => ({
       nome: c.name,
       empresa: c.company,
       mensalidade: c.monthly_fee ? fmtBRL(c.monthly_fee) : null,
       dia_pagamento: c.payment_day,
+      telefone: c.phone,
     })),
     lista_inativos: inativos.map(c => ({
       nome: c.name,
@@ -103,8 +104,7 @@ async function getTarefas() {
   const pendentes    = data.filter(t => t.status === 'pendente')
   const em_andamento = data.filter(t => t.status === 'em_andamento')
   const concluidas   = data.filter(t => t.status === 'concluida')
-
-  const atrasadas = pendentes.filter(t => t.due_date && t.due_date < hoje())
+  const atrasadas    = pendentes.filter(t => t.due_date && t.due_date < hoje())
 
   return {
     total: data.length,
@@ -130,7 +130,6 @@ async function getTarefas() {
 }
 
 async function getFinanceiro() {
-  // Mês atual
   const { data: mesAtual } = await supabase
     .from('finances')
     .select('tipo, valor, status, categoria, descricao, data_vencimento')
@@ -138,7 +137,6 @@ async function getFinanceiro() {
     .gte('data_vencimento', inicioMes(0))
     .lte('data_vencimento', fimMes(0))
 
-  // Mês passado
   const { data: mesPassado } = await supabase
     .from('finances')
     .select('tipo, valor, status')
@@ -165,7 +163,6 @@ async function getFinanceiro() {
   const atual   = calcular(mesAtual ?? [])
   const passado = calcular(mesPassado ?? [])
 
-  // Vencimentos próximos (próximos 7 dias)
   const { data: vencendo } = await supabase
     .from('finances')
     .select('descricao, valor, data_vencimento, status')
@@ -175,7 +172,6 @@ async function getFinanceiro() {
     .lte('data_vencimento', diasAtras(-7))
     .order('data_vencimento')
 
-  // Principais gastos do mês
   const gastosPorCategoria: Record<string, number> = {}
   mesAtual?.filter(l => l.tipo === 'gasto' || l.tipo === 'investimento').forEach(l => {
     gastosPorCategoria[l.categoria] = (gastosPorCategoria[l.categoria] ?? 0) + Number(l.valor)
@@ -198,7 +194,6 @@ async function getFinanceiro() {
     comparacao: {
       receita_diferenca: fmtBRL(atual.receita - passado.receita),
       receita_cresceu: atual.receita >= passado.receita,
-      gastos_diferenca: fmtBRL((atual.gasto + atual.investimento) - (passado.gasto + passado.investimento)),
     },
     vencendo_em_7_dias: (vencendo ?? []).map(v => ({
       descricao: v.descricao,
@@ -213,53 +208,48 @@ async function getFinanceiro() {
 }
 
 async function getCampanhas(params: { periodo?: string; cliente?: string } = {}) {
-  const { periodo = '7dias', cliente } = params
+  const { cliente } = params
 
-  const diasMap: Record<string, number> = {
-    hoje: 0,
-    ontem: 1,
-    '7dias': 7,
-    '30dias': 30,
-  }
-  const dias = diasMap[periodo] ?? 7
-  const dataInicio = diasAtras(dias === 0 ? 0 : dias)
-  const dataFim = periodo === 'ontem' ? diasAtras(1) : hoje()
-
-  // Buscar campanhas
-  let query = supabase
+  // Busca TODAS as campanhas — filtro por cliente feito no JS
+  const { data, error } = await supabase
     .from('campaigns')
     .select(`
       id, name, status, channel,
       start_date, end_date, budget,
-      clients(name, company),
-      campaign_metrics(metric_key, metric_label, metric_value, updated_at)
+      clients(id, name, company),
+      campaign_metrics(metric_key, metric_label, metric_value)
     `)
     .order('created_at', { ascending: false })
 
-  if (cliente) {
-    query = query.ilike('clients.name', `%${cliente}%`)
-  }
-
-  const { data, error } = await query
   if (error) return { erro: error.message }
 
-  const ativas    = data.filter(c => c.status === 'ativa')
-  const pausadas  = data.filter(c => c.status === 'pausada')
+  // Filtrar por cliente no JS (funciona corretamente com joins)
+  let filtradas = data as any[]
+  if (cliente) {
+    filtradas = data.filter((c: any) =>
+      (c.clients?.name ?? '').toLowerCase().includes(cliente.toLowerCase()) ||
+      (c.clients?.company ?? '').toLowerCase().includes(cliente.toLowerCase())
+    )
+  }
+
+  const ativas     = filtradas.filter((c: any) => c.status === 'ativa')
+  const pausadas   = filtradas.filter((c: any) => c.status === 'pausada')
+  const finalizadas = filtradas.filter((c: any) => c.status === 'finalizada')
 
   return {
-    total: data.length,
+    total: filtradas.length,
     ativas: ativas.length,
     pausadas: pausadas.length,
-    periodo_consultado: periodo,
-    campanhas: data.slice(0, 10).map(c => {
+    finalizadas: finalizadas.length,
+    campanhas: filtradas.map((c: any) => {
       const metricas: Record<string, string> = {}
-      ;(c.campaign_metrics as any[])?.forEach((m: any) => {
+      ;(c.campaign_metrics ?? []).forEach((m: any) => {
         metricas[m.metric_label] = m.metric_value ?? '—'
       })
       return {
         nome: c.name,
-        cliente: (c.clients as any)?.name ?? null,
-        empresa: (c.clients as any)?.company ?? null,
+        cliente: c.clients?.name ?? null,
+        empresa: c.clients?.company ?? null,
         status: c.status,
         canal: c.channel,
         orcamento: c.budget ? fmtBRL(Number(c.budget)) : null,
@@ -269,12 +259,40 @@ async function getCampanhas(params: { periodo?: string; cliente?: string } = {})
   }
 }
 
+async function getIntegracoes() {
+  const { data, error } = await supabase
+    .from('integrations')
+    .select('type, label, status, connected_at')
+    .order('label')
+
+  if (error) return { erro: error.message }
+
+  const conectadas    = data.filter(i => i.status === 'connected')
+  const desconectadas = data.filter(i => i.status === 'disconnected')
+
+  return {
+    total: data.length,
+    conectadas: conectadas.length,
+    desconectadas: desconectadas.length,
+    lista_conectadas: conectadas.map(i => ({
+      nome: i.label,
+      tipo: i.type,
+      conectada_em: i.connected_at,
+    })),
+    lista_desconectadas: desconectadas.map(i => ({
+      nome: i.label,
+      tipo: i.type,
+    })),
+  }
+}
+
 async function getResumoGeral() {
-  const [clientes, tarefas, financeiro, campanhas] = await Promise.all([
+  const [clientes, tarefas, financeiro, campanhas, integracoes] = await Promise.all([
     getClientes(),
     getTarefas(),
     getFinanceiro(),
     getCampanhas(),
+    getIntegracoes(),
   ])
 
   return {
@@ -297,6 +315,10 @@ async function getResumoGeral() {
       ativas: (campanhas as any).ativas,
       pausadas: (campanhas as any).pausadas,
     },
+    integracoes: {
+      conectadas: (integracoes as any).conectadas,
+      lista: (integracoes as any).lista_conectadas,
+    },
     data_consulta: new Date().toLocaleDateString('pt-BR', {
       weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'
     }),
@@ -308,7 +330,7 @@ async function getResumoGeral() {
 
 export async function POST(req: NextRequest) {
   if (!verificarSecret(req)) {
-    return NextResponse.json({ erro: 'Não autorizado' }, { status: 401 })
+    return NextResponse.json({ erro: 'Nao autorizado' }, { status: 401 })
   }
 
   const body = await req.json()
@@ -330,11 +352,14 @@ export async function POST(req: NextRequest) {
       case 'get_campanhas':
         resultado = await getCampanhas(params ?? {})
         break
+      case 'get_integracoes':
+        resultado = await getIntegracoes()
+        break
       case 'get_resumo_geral':
         resultado = await getResumoGeral()
         break
       default:
-        return NextResponse.json({ erro: `Ação desconhecida: ${acao}` }, { status: 400 })
+        return NextResponse.json({ erro: `Acao desconhecida: ${acao}` }, { status: 400 })
     }
 
     return NextResponse.json({ sucesso: true, data: resultado })
@@ -343,10 +368,9 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET para teste rápido (verificar se a API está online)
 export async function GET(req: NextRequest) {
   if (!verificarSecret(req)) {
-    return NextResponse.json({ erro: 'Não autorizado' }, { status: 401 })
+    return NextResponse.json({ erro: 'Nao autorizado' }, { status: 401 })
   }
-  return NextResponse.json({ status: 'Alpha API online ✅', timestamp: new Date().toISOString() })
+  return NextResponse.json({ status: 'Alpha API online', timestamp: new Date().toISOString() })
 }
