@@ -24,7 +24,6 @@ export async function GET(req: NextRequest) {
 
     const accountId = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`
 
-    // Buscar todos os campos financeiros disponíveis
     const fields = 'balance,currency,funding_source_details,amount_spent,spend_cap,account_status'
     const metaUrl = new URL(`https://graph.facebook.com/v19.0/${accountId}`)
     metaUrl.searchParams.set('fields', fields)
@@ -38,9 +37,42 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: metaData.error.message }, { status: 400 })
     }
 
-    // Retornar raw para debug — remover depois
-    return NextResponse.json({ raw: metaData })
+    const currency = metaData.currency ?? 'BRL'
+    const funding = metaData.funding_source_details
 
+    // Saldo disponível real — vem em display_string ou calculado por spend_cap - amount_spent
+    let saldo: string | null = null
+    if (funding?.display_string) {
+      // Ex: "Saldo disponível (R$321,53 BRL)" — extrai o valor formatado
+      saldo = funding.display_string
+    } else if (metaData.spend_cap && metaData.amount_spent) {
+      const disponivel = (parseInt(metaData.spend_cap) - parseInt(metaData.amount_spent)) / 100
+      saldo = disponivel.toLocaleString('pt-BR', { style: 'currency', currency })
+    } else if (metaData.balance) {
+      saldo = (parseInt(metaData.balance) / 100).toLocaleString('pt-BR', { style: 'currency', currency })
+    }
+
+    // Fundos — soma dos cupons ativos em funding_source_details.coupons
+    let fundos: string | null = null
+    if (funding?.coupons && Array.isArray(funding.coupons)) {
+      const totalFundos = funding.coupons.reduce((acc: number, c: any) => {
+        return acc + (parseInt(c.amount ?? '0'))
+      }, 0)
+      if (totalFundos > 0) {
+        fundos = (totalFundos / 100).toLocaleString('pt-BR', { style: 'currency', currency })
+      }
+    }
+
+    // Cartão: type 1 = cartão de crédito
+    // type 20 = créditos/cupons (não é cartão)
+    const temCartao = funding?.type === 1
+
+    return NextResponse.json({
+      saldo,
+      fundos,
+      temCartao,
+      currency,
+    })
   } catch (error: any) {
     console.error('Erro ao buscar conta Meta:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
