@@ -1,7 +1,6 @@
-// app/api/ai/route.ts — v1.3.0
-// Correção: filtrar mensagens role='tool' do histórico antes de enviar à OpenAI
-// A OpenAI exige que tool messages venham APÓS assistant com tool_calls — histórico salvo
-// pode conter tool messages órfãs que causam erro 400.
+// app/api/ai/route.ts — v1.4.0
+// Correção: passa supabase autenticado para crmTools.getTools()
+// assim as queries do CRM funcionam com RLS corretamente
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
@@ -29,9 +28,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Mensagem vazia' }, { status: 400 })
     }
 
-    // 3. Recuperar histórico e filtrar mensagens problemáticas
-    // Remove role='tool' e role='assistant' com tool_calls do histórico salvo
-    // pois a OpenAI exige que venham em sequência exata — histórico antigo pode quebrar isso
+    // 3. Recuperar histórico — apenas user e assistant
     const historicoRaw: Message[] = await memoryService.recuperar(user.id)
     const historico = historicoRaw.filter(
       m => m.role === 'user' || m.role === 'assistant'
@@ -41,14 +38,14 @@ export async function POST(req: NextRequest) {
     const novaMensagem: Message = { role: 'user', content: mensagem }
     const mensagensParaIA: Message[] = [...historico, novaMensagem]
 
-    // 5. Tools do CRM
-    const tools = crmTools.getTools()
+    // 5. Tools do CRM — passa supabase autenticado para as queries funcionarem
+    const tools = crmTools.getTools(supabase)
 
     // 6. Chamar AIService
     const resposta = await alphaAI.chat(mensagensParaIA, tools)
     const respostaTexto = resposta.text
 
-    // 7. Salvar histórico — apenas user e assistant (sem tool messages)
+    // 7. Salvar histórico
     const mensagemAssistente: Message = { role: 'assistant', content: respostaTexto }
     await memoryService.salvar(user.id, [
       ...mensagensParaIA,
@@ -66,7 +63,6 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ resposta: respostaTexto, audio: audioBase64 })
-
   } catch (err: any) {
     console.error('[api/ai] Erro interno:', err)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
