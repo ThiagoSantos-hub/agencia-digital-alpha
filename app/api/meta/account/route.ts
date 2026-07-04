@@ -1,8 +1,6 @@
 import { createServerClient } from '@/lib/supabase-server'
 import { NextRequest, NextResponse } from 'next/server'
 
-// GET /api/meta/account?adAccountId=act_XXXXX
-// Retorna saldo, fundos e status do cartão da conta de anúncios do Meta
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
@@ -27,8 +25,12 @@ export async function GET(req: NextRequest) {
 
     const accountId = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`
 
-    // Buscar dados financeiros da conta: saldo, fundos e método de pagamento
-    const fields = 'balance,spend_cap,amount_spent,funding_source_details,is_prepay_account,currency'
+    // Campos corretos da API do Meta:
+    // balance        = saldo devedor atual (negativo = deve, positivo = crédito)
+    // prepay_amount  = fundos pré-pagos disponíveis
+    // funding_source_details = método de pagamento (cartão, etc)
+    // currency       = moeda da conta
+    const fields = 'balance,prepay_amount,funding_source_details,currency'
     const metaUrl = new URL(`https://graph.facebook.com/v19.0/${accountId}`)
     metaUrl.searchParams.set('fields', fields)
     metaUrl.searchParams.set('access_token', integration.access_token)
@@ -42,22 +44,22 @@ export async function GET(req: NextRequest) {
     }
 
     const currency = metaData.currency ?? 'BRL'
-    const divisor = currency === 'BRL' ? 100 : 100
 
-    const fmtBRL = (centavos: number | null) => {
+    // Meta retorna valores em centavos
+    const fmtBRL = (centavos: number | string | null | undefined) => {
       if (centavos === null || centavos === undefined) return null
-      return (centavos / divisor).toLocaleString('pt-BR', { style: 'currency', currency })
+      const valor = typeof centavos === 'string' ? parseFloat(centavos) : centavos
+      return (valor / 100).toLocaleString('pt-BR', { style: 'currency', currency })
     }
 
-    // Detectar se tem cartão de crédito como método de pagamento
+    // Detectar cartão: type 1 = cartão de crédito
     const funding = metaData.funding_source_details
-    const temCartao = funding?.type === 1 // type 1 = cartão de crédito no Meta
+    const temCartao = funding?.type === 1
 
     return NextResponse.json({
-      saldo:       fmtBRL(metaData.balance),
-      fundos:      fmtBRL(metaData.spend_cap ? metaData.spend_cap - metaData.amount_spent : null),
-      temCartao:   temCartao ?? false,
-      isPrepay:    metaData.is_prepay_account ?? false,
+      saldo:     fmtBRL(metaData.balance),
+      fundos:    fmtBRL(metaData.prepay_amount),
+      temCartao: temCartao ?? false,
       currency,
     })
   } catch (error: any) {
