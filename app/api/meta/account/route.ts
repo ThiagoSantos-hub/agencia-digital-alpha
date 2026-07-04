@@ -24,7 +24,6 @@ export async function GET(req: NextRequest) {
 
     const accountId = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`
 
-    // Campos reais e válidos da API do Meta Ads
     const fields = 'balance,currency,funding_source_details,adspaymentcycle'
     const metaUrl = new URL(`https://graph.facebook.com/v19.0/${accountId}`)
     metaUrl.searchParams.set('fields', fields)
@@ -46,15 +45,12 @@ export async function GET(req: NextRequest) {
       return (valor / 100).toLocaleString('pt-BR', { style: 'currency', currency })
     }
 
-    // Buscar fundos separadamente via endpoint de financiamento
-    const fundosUrl = new URL(`https://graph.facebook.com/v19.0/${accountId}/funding_source_details`)
-    fundosUrl.searchParams.set('access_token', integration.access_token)
-
-    // Detectar cartão: type 1 = cartão de crédito no Meta
     const funding = metaData.funding_source_details
     const temCartao = funding?.type === 1
 
     const saldo = fmtBRL(metaData.balance)
+
+    // adspaymentcycle retorna fundos pré-pagos quando disponível
     const fundosRaw = metaData.adspaymentcycle?.amount ?? null
     const fundos = fundosRaw !== null ? fmtBRL(fundosRaw) : null
 
