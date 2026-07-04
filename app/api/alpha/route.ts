@@ -44,8 +44,6 @@ function fmtBRL(v: number): string {
   return `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
 }
 
-// ─── Handlers ────────────────────────────────────────────────────────────────
-
 async function getClientes() {
   const { data, error } = await supabase
     .from('clients')
@@ -210,7 +208,6 @@ async function getFinanceiro() {
 async function getCampanhas(params: { periodo?: string; cliente?: string } = {}) {
   const { cliente } = params
 
-  // Busca TODAS as campanhas — filtro por cliente feito no JS
   const { data, error } = await supabase
     .from('campaigns')
     .select(`
@@ -223,7 +220,6 @@ async function getCampanhas(params: { periodo?: string; cliente?: string } = {})
 
   if (error) return { erro: error.message }
 
-  // Filtrar por cliente no JS (funciona corretamente com joins)
   let filtradas = data as any[]
   if (cliente) {
     filtradas = data.filter((c: any) =>
@@ -232,8 +228,8 @@ async function getCampanhas(params: { periodo?: string; cliente?: string } = {})
     )
   }
 
-  const ativas     = filtradas.filter((c: any) => c.status === 'ativa')
-  const pausadas   = filtradas.filter((c: any) => c.status === 'pausada')
+  const ativas      = filtradas.filter((c: any) => c.status === 'ativa')
+  const pausadas    = filtradas.filter((c: any) => c.status === 'pausada')
   const finalizadas = filtradas.filter((c: any) => c.status === 'finalizada')
 
   return {
@@ -277,7 +273,6 @@ async function getIntegracoes() {
     lista_conectadas: conectadas.map(i => ({
       nome: i.label,
       tipo: i.type,
-      conectada_em: i.connected_at,
     })),
     lista_desconectadas: desconectadas.map(i => ({
       nome: i.label,
@@ -307,9 +302,9 @@ async function getResumoGeral() {
       em_andamento: (tarefas as any).em_andamento,
     },
     financeiro: {
-      receita_mes: (financeiro as any).mes_atual.receita_total,
-      saldo_mes: (financeiro as any).mes_atual.saldo,
-      receita_pendente: (financeiro as any).mes_atual.receita_pendente,
+      receita_mes: (financeiro as any).mes_atual?.receita_total,
+      saldo_mes: (financeiro as any).mes_atual?.saldo,
+      receita_pendente: (financeiro as any).mes_atual?.receita_pendente,
     },
     campanhas: {
       ativas: (campanhas as any).ativas,
@@ -327,13 +322,20 @@ async function getResumoGeral() {
 }
 
 // ─── Handler principal ────────────────────────────────────────────────────────
+// IMPORTANTE: Sempre retorna status 200 — o SDK do ElevenLabs crasha com 4xx/5xx
 
 export async function POST(req: NextRequest) {
   if (!verificarSecret(req)) {
-    return NextResponse.json({ erro: 'Nao autorizado' }, { status: 401 })
+    return NextResponse.json({ sucesso: false, mensagem: 'Nao autorizado' })
   }
 
-  const body = await req.json()
+  let body: any
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ sucesso: false, mensagem: 'Body invalido' })
+  }
+
   const { acao, params } = body
 
   try {
@@ -359,18 +361,18 @@ export async function POST(req: NextRequest) {
         resultado = await getResumoGeral()
         break
       default:
-        return NextResponse.json({ erro: `Acao desconhecida: ${acao}` }, { status: 400 })
+        return NextResponse.json({ sucesso: false, mensagem: `Acao desconhecida: ${acao}` })
     }
 
     return NextResponse.json({ sucesso: true, data: resultado })
   } catch (err: any) {
-    return NextResponse.json({ erro: err.message ?? 'Erro interno' }, { status: 500 })
+    return NextResponse.json({ sucesso: false, mensagem: err.message ?? 'Erro interno' })
   }
 }
 
 export async function GET(req: NextRequest) {
   if (!verificarSecret(req)) {
-    return NextResponse.json({ erro: 'Nao autorizado' }, { status: 401 })
+    return NextResponse.json({ sucesso: false, mensagem: 'Nao autorizado' })
   }
   return NextResponse.json({ status: 'Alpha API online', timestamp: new Date().toISOString() })
 }
