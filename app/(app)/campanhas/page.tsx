@@ -335,13 +335,13 @@ function ClienteAccordion({ clienteId, clienteNome, adAccountId, campaigns, fetc
               {metaInfo.fundos && (
                 <div className="flex items-center gap-1.5 bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 rounded-full">
                   <PiggyBank size={11} className="text-blue-400" />
-                  <span className="text-blue-400 text-[10px] font-bold">{metaInfo.fundos}</span>
+                  <span className="text-blue-400 text-[10px] font-bold">Fundos: {metaInfo.fundos}</span>
                 </div>
               )}
               {metaInfo.saldo && (
                 <div className="flex items-center gap-1.5 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-full">
                   <Wallet size={11} className="text-indigo-400" />
-                  <span className="text-indigo-400 text-[10px] font-bold">{metaInfo.saldo}</span>
+                  <span className="text-indigo-400 text-[10px] font-bold">Saldo: {metaInfo.saldo}</span>
                 </div>
               )}
             </>
