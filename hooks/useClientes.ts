@@ -25,6 +25,21 @@ export interface Client {
 
 type ClientInput = Omit<Client, 'id' | 'created_at' | 'dias_atraso'>
 
+// Calcula quantos dias um payment_day está atrasado em relação a hoje.
+// Ex: hoje é dia 4, payment_day = 1 → 3 dias atrasado.
+function calcularDiasAtrasoPorPaymentDay(paymentDay: number): number {
+  const hoje = new Date()
+  hoje.setHours(0, 0, 0, 0)
+  const ano = hoje.getFullYear()
+  const mes = hoje.getMonth()
+  const ultimoDia = new Date(ano, mes + 1, 0).getDate()
+  const diaReal = Math.min(paymentDay, ultimoDia)
+  const vencimento = new Date(ano, mes, diaReal)
+  vencimento.setHours(0, 0, 0, 0)
+  if (vencimento >= hoje) return 0
+  return Math.ceil((hoje.getTime() - vencimento.getTime()) / (1000 * 60 * 60 * 24))
+}
+
 export function useClientes() {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
@@ -70,11 +85,19 @@ export function useClientes() {
           
           if (vencimento < hoje || f.status === 'atrasado') {
             temAtrasado = true
-            const diffTime = Math.abs(hoje.getTime() - vencimento.getTime())
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+            const diffDays = Math.ceil(
+              (hoje.getTime() - vencimento.getTime()) / (1000 * 60 * 60 * 24)
+            )
             if (diffDays > maiorAtraso) maiorAtraso = diffDays
           }
         })
+
+        // CORREÇÃO: cliente marcado como 'atrasado' no banco mas sem lançamentos
+        // → calcular dias com base no payment_day diretamente
+        if (!temAtrasado && client.status === 'atrasado' && client.payment_day) {
+          maiorAtraso = calcularDiasAtrasoPorPaymentDay(client.payment_day)
+          temAtrasado = true
+        }
 
         return {
           ...client,
