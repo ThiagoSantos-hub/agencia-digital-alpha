@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@elevenlabs/react": "1.6.1",
+    "@elevenlabs/react": "^1.9.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.44.4",
     "clsx": "^2.1.1",
