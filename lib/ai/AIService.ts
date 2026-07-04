@@ -18,7 +18,7 @@ export class AIService {
       const { OpenAIProvider } = require('./providers/openai.provider')
       this.provider = new OpenAIProvider()
     }
-    return this.provider
+    return this.provider!
   }
 
   async chat(

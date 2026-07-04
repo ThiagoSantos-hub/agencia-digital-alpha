@@ -11,7 +11,7 @@ export class VoiceService {
       const { ElevenLabsProvider } = require('./providers/elevenlabs.provider')
       this.provider = new ElevenLabsProvider()
     }
-    return this.provider
+    return this.provider!
   }
 
   async sintetizar(texto: string): Promise<Buffer> {
