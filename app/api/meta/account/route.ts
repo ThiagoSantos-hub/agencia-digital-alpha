@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
     const accountId = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`
 
-    const fields = 'balance,currency,funding_source_details,amount_spent,spend_cap'
+    const fields = 'balance,currency,funding_source_details,spend_cap'
     const metaUrl = new URL(`https://graph.facebook.com/v19.0/${accountId}`)
     metaUrl.searchParams.set('fields', fields)
     metaUrl.searchParams.set('access_token', integration.access_token)
@@ -33,12 +33,39 @@ export async function GET(req: NextRequest) {
     const metaData = await metaRes.json()
 
     if (metaData.error) {
+      console.error('Erro Meta account:', metaData.error)
       return NextResponse.json({ error: metaData.error.message }, { status: 400 })
     }
 
-    return NextResponse.json({ raw: metaData })
+    const currency = metaData.currency ?? 'BRL'
+    const funding = metaData.funding_source_details
 
+    const fmtBRL = (centavos: number | string | null | undefined) => {
+      if (centavos === null || centavos === undefined) return null
+      const valor = typeof centavos === 'string' ? parseFloat(centavos) : centavos
+      return (valor / 100).toLocaleString('pt-BR', { style: 'currency', currency })
+    }
+
+    // type 1 = cartão de crédito
+    const temCartao = funding?.type === 1
+
+    // Saldo: para cartão usa balance, para créditos usa display_string
+    let saldo: string | null = null
+    if (temCartao) {
+      saldo = fmtBRL(metaData.balance)
+    } else if (funding?.display_string) {
+      saldo = funding.display_string
+    } else {
+      saldo = fmtBRL(metaData.balance)
+    }
+
+    return NextResponse.json({
+      saldo,
+      temCartao,
+      currency,
+    })
   } catch (error: any) {
+    console.error('Erro ao buscar conta Meta:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
