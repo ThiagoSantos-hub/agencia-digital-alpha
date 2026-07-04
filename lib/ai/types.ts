@@ -5,10 +5,13 @@
 export type MessageRole = 'user' | 'assistant' | 'system' | 'tool'
 
 export interface Message {
-  role:        MessageRole
-  content:     string
-  toolCallId?: string
-  toolName?:   string
+  role:          MessageRole
+  content:       string
+  toolCallId?:   string
+  toolName?:     string
+  // Campo interno: guarda o tool_calls original da OpenAI
+  // Necessário para montar corretamente a mensagem assistant no loop de tool calling
+  rawToolCalls?: any[]
 }
 
 export interface CRMToolParameter {
@@ -33,9 +36,11 @@ export interface AIRequest {
 }
 
 export interface AIResponse {
-  text:       string
-  toolCalls?: ToolCall[]
-  usage?:     { promptTokens: number; completionTokens: number }
+  text:          string
+  toolCalls?:    ToolCall[]
+  // Guarda o tool_calls bruto da OpenAI para reenviar na mensagem assistant
+  rawToolCalls?: any[]
+  usage?:        { promptTokens: number; completionTokens: number }
 }
 
 export interface ToolCall {
