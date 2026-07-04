@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
     const accountId = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`
 
-    const fields = 'balance,currency,funding_source_details,spend_cap'
+    const fields = 'balance,currency,funding_source_details,spend_cap,account_status'
     const metaUrl = new URL(`https://graph.facebook.com/v19.0/${accountId}`)
     metaUrl.searchParams.set('fields', fields)
     metaUrl.searchParams.set('access_token', integration.access_token)
@@ -59,9 +59,13 @@ export async function GET(req: NextRequest) {
       saldo = fmtBRL(metaData.balance)
     }
 
+    // account_status: 1=ativa, 2=desabilitada, 3=não confirmada, 9=em revisão
+    const contaBloqueada = metaData.account_status !== undefined && metaData.account_status !== 1
+
     return NextResponse.json({
       saldo,
       temCartao,
+      contaBloqueada,
       currency,
     })
   } catch (error: any) {
