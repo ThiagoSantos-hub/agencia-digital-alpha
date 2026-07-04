@@ -1,4 +1,4 @@
-ts// lib/ai/types.ts
+// lib/ai/types.ts
 // Tipos e interfaces base do módulo Alpha AI
 // Todos os outros arquivos de lib/ai dependem deste
 
