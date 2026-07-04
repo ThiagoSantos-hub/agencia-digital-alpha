@@ -1,6 +1,5 @@
 // lib/ai/providers/openai.provider.ts
 // Implementa AIProvider usando fetch nativo — OpenAI gpt-4o-mini com function calling
-
 import type { AIProvider, AIRequest, AIResponse, ToolCall } from '../types'
 
 export class OpenAIProvider implements AIProvider {
@@ -32,12 +31,29 @@ export class OpenAIProvider implements AIProvider {
       model:       this.model,
       max_tokens:  request.maxTokens  ?? 1024,
       temperature: request.temperature ?? 0.7,
-      messages:    request.messages.map(m => ({
-        role:    m.role,
-        content: m.content,
-        ...(m.toolCallId ? { tool_call_id: m.toolCallId } : {}),
-        ...(m.toolName   ? { name: m.toolName }           : {}),
-      })),
+      messages:    request.messages.map(m => {
+        // Mensagem assistant com tool_calls — formato exigido pela OpenAI
+        if (m.role === 'assistant' && m.rawToolCalls) {
+          return {
+            role:       'assistant',
+            content:    m.content || null,
+            tool_calls: m.rawToolCalls,
+          }
+        }
+        // Mensagem tool — precisa de tool_call_id
+        if (m.role === 'tool') {
+          return {
+            role:         'tool',
+            content:      m.content,
+            tool_call_id: m.toolCallId,
+          }
+        }
+        // Mensagens normais (system, user, assistant sem tools)
+        return {
+          role:    m.role,
+          content: m.content,
+        }
+      }),
     }
 
     if (tools && tools.length > 0) {
@@ -59,7 +75,7 @@ export class OpenAIProvider implements AIProvider {
       throw new Error(`[OpenAIProvider] Erro API: ${response.status} — ${erro}`)
     }
 
-    const data   = await response.json()
+    const data    = await response.json()
     const choice  = data.choices?.[0]
     const message = choice?.message
 
@@ -70,8 +86,10 @@ export class OpenAIProvider implements AIProvider {
     }))
 
     return {
-      text:      message?.content ?? '',
-      toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+      text:         message?.content ?? '',
+      toolCalls:    toolCalls.length > 0 ? toolCalls : undefined,
+      // Guardar o raw para reenviar na próxima iteração do loop
+      rawToolCalls: message?.tool_calls ?? undefined,
       usage: data.usage ? {
         promptTokens:     data.usage.prompt_tokens,
         completionTokens: data.usage.completion_tokens,
