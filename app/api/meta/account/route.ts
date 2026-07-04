@@ -24,8 +24,7 @@ export async function GET(req: NextRequest) {
 
     const accountId = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`
 
-    // Buscar campos + endpoint de ads_payment_cycles para fundos reais
-    const fields = 'balance,currency,funding_source_details,amount_spent,spend_cap,ads_payment_cycle'
+    const fields = 'balance,currency,funding_source_details,amount_spent,spend_cap'
     const metaUrl = new URL(`https://graph.facebook.com/v19.0/${accountId}`)
     metaUrl.searchParams.set('fields', fields)
     metaUrl.searchParams.set('access_token', integration.access_token)
