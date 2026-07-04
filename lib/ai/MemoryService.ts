@@ -1,9 +1,9 @@
 // lib/ai/MemoryService.ts
-// Lê e escreve na tabela conversations (já existe no Supabase)
-// Mantém histórico de mensagens por usuário
+// Mantém histórico de mensagens por usuário na tabela chat_histories
+// Esta tabela é específica para o chat de texto, separada das transcrições de voz
 
 import type { Message, ConversationMessage } from './types'
-import { createClient } from '@/lib/supabase'
+import { createServerClient } from '@/lib/supabase-server'
 
 const MAX_MESSAGES = 20
 
@@ -11,9 +11,10 @@ export class MemoryService {
 
   async recuperar(userId: string): Promise<Message[]> {
     try {
-      const supabase = createClient()
+      // Usamos createServerClient porque o MemoryService é chamado dentro de API Routes
+      const supabase = createServerClient()
       const { data, error } = await supabase
-        .from('conversations')
+        .from('chat_histories')
         .select('messages')
         .eq('user_id', userId)
         .single()
@@ -22,14 +23,15 @@ export class MemoryService {
 
       const mensagens = (data.messages ?? []) as ConversationMessage[]
       return mensagens.map(m => ({ role: m.role, content: m.content }))
-    } catch {
+    } catch (err) {
+      console.error('[MemoryService] Erro ao recuperar conversa:', err)
       return []
     }
   }
 
   async salvar(userId: string, messages: Message[]): Promise<void> {
     try {
-      const supabase = createClient()
+      const supabase = createServerClient()
 
       const filtered = messages
         .filter(m => m.role !== 'system' && m.role !== 'tool')
@@ -41,12 +43,18 @@ export class MemoryService {
         createdAt: new Date().toISOString(),
       }))
 
-      await supabase
-        .from('conversations')
+      const { error } = await supabase
+        .from('chat_histories')
         .upsert(
-          { user_id: userId, messages: conversationMessages, updated_at: new Date().toISOString() },
+          { 
+            user_id: userId, 
+            messages: conversationMessages, 
+            updated_at: new Date().toISOString() 
+          },
           { onConflict: 'user_id' }
         )
+      
+      if (error) throw error
     } catch (err) {
       console.error('[MemoryService] Erro ao salvar conversa:', err)
     }
@@ -54,13 +62,18 @@ export class MemoryService {
 
   async limpar(userId: string): Promise<void> {
     try {
-      const supabase = createClient()
-      await supabase
-        .from('conversations')
+      const supabase = createServerClient()
+      const { error } = await supabase
+        .from('chat_histories')
         .upsert(
-          { user_id: userId, messages: [], updated_at: new Date().toISOString() },
+          { 
+            user_id: userId, 
+            messages: [], 
+            updated_at: new Date().toISOString() 
+          },
           { onConflict: 'user_id' }
         )
+      if (error) throw error
     } catch (err) {
       console.error('[MemoryService] Erro ao limpar conversa:', err)
     }
