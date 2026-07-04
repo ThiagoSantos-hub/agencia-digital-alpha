@@ -3,18 +3,22 @@
 // Orquestra: AIService + MemoryService + CRMToolsService + VoiceService
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase'
+import { createServerClient } from '@/lib/supabase-server'
 import { alphaAI as aiService } from '@/lib/ai/AIService'
 import { memoryService }    from '@/lib/ai/MemoryService'
 import { voiceService }     from '@/lib/ai/VoiceService'
 import { crmTools }         from '@/lib/ai/CRMToolsService'
 import type { Message as AIMessage } from '@/lib/ai/types'
 
+// Força a rota a ser dinâmica para evitar erro de pré-renderização estática (Next.js 14)
+export const dynamic = 'force-dynamic'
+
 export async function POST(req: NextRequest) {
   try {
-    // 1. Autenticação — pega o usuário logado via cookie de sessão
-    const supabase = createClient()
+    // 1. Autenticação — pega o usuário logado via cookie de sessão usando o client de servidor
+    const supabase = createServerClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
     if (authError || !user) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
     }
