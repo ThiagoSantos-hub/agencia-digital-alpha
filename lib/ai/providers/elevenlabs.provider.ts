@@ -6,25 +6,27 @@
 import type { VoiceProvider } from '../types'
 
 export class ElevenLabsProvider implements VoiceProvider {
-  private readonly elevenLabsKey: string
-  private readonly voiceId:       string
-  private readonly openAiKey:     string
+  private readonly elevenLabsKey: string | undefined
+  private readonly voiceId:       string | undefined
+  private readonly openAiKey:     string | undefined
 
   constructor() {
-    const elKey   = process.env.ELEVENLABS_API_KEY
-    const voiceId = process.env.ELEVENLABS_VOICE_ID
-    const oaKey   = process.env.OPENAI_API_KEY
+    this.elevenLabsKey = process.env.ELEVENLABS_API_KEY
+    this.voiceId       = process.env.ELEVENLABS_VOICE_ID
+    this.openAiKey     = process.env.OPENAI_API_KEY
 
-    if (!elKey)   throw new Error('[ElevenLabsProvider] ELEVENLABS_API_KEY não configurada.')
-    if (!voiceId) throw new Error('[ElevenLabsProvider] ELEVENLABS_VOICE_ID não configurado.')
-    if (!oaKey)   throw new Error('[ElevenLabsProvider] OPENAI_API_KEY não configurada.')
-
-    this.elevenLabsKey = elKey
-    this.voiceId       = voiceId
-    this.openAiKey     = oaKey
+    // Apenas OPENAI_API_KEY é estritamente obrigatória para o funcionamento da classe (transcrição)
+    // ElevenLabs é obrigatória apenas se sintetizar() for chamado.
+    if (!this.openAiKey) {
+      console.warn('[ElevenLabsProvider] OPENAI_API_KEY não configurada. Transcrição não funcionará.')
+    }
   }
 
   async sintetizar(texto: string): Promise<Buffer> {
+    if (!this.elevenLabsKey || !this.voiceId) {
+      throw new Error('[ElevenLabsProvider] ELEVENLABS_API_KEY ou ELEVENLABS_VOICE_ID não configurados.')
+    }
+
     const url = `https://api.elevenlabs.io/v1/text-to-speech/${this.voiceId}`
 
     const response = await fetch(url, {
@@ -53,11 +55,17 @@ export class ElevenLabsProvider implements VoiceProvider {
   }
 
   async transcrever(audioBuffer: Buffer, mimeType: string): Promise<string> {
+    if (!this.openAiKey) {
+      throw new Error('[ElevenLabsProvider] OPENAI_API_KEY não configurada para transcrição.')
+    }
+
     const formData = new FormData()
-    // Converte Buffer para Uint8Array para compatibilidade com Blob no ambiente browser/edge
     const uint8Array = new Uint8Array(audioBuffer)
     const blob = new Blob([uint8Array], { type: mimeType })
-    formData.append('file',     blob, 'audio.webm')
+    
+    // Determina a extensão correta baseada no mimeType para o Whisper não se perder
+    const extensao = mimeType.includes('mp4') ? 'm4a' : 'webm'
+    formData.append('file',     blob, `audio.${extensao}`)
     formData.append('model',    'whisper-1')
     formData.append('language', 'pt')
 

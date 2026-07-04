@@ -37,7 +37,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ texto })
 
   } catch (err: any) {
-    console.error('[transcribe] ERRO DETALHADO:', err?.message, err?.stack)
-    return NextResponse.json({ error: err?.message ?? 'Erro interno' }, { status: 500 })
+    console.error('[transcribe] ERRO DETALHADO:', err)
+    const status = err?.message?.includes('não configurada') ? 503 : 500
+    return NextResponse.json({ error: err?.message ?? 'Erro interno na transcrição' }, { status })
   }
 }
