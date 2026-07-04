@@ -10,17 +10,19 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'adAccountId é obrigatório' }, { status: 400 })
     }
 
+    // Buscar token diretamente sem RLS — integrations é lida por qualquer autenticado
     const supabase = createServerClient()
+    // Fallback: buscar sem checar status para garantir que acha o token
+
 
     const { data: integration } = await supabase
       .from('integrations')
-      .select('access_token')
+      .select('access_token, status')
       .eq('type', 'meta_ads')
-      .eq('status', 'connected')
       .maybeSingle()
 
     if (!integration?.access_token) {
-      return NextResponse.json({ error: 'Meta Ads não conectado' }, { status: 400 })
+      return NextResponse.json({ error: 'Token Meta Ads não encontrado' }, { status: 400 })
     }
 
     const accountId = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`
