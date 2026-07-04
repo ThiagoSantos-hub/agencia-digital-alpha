@@ -1,18 +1,17 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, Megaphone, CheckSquare, Plug, Wallet, UserCircle } from 'lucide-react'
-
+import { LayoutDashboard, Users, Megaphone, CheckSquare, Plug, Wallet, UserCircle, Bot } from 'lucide-react'
 const menuItems = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, ativo: true },
   { label: 'Clientes', href: '/clientes', icon: Users, ativo: true },
   { label: 'Campanhas', href: '/campanhas', icon: Megaphone, ativo: true },
   { label: 'Tarefas', href: '/tarefas', icon: CheckSquare, ativo: true },
   { label: 'Financeiro', href: '/financeiro', icon: Wallet, ativo: true },
+  { label: 'Alpha AI', href: '/ai', icon: Bot, ativo: true },
   { label: 'Integrações', href: '/integracoes', icon: Plug, ativo: true },
   { label: 'Perfil', href: '/perfil', icon: UserCircle, ativo: true },
 ]
-
 export function Sidebar() {
   const pathname = usePathname()
   return (
@@ -45,7 +44,7 @@ export function Sidebar() {
         })}
       </nav>
       <div className="px-6 py-4 border-t border-[#1a3a24]">
-        <p className="text-xs text-gray-600">v0.4.0 — MVP</p>
+        <p className="text-xs text-gray-600">v0.5.0 — MVP</p>
       </div>
     </aside>
   )
