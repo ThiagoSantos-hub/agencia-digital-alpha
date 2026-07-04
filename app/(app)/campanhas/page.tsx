@@ -19,7 +19,6 @@ const statusConfig = {
 
 interface MetaAccountInfo {
   saldo: string | null
-  fundos: string | null
   temCartao: boolean
 }
 
@@ -280,12 +279,6 @@ function ClienteAccordion({ clienteId, clienteNome, adAccountId, campaigns, fetc
                 <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
                   <CreditCard size={11} className="text-emerald-400" />
                   <span className="text-emerald-400 text-[10px] font-bold">Cartão</span>
-                </div>
-              )}
-              {metaInfo.fundos && (
-                <div className="flex items-center gap-1.5 bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 rounded-full">
-                  <PiggyBank size={11} className="text-blue-400" />
-                  <span className="text-blue-400 text-[10px] font-bold">Fundos: {metaInfo.fundos}</span>
                 </div>
               )}
               {metaInfo.saldo && (
