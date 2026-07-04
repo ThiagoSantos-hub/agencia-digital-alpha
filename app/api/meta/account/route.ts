@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     const accountId = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`
 
     // Campos reais e válidos da API do Meta Ads
-    const fields = 'balance,currency,funding_source_details'
+    const fields = 'balance,currency,funding_source_details,adspaymentcycle'
     const metaUrl = new URL(`https://graph.facebook.com/v19.0/${accountId}`)
     metaUrl.searchParams.set('fields', fields)
     metaUrl.searchParams.set('access_token', integration.access_token)
@@ -54,12 +54,13 @@ export async function GET(req: NextRequest) {
     const funding = metaData.funding_source_details
     const temCartao = funding?.type === 1
 
-    // balance: saldo atual da conta (negativo = débito pendente)
     const saldo = fmtBRL(metaData.balance)
+    const fundosRaw = metaData.adspaymentcycle?.amount ?? null
+    const fundos = fundosRaw !== null ? fmtBRL(fundosRaw) : null
 
     return NextResponse.json({
       saldo,
-      fundos: null, // prepay_amount não existe na API pública do Meta
+      fundos,
       temCartao: temCartao ?? false,
       currency,
     })
