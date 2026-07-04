@@ -1,15 +1,7 @@
 'use client'
-// app/(app)/financeiro/page.tsx — v2.1.0
-// Módulo Financeiro — Visual inspirado no Grana Zen
-// Projeto: Agência Digital Alpha
-// CORREÇÕES v2.1.0:
-//   [BUG F-1] inputVazio: adicionado dia_vencimento (obrigatório em LancamentoInput)
-//   [BUG F-2] Cards de totais: corrigido acesso para .receita/.gasto/.investimento (singular)
-//   [BUG F-3] formInput tipado corretamente como LancamentoInput — sem data_vencimento/status
-//   [BUG F-4] abrirModalEditar: mapeamento correto Lancamento → LancamentoInput
-//   [BUG F-5] handleSalvar: valida dia_vencimento em vez de data_vencimento
-//   [BUG F-6] Formulário: campo dia_vencimento (1-31) no lugar de data_vencimento (date)
-//   [BUG F-7] Toggle de status usa editStatus (estado separado)
+// app/(app)/financeiro/page.tsx — v2.2.0
+// CORREÇÕES v2.1.0: [BUG F-1 a F-7]
+// NOVO v2.2.0: [FEATURE] Botão olho para ocultar/mostrar valores financeiros
 
 import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase'
@@ -27,10 +19,8 @@ import {
   TrendingUp, TrendingDown, PiggyBank, Wallet,
   Plus, Search, Pencil, Trash2, CheckCircle2,
   ChevronLeft, ChevronRight, X, AlertCircle,
-  RotateCcw, User, RepeatIcon, Pin,
+  RotateCcw, User, RepeatIcon, Pin, Eye, EyeOff,
 } from 'lucide-react'
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const fmtBRL = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -48,13 +38,8 @@ const PALETTE = [
   '#f59e0b','#ef4444','#8b5cf6','#3b82f6','#06b6d4',
 ]
 
-// ─── Tipos ───────────────────────────────────────────────────────────────────
-
 type AbaFiltro = 'todas' | 'receitas' | 'despesas'
 
-// [BUG F-1 CORRIGIDO] Adicionado dia_vencimento (obrigatório em LancamentoInput).
-// data_vencimento é calculado automaticamente pelo hook a partir de dia_vencimento.
-// status é gerenciado em editStatus (estado separado), não no formInput.
 const inputVazio: LancamentoInput = {
   escopo: 'agencia',
   tipo: 'receita',
@@ -67,9 +52,7 @@ const inputVazio: LancamentoInput = {
   recorrencia: null,
 }
 
-// ─── Mini gráfico de pizza SVG ────────────────────────────────────────────────
-
-function PieChart({ data }: { data: { label: string; value: number; color: string }[] }) {
+function PieChart({ data, visiveis }: { data: { label: string; value: number; color: string }[], visiveis: boolean }) {
   const total = data.reduce((s, d) => s + d.value, 0)
   if (total === 0) return null
 
@@ -105,7 +88,7 @@ function PieChart({ data }: { data: { label: string; value: number; color: strin
         ))}
         <text x={cx} y={cy - 6} textAnchor="middle" fill="#fff" fontSize="10" fontWeight="600">Total</text>
         <text x={cx} y={cy + 8} textAnchor="middle" fill="#00ff88" fontSize="9">
-          {fmtBRL(total)}
+          {visiveis ? fmtBRL(total) : '••••••'}
         </text>
       </svg>
       <div className="space-y-1.5">
@@ -117,7 +100,7 @@ function PieChart({ data }: { data: { label: string; value: number; color: strin
             </div>
             <div className="flex items-center gap-2 text-right">
               <span className="text-gray-500">{s.pct}%</span>
-              <span className="text-white font-medium">{fmtBRL(s.value)}</span>
+              <span className="text-white font-medium">{visiveis ? fmtBRL(s.value) : '••••••'}</span>
             </div>
           </div>
         ))}
@@ -125,8 +108,6 @@ function PieChart({ data }: { data: { label: string; value: number; color: strin
     </div>
   )
 }
-
-// ─── Componente principal ─────────────────────────────────────────────────────
 
 export default function FinanceiroPage() {
   const supabase = createClient()
@@ -142,13 +123,13 @@ export default function FinanceiroPage() {
   const [abaFiltro, setAbaFiltro] = useState<AbaFiltro>('todas')
   const [busca, setBusca] = useState('')
 
-  // Modal
+  // [FEATURE v2.2.0] Ocultar/mostrar valores
+  const [visiveis, setVisiveis] = useState(true)
+
   const [modalAberto, setModalAberto] = useState(false)
   const [modalTipo, setModalTipo] = useState<'receita' | 'despesa'>('receita')
   const [editando, setEditando] = useState<Lancamento | null>(null)
-  // [BUG F-3] formInput é estritamente LancamentoInput — sem data_vencimento/status
   const [formInput, setFormInput] = useState<LancamentoInput>(inputVazio)
-  // [BUG F-7] status gerenciado separadamente pois não faz parte de LancamentoInput
   const [editStatus, setEditStatus] = useState<StatusLancamento>('pendente')
   const [salvando, setSalvando] = useState(false)
   const [erroModal, setErroModal] = useState<string | null>(null)
@@ -178,7 +159,6 @@ export default function FinanceiroPage() {
     dataFim: periodoFim,
   })
 
-  // Atualiza o filtro de escopo no hook sempre que o botão Agência/Pessoal mudar
   useEffect(() => {
     atualizarFiltros({ escopo: escopoAtivo })
   }, [escopoAtivo])
@@ -198,32 +178,19 @@ export default function FinanceiroPage() {
 
   useEffect(() => {
     if (!isAdmin) return
-    // [INTEGRAÇÃO] Buscar clientes com mensalidades para preencher o financeiro
     supabase.from('clients').select('id, name, monthly_fee, payment_day').order('name')
       .then(({ data }) => setClientes(data ?? []))
   }, [isAdmin])
 
-  // [INTEGRAÇÃO] Simplificado: Financeiro não cadastra clientes mais.
-  // Apenas receitas avulsas ou gastos.
-
-  // ─── Listagem filtrada ───────────────────────────────────────────────────────
-
   const listagem = useMemo(() => {
-    // 1. Primeiro, filtramos apenas os lançamentos que devem aparecer no mês selecionado
     const filtradosPorMes = lancamentos.filter(l => {
       const dataVenc = new Date(l.data_vencimento + 'T00:00:00')
-      const mesLancamento = dataVenc.getMonth()
-      const anoLancamento = dataVenc.getFullYear()
-
-      return l.recorrente || (mesLancamento === mesAtivo && anoLancamento === anoAtivo)
+      return l.recorrente || (dataVenc.getMonth() === mesAtivo && dataVenc.getFullYear() === anoAtivo)
     })
 
-    // 2. Ajustamos status para recorrências e corrigimos a data
     return filtradosPorMes.map(l => {
       const dataVencOriginal = new Date(l.data_vencimento + 'T00:00:00')
-      const mesOriginal = dataVencOriginal.getMonth()
-      const anoOriginal = dataVencOriginal.getFullYear()
-      const ehMesDiferente = mesOriginal !== mesAtivo || anoOriginal !== anoAtivo
+      const ehMesDiferente = dataVencOriginal.getMonth() !== mesAtivo || dataVencOriginal.getFullYear() !== anoAtivo
 
       if (l.recorrente && ehMesDiferente) {
         return { 
@@ -246,7 +213,6 @@ export default function FinanceiroPage() {
     })
   }, [lancamentos, abaFiltro, busca, mesAtivo, anoAtivo])
 
-  // [INTELIGÊNCIA] Recalcular totais baseados na listagem projetada (não nos brutos do banco)
   const totais = useMemo(() => {
     const t = { receita: 0, gasto: 0, investimento: 0, saldo: 0, receita_paga: 0, receita_pendente: 0, gasto_pago: 0, gasto_pendente: 0 }
     listagem.forEach(l => {
@@ -286,7 +252,8 @@ export default function FinanceiroPage() {
       .map(([label, value], i) => ({ label, value, color: PALETTE[i % PALETTE.length] }))
   }, [lancamentos])
 
-  // ─── Ações ───────────────────────────────────────────────────────────────────
+  // helper para exibir ou mascarar
+  const val = (v: number) => visiveis ? fmtBRL(v) : '••••••'
 
   function navMes(dir: -1 | 1) {
     setMesAtivo(prev => {
@@ -301,30 +268,19 @@ export default function FinanceiroPage() {
     setEditando(null)
     setModalTipo(tipo)
     setEditStatus('pendente')
-    setFormInput({
-      ...inputVazio,
-      escopo: escopoAtivo,
-      tipo: tipo === 'receita' ? 'receita' : 'gasto',
-    })
+    setFormInput({ ...inputVazio, escopo: escopoAtivo, tipo: tipo === 'receita' ? 'receita' : 'gasto' })
     setErroModal(null)
     setModalAberto(true)
   }
 
-  // [BUG F-4 CORRIGIDO] Mapeamento correto Lancamento → LancamentoInput
   function abrirModalEditar(l: Lancamento) {
     setEditando(l)
     setModalTipo(l.tipo === 'receita' ? 'receita' : 'despesa')
     setEditStatus(l.status)
     setFormInput({
-      escopo:         l.escopo,
-      tipo:           l.tipo,
-      categoria:      l.categoria,
-      descricao:      l.descricao,
-      valor:          l.valor,
-      dia_vencimento: l.dia_vencimento,
-      client_id:      l.client_id,
-      recorrente:     l.recorrente,
-      recorrencia:    l.recorrencia,
+      escopo: l.escopo, tipo: l.tipo, categoria: l.categoria, descricao: l.descricao,
+      valor: l.valor, dia_vencimento: l.dia_vencimento, client_id: l.client_id,
+      recorrente: l.recorrente, recorrencia: l.recorrencia,
     })
     setErroModal(null)
     setModalAberto(true)
@@ -334,19 +290,14 @@ export default function FinanceiroPage() {
     if (!formInput.descricao.trim()) { setErroModal('Informe a descrição.'); return }
     if (!formInput.categoria) { setErroModal('Selecione a categoria.'); return }
     if (!formInput.valor || formInput.valor <= 0) { setErroModal('Informe um valor válido.'); return }
-    // [BUG F-5 CORRIGIDO] Valida dia_vencimento (campo real do LancamentoInput)
     if (!formInput.dia_vencimento || formInput.dia_vencimento < 1 || formInput.dia_vencimento > 31) {
-      setErroModal('Informe o dia de vencimento (1 a 31).')
-      return
+      setErroModal('Informe o dia de vencimento (1 a 31).'); return
     }
-
     setSalvando(true)
     setErroModal(null)
-
     const ok = editando
       ? await updateLancamento(editando.id, { ...formInput, status: editStatus })
       : await createLancamento(formInput)
-
     setSalvando(false)
     if (ok) setModalAberto(false)
     else setErroModal('Erro ao salvar. Tente novamente.')
@@ -359,26 +310,35 @@ export default function FinanceiroPage() {
 
   const categorias = CATEGORIAS[formInput.escopo]?.[formInput.tipo] ?? []
 
-  // ─── Render ───────────────────────────────────────────────────────────────────
-
   return (
     <div className="p-6 space-y-6">
 
-      {isAdmin && (
-        <div className="flex gap-2">
-          {(['agencia', 'pessoal'] as EscopoFinanceiro[]).map(e => (
-            <button
-              key={e}
-              onClick={() => setEscopoAtivo(e)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${escopoAtivo === e
-                ? 'bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30'
-                : 'text-gray-400 border border-[#1a3a24] hover:border-[#00ff88]/30 hover:text-white'}`}
-            >
-              {e === 'agencia' ? '🏢 Agência' : '👤 Pessoal'}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* Topo: abas escopo + botão olho */}
+      <div className="flex items-center justify-between">
+        {isAdmin && (
+          <div className="flex gap-2">
+            {(['agencia', 'pessoal'] as EscopoFinanceiro[]).map(e => (
+              <button
+                key={e}
+                onClick={() => setEscopoAtivo(e)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${escopoAtivo === e
+                  ? 'bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30'
+                  : 'text-gray-400 border border-[#1a3a24] hover:border-[#00ff88]/30 hover:text-white'}`}
+              >
+                {e === 'agencia' ? '🏢 Agência' : '👤 Pessoal'}
+              </button>
+            ))}
+          </div>
+        )}
+        <button
+          onClick={() => setVisiveis(v => !v)}
+          className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm border border-[#1a3a24] text-gray-400 hover:border-[#00ff88]/30 hover:text-white transition-colors ml-auto"
+          title={visiveis ? 'Ocultar valores' : 'Mostrar valores'}
+        >
+          {visiveis ? <EyeOff size={15} /> : <Eye size={15} />}
+          <span className="text-xs">{visiveis ? 'Ocultar' : 'Mostrar'}</span>
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Card Receitas */}
@@ -393,24 +353,23 @@ export default function FinanceiroPage() {
             <div className="w-10 h-10 rounded-full bg-[#00ff88]/10 border border-[#00ff88]/20 flex items-center justify-center">
               <TrendingUp size={20} className="text-[#00ff88]" />
             </div>
-            <span className="text-3xl font-bold text-white">{fmtBRL(totais.receita)}</span>
+            <span className="text-3xl font-bold text-white">{val(totais.receita)}</span>
           </div>
           <p className="text-gray-500 text-xs mb-6">1 de {MESES[mesAtivo]} - {ultimoDia} de {MESES[mesAtivo]}</p>
-          
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl p-4">
               <div className="flex items-center gap-2 text-[#00ff88] mb-1">
                 <CheckCircle2 size={14} />
                 <span className="text-xs font-medium">Recebido</span>
               </div>
-              <p className="text-lg font-bold text-white">{fmtBRL(totais.receita_paga)}</p>
+              <p className="text-lg font-bold text-white">{val(totais.receita_paga)}</p>
             </div>
             <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl p-4">
               <div className="flex items-center gap-2 text-amber-400 mb-1">
                 <RotateCcw size={14} />
                 <span className="text-xs font-medium">A receber</span>
               </div>
-              <p className="text-lg font-bold text-white">{fmtBRL(totais.receita_pendente)}</p>
+              <p className="text-lg font-bold text-white">{val(totais.receita_pendente)}</p>
             </div>
           </div>
         </div>
@@ -427,24 +386,23 @@ export default function FinanceiroPage() {
             <div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
               <TrendingDown size={20} className="text-red-400" />
             </div>
-            <span className="text-3xl font-bold text-white">{fmtBRL(totais.gasto + totais.investimento)}</span>
+            <span className="text-3xl font-bold text-white">{val(totais.gasto + totais.investimento)}</span>
           </div>
           <p className="text-gray-500 text-xs mb-6">1 de {MESES[mesAtivo]} - {ultimoDia} de {MESES[mesAtivo]}</p>
-          
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl p-4">
               <div className="flex items-center gap-2 text-emerald-500 mb-1">
                 <CheckCircle2 size={14} />
                 <span className="text-xs font-medium">Pago</span>
               </div>
-              <p className="text-lg font-bold text-white">{fmtBRL(totais.gasto_pago)}</p>
+              <p className="text-lg font-bold text-white">{val(totais.gasto_pago)}</p>
             </div>
             <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl p-4">
               <div className="flex items-center gap-2 text-red-400 mb-1">
                 <RotateCcw size={14} />
                 <span className="text-xs font-medium">A pagar</span>
               </div>
-              <p className="text-lg font-bold text-white">{fmtBRL(totais.gasto_pendente)}</p>
+              <p className="text-lg font-bold text-white">{val(totais.gasto_pendente)}</p>
             </div>
           </div>
         </div>
@@ -474,9 +432,9 @@ export default function FinanceiroPage() {
           </div>
 
           <div className="flex border-b border-[#1a3a24]">
-            {([['todas', 'Todas'], ['receitas', 'Receitas'], ['despesas', 'Despesas']] as [AbaFiltro, string][]).map(([val, label]) => (
-              <button key={val} onClick={() => setAbaFiltro(val)}
-                className={`flex-1 py-2.5 text-sm font-medium transition-colors ${abaFiltro === val ? 'text-[#00ff88] border-b-2 border-[#00ff88]' : 'text-gray-500 hover:text-gray-300'}`}>
+            {([['todas', 'Todas'], ['receitas', 'Receitas'], ['despesas', 'Despesas']] as [AbaFiltro, string][]).map(([v, label]) => (
+              <button key={v} onClick={() => setAbaFiltro(v as AbaFiltro)}
+                className={`flex-1 py-2.5 text-sm font-medium transition-colors ${abaFiltro === v ? 'text-[#00ff88] border-b-2 border-[#00ff88]' : 'text-gray-500 hover:text-gray-300'}`}>
                 {label}
               </button>
             ))}
@@ -518,7 +476,7 @@ export default function FinanceiroPage() {
                           </span>
                         )}
                         <span className={`text-sm font-semibold ${isReceita ? 'text-[#00ff88]' : 'text-red-400'}`}>
-                          {isReceita ? '+' : '-'}{fmtBRL(totalGrupo)}
+                          {visiveis ? `${isReceita ? '+' : '-'}${fmtBRL(totalGrupo)}` : '••••••'}
                         </span>
                       </div>
                     </div>
@@ -536,7 +494,9 @@ export default function FinanceiroPage() {
                             {l.status === 'pago' ? 'Pago' : l.status === 'atrasado' ? 'Atrasado' : 'Pendente'}
                           </span>
                           <div className="text-right min-w-[100px]">
-                            <p className={`text-sm font-semibold ${l.tipo === 'receita' ? 'text-[#00ff88]' : 'text-red-400'}`}>{fmtBRL(l.valor)}</p>
+                            <p className={`text-sm font-semibold ${l.tipo === 'receita' ? 'text-[#00ff88]' : 'text-red-400'}`}>
+                              {visiveis ? fmtBRL(l.valor) : '••••••'}
+                            </p>
                             <p className="text-gray-600 text-xs">{fmtData(l.data_vencimento)}</p>
                           </div>
                           <div className="flex items-center gap-1">
@@ -568,7 +528,7 @@ export default function FinanceiroPage() {
             <p className="text-gray-600 text-xs mb-5">
               {String(periodoInicio).slice(8)}/{String(mesAtivo + 1).padStart(2, '0')} — {String(periodoFim).slice(8)}/{String(mesAtivo + 1).padStart(2, '0')}
             </p>
-            {dadosPizza.length > 0 ? <PieChart data={dadosPizza} /> : (
+            {dadosPizza.length > 0 ? <PieChart data={dadosPizza} visiveis={visiveis} /> : (
               <div className="py-12 text-center">
                 <PiggyBank size={28} className="mx-auto text-gray-700 mb-2" />
                 <p className="text-gray-600 text-xs">Sem despesas no período</p>
@@ -598,19 +558,16 @@ export default function FinanceiroPage() {
                   <AlertCircle size={15} /> {erroModal}
                 </div>
               )}
-
               <div>
                 <label className="text-xs font-medium text-gray-400 mb-1.5 block">Valor</label>
                 <input type="number" min="0" step="0.01" value={formInput.valor || ''} onChange={e => setFormInput(p => ({ ...p, valor: parseFloat(e.target.value) || 0 }))} placeholder="R$ 0,00"
                   className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none focus:border-[#00ff88]/40" />
               </div>
-
               <div>
                 <label className="text-xs font-medium text-gray-400 mb-1.5 block">Descrição</label>
                 <input value={formInput.descricao} onChange={e => setFormInput(p => ({ ...p, descricao: e.target.value }))} placeholder="Ex: Mensalidade cliente"
                   className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none focus:border-[#00ff88]/40" />
               </div>
-
               {modalTipo === 'despesa' && (
                 <div>
                   <label className="text-xs font-medium text-gray-400 mb-1.5 block">Tipo</label>
@@ -624,7 +581,6 @@ export default function FinanceiroPage() {
                   </div>
                 </div>
               )}
-
               <div>
                 <label className="text-xs font-medium text-gray-400 mb-1.5 block">Categoria</label>
                 <select value={formInput.categoria} onChange={e => setFormInput(p => ({ ...p, categoria: e.target.value }))}
@@ -633,10 +589,6 @@ export default function FinanceiroPage() {
                   {categorias.map((c: string) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
-
-              {/* [INTEGRAÇÃO] Seleção de cliente removida. O financeiro agora é para gastos e receitas avulsas. Clientes são automáticos. */}
-
-              {/* [BUG F-7] Toggle usa editStatus */}
               <div className="flex items-center justify-between bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-3">
                 <div className="flex items-center gap-2">
                   {modalTipo === 'receita' ? <TrendingUp size={15} className="text-gray-500" /> : <TrendingDown size={15} className="text-gray-500" />}
@@ -650,15 +602,12 @@ export default function FinanceiroPage() {
                   <div className={`w-4 h-4 bg-white rounded-full shadow-md transition-all duration-200 transform ${editStatus === 'pago' ? 'translate-x-5' : 'translate-x-0'}`} />
                 </button>
               </div>
-
-              {/* [BUG F-6] Dia de vencimento (1-31) */}
               <div>
                 <label className="text-xs font-medium text-gray-400 mb-1.5 block">Dia de Vencimento (1 a 31)</label>
                 <input type="number" min={1} max={31} value={formInput.dia_vencimento || ''} onChange={e => setFormInput(p => ({ ...p, dia_vencimento: Math.max(1, Math.min(31, parseInt(e.target.value) || 1)) }))} placeholder="Ex: 10"
                   className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none focus:border-[#00ff88]/40" />
                 <p className="text-gray-600 text-xs mt-1">A data de vencimento será calculada automaticamente para o próximo mês com esse dia.</p>
               </div>
-
               <div className="flex items-center justify-between bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-3">
                 <div className="flex items-center gap-2">
                   <Pin size={15} className="text-gray-500" />
@@ -672,7 +621,6 @@ export default function FinanceiroPage() {
                   <div className={`w-4 h-4 bg-white rounded-full shadow-md transition-all duration-200 transform ${formInput.recorrente ? 'translate-x-5' : 'translate-x-0'}`} />
                 </button>
               </div>
-
               {formInput.recorrente && (
                 <div>
                   <label className="text-xs font-medium text-gray-400 mb-1.5 block">Repetir</label>
@@ -686,7 +634,6 @@ export default function FinanceiroPage() {
                   </div>
                 </div>
               )}
-
               <div className="flex items-center gap-2 bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-3">
                 <User size={15} className="text-gray-500" />
                 <div>
