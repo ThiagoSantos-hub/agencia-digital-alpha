@@ -165,13 +165,10 @@ function ModalNovoCliente({ onClose }: { onClose: () => void }) {
             <X size={18} />
           </button>
         </div>
-
         <FormFields form={form} set={set} />
-
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">{error}</div>
         )}
-
         <div className="flex gap-3 pt-1">
           <button onClick={onClose} disabled={loading}
             className="flex-1 py-2.5 rounded-xl text-sm font-medium text-gray-400 bg-[#0f0f0f] border border-[#2a2a2a] hover:text-white transition-colors">
@@ -243,13 +240,10 @@ function ModalEditarCliente({ client, onClose }: { client: Client; onClose: () =
             <X size={18} />
           </button>
         </div>
-
         <FormFields form={form} set={set} />
-
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">{error}</div>
         )}
-
         <div className="flex gap-3 pt-1">
           <button onClick={onClose} disabled={loading}
             className="flex-1 py-2.5 rounded-xl text-sm font-medium text-gray-400 bg-[#0f0f0f] border border-[#2a2a2a] hover:text-white transition-colors">
@@ -298,6 +292,8 @@ function ModalConfirmarExclusao({ name, onClose, onConfirm }: { name: string; on
 export default function ClientesPage() {
   const { clients, loading, deleteCliente, updateCliente } = useClientes()
   const [search, setSearch] = useState('')
+  // [FEATURE] Ocultar/mostrar valores financeiros na tabela
+  const [valoresVisiveis, setValoresVisiveis] = useState(true)
   const [modalNovo, setModalNovo] = useState(false)
   const [clienteEditar, setClienteEditar] = useState<Client | null>(null)
   const [clienteExcluir, setClienteExcluir] = useState<Client | null>(null)
@@ -372,7 +368,19 @@ export default function ClientesPage() {
               <tr className="border-b border-[#2a2a2a] bg-[#1f1f1f]/50">
                 <th className="px-5 py-3 text-gray-500 font-medium">CLIENTE / EMPRESA</th>
                 <th className="px-5 py-3 text-gray-500 font-medium">CONTATO</th>
-                <th className="px-5 py-3 text-gray-500 font-medium">FINANCEIRO</th>
+                <th className="px-5 py-3 text-gray-500 font-medium">
+                  {/* [FEATURE] Olhinho ao lado de FINANCEIRO */}
+                  <div className="flex items-center gap-2">
+                    FINANCEIRO
+                    <button
+                      onClick={() => setValoresVisiveis(v => !v)}
+                      className="text-gray-600 hover:text-gray-300 transition-colors"
+                      title={valoresVisiveis ? 'Ocultar valores' : 'Mostrar valores'}
+                    >
+                      {valoresVisiveis ? <EyeOff size={13} /> : <Eye size={13} />}
+                    </button>
+                  </div>
+                </th>
                 <th className="px-5 py-3 text-gray-500 font-medium">STATUS</th>
                 {title.includes('Inativos') && <th className="px-5 py-3 text-gray-500 font-medium">INATIVADO EM</th>}
                 <th className="px-5 py-3 text-gray-500 font-medium text-right pr-12">AÇÕES</th>
@@ -404,8 +412,13 @@ export default function ClientesPage() {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex flex-col">
+                        {/* [FEATURE] Valor mascarado quando olhinho fechado */}
                         <span className="text-white font-medium text-sm">
-                          {c.monthly_fee ? `R$ ${c.monthly_fee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'}
+                          {c.monthly_fee
+                            ? (valoresVisiveis
+                                ? `R$ ${c.monthly_fee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                                : '••••••')
+                            : '—'}
                         </span>
                         <span className="text-gray-500 text-[10px]">Dia {c.payment_day || '—'}</span>
                       </div>
