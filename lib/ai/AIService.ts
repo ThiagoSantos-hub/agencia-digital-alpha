@@ -1,7 +1,7 @@
-// lib/ai/AIService.ts — v1.3.0
+// lib/ai/AIService.ts — v1.4.0
 import type { AIProvider, AIRequest, AIResponse, CRMTool, Message } from './types'
 
-const SYSTEM_PROMPT = `Você é a Alpha, assistente de inteligência artificial da Agência Digital Alpha.
+const SYSTEM_PROMPT_BASE = `Você é a Alpha, assistente de inteligência artificial da Agência Digital Alpha.
 Você tem acesso aos dados reais do CRM da agência: clientes, campanhas, tarefas, financeiro e integrações.
 Responda sempre em português brasileiro, de forma direta e profissional.
 Quando precisar de dados, use as ferramentas disponíveis.
@@ -18,13 +18,21 @@ export class AIService {
     return this.provider!
   }
 
+  private getDynamicSystemPrompt(): string {
+    const agora = new Date()
+    // Ajuste para o fuso horário de Brasília (UTC-3)
+    const dataHoraBrasilia = agora.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })
+    
+    return `${SYSTEM_PROMPT_BASE}\n\nDATA E HORA ATUAL (Brasília): ${dataHoraBrasilia}`
+  }
+
   async chat(
     messages:  Message[],
     tools?:    CRMTool[],
     options?:  { maxTokens?: number; temperature?: number }
   ): Promise<AIResponse> {
     const provider = this.getProvider()
-    const systemMessage: Message = { role: 'system', content: SYSTEM_PROMPT }
+    const systemMessage: Message = { role: 'system', content: this.getDynamicSystemPrompt() }
 
     // [FIX v1.3] fullMessages é mutável — atualizado a cada iteração do loop
     // para manter os pares assistant+tool_calls+tool em sequência correta
