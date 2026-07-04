@@ -21,8 +21,12 @@ interface Webhook {
   active: boolean
 }
 
-const OAUTH_INTEGRATIONS = ['google_ads', 'gmail', 'google_drive', 'google_calendar', 'meta_ads']
+const OAUTH_INTEGRATIONS = [
+  'google_ads', 'gmail', 'google_drive', 'google_calendar',
+  'meta_ads', 'meta_ads_2', 'meta_ads_3', 'meta_ads_4',
+]
 const GOOGLE_INTEGRATIONS = ['google_ads', 'gmail', 'google_drive', 'google_calendar']
+const META_INTEGRATIONS = ['meta_ads', 'meta_ads_2', 'meta_ads_3', 'meta_ads_4']
 
 const INTEGRATION_ICONS: Record<string, string> = {
   google_ads: 'https://www.gstatic.com/images/branding/product/2x/google_ads_48dp.png',
@@ -30,6 +34,9 @@ const INTEGRATION_ICONS: Record<string, string> = {
   google_drive: 'https://www.gstatic.com/images/branding/product/2x/drive_2020q4_48dp.png',
   google_calendar: 'https://www.gstatic.com/images/branding/product/2x/calendar_2020q4_48dp.png',
   meta_ads: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/200px-Meta_Platforms_Inc._logo.svg.png',
+  meta_ads_2: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/200px-Meta_Platforms_Inc._logo.svg.png',
+  meta_ads_3: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/200px-Meta_Platforms_Inc._logo.svg.png',
+  meta_ads_4: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/200px-Meta_Platforms_Inc._logo.svg.png',
   brevo: 'https://www.brevo.com/wp-content/uploads/2023/01/brevo-logo.svg',
   openai: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/OpenAI_Logo.svg/200px-OpenAI_Logo.svg.png',
   evolution_api: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/200px-WhatsApp.svg.png',
@@ -43,6 +50,9 @@ const INTEGRATION_EMOJI: Record<string, string> = {
   google_drive: '📁',
   google_calendar: '📅',
   meta_ads: '📣',
+  meta_ads_2: '📣',
+  meta_ads_3: '📣',
+  meta_ads_4: '📣',
   brevo: '💌',
   openai: '🤖',
   evolution_api: '💬',
@@ -202,7 +212,10 @@ export default function IntegracoesPage() {
           : 'Google conectado com sucesso!'
       )
     }
-    if (params.get('success') === 'meta_connected') setSuccessMsg('Meta Ads conectado com sucesso!')
+    if (params.get('success') === 'meta_connected') {
+      const slot = params.get('slot')
+      setSuccessMsg(slot && slot !== 'meta_ads' ? `Meta Ads (${slot.replace('meta_ads_', '#')}) conectado com sucesso!` : 'Meta Ads conectado com sucesso!')
+    }
     if (params.get('error')) setErrorMsg('Erro ao conectar. Tente novamente.')
     fetchData()
   }, [])
@@ -345,7 +358,7 @@ export default function IntegracoesPage() {
                     href={
                       GOOGLE_INTEGRATIONS.includes(integration.type)
                         ? `/api/integrations/connect/google?type=${integration.type}`
-                        : '/api/integrations/connect/meta'
+                        : `/api/integrations/connect/meta?slot=${integration.type}`
                     }
                     className="text-xs px-3 py-1.5 rounded-lg font-medium transition-colors"
                     style={{ backgroundColor: '#00ff88', color: '#0a0f0c' }}
