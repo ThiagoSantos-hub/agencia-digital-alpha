@@ -1,9 +1,10 @@
-// app/api/ai/route.ts — v1.2.0
-// Correção: trocado createClient (browser) por createServerClient (server)
-// O browser client não lê cookies em API Routes — causava erro 401
+// app/api/ai/route.ts — v1.3.0
+// Correção: filtrar mensagens role='tool' do histórico antes de enviar à OpenAI
+// A OpenAI exige que tool messages venham APÓS assistant com tool_calls — histórico salvo
+// pode conter tool messages órfãs que causam erro 400.
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase-server'  // ← CORRIGIDO
+import { createServerClient } from '@/lib/supabase-server'
 import { alphaAI }            from '@/lib/ai/AIService'
 import { memoryService }      from '@/lib/ai/MemoryService'
 import { voiceService }       from '@/lib/ai/VoiceService'
@@ -12,7 +13,7 @@ import type { Message }       from '@/lib/ai/types'
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Autenticação — server client lê cookies corretamente
+    // 1. Autenticação
     const supabase = createServerClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
@@ -28,8 +29,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Mensagem vazia' }, { status: 400 })
     }
 
-    // 3. Recuperar histórico
-    const historico: Message[] = await memoryService.recuperar(user.id)
+    // 3. Recuperar histórico e filtrar mensagens problemáticas
+    // Remove role='tool' e role='assistant' com tool_calls do histórico salvo
+    // pois a OpenAI exige que venham em sequência exata — histórico antigo pode quebrar isso
+    const historicoRaw: Message[] = await memoryService.recuperar(user.id)
+    const historico = historicoRaw.filter(
+      m => m.role === 'user' || m.role === 'assistant'
+    )
 
     // 4. Montar mensagem do usuário
     const novaMensagem: Message = { role: 'user', content: mensagem }
@@ -42,7 +48,7 @@ export async function POST(req: NextRequest) {
     const resposta = await alphaAI.chat(mensagensParaIA, tools)
     const respostaTexto = resposta.text
 
-    // 7. Salvar histórico (máx 50 mensagens)
+    // 7. Salvar histórico — apenas user e assistant (sem tool messages)
     const mensagemAssistente: Message = { role: 'assistant', content: respostaTexto }
     await memoryService.salvar(user.id, [
       ...mensagensParaIA,
