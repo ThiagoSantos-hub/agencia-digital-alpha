@@ -1,13 +1,18 @@
-// lib/ai/CRMToolsService.ts
-// Encapsula dados do CRM como ferramentas para o AIService
+// lib/ai/CRMToolsService.ts — v1.1.0
+// Correção: recebe supabase autenticado via parâmetro em vez de criar createClient() interno
+// createClient() (browser) não funciona em API routes — sem sessão, RLS bloqueia tudo
 
 import type { CRMTool } from './types'
-import { createClient } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export class CRMToolsService {
 
-  private async query<T>(table: string, select = '*', filters?: Record<string, any>): Promise<T[]> {
-    const supabase = createClient()
+  private async query<T>(
+    supabase: SupabaseClient,
+    table: string,
+    select = '*',
+    filters?: Record<string, any>
+  ): Promise<T[]> {
     let q = supabase.from(table).select(select)
     if (filters) {
       for (const [key, val] of Object.entries(filters)) {
@@ -18,22 +23,20 @@ export class CRMToolsService {
     return (data ?? []) as T[]
   }
 
-  async getClientes(): Promise<string> {
-    const data = await this.query('clients', 'id, name, company, status, monthly_fee, payment_day')
+  async getClientes(supabase: SupabaseClient): Promise<string> {
+    const data = await this.query(supabase, 'clients', 'id, name, company, status, monthly_fee, payment_day')
     return JSON.stringify(data)
   }
 
-  async getTarefas(status?: string): Promise<string> {
-    const supabase = createClient()
+  async getTarefas(supabase: SupabaseClient, status?: string): Promise<string> {
     let q = supabase.from('tasks').select('id, title, status, priority, due_date, assignee:profiles(name), client:clients(name)')
     if (status) q = q.eq('status', status)
     const { data } = await q
     return JSON.stringify(data ?? [])
   }
 
-  async getFinanceiro(escopo: 'agencia' | 'pessoal' = 'agencia'): Promise<string> {
-    const supabase = createClient()
-    const hoje  = new Date()
+  async getFinanceiro(supabase: SupabaseClient, escopo: 'agencia' | 'pessoal' = 'agencia'): Promise<string> {
+    const hoje   = new Date()
     const inicio = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-01`
     const fim    = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-31`
     const { data } = await supabase
@@ -53,24 +56,23 @@ export class CRMToolsService {
     return JSON.stringify({ totais, lancamentos: lista })
   }
 
-  async getCampanhas(status?: string): Promise<string> {
-    const supabase = createClient()
+  async getCampanhas(supabase: SupabaseClient, status?: string): Promise<string> {
     let q = supabase.from('campaigns').select('id, name, status, channel, budget, start_date, end_date, client:clients(name)')
     if (status) q = q.eq('status', status)
     const { data } = await q
     return JSON.stringify(data ?? [])
   }
 
-  async getIntegracoes(): Promise<string> {
-    const data = await this.query('integrations', 'type, label, status')
+  async getIntegracoes(supabase: SupabaseClient): Promise<string> {
+    const data = await this.query(supabase, 'integrations', 'type, label, status')
     return JSON.stringify(data)
   }
 
-  async getResumoGeral(): Promise<string> {
+  async getResumoGeral(supabase: SupabaseClient): Promise<string> {
     const [clientes, tarefas, campanhas] = await Promise.all([
-      this.query('clients', 'status'),
-      this.query('tasks', 'status'),
-      this.query('campaigns', 'status'),
+      this.query(supabase, 'clients', 'status'),
+      this.query(supabase, 'tasks', 'status'),
+      this.query(supabase, 'campaigns', 'status'),
     ])
     const resumo = {
       clientes: {
@@ -95,21 +97,22 @@ export class CRMToolsService {
     return JSON.stringify(resumo)
   }
 
-  getTools(): CRMTool[] {
+  // Agora recebe supabase autenticado como parâmetro
+  getTools(supabase: SupabaseClient): CRMTool[] {
     return [
       {
         name:        'getResumoGeral',
         description: 'Retorna um resumo geral da agência: total de clientes, tarefas e campanhas com seus status.',
         parameters:  {},
         required:    [],
-        execute:     () => this.getResumoGeral(),
+        execute:     () => this.getResumoGeral(supabase),
       },
       {
         name:        'getClientes',
         description: 'Retorna lista de todos os clientes com status e mensalidade.',
         parameters:  {},
         required:    [],
-        execute:     () => this.getClientes(),
+        execute:     () => this.getClientes(supabase),
       },
       {
         name:        'getTarefas',
@@ -122,7 +125,7 @@ export class CRMToolsService {
           },
         },
         required: [],
-        execute:  (args) => this.getTarefas(args.status),
+        execute:  (args) => this.getTarefas(supabase, args.status),
       },
       {
         name:        'getFinanceiro',
@@ -135,7 +138,7 @@ export class CRMToolsService {
           },
         },
         required: [],
-        execute:  (args) => this.getFinanceiro(args.escopo ?? 'agencia'),
+        execute:  (args) => this.getFinanceiro(supabase, args.escopo ?? 'agencia'),
       },
       {
         name:        'getCampanhas',
@@ -148,14 +151,14 @@ export class CRMToolsService {
           },
         },
         required: [],
-        execute:  (args) => this.getCampanhas(args.status),
+        execute:  (args) => this.getCampanhas(supabase, args.status),
       },
       {
         name:        'getIntegracoes',
         description: 'Retorna status das integrações configuradas (Google, Meta, Brevo, OpenAI, etc.).',
         parameters:  {},
         required:    [],
-        execute:     () => this.getIntegracoes(),
+        execute:     () => this.getIntegracoes(supabase),
       },
     ]
   }
