@@ -2,11 +2,12 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useCampanhas, Campaign, CampaignMetric, MetaMetricOption } from '@/hooks/useCampanhas'
-import { useClientes } from '@/hooks/useClientes'
+import { useClientes, Client } from '@/hooks/useClientes'
 import {
   Search, Megaphone, BarChart2, RefreshCw, Calendar,
   ExternalLink, Filter, AlertTriangle, ChevronDown,
-  ChevronUp, User, Settings2, X, Check,
+  ChevronUp, User, Settings2, X, Check, CreditCard,
+  Wallet, PiggyBank,
 } from 'lucide-react'
 
 const statusConfig = {
@@ -14,6 +15,36 @@ const statusConfig = {
   pausada:    { label: 'Pausada',    className: 'text-amber-400 bg-amber-500/10 border-amber-500/30'       },
   finalizada: { label: 'Finalizada', className: 'text-gray-400 bg-gray-500/10 border-gray-500/30'          },
   rascunho:   { label: 'Rascunho',   className: 'text-blue-400 bg-blue-500/10 border-blue-500/30'          },
+}
+
+// ─── Dados financeiros da conta Meta ────────────────────────────────────────
+
+interface MetaAccountInfo {
+  saldo: string | null
+  fundos: string | null
+  temCartao: boolean
+  isPrepay: boolean
+}
+
+function useMetaAccount(adAccountId: string | null) {
+  const [info, setInfo] = useState<MetaAccountInfo | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!adAccountId) return
+    let cancelled = false
+    setLoading(true)
+    fetch(`/api/meta/account?adAccountId=${encodeURIComponent(adAccountId)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (!cancelled && !data.error) setInfo(data)
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [adAccountId])
+
+  return { info, loading }
 }
 
 // ─── Modal de seleção de métricas ────────────────────────────────────────────
@@ -53,7 +84,6 @@ function MetricSelectorModal({ campaign, allOptions, onSave, onClose }: {
             <X size={18} />
           </button>
         </div>
-
         <div className="flex-1 overflow-y-auto px-6 py-4">
           <p className="text-gray-500 text-xs mb-4">Selecione as métricas que deseja visualizar para esta campanha. A escolha fica salva até você editar novamente.</p>
           <div className="grid grid-cols-2 gap-2">
@@ -76,19 +106,12 @@ function MetricSelectorModal({ campaign, allOptions, onSave, onClose }: {
             })}
           </div>
         </div>
-
         <div className="px-6 py-4 border-t border-[#2a2a2a] flex gap-3">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl border border-[#2a2a2a] text-gray-400 text-sm hover:text-white transition-colors"
-          >
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-[#2a2a2a] text-gray-400 text-sm hover:text-white transition-colors">
             Cancelar
           </button>
-          <button
-            onClick={handleSave}
-            disabled={saving || selected.length === 0}
-            className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-          >
+          <button onClick={handleSave} disabled={saving || selected.length === 0}
+            className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors">
             {saving ? 'Salvando...' : `Salvar (${selected.length})`}
           </button>
         </div>
@@ -113,7 +136,6 @@ function CampaignCard({ campaign, fetchMetrics, fetchAllMetricOptions, saveSelec
   const [modalAberto, setModalAberto] = useState(false)
   const [allOptions, setAllOptions] = useState<MetaMetricOption[]>([])
 
-  // Recarrega métricas automaticamente quando a data muda e o painel está aberto
   useEffect(() => {
     if (!expandido) return
     let cancelled = false
@@ -126,10 +148,7 @@ function CampaignCard({ campaign, fetchMetrics, fetchAllMetricOptions, saveSelec
         dateStart || undefined,
         dateEnd || undefined,
       )
-      if (!cancelled) {
-        setMetrics(data)
-        setLoadingMetrics(false)
-      }
+      if (!cancelled) { setMetrics(data); setLoadingMetrics(false) }
     }
     reload()
     return () => { cancelled = true }
@@ -162,16 +181,9 @@ function CampaignCard({ campaign, fetchMetrics, fetchAllMetricOptions, saveSelec
 
   const handleSaveMetrics = async (keys: string[]) => {
     await saveSelectedMetrics(campaign.id, keys)
-    // Recarrega métricas com nova seleção se painel estiver aberto
     if (expandido) {
       setLoadingMetrics(true)
-      const data = await fetchMetrics(
-        campaign.id,
-        campaign.meta_campaign_id || '',
-        keys,
-        dateStart || undefined,
-        dateEnd || undefined,
-      )
+      const data = await fetchMetrics(campaign.id, campaign.meta_campaign_id || '', keys, dateStart || undefined, dateEnd || undefined)
       setMetrics(data)
       setLoadingMetrics(false)
     }
@@ -197,7 +209,6 @@ function CampaignCard({ campaign, fetchMetrics, fetchAllMetricOptions, saveSelec
               </div>
             </div>
           </div>
-
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
               <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider">Orçamento Diário</p>
@@ -205,20 +216,13 @@ function CampaignCard({ campaign, fetchMetrics, fetchAllMetricOptions, saveSelec
                 {campaign.budget ? `R$ ${campaign.budget.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'}
               </p>
             </div>
-
-            {/* Botão de configurar métricas */}
-            <button
-              onClick={abrirConfig}
+            <button onClick={abrirConfig}
               className="w-8 h-8 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] flex items-center justify-center text-gray-500 hover:text-indigo-400 hover:border-indigo-500/30 transition-all"
-              title="Configurar métricas"
-            >
+              title="Configurar métricas">
               <Settings2 size={14} />
             </button>
-
-            <button
-              onClick={loadMetrics}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${expandido ? 'bg-indigo-600 text-white' : 'bg-[#0f0f0f] border border-[#2a2a2a] text-gray-400 hover:text-white'}`}
-            >
+            <button onClick={loadMetrics}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${expandido ? 'bg-indigo-600 text-white' : 'bg-[#0f0f0f] border border-[#2a2a2a] text-gray-400 hover:text-white'}`}>
               <BarChart2 size={14} />
               {expandido ? 'Ocultar Métricas' : 'Ver Métricas'}
             </button>
@@ -246,12 +250,9 @@ function CampaignCard({ campaign, fetchMetrics, fetchAllMetricOptions, saveSelec
               </div>
             )}
             <div className="mt-4 flex justify-end">
-              <a
-                href={`https://www.facebook.com/adsmanager/manage/campaigns?act=${campaign.meta_campaign_id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-[10px] font-bold text-gray-600 hover:text-white transition-colors uppercase tracking-widest"
-              >
+              <a href={`https://www.facebook.com/adsmanager/manage/campaigns?act=${campaign.meta_campaign_id}`}
+                target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-[10px] font-bold text-gray-600 hover:text-white transition-colors uppercase tracking-widest">
                 Abrir no Gerenciador <ExternalLink size={12} />
               </a>
             </div>
@@ -273,9 +274,10 @@ function CampaignCard({ campaign, fetchMetrics, fetchAllMetricOptions, saveSelec
 
 // ─── Accordion por cliente ────────────────────────────────────────────────────
 
-function ClienteAccordion({ clienteId, clienteNome, campaigns, fetchMetrics, fetchAllMetricOptions, saveSelectedMetrics, statusFilter, search, dateStart, dateEnd }: {
+function ClienteAccordion({ clienteId, clienteNome, adAccountId, campaigns, fetchMetrics, fetchAllMetricOptions, saveSelectedMetrics, statusFilter, search, dateStart, dateEnd }: {
   clienteId: string
   clienteNome: string
+  adAccountId: string | null
   campaigns: Campaign[]
   fetchMetrics: (id: string, metaId: string, selected?: string[], start?: string, end?: string) => Promise<CampaignMetric[]>
   fetchAllMetricOptions: () => Promise<MetaMetricOption[]>
@@ -286,6 +288,7 @@ function ClienteAccordion({ clienteId, clienteNome, campaigns, fetchMetrics, fet
   dateEnd: string
 }) {
   const [aberto, setAberto] = useState(false)
+  const { info: metaInfo, loading: metaLoading } = useMetaAccount(adAccountId)
 
   const campanhasFiltradas = useMemo(() => {
     return campaigns.filter(c => {
@@ -316,6 +319,35 @@ function ClienteAccordion({ clienteId, clienteNome, campaigns, fetchMetrics, fet
             </p>
           </div>
         </div>
+
+        {/* Saldo, fundos e cartão — sempre visível */}
+        <div className="flex items-center gap-3 mr-4">
+          {metaLoading ? (
+            <RefreshCw size={12} className="animate-spin text-gray-600" />
+          ) : metaInfo ? (
+            <>
+              {metaInfo.temCartao && (
+                <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
+                  <CreditCard size={11} className="text-emerald-400" />
+                  <span className="text-emerald-400 text-[10px] font-bold">Cartão</span>
+                </div>
+              )}
+              {metaInfo.fundos && (
+                <div className="flex items-center gap-1.5 bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 rounded-full">
+                  <PiggyBank size={11} className="text-blue-400" />
+                  <span className="text-blue-400 text-[10px] font-bold">{metaInfo.fundos}</span>
+                </div>
+              )}
+              {metaInfo.saldo && (
+                <div className="flex items-center gap-1.5 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-full">
+                  <Wallet size={11} className="text-indigo-400" />
+                  <span className="text-indigo-400 text-[10px] font-bold">{metaInfo.saldo}</span>
+                </div>
+              )}
+            </>
+          ) : null}
+        </div>
+
         <div className="flex items-center gap-3">
           <span className="text-indigo-400 text-xs font-bold bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-full">
             {campanhasFiltradas.length}
@@ -355,12 +387,13 @@ export default function CampanhasPage() {
   const [localError, setLocalError] = useState<string | null>(null)
 
   const campanhasPorCliente = useMemo(() => {
-    const grupos: Record<string, { nome: string; campaigns: Campaign[] }> = {}
+    const grupos: Record<string, { nome: string; adAccountId: string | null; campaigns: Campaign[] }> = {}
     campaigns.forEach(c => {
       if (!grupos[c.client_id]) {
         const cliente = clients.find(cl => cl.id === c.client_id)
         grupos[c.client_id] = {
           nome: cliente?.name ?? `Cliente ${c.client_id.slice(0, 8)}`,
+          adAccountId: cliente?.meta_ad_account_id ?? null,
           campaigns: [],
         }
       }
@@ -387,11 +420,8 @@ export default function CampanhasPage() {
             Visualização direta de anúncios sincronizados com seu Meta Ads.
           </p>
         </div>
-        <button
-          onClick={handleSync}
-          disabled={loading}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-medium transition-all ${loading ? 'bg-indigo-500/20 text-indigo-400' : 'bg-[#1a1a1a] border border-[#2a2a2a] text-gray-300 hover:text-white'}`}
-        >
+        <button onClick={handleSync} disabled={loading}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-medium transition-all ${loading ? 'bg-indigo-500/20 text-indigo-400' : 'bg-[#1a1a1a] border border-[#2a2a2a] text-gray-300 hover:text-white'}`}>
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           {loading ? 'Sincronizando...' : 'Sincronizar Meta'}
         </button>
@@ -407,55 +437,33 @@ export default function CampanhasPage() {
         </div>
       )}
 
-      {/* Filtros */}
       <div className="flex flex-wrap items-center gap-4 bg-[#1a1a1a] p-3 rounded-2xl border border-[#2a2a2a] shadow-lg">
         <div className="relative flex-1 min-w-[200px]">
           <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input
-            type="text"
-            placeholder="Buscar campanha pelo nome..."
-            value={search}
+          <input type="text" placeholder="Buscar campanha pelo nome..." value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-12 pr-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 transition-all"
-          />
+            className="w-full pl-12 pr-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 transition-all" />
         </div>
-
         <div className="flex items-center gap-2 px-4 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl">
           <Filter size={16} className="text-indigo-400" />
-          <select
-            value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}
-            className="bg-transparent text-white text-sm focus:outline-none cursor-pointer"
-          >
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
+            className="bg-transparent text-white text-sm focus:outline-none cursor-pointer">
             <option value="todas">Todos os Status</option>
             <option value="ativa">Ativas</option>
             <option value="pausada">Pausadas</option>
             <option value="finalizada">Finalizadas</option>
           </select>
         </div>
-
-        {/* Período personalizado — passado para as métricas de cada campanha */}
         <div className="flex items-center gap-2 px-4 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl">
           <Calendar size={16} className="text-indigo-400" />
-          <input
-            type="date"
-            value={dateStart}
-            onChange={e => setDateStart(e.target.value)}
-            className="bg-transparent text-white text-sm focus:outline-none"
-            style={{ colorScheme: 'dark' }}
-          />
+          <input type="date" value={dateStart} onChange={e => setDateStart(e.target.value)}
+            className="bg-transparent text-white text-sm focus:outline-none" style={{ colorScheme: 'dark' }} />
           <span className="text-gray-600">—</span>
-          <input
-            type="date"
-            value={dateEnd}
-            onChange={e => setDateEnd(e.target.value)}
-            className="bg-transparent text-white text-sm focus:outline-none"
-            style={{ colorScheme: 'dark' }}
-          />
+          <input type="date" value={dateEnd} onChange={e => setDateEnd(e.target.value)}
+            className="bg-transparent text-white text-sm focus:outline-none" style={{ colorScheme: 'dark' }} />
         </div>
       </div>
 
-      {/* Lista agrupada por cliente */}
       <div className="grid grid-cols-1 gap-4">
         {loading && campaigns.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
@@ -469,11 +477,12 @@ export default function CampanhasPage() {
             <p className="text-gray-500 text-sm mt-1">Verifique sua conexão com o Meta Ads ou tente outro filtro.</p>
           </div>
         ) : (
-          Object.entries(campanhasPorCliente).map(([clienteId, { nome, campaigns: cams }]) => (
+          Object.entries(campanhasPorCliente).map(([clienteId, { nome, adAccountId, campaigns: cams }]) => (
             <ClienteAccordion
               key={clienteId}
               clienteId={clienteId}
               clienteNome={nome}
+              adAccountId={adAccountId}
               campaigns={cams}
               fetchMetrics={fetchMetrics}
               fetchAllMetricOptions={fetchAllMetricOptions}
