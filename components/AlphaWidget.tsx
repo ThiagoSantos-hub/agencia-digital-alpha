@@ -56,7 +56,7 @@ function AlphaButton({ userName }: { userName: string }) {
 
   const handleClick = useCallback(async () => {
     if (active) {
-      await endSession()
+      try { await endSession() } catch {}
       return
     }
     
@@ -65,11 +65,9 @@ function AlphaButton({ userName }: { userName: string }) {
     setLoading(true)
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true })
-      await startSession({
-        agentId: AGENT_ID,
-      })
+      await startSession({ agentId: AGENT_ID })
     } catch (error) {
-      console.error('Erro ao iniciar sessão Alpha:', error)
+      console.warn('[Alpha] Erro ao iniciar sessão:', error)
       setLoading(false)
     }
   }, [active, loading, startSession, endSession])
@@ -135,32 +133,31 @@ export function AlphaWidget() {
   }, [supabase])
 
   const handleDisconnect = useCallback(async (conversation: any) => {
-    console.log('Alpha desconectada')
     if (!userId || !conversation?.transcript || conversation.transcript.length === 0) return
-
     try {
-      const { error } = await supabase
-        .from('conversations')
-        .insert({
-          user_id: userId,
-          transcript: conversation.transcript
-        })
-      
-      if (error) throw error
-      console.log('Conversa salva com sucesso na memória da Alpha')
+      await supabase.from('conversations').insert({
+        user_id: userId,
+        transcript: conversation.transcript
+      })
     } catch (err) {
-      console.error('Erro ao salvar conversa no Supabase:', err)
+      console.error('[Alpha] Erro ao salvar conversa:', err)
     }
   }, [userId, supabase])
+
+  // Proteção: captura erro do SDK sem deixar crashar
+  const handleError = useCallback((error: any) => {
+    const tipo = error?.error_type ?? error?.type ?? 'desconhecido'
+    console.warn('[Alpha] Erro SDK:', tipo)
+  }, [])
 
   if (userName === null) return null
 
   return (
     <ConversationProvider
       agentId={AGENT_ID}
-      onConnect={() => console.log('Alpha conectada')}
+      onConnect={() => console.log('[Alpha] conectada')}
       onDisconnect={handleDisconnect}
-      onError={(error) => console.error('Erro Alpha:', error)}
+      onError={handleError}
     >
       <AlphaButton userName={userName} />
     </ConversationProvider>
