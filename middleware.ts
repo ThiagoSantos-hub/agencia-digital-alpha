@@ -1,6 +1,5 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
   const supabase = createServerClient(
@@ -17,7 +16,6 @@ export async function middleware(request: NextRequest) {
       },
     }
   )
-
   const { data: { user } } = await supabase.auth.getUser()
   const isAuthRoute = request.nextUrl.pathname.startsWith('/login')
   const isAppRoute =
@@ -27,13 +25,12 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/tarefas') ||
     request.nextUrl.pathname.startsWith('/integracoes') ||
     request.nextUrl.pathname.startsWith('/financeiro') ||
+    request.nextUrl.pathname.startsWith('/ai') ||
     request.nextUrl.pathname.startsWith('/perfil')
-
   if (!user && isAppRoute) return NextResponse.redirect(new URL('/login', request.url))
   if (user && isAuthRoute) return NextResponse.redirect(new URL('/dashboard', request.url))
   return supabaseResponse
 }
-
 export const config = {
   matcher: [
     '/dashboard/:path*',
@@ -42,6 +39,7 @@ export const config = {
     '/tarefas/:path*',
     '/integracoes/:path*',
     '/financeiro/:path*',
+    '/ai/:path*',
     '/perfil/:path*',
     '/login',
   ],
