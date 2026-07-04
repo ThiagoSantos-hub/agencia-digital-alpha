@@ -4,11 +4,11 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase'
-import { aiService }        from '@/lib/ai/AIService'
+import { alphaAI as aiService } from '@/lib/ai/AIService'
 import { memoryService }    from '@/lib/ai/MemoryService'
 import { voiceService }     from '@/lib/ai/VoiceService'
 import { crmTools }         from '@/lib/ai/CRMToolsService'
-import type { AIMessage }   from '@/lib/ai/types'
+import type { Message as AIMessage } from '@/lib/ai/types'
 
 export async function POST(req: NextRequest) {
   try {
@@ -39,7 +39,8 @@ export async function POST(req: NextRequest) {
     const tools = crmTools.getTools()
 
     // 6. Chamar o AIService com o histórico + tools do CRM
-    const respostaTexto = await aiService.responder(mensagensParaIA, tools)
+    const aiResponse = await aiService.chat(mensagensParaIA, tools)
+    const respostaTexto = aiResponse.text
 
     // 7. Montar mensagem de resposta
     const mensagemAssistente: AIMessage = { role: 'assistant', content: respostaTexto }
