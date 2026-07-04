@@ -1,6 +1,5 @@
-// lib/ai/CRMToolsService.ts — v1.1.0
-// Correção: recebe supabase autenticado via parâmetro em vez de criar createClient() interno
-// createClient() (browser) não funciona em API routes — sem sessão, RLS bloqueia tudo
+// lib/ai/CRMToolsService.ts — v1.2.0
+// Adicionado: getMetricasCampanha — busca métricas reais do Meta Ads por período
 
 import type { CRMTool } from './types'
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -57,7 +56,7 @@ export class CRMToolsService {
   }
 
   async getCampanhas(supabase: SupabaseClient, status?: string): Promise<string> {
-    let q = supabase.from('campaigns').select('id, name, status, channel, budget, start_date, end_date, client:clients(name)')
+    let q = supabase.from('campaigns').select('id, name, status, channel, budget, start_date, end_date, meta_campaign_id, client:clients(name)')
     if (status) q = q.eq('status', status)
     const { data } = await q
     return JSON.stringify(data ?? [])
@@ -97,7 +96,117 @@ export class CRMToolsService {
     return JSON.stringify(resumo)
   }
 
-  // Agora recebe supabase autenticado como parâmetro
+  async getMetricasCampanha(
+    supabase: SupabaseClient,
+    nomeCliente?: string,
+    nomeCampanha?: string,
+    dataInicio?: string,
+    dataFim?: string
+  ): Promise<string> {
+    // 1. Buscar token do Meta
+    const { data: integration } = await supabase
+      .from('integrations')
+      .select('access_token')
+      .eq('type', 'meta_ads')
+      .maybeSingle()
+
+    if (!integration?.access_token) {
+      return JSON.stringify({ erro: 'Meta Ads não conectado' })
+    }
+
+    // 2. Buscar campanhas com filtros
+    let q = supabase
+      .from('campaigns')
+      .select('id, name, meta_campaign_id, budget, status, client:clients(name, meta_ad_account_id)')
+      .not('meta_campaign_id', 'is', null)
+
+    const { data: campanhas } = await q
+    if (!campanhas || campanhas.length === 0) {
+      return JSON.stringify({ erro: 'Nenhuma campanha com ID do Meta encontrada' })
+    }
+
+    // 3. Filtrar por nome se informado
+    let campanhasFiltradas = campanhas
+    if (nomeCliente) {
+      campanhasFiltradas = campanhasFiltradas.filter((c: any) =>
+        c.client?.name?.toLowerCase().includes(nomeCliente.toLowerCase())
+      )
+    }
+    if (nomeCampanha) {
+      campanhasFiltradas = campanhasFiltradas.filter((c: any) =>
+        c.name?.toLowerCase().includes(nomeCampanha.toLowerCase())
+      )
+    }
+
+    if (campanhasFiltradas.length === 0) {
+      return JSON.stringify({ erro: 'Nenhuma campanha encontrada com esse filtro' })
+    }
+
+    // 4. Definir período
+    const hoje = new Date()
+    const fmt = (d: Date) => d.toISOString().split('T')[0]
+    const trintaDiasAtras = new Date(hoje)
+    trintaDiasAtras.setDate(hoje.getDate() - 30)
+
+    const since = dataInicio || fmt(trintaDiasAtras)
+    const until = dataFim   || fmt(hoje)
+
+    // 5. Buscar métricas de cada campanha na API do Meta
+    const resultados: any[] = []
+    const fields = 'impressions,reach,clicks,ctr,spend,cpm,cpc,actions'
+
+    for (const camp of campanhasFiltradas.slice(0, 10)) { // máximo 10 por vez
+      try {
+        const metaUrl = new URL(`https://graph.facebook.com/v19.0/${camp.meta_campaign_id}/insights`)
+        metaUrl.searchParams.set('fields', fields)
+        metaUrl.searchParams.set('time_range', JSON.stringify({ since, until }))
+        metaUrl.searchParams.set('access_token', integration.access_token)
+
+        const res = await fetch(metaUrl.toString())
+        const metaData = await res.json()
+
+        const insight = metaData.data?.[0]
+
+        if (insight) {
+          const fmtBRL = (v: string) => v ? `R$ ${(parseFloat(v)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'
+
+          // Resultado principal (WhatsApp, leads, compras)
+          const resultado = insight.actions?.find((a: any) =>
+            ['lead', 'purchase', 'onsite_conversion.messaging_conversation_started_7d', 'offsite_conversion.fb_pixel_lead'].includes(a.action_type)
+          )
+
+          resultados.push({
+            campanha:     camp.name,
+            cliente:      (camp.client as any)?.name ?? '—',
+            periodo:      `${since} a ${until}`,
+            impressoes:   insight.impressions ? parseInt(insight.impressions).toLocaleString('pt-BR') : '—',
+            alcance:      insight.reach ? parseInt(insight.reach).toLocaleString('pt-BR') : '—',
+            cliques:      insight.clicks ? parseInt(insight.clicks).toLocaleString('pt-BR') : '—',
+            ctr:          insight.ctr ? `${parseFloat(insight.ctr).toFixed(2)}%` : '—',
+            gasto:        fmtBRL(insight.spend),
+            cpm:          fmtBRL(insight.cpm),
+            cpc:          fmtBRL(insight.cpc),
+            resultados:   resultado ? parseInt(resultado.value).toLocaleString('pt-BR') : '—',
+          })
+        } else {
+          resultados.push({
+            campanha: camp.name,
+            cliente:  (camp.client as any)?.name ?? '—',
+            periodo:  `${since} a ${until}`,
+            info:     'Sem dados no período informado',
+          })
+        }
+      } catch (err: any) {
+        resultados.push({
+          campanha: camp.name,
+          erro:     err.message,
+        })
+      }
+    }
+
+    return JSON.stringify(resultados)
+  }
+
   getTools(supabase: SupabaseClient): CRMTool[] {
     return [
       {
@@ -159,6 +268,36 @@ export class CRMToolsService {
         parameters:  {},
         required:    [],
         execute:     () => this.getIntegracoes(supabase),
+      },
+      {
+        name:        'getMetricasCampanha',
+        description: 'Busca métricas reais do Meta Ads em tempo real: gasto, impressões, cliques, CTR, CPM, CPC e resultados. Pode filtrar por nome do cliente, nome da campanha e período de datas.',
+        parameters: {
+          nomeCliente: {
+            type:        'string',
+            description: 'Nome do cliente para filtrar as campanhas (parcial)',
+          },
+          nomeCampanha: {
+            type:        'string',
+            description: 'Nome da campanha para filtrar (parcial)',
+          },
+          dataInicio: {
+            type:        'string',
+            description: 'Data de início no formato YYYY-MM-DD (ex: 2026-07-01)',
+          },
+          dataFim: {
+            type:        'string',
+            description: 'Data de fim no formato YYYY-MM-DD (ex: 2026-07-04)',
+          },
+        },
+        required: [],
+        execute:  (args) => this.getMetricasCampanha(
+          supabase,
+          args.nomeCliente,
+          args.nomeCampanha,
+          args.dataInicio,
+          args.dataFim
+        ),
       },
     ]
   }
