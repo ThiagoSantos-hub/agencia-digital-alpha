@@ -267,7 +267,7 @@ function ClienteAccordion({ clienteId, clienteNome, adAccountId, campaigns, fetc
           </div>
           <div className="text-left">
             <div className="flex items-center gap-2">
-              <p className={}>{clienteNome}</p>
+              <p className={metaInfo?.contaBloqueada ? 'text-red-400 font-semibold' : ''}>{clienteNome}</p>
               {metaInfo?.contaBloqueada && (
                 <span className="text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/30 px-2 py-0.5 rounded-full">Conta bloqueada</span>
               )}
