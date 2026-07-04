@@ -1,6 +1,4 @@
-// lib/ai/AIService.ts — v1.2.0
-// Correção: mensagem assistant agora inclui rawToolCalls no loop de tool calling
-// A OpenAI exige que a mensagem assistant contenha tool_calls para aceitar mensagens tool subsequentes
+// lib/ai/AIService.ts — v1.3.0
 import type { AIProvider, AIRequest, AIResponse, CRMTool, Message } from './types'
 
 const SYSTEM_PROMPT = `Você é a Alpha, assistente de inteligência artificial da Agência Digital Alpha.
@@ -26,9 +24,11 @@ export class AIService {
     options?:  { maxTokens?: number; temperature?: number }
   ): Promise<AIResponse> {
     const provider = this.getProvider()
-
     const systemMessage: Message = { role: 'system', content: SYSTEM_PROMPT }
-    const fullMessages = [systemMessage, ...messages]
+
+    // [FIX v1.3] fullMessages é mutável — atualizado a cada iteração do loop
+    // para manter os pares assistant+tool_calls+tool em sequência correta
+    let fullMessages: Message[] = [systemMessage, ...messages]
 
     const request: AIRequest = {
       messages:    fullMessages,
@@ -44,12 +44,18 @@ export class AIService {
     while (response.toolCalls && response.toolCalls.length > 0 && iterations < 5) {
       iterations++
 
-      const toolResultMessages: Message[] = []
+      // Mensagem assistant COM rawToolCalls — obrigatória antes das mensagens tool
+      const assistantMessage: Message = {
+        role:         'assistant',
+        content:      response.text || '',
+        rawToolCalls: response.rawToolCalls,
+      }
 
+      // Executar cada tool e coletar resultados
+      const toolResultMessages: Message[] = []
       for (const toolCall of response.toolCalls) {
         const tool = tools?.find(t => t.name === toolCall.name)
         let result = ''
-
         if (tool) {
           try {
             result = await tool.execute(toolCall.args)
@@ -59,7 +65,6 @@ export class AIService {
         } else {
           result = `Ferramenta "${toolCall.name}" não encontrada.`
         }
-
         toolResultMessages.push({
           role:       'tool',
           content:    result,
@@ -68,23 +73,16 @@ export class AIService {
         })
       }
 
-      // CORREÇÃO: a mensagem assistant DEVE incluir rawToolCalls
-      // A OpenAI rejeita mensagens tool que não têm uma mensagem assistant
-      // com tool_calls precedente — erro 400 "messages with role 'tool' must
-      // be a response to a preceeding message with 'tool_calls'"
-      const assistantMessage: Message = {
-        role:          'assistant',
-        content:       response.text || '',
-        rawToolCalls:  response.rawToolCalls,
-      }
-
-      const updatedMessages = [
+      // [FIX v1.3] Atualiza fullMessages acumulando corretamente:
+      // [...anterior, assistant+tool_calls, ...tool results]
+      // Assim a próxima iteração tem o contexto completo e correto
+      fullMessages = [
         ...fullMessages,
         assistantMessage,
         ...toolResultMessages,
       ]
 
-      response = await provider.chat({ ...request, messages: updatedMessages })
+      response = await provider.chat({ ...request, messages: fullMessages })
     }
 
     return response
