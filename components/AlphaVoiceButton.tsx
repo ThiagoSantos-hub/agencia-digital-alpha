@@ -1,5 +1,10 @@
 'use client'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useAlphaVoice, VoiceState } from '@/hooks/useAlphaVoice'
+
+// ── PATCH v1.1 — sincroniza com extensão Chrome via localStorage ──────────────
+// Quando o usuário ativa/desativa no botão, seta localStorage.alphaAtiva
+// A extensão escuta esse evento e espelha o estado em todas as abas do Chrome
 
 function IconMic() {
   return (
@@ -11,7 +16,6 @@ function IconMic() {
     </svg>
   )
 }
-
 function IconX() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -20,7 +24,6 @@ function IconX() {
     </svg>
   )
 }
-
 function WaveIcon() {
   return (
     <span style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 20 }}>
@@ -38,7 +41,6 @@ function WaveIcon() {
     </span>
   )
 }
-
 function Spinner() {
   return (
     <span style={{
@@ -54,8 +56,21 @@ function Spinner() {
 
 export function AlphaVoiceButton() {
   const { voiceState, startListening, stopListening } = useAlphaVoice()
-
   const isActive = voiceState !== 'idle'
+
+  // ── Sincroniza com extensão Chrome ────────────────────────────────────────
+  useEffect(() => {
+    localStorage.setItem('alphaAtiva', isActive ? 'true' : 'false')
+    window.dispatchEvent(new StorageEvent('storage', {
+      key:      'alphaAtiva',
+      newValue: isActive ? 'true' : 'false',
+    }))
+  }, [isActive])
+
+  const handleClick = () => {
+    if (isActive) stopListening()
+    else startListening()
+  }
 
   const btnBg: Record<VoiceState, string> = {
     idle:       '#0f1a14',
@@ -80,10 +95,9 @@ export function AlphaVoiceButton() {
         }
         .alpha-wave-bar { height: 5px; }
       `}</style>
-
       <button
-        onClick={() => isActive ? stopListening() : startListening()}
-        title={isActive ? 'Parar Alpha AI' : 'Falar com Alpha AI'}
+        onClick={handleClick}
+        title={isActive ? 'Desativar Alpha AI' : 'Ativar Alpha AI'}
         style={{
           position:       'fixed',
           bottom:         100,
