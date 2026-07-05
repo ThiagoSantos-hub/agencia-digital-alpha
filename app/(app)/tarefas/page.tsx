@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useTasks, Task, TaskStatus } from '@/hooks/useTasks'
 import { useColaboradores } from '@/hooks/useColaboradores'
 import { useAuth } from '@/hooks/useAuth'
@@ -17,8 +17,8 @@ import {
 } from 'lucide-react'
 
 export default function AdminTarefasPage() {
-  const { profile } = useAuth()
-  const { tasks, listTasks, createTask, deleteTask, loading } = useTasks()
+  const { profile, loading: authLoading } = useAuth()
+  const { tasks, listTasks, createTask, deleteTask, loading: tasksLoading } = useTasks()
   const { colaboradores } = useColaboradores()
   
   const [modalOpen, setModalOpen] = useState(false)
@@ -71,12 +71,21 @@ export default function AdminTarefasPage() {
     }
   }
 
-  const getStatusInfo = (status: TaskStatus) => {
+  const getStatusInfo = useCallback((status: string) => {
     switch (status) {
       case 'a_fazer': return { label: 'A Fazer', color: 'text-gray-400', icon: Clock, bg: 'bg-gray-400/10' }
       case 'em_andamento': return { label: 'Em Andamento', color: 'text-emerald-400', icon: Play, bg: 'bg-emerald-400/10' }
       case 'finalizada': return { label: 'Finalizada', color: 'text-blue-400', icon: CheckCircle2, bg: 'bg-blue-400/10' }
+      default: return { label: status, color: 'text-gray-400', icon: AlertCircle, bg: 'bg-gray-400/10' }
     }
+  }, [])
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-emerald-500"></div>
+      </div>
+    )
   }
 
   if (profile?.role !== 'admin') {
@@ -144,15 +153,15 @@ export default function AdminTarefasPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-[#1a3a24]">
-            {loading ? (
+            {tasksLoading ? (
               <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500 italic">Carregando tarefas...</td></tr>
             ) : filteredTasks.length === 0 ? (
               <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500 italic">Nenhuma tarefa encontrada.</td></tr>
             ) : (
               filteredTasks.map((task) => {
-                const status = getStatusInfo(task.status as TaskStatus)
+                const statusInfo = getStatusInfo(task.status)
                 const collaborator = colaboradores.find(c => c.id === task.collaborator_id)
-                const StatusIcon = status.icon
+                const StatusIcon = statusInfo.icon
 
                 return (
                   <tr key={task.id} className="hover:bg-[#121a15] transition-colors group">
@@ -169,9 +178,9 @@ export default function AdminTarefasPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${status.bg} ${status.color} text-[10px] font-black uppercase tracking-wider`}>
+                      <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${statusInfo.bg} ${statusInfo.color} text-[10px] font-black uppercase tracking-wider`}>
                         <StatusIcon size={12} />
-                        {status.label}
+                        {statusInfo.label}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-xs text-gray-500 font-medium">
