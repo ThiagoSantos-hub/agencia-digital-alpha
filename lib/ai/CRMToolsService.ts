@@ -1,5 +1,5 @@
-// lib/ai/CRMToolsService.ts — v1.3.0
-// Adicionado: cadastrarCliente, cadastrarColaborador
+// lib/ai/CRMToolsService.ts — v1.4.0
+// Adicionado: data_entrada no cadastrarCliente, ativarCliente, inativarCliente
 
 import type { CRMTool } from './types'
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -195,7 +195,7 @@ export class CRMToolsService {
     return JSON.stringify(resultados)
   }
 
-  // ── NOVO: Cadastrar Cliente ───────────────────────────────────────────────
+  // ── Cadastrar Cliente ─────────────────────────────────────────────────────
   async cadastrarCliente(
     supabase: SupabaseClient,
     nome: string,
@@ -203,23 +203,26 @@ export class CRMToolsService {
     telefone: string,
     mensalidade: number,
     diaPagamento: number,
-    email?: string
+    email?: string,
+    dataEntrada?: string
   ): Promise<string> {
+    const hoje = new Date().toISOString().split('T')[0]
     const { data, error } = await supabase.from('clients').insert({
-      name:        nome,
-      company:     empresa,
-      phone:       telefone,
-      email:       email ?? null,
-      monthly_fee: mensalidade,
-      payment_day: diaPagamento,
-      status:      'ativo',
+      name:         nome,
+      company:      empresa,
+      phone:        telefone,
+      email:        email ?? null,
+      monthly_fee:  mensalidade,
+      payment_day:  diaPagamento,
+      status:       'ativo',
+      start_date:   dataEntrada ?? hoje,
     }).select().single()
 
     if (error) return JSON.stringify({ erro: error.message })
     return JSON.stringify({ sucesso: true, cliente: data })
   }
 
-  // ── NOVO: Cadastrar Colaborador ───────────────────────────────────────────
+  // ── Cadastrar Colaborador ─────────────────────────────────────────────────
   async cadastrarColaborador(
     supabase: SupabaseClient,
     nome: string,
@@ -227,7 +230,6 @@ export class CRMToolsService {
     cargo: string,
     telefone?: string
   ): Promise<string> {
-    // Cria o perfil na tabela profiles
     const { data, error } = await supabase.from('profiles').insert({
       name:  nome,
       email: email,
@@ -238,6 +240,49 @@ export class CRMToolsService {
 
     if (error) return JSON.stringify({ erro: error.message })
     return JSON.stringify({ sucesso: true, colaborador: data })
+  }
+
+  // ── Ativar Cliente ────────────────────────────────────────────────────────
+  async ativarCliente(
+    supabase: SupabaseClient,
+    nomeOuId: string
+  ): Promise<string> {
+    // Tenta por ID primeiro, depois por nome (busca parcial)
+    const isUUID = /^[0-9a-f-]{36}$/i.test(nomeOuId)
+
+    let query = supabase.from('clients').update({ status: 'ativo' })
+
+    if (isUUID) {
+      query = query.eq('id', nomeOuId)
+    } else {
+      query = query.ilike('name', `%${nomeOuId}%`)
+    }
+
+    const { data, error } = await query.select('id, name, status').single()
+
+    if (error) return JSON.stringify({ erro: error.message })
+    return JSON.stringify({ sucesso: true, mensagem: `Cliente "${data.name}" ativado com sucesso.`, cliente: data })
+  }
+
+  // ── Inativar Cliente ──────────────────────────────────────────────────────
+  async inativarCliente(
+    supabase: SupabaseClient,
+    nomeOuId: string
+  ): Promise<string> {
+    const isUUID = /^[0-9a-f-]{36}$/i.test(nomeOuId)
+
+    let query = supabase.from('clients').update({ status: 'inativo' })
+
+    if (isUUID) {
+      query = query.eq('id', nomeOuId)
+    } else {
+      query = query.ilike('name', `%${nomeOuId}%`)
+    }
+
+    const { data, error } = await query.select('id, name, status').single()
+
+    if (error) return JSON.stringify({ erro: error.message })
+    return JSON.stringify({ sucesso: true, mensagem: `Cliente "${data.name}" inativado com sucesso.`, cliente: data })
   }
 
   getTools(supabase: SupabaseClient): CRMTool[] {
@@ -314,7 +359,7 @@ export class CRMToolsService {
         required: [],
         execute:  (args) => this.getMetricasCampanha(supabase, args.nomeCliente, args.nomeCampanha, args.dataInicio, args.dataFim),
       },
-      // ── NOVO ──────────────────────────────────────────────────────────────
+      // ── Cadastrar Cliente ──────────────────────────────────────────────────
       {
         name:        'cadastrarCliente',
         description: 'Cadastra um novo cliente na agência. Use quando o usuário pedir para registrar ou cadastrar um cliente novo.',
@@ -325,6 +370,7 @@ export class CRMToolsService {
           mensalidade:  { type: 'number', description: 'Valor da mensalidade em reais' },
           diaPagamento: { type: 'number', description: 'Dia do mês para vencimento (1-31)' },
           email:        { type: 'string', description: 'Email do cliente (opcional)' },
+          dataEntrada:  { type: 'string', description: 'Data de entrada no formato YYYY-MM-DD. Se não informada, usa a data de hoje.' },
         },
         required: ['nome', 'empresa', 'telefone', 'mensalidade', 'diaPagamento'],
         execute:  (args) => this.cadastrarCliente(
@@ -334,9 +380,11 @@ export class CRMToolsService {
           args.telefone,
           args.mensalidade,
           args.diaPagamento,
-          args.email
+          args.email,
+          args.dataEntrada
         ),
       },
+      // ── Cadastrar Colaborador ──────────────────────────────────────────────
       {
         name:        'cadastrarColaborador',
         description: 'Cadastra um novo colaborador ou funcionário da agência.',
@@ -354,6 +402,26 @@ export class CRMToolsService {
           args.cargo,
           args.telefone
         ),
+      },
+      // ── Ativar Cliente ─────────────────────────────────────────────────────
+      {
+        name:        'ativarCliente',
+        description: 'Ativa um cliente pelo nome (parcial) ou ID. Muda o status para "ativo".',
+        parameters: {
+          nomeOuId: { type: 'string', description: 'Nome (parcial) ou ID do cliente a ativar' },
+        },
+        required: ['nomeOuId'],
+        execute:  (args) => this.ativarCliente(supabase, args.nomeOuId),
+      },
+      // ── Inativar Cliente ───────────────────────────────────────────────────
+      {
+        name:        'inativarCliente',
+        description: 'Inativa um cliente pelo nome (parcial) ou ID. Muda o status para "inativo".',
+        parameters: {
+          nomeOuId: { type: 'string', description: 'Nome (parcial) ou ID do cliente a inativar' },
+        },
+        required: ['nomeOuId'],
+        execute:  (args) => this.inativarCliente(supabase, args.nomeOuId),
       },
     ]
   }
