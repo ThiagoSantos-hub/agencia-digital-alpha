@@ -27,7 +27,8 @@ export class OpenAITTSProvider implements VoiceProvider {
       body: JSON.stringify({
         model: 'tts-1',
         input: texto,
-        voice: 'nova', // voz feminina — opções: alloy, echo, fable, nova, onyx, shimmer
+        voice: "nova",
+        speed: 0.9,  // 1.0 = normal, 0.9 = ligeiramente mais lento e natural // voz feminina — opções: alloy, echo, fable, nova, onyx, shimmer
       }),
     })
 
