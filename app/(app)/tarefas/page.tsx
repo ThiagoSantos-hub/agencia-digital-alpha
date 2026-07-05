@@ -1,341 +1,269 @@
 'use client'
 
-import { useState } from 'react'
-import { useTarefas, Tarefa, TarefaInput } from '@/hooks/useTarefas'
+import { useEffect, useState, useMemo } from 'react'
+import { useTasks, Task, TaskStatus } from '@/hooks/useTasks'
+import { useColaboradores } from '@/hooks/useColaboradores'
+import { useAuth } from '@/hooks/useAuth'
+import { 
+  Plus, 
+  Search, 
+  Filter, 
+  Trash2, 
+  Clock, 
+  Play, 
+  CheckCircle2,
+  AlertCircle,
+  X
+} from 'lucide-react'
 
-const STATUS_LABELS: Record<Tarefa['status'], string> = {
-  pendente: 'Pendente',
-  em_andamento: 'Em andamento',
-  concluida: 'Concluída',
-  cancelada: 'Cancelada',
-}
-
-const STATUS_COLORS: Record<Tarefa['status'], string> = {
-  pendente: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30',
-  em_andamento: 'bg-blue-500/20 text-blue-400 border border-blue-500/30',
-  concluida: 'bg-[#00ff88]/20 text-[#00ff88] border border-[#00ff88]/30',
-  cancelada: 'bg-red-500/20 text-red-400 border border-red-500/30',
-}
-
-const PRIORITY_COLORS: Record<Tarefa['priority'], string> = {
-  baixa: 'text-gray-400',
-  media: 'text-yellow-400',
-  alta: 'text-orange-400',
-  urgente: 'text-red-400',
-}
-
-const PRIORITY_LABELS: Record<Tarefa['priority'], string> = {
-  baixa: 'Baixa',
-  media: 'Média',
-  alta: 'Alta',
-  urgente: 'Urgente',
-}
-
-const EMPTY_FORM: TarefaInput = {
-  title: '',
-  description: null,
-  status: 'pendente',
-  priority: 'media',
-  due_date: null,
-  client_id: null,
-  campaign_id: null,
-  assignee_id: null,
-}
-
-export default function TarefasPage() {
-  const { tarefas, usuarios, loading, error, createTarefa, updateTarefa, deleteTarefa } = useTarefas()
+export default function AdminTarefasPage() {
+  const { profile } = useAuth()
+  const { tasks, listTasks, createTask, deleteTask, loading } = useTasks()
+  const { colaboradores } = useColaboradores()
+  
   const [modalOpen, setModalOpen] = useState(false)
-  const [editando, setEditando] = useState<Tarefa | null>(null)
-  const [form, setForm] = useState<TarefaInput>(EMPTY_FORM)
-  const [salvando, setSalvando] = useState(false)
-  const [busca, setBusca] = useState('')
-  const [filtroStatus, setFiltroStatus] = useState('todos')
-  const [deletandoId, setDeletandoId] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+  const [filterStatus, setFilterStatus] = useState<string>('todos')
+  const [saving, setSaving] = useState(false)
+  
+  const [form, setForm] = useState({
+    title: '',
+    description: '',
+    collaborator_id: ''
+  })
 
-  const abrirModal = (tarefa?: Tarefa) => {
-    if (tarefa) {
-      setEditando(tarefa)
-      setForm({
-        title: tarefa.title,
-        description: tarefa.description,
-        status: tarefa.status,
-        priority: tarefa.priority,
-        due_date: tarefa.due_date,
-        client_id: tarefa.client_id,
-        campaign_id: tarefa.campaign_id,
-        assignee_id: tarefa.assignee_id,
-      })
-    } else {
-      setEditando(null)
-      setForm(EMPTY_FORM)
-    }
-    setModalOpen(true)
-  }
+  useEffect(() => {
+    listTasks()
+  }, [listTasks])
 
-  const fecharModal = () => {
-    setModalOpen(false)
-    setEditando(null)
-    setForm(EMPTY_FORM)
-  }
+  const filteredTasks = useMemo(() => {
+    return tasks.filter(t => {
+      const matchSearch = t.title.toLowerCase().includes(search.toLowerCase())
+      const matchStatus = filterStatus === 'todos' ? true : t.status === filterStatus
+      return matchSearch && matchStatus
+    })
+  }, [tasks, search, filterStatus])
 
-  const handleSubmit = async () => {
-    if (!form.title.trim()) return
-    setSalvando(true)
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.title || !form.collaborator_id) return
+    
+    setSaving(true)
     try {
-      if (editando) {
-        await updateTarefa(editando.id, form)
-      } else {
-        await createTarefa(form)
-      }
-      fecharModal()
-    } catch (e: any) {
-      alert('Erro: ' + e.message)
+      await createTask(form)
+      setModalOpen(false)
+      setForm({ title: '', description: '', collaborator_id: '' })
+      listTasks()
+    } catch (error) {
+      console.error('Erro ao criar tarefa:', error)
     } finally {
-      setSalvando(false)
+      setSaving(false)
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Excluir esta tarefa?')) return
-    setDeletandoId(id)
+    if (!confirm('Tem certeza que deseja excluir esta tarefa?')) return
     try {
-      await deleteTarefa(id)
-    } finally {
-      setDeletandoId(null)
+      await deleteTask(id)
+      listTasks()
+    } catch (error) {
+      console.error('Erro ao excluir tarefa:', error)
     }
   }
 
-  const tarefasFiltradas = tarefas.filter(t => {
-    const matchBusca = t.title.toLowerCase().includes(busca.toLowerCase())
-    const matchStatus = filtroStatus === 'todos' || t.status === filtroStatus
-    return matchBusca && matchStatus
-  })
+  const getStatusInfo = (status: TaskStatus) => {
+    switch (status) {
+      case 'a_fazer': return { label: 'A Fazer', color: 'text-gray-400', icon: Clock, bg: 'bg-gray-400/10' }
+      case 'em_andamento': return { label: 'Em Andamento', color: 'text-emerald-400', icon: Play, bg: 'bg-emerald-400/10' }
+      case 'finalizada': return { label: 'Finalizada', color: 'text-blue-400', icon: CheckCircle2, bg: 'bg-blue-400/10' }
+    }
+  }
 
-  const formatDate = (d: string | null) =>
-    d ? new Date(d).toLocaleDateString('pt-BR') : '—'
+  if (profile?.role !== 'admin') {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center p-6">
+        <div className="text-center">
+          <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
+          <h1 className="text-xl font-bold text-white">Acesso Negado</h1>
+          <p className="text-gray-400 mt-2">Você não tem permissão para acessar esta página.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
+    <div className="p-8 space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Tarefas</h1>
-          <p className="text-gray-400 text-sm mt-1">{tarefas.length} tarefa{tarefas.length !== 1 ? 's' : ''} no total</p>
+          <h1 className="text-2xl font-bold text-white">Gestão de Tarefas</h1>
+          <p className="text-gray-400 text-sm mt-1">Atribua e acompanhe as tarefas da equipe.</p>
         </div>
-        <button
-          onClick={() => abrirModal()}
-          className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          style={{ background: '#00ff88', color: '#0a0f0c' }}
+        <button 
+          onClick={() => setModalOpen(true)}
+          className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold px-4 py-2 rounded-xl flex items-center gap-2 transition-all text-sm"
         >
-          + Nova Tarefa
+          <Plus size={18} />
+          Nova Tarefa
         </button>
       </div>
 
       {/* Filtros */}
-      <div className="flex flex-wrap gap-3">
-        <input
-          type="text"
-          placeholder="Buscar por título..."
-          value={busca}
-          onChange={e => setBusca(e.target.value)}
-          className="px-3 py-2 rounded-lg text-sm text-white placeholder-gray-500 outline-none"
-          style={{ background: '#0f1a14', border: '1px solid #1a3a24', minWidth: 220 }}
-        />
-        <select
-          value={filtroStatus}
-          onChange={e => setFiltroStatus(e.target.value)}
-          className="px-3 py-2 rounded-lg text-sm text-white outline-none"
-          style={{ background: '#0f1a14', border: '1px solid #1a3a24' }}
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+          <input 
+            type="text" 
+            placeholder="Buscar tarefas..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+          />
+        </div>
+        <select 
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
         >
           <option value="todos">Todos os status</option>
-          <option value="pendente">Pendente</option>
-          <option value="em_andamento">Em andamento</option>
-          <option value="concluida">Concluída</option>
-          <option value="cancelada">Cancelada</option>
+          <option value="a_fazer">A Fazer</option>
+          <option value="em_andamento">Em Andamento</option>
+          <option value="finalizada">Finalizada</option>
         </select>
       </div>
 
-      {/* Tabela */}
-      <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #1a3a24' }}>
-        {loading ? (
-          <div className="p-12 text-center text-gray-400">Carregando tarefas...</div>
-        ) : error ? (
-          <div className="p-12 text-center text-red-400">Erro: {error}</div>
-        ) : tarefasFiltradas.length === 0 ? (
-          <div className="p-12 text-center text-gray-500">
-            {busca || filtroStatus !== 'todos'
-              ? 'Nenhuma tarefa encontrada com esses filtros.'
-              : 'Nenhuma tarefa ainda. Crie a primeira!'}
-          </div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead style={{ background: '#0f1a14', borderBottom: '1px solid #1a3a24' }}>
-              <tr>
-                {['Título', 'Responsável', 'Prioridade', 'Prazo', 'Status', 'Ações'].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody style={{ background: '#0a0f0c' }}>
-              {tarefasFiltradas.map((t, i) => (
-                <tr
-                  key={t.id}
-                  style={{ borderBottom: i < tarefasFiltradas.length - 1 ? '1px solid #1a3a24' : undefined }}
-                  className="hover:bg-[#0f1a14] transition-colors"
-                >
-                  <td className="px-4 py-3">
-                    <div className="font-medium text-white">{t.title}</div>
-                    {t.description && <div className="text-gray-500 text-xs mt-0.5 truncate max-w-xs">{t.description}</div>}
-                  </td>
-                  <td className="px-4 py-3 text-gray-400">{t.assignee?.name || '—'}</td>
-                  <td className="px-4 py-3">
-                    <span className={`font-medium text-sm ${PRIORITY_COLORS[t.priority]}`}>
-                      {PRIORITY_LABELS[t.priority]}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-gray-400">{formatDate(t.due_date)}</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[t.status]}`}>
-                      {STATUS_LABELS[t.status]}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => abrirModal(t)}
-                        className="text-xs px-3 py-1 rounded-lg text-gray-300 hover:text-white transition-colors"
-                        style={{ background: '#1a3a24' }}
+      {/* Tabela de Tarefas */}
+      <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl overflow-hidden">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="border-b border-[#1a3a24] bg-[#0d1410]">
+              <th className="px-6 py-4 text-xs font-black text-emerald-500 uppercase tracking-widest">Tarefa</th>
+              <th className="px-6 py-4 text-xs font-black text-emerald-500 uppercase tracking-widest">Colaborador</th>
+              <th className="px-6 py-4 text-xs font-black text-emerald-500 uppercase tracking-widest">Status</th>
+              <th className="px-6 py-4 text-xs font-black text-emerald-500 uppercase tracking-widest">Criada em</th>
+              <th className="px-6 py-4 text-xs font-black text-emerald-500 uppercase tracking-widest text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#1a3a24]">
+            {loading ? (
+              <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500 italic">Carregando tarefas...</td></tr>
+            ) : filteredTasks.length === 0 ? (
+              <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500 italic">Nenhuma tarefa encontrada.</td></tr>
+            ) : (
+              filteredTasks.map((task) => {
+                const status = getStatusInfo(task.status as TaskStatus)
+                const collaborator = colaboradores.find(c => c.id === task.collaborator_id)
+                const StatusIcon = status.icon
+
+                return (
+                  <tr key={task.id} className="hover:bg-[#121a15] transition-colors group">
+                    <td className="px-6 py-4">
+                      <p className="text-sm font-bold text-white">{task.title}</p>
+                      {task.description && <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{task.description}</p>}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="h-6 w-6 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-[10px] font-bold text-emerald-400 uppercase">
+                          {collaborator?.name?.[0] || '?'}
+                        </div>
+                        <span className="text-sm text-gray-300">{collaborator?.name || 'Não atribuído'}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${status.bg} ${status.color} text-[10px] font-black uppercase tracking-wider`}>
+                        <StatusIcon size={12} />
+                        {status.label}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-xs text-gray-500 font-medium">
+                      {new Date(task.created_at).toLocaleDateString('pt-BR')}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button 
+                        onClick={() => handleDelete(task.id)}
+                        className="p-2 text-gray-600 hover:text-red-400 transition-colors"
+                        title="Excluir tarefa"
                       >
-                        Editar
+                        <Trash2 size={18} />
                       </button>
-                      <button
-                        onClick={() => handleDelete(t.id)}
-                        disabled={deletandoId === t.id}
-                        className="text-xs px-3 py-1 rounded-lg text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
-                        style={{ background: 'rgba(239,68,68,0.1)' }}
-                      >
-                        {deletandoId === t.id ? '...' : 'Excluir'}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+                    </td>
+                  </tr>
+                )
+              })
+            )}
+          </tbody>
+        </table>
       </div>
 
-      {/* Modal */}
+      {/* Modal Nova Tarefa */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)' }}>
-          <div className="w-full max-w-lg rounded-xl p-6 space-y-4" style={{ background: '#0f1a14', border: '1px solid #1a3a24' }}>
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white">{editando ? 'Editar Tarefa' : 'Nova Tarefa'}</h2>
-              <button onClick={fecharModal} className="text-gray-400 hover:text-white text-xl leading-none">×</button>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in duration-200">
+            <div className="px-8 py-6 border-b border-[#1a3a24] bg-[#0d1410] flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-white">Nova Tarefa</h2>
+                <p className="text-gray-500 text-xs mt-1 uppercase tracking-widest font-bold">Atribuir ao time</p>
+              </div>
+              <button onClick={() => setModalOpen(false)} className="text-gray-500 hover:text-white transition-colors">
+                <X size={24} />
+              </button>
             </div>
-
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Título *</label>
-                <input
+            
+            <form onSubmit={handleCreate} className="p-8 space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-emerald-500 uppercase tracking-widest ml-1">Título da Tarefa</label>
+                <input 
+                  required
+                  type="text" 
                   value={form.title}
-                  onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                  placeholder="Nome da tarefa"
-                  className="w-full px-3 py-2 rounded-lg text-sm text-white placeholder-gray-500 outline-none"
-                  style={{ background: '#0a0f0c', border: '1px solid #1a3a24' }}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  placeholder="Ex: Criar artes para o Instagram"
+                  className="w-full bg-[#121a15] border border-[#1a3a24] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all"
                 />
               </div>
 
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Descrição</label>
-                <textarea
-                  value={form.description || ''}
-                  onChange={e => setForm(f => ({ ...f, description: e.target.value || null }))}
-                  placeholder="Detalhes da tarefa (opcional)"
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-emerald-500 uppercase tracking-widest ml-1">Descrição (Opcional)</label>
+                <textarea 
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="Detalhes sobre a entrega..."
                   rows={3}
-                  className="w-full px-3 py-2 rounded-lg text-sm text-white placeholder-gray-500 outline-none resize-none"
-                  style={{ background: '#0a0f0c', border: '1px solid #1a3a24' }}
+                  className="w-full bg-[#121a15] border border-[#1a3a24] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all resize-none"
                 />
               </div>
 
-              {/* Responsável */}
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Responsável</label>
-                <select
-                  value={form.assignee_id || ''}
-                  onChange={e => setForm(f => ({ ...f, assignee_id: e.target.value || null }))}
-                  className="w-full px-3 py-2 rounded-lg text-sm text-white outline-none"
-                  style={{ background: '#0a0f0c', border: '1px solid #1a3a24' }}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-emerald-500 uppercase tracking-widest ml-1">Responsável</label>
+                <select 
+                  required
+                  value={form.collaborator_id}
+                  onChange={(e) => setForm({ ...form, collaborator_id: e.target.value })}
+                  className="w-full bg-[#121a15] border border-[#1a3a24] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all"
                 >
-                  <option value="">— Sem responsável —</option>
-                  {usuarios.map(u => (
-                    <option key={u.id} value={u.id}>
-                      {u.name || 'Sem nome'} ({u.role === 'admin' ? 'Admin' : 'Gestor'})
-                    </option>
+                  <option value="">Selecione um colaborador...</option>
+                  {colaboradores.filter(c => c.status === 'ativo').map(c => (
+                    <option key={c.id} value={c.id}>{c.name} ({c.role})</option>
                   ))}
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">Status</label>
-                  <select
-                    value={form.status}
-                    onChange={e => setForm(f => ({ ...f, status: e.target.value as Tarefa['status'] }))}
-                    className="w-full px-3 py-2 rounded-lg text-sm text-white outline-none"
-                    style={{ background: '#0a0f0c', border: '1px solid #1a3a24' }}
-                  >
-                    <option value="pendente">Pendente</option>
-                    <option value="em_andamento">Em andamento</option>
-                    <option value="concluida">Concluída</option>
-                    <option value="cancelada">Cancelada</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">Prioridade</label>
-                  <select
-                    value={form.priority}
-                    onChange={e => setForm(f => ({ ...f, priority: e.target.value as Tarefa['priority'] }))}
-                    className="w-full px-3 py-2 rounded-lg text-sm text-white outline-none"
-                    style={{ background: '#0a0f0c', border: '1px solid #1a3a24' }}
-                  >
-                    <option value="baixa">Baixa</option>
-                    <option value="media">Média</option>
-                    <option value="alta">Alta</option>
-                    <option value="urgente">Urgente</option>
-                  </select>
-                </div>
+              <div className="flex gap-4 pt-4">
+                <button 
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  className="flex-1 px-6 py-3 rounded-xl border border-[#1a3a24] text-gray-400 font-bold hover:bg-[#1a3a24]/30 transition-all text-sm"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  disabled={saving}
+                  className="flex-1 px-6 py-3 rounded-xl bg-emerald-500 text-black font-black hover:bg-emerald-400 transition-all text-sm disabled:opacity-50"
+                >
+                  {saving ? 'Criando...' : 'Criar Tarefa'}
+                </button>
               </div>
-
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Prazo</label>
-                <input
-                  type="date"
-                  value={form.due_date || ''}
-                  onChange={e => setForm(f => ({ ...f, due_date: e.target.value || null }))}
-                  className="w-full px-3 py-2 rounded-lg text-sm text-white outline-none"
-                  style={{ background: '#0a0f0c', border: '1px solid #1a3a24', colorScheme: 'dark' }}
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <button
-                onClick={fecharModal}
-                className="flex-1 py-2 rounded-lg text-sm text-gray-400 hover:text-white transition-colors"
-                style={{ background: '#0a0f0c', border: '1px solid #1a3a24' }}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={salvando || !form.title.trim()}
-                className="flex-1 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                style={{ background: '#00ff88', color: '#0a0f0c' }}
-              >
-                {salvando ? 'Salvando...' : editando ? 'Salvar' : 'Criar Tarefa'}
-              </button>
-            </div>
+            </form>
           </div>
         </div>
       )}
