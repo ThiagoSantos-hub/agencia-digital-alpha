@@ -2,17 +2,17 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request })
-
-  // v1.2.0: Suporte a chamadas da extensão (Bearer token) no middleware
-  const authHeader = request.headers.get('Authorization')
   const isApiRoute = request.nextUrl.pathname.startsWith('/api/')
-
-  // Se for uma rota de API e tiver Bearer token, deixa passar para o handler da API tratar
-  // O handler da API já usa o createServerClient robusto que criamos.
-  if (isApiRoute && authHeader?.startsWith('Bearer ')) {
-    return supabaseResponse
+  
+  // v1.3.0: ISOLAMENTO TOTAL DE API
+  // Se for uma rota de API, o middleware NÃO faz nada.
+  // Deixamos a responsabilidade de autenticação 100% para os handlers de API.
+  // Isso evita redirecionamentos indesejados (307/302) que causam erro 401 em chamadas CORS da extensão.
+  if (isApiRoute) {
+    return NextResponse.next()
   }
+
+  let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -41,9 +41,7 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/ai') ||
     request.nextUrl.pathname.startsWith('/perfil')
 
-  // Se não houver usuário e for rota de app, redireciona para login
-  // Exceto se for rota de API (APIs devem retornar 401, não redirecionar)
-  if (!user && isAppRoute && !isApiRoute) {
+  if (!user && isAppRoute) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
