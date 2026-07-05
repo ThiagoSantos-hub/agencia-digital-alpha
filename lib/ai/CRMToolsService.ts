@@ -1,5 +1,5 @@
-// lib/ai/CRMToolsService.ts — v1.2.0
-// Adicionado: getMetricasCampanha — busca métricas reais do Meta Ads por período
+// lib/ai/CRMToolsService.ts — v1.3.0
+// Adicionado: cadastrarCliente, cadastrarColaborador
 
 import type { CRMTool } from './types'
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -103,7 +103,6 @@ export class CRMToolsService {
     dataInicio?: string,
     dataFim?: string
   ): Promise<string> {
-    // 1. Buscar token do Meta
     const { data: integration } = await supabase
       .from('integrations')
       .select('access_token')
@@ -114,7 +113,6 @@ export class CRMToolsService {
       return JSON.stringify({ erro: 'Meta Ads não conectado' })
     }
 
-    // 2. Buscar campanhas com filtros
     let q = supabase
       .from('campaigns')
       .select('id, name, meta_campaign_id, budget, status, client:clients(name, meta_ad_account_id)')
@@ -125,7 +123,6 @@ export class CRMToolsService {
       return JSON.stringify({ erro: 'Nenhuma campanha com ID do Meta encontrada' })
     }
 
-    // 3. Filtrar por nome se informado
     let campanhasFiltradas = campanhas
     if (nomeCliente) {
       campanhasFiltradas = campanhasFiltradas.filter((c: any) =>
@@ -142,7 +139,6 @@ export class CRMToolsService {
       return JSON.stringify({ erro: 'Nenhuma campanha encontrada com esse filtro' })
     }
 
-    // 4. Definir período
     const hoje = new Date()
     const fmt = (d: Date) => d.toISOString().split('T')[0]
     const trintaDiasAtras = new Date(hoje)
@@ -151,11 +147,10 @@ export class CRMToolsService {
     const since = dataInicio || fmt(trintaDiasAtras)
     const until = dataFim   || fmt(hoje)
 
-    // 5. Buscar métricas de cada campanha na API do Meta
     const resultados: any[] = []
     const fields = 'impressions,reach,clicks,ctr,spend,cpm,cpc,actions'
 
-    for (const camp of campanhasFiltradas.slice(0, 10)) { // máximo 10 por vez
+    for (const camp of campanhasFiltradas.slice(0, 10)) {
       try {
         const metaUrl = new URL(`https://graph.facebook.com/v19.0/${camp.meta_campaign_id}/insights`)
         metaUrl.searchParams.set('fields', fields)
@@ -164,29 +159,25 @@ export class CRMToolsService {
 
         const res = await fetch(metaUrl.toString())
         const metaData = await res.json()
-
         const insight = metaData.data?.[0]
 
         if (insight) {
           const fmtBRL = (v: string) => v ? `R$ ${(parseFloat(v)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'
-
-          // Resultado principal (WhatsApp, leads, compras)
           const resultado = insight.actions?.find((a: any) =>
             ['lead', 'purchase', 'onsite_conversion.messaging_conversation_started_7d', 'offsite_conversion.fb_pixel_lead'].includes(a.action_type)
           )
-
           resultados.push({
-            campanha:     camp.name,
-            cliente:      (camp.client as any)?.name ?? '—',
-            periodo:      `${since} a ${until}`,
-            impressoes:   insight.impressions ? parseInt(insight.impressions).toLocaleString('pt-BR') : '—',
-            alcance:      insight.reach ? parseInt(insight.reach).toLocaleString('pt-BR') : '—',
-            cliques:      insight.clicks ? parseInt(insight.clicks).toLocaleString('pt-BR') : '—',
-            ctr:          insight.ctr ? `${parseFloat(insight.ctr).toFixed(2)}%` : '—',
-            gasto:        fmtBRL(insight.spend),
-            cpm:          fmtBRL(insight.cpm),
-            cpc:          fmtBRL(insight.cpc),
-            resultados:   resultado ? parseInt(resultado.value).toLocaleString('pt-BR') : '—',
+            campanha:   camp.name,
+            cliente:    (camp.client as any)?.name ?? '—',
+            periodo:    `${since} a ${until}`,
+            impressoes: insight.impressions ? parseInt(insight.impressions).toLocaleString('pt-BR') : '—',
+            alcance:    insight.reach ? parseInt(insight.reach).toLocaleString('pt-BR') : '—',
+            cliques:    insight.clicks ? parseInt(insight.clicks).toLocaleString('pt-BR') : '—',
+            ctr:        insight.ctr ? `${parseFloat(insight.ctr).toFixed(2)}%` : '—',
+            gasto:      fmtBRL(insight.spend),
+            cpm:        fmtBRL(insight.cpm),
+            cpc:        fmtBRL(insight.cpc),
+            resultados: resultado ? parseInt(resultado.value).toLocaleString('pt-BR') : '—',
           })
         } else {
           resultados.push({
@@ -197,14 +188,56 @@ export class CRMToolsService {
           })
         }
       } catch (err: any) {
-        resultados.push({
-          campanha: camp.name,
-          erro:     err.message,
-        })
+        resultados.push({ campanha: camp.name, erro: err.message })
       }
     }
 
     return JSON.stringify(resultados)
+  }
+
+  // ── NOVO: Cadastrar Cliente ───────────────────────────────────────────────
+  async cadastrarCliente(
+    supabase: SupabaseClient,
+    nome: string,
+    empresa: string,
+    telefone: string,
+    mensalidade: number,
+    diaPagamento: number,
+    email?: string
+  ): Promise<string> {
+    const { data, error } = await supabase.from('clients').insert({
+      name:        nome,
+      company:     empresa,
+      phone:       telefone,
+      email:       email ?? null,
+      monthly_fee: mensalidade,
+      payment_day: diaPagamento,
+      status:      'ativo',
+    }).select().single()
+
+    if (error) return JSON.stringify({ erro: error.message })
+    return JSON.stringify({ sucesso: true, cliente: data })
+  }
+
+  // ── NOVO: Cadastrar Colaborador ───────────────────────────────────────────
+  async cadastrarColaborador(
+    supabase: SupabaseClient,
+    nome: string,
+    email: string,
+    cargo: string,
+    telefone?: string
+  ): Promise<string> {
+    // Cria o perfil na tabela profiles
+    const { data, error } = await supabase.from('profiles').insert({
+      name:  nome,
+      email: email,
+      role:  'member',
+      phone: telefone ?? null,
+      cargo: cargo,
+    }).select().single()
+
+    if (error) return JSON.stringify({ erro: error.message })
+    return JSON.stringify({ sucesso: true, colaborador: data })
   }
 
   getTools(supabase: SupabaseClient): CRMTool[] {
@@ -264,39 +297,62 @@ export class CRMToolsService {
       },
       {
         name:        'getIntegracoes',
-        description: 'Retorna status das integrações configuradas (Google, Meta, Brevo, OpenAI, etc.).',
+        description: 'Retorna status das integrações configuradas.',
         parameters:  {},
         required:    [],
         execute:     () => this.getIntegracoes(supabase),
       },
       {
         name:        'getMetricasCampanha',
-        description: 'Busca métricas reais do Meta Ads em tempo real: gasto, impressões, cliques, CTR, CPM, CPC e resultados. Pode filtrar por nome do cliente, nome da campanha e período de datas.',
+        description: 'Busca métricas reais do Meta Ads: gasto, impressões, cliques, CTR, CPM, CPC.',
         parameters: {
-          nomeCliente: {
-            type:        'string',
-            description: 'Nome do cliente para filtrar as campanhas (parcial)',
-          },
-          nomeCampanha: {
-            type:        'string',
-            description: 'Nome da campanha para filtrar (parcial)',
-          },
-          dataInicio: {
-            type:        'string',
-            description: 'Data de início no formato YYYY-MM-DD (ex: 2026-07-01)',
-          },
-          dataFim: {
-            type:        'string',
-            description: 'Data de fim no formato YYYY-MM-DD (ex: 2026-07-04)',
-          },
+          nomeCliente:  { type: 'string', description: 'Nome do cliente (parcial)' },
+          nomeCampanha: { type: 'string', description: 'Nome da campanha (parcial)' },
+          dataInicio:   { type: 'string', description: 'Data início YYYY-MM-DD' },
+          dataFim:      { type: 'string', description: 'Data fim YYYY-MM-DD' },
         },
         required: [],
-        execute:  (args) => this.getMetricasCampanha(
+        execute:  (args) => this.getMetricasCampanha(supabase, args.nomeCliente, args.nomeCampanha, args.dataInicio, args.dataFim),
+      },
+      // ── NOVO ──────────────────────────────────────────────────────────────
+      {
+        name:        'cadastrarCliente',
+        description: 'Cadastra um novo cliente na agência. Use quando o usuário pedir para registrar ou cadastrar um cliente novo.',
+        parameters: {
+          nome:         { type: 'string', description: 'Nome completo do cliente' },
+          empresa:      { type: 'string', description: 'Nome da empresa do cliente' },
+          telefone:     { type: 'string', description: 'Telefone com DDD, apenas números' },
+          mensalidade:  { type: 'number', description: 'Valor da mensalidade em reais' },
+          diaPagamento: { type: 'number', description: 'Dia do mês para vencimento (1-31)' },
+          email:        { type: 'string', description: 'Email do cliente (opcional)' },
+        },
+        required: ['nome', 'empresa', 'telefone', 'mensalidade', 'diaPagamento'],
+        execute:  (args) => this.cadastrarCliente(
           supabase,
-          args.nomeCliente,
-          args.nomeCampanha,
-          args.dataInicio,
-          args.dataFim
+          args.nome,
+          args.empresa,
+          args.telefone,
+          args.mensalidade,
+          args.diaPagamento,
+          args.email
+        ),
+      },
+      {
+        name:        'cadastrarColaborador',
+        description: 'Cadastra um novo colaborador ou funcionário da agência.',
+        parameters: {
+          nome:     { type: 'string', description: 'Nome completo do colaborador' },
+          email:    { type: 'string', description: 'Email do colaborador' },
+          cargo:    { type: 'string', description: 'Cargo ou função do colaborador' },
+          telefone: { type: 'string', description: 'Telefone com DDD (opcional)' },
+        },
+        required: ['nome', 'email', 'cargo'],
+        execute:  (args) => this.cadastrarColaborador(
+          supabase,
+          args.nome,
+          args.email,
+          args.cargo,
+          args.telefone
         ),
       },
     ]
