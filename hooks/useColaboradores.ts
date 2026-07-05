@@ -10,6 +10,9 @@ export interface Colaborador {
   email: string | null
   phone: string | null
   status: 'ativo' | 'inativo'
+  salary: number | null
+  salary_frequency: 'mensal' | 'quinzenal' | 'semanal' | null
+  salary_day: number | null
   created_at: string
   updated_at: string
 }
@@ -20,6 +23,9 @@ export interface ColaboradorInput {
   email?: string
   phone?: string
   status?: 'ativo' | 'inativo'
+  salary?: number
+  salary_frequency?: 'mensal' | 'quinzenal' | 'semanal'
+  salary_day?: number
 }
 
 export function useColaboradores() {
