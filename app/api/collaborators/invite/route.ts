@@ -1,4 +1,4 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
@@ -6,9 +6,31 @@ export async function POST(request: Request) {
   try {
     const { name, email, password, cargo } = await request.json()
 
-    const supabase = createRouteHandlerClient({ cookies })
+    const cookieStore = cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+          set(name: string, value: string, options: CookieOptions) {
+            cookieStore.set({ name, value, ...options })
+          },
+          remove(name: string, options: CookieOptions) {
+            cookieStore.set({ name, value: '', ...options })
+          },
+        },
+      }
+    )
 
-    // 1. Criar usuário no Supabase Auth
+    // 1. Criar usuário no Supabase Auth (usando a service role para admin operations se necessário, 
+    // mas aqui seguiremos a lógica do usuário autenticado se ele tiver permissão)
+    // Nota: createUser via admin requer service_role key. 
+    // Se o cliente supabase acima usar a anon key, auth.admin não funcionará a menos que o usuário seja superadmin.
+    // No entanto, vou manter a estrutura lógica solicitada, apenas corrigindo os imports.
+    
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
