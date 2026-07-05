@@ -99,12 +99,12 @@ export default function CollaboratorLayout({
         <header className="h-16 border-b border-[#1a3a24] bg-[#0a0f0c]/80 backdrop-blur-md sticky top-0 z-30 px-8 flex items-center justify-between">
           <div>
             <h2 className="text-sm font-medium text-gray-400">Bem-vindo de volta,</h2>
-            <p className="text-white font-bold">{profile.full_name || profile.email}</p>
+            <p className="text-white font-bold">{profile.name || profile.email}</p>
           </div>
 
           <div className="flex items-center gap-4">
             <div className="h-8 w-8 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xs font-bold uppercase">
-              {profile.full_name?.[0] || profile.email?.[0]}
+              {profile.name?.[0] || profile.email?.[0]}
             </div>
           </div>
         </header>
