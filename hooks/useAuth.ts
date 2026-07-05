@@ -8,7 +8,7 @@ interface Profile {
   id: string
   email: string
   name: string | null
-  role: 'admin' | 'manager'
+  role: 'admin' | 'manager' | 'collaborator'
 }
 
 // Cache global simples para o perfil durante a sessão

@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase'
 export interface Profile {
   id: string
   name: string | null
-  role: 'admin' | 'manager'
+  role: 'admin' | 'manager' | 'collaborator'
 }
 
 export interface Tarefa {
