@@ -8,6 +8,7 @@ const menuItems = [
   { label: 'Campanhas', href: '/campanhas', icon: Megaphone, ativo: true },
   { label: 'Tarefas', href: '/tarefas', icon: CheckSquare, ativo: true },
   { label: 'Financeiro', href: '/financeiro', icon: Wallet, ativo: true },
+  { label: 'Colaboradores', href: '/colaboradores', icon: Users, ativo: true },
   { label: 'Alpha AI', href: '/ai', icon: Bot, ativo: true },
   { label: 'Integrações', href: '/integracoes', icon: Plug, ativo: true },
   { label: 'Perfil', href: '/perfil', icon: UserCircle, ativo: true },
