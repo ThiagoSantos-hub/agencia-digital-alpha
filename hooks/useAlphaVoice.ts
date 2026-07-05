@@ -19,17 +19,14 @@ export function useAlphaVoice() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef        = useRef<Blob[]>([])
   const audioCtxRef      = useRef<AudioContext | null>(null)
-  const analyserRef      = useRef<AnalyserNode | null>(null)
   const rafRef           = useRef<number | null>(null)
   const audioRef         = useRef<HTMLAudioElement | null>(null)
   const streamRef        = useRef<MediaStream | null>(null)
-  // Guardamos uma referência para iniciarEscuta para o loop
   const iniciarEscutaRef = useRef<() => Promise<void>>()
 
   const pararMonitoramento = useCallback(() => {
     if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null }
     if (audioCtxRef.current) { audioCtxRef.current.close().catch(() => {}); audioCtxRef.current = null }
-    analyserRef.current = null
   }, [])
 
   const pararStream = useCallback(() => {
@@ -50,7 +47,11 @@ export function useAlphaVoice() {
       const transRes = await fetch('/api/ai/transcribe', { method: 'POST', body: formData })
       if (!transRes.ok) throw new Error('Erro na transcrição')
       const { texto } = await transRes.json()
-      if (!texto?.trim()) throw new Error('Não entendi. Tente novamente.')
+      if (!texto?.trim()) {
+        // Ruído sem fala — volta a ouvir sem processar
+        if (iniciarEscutaRef.current) iniciarEscutaRef.current()
+        return
+      }
       setTranscript(texto.trim())
 
       // 2. Consultar Alpha
@@ -63,13 +64,12 @@ export function useAlphaVoice() {
       const data = await aiRes.json()
       setLastResponse(data.resposta ?? '')
 
-      // 3. Tocar áudio — usando Audio element já existente no DOM para contornar autoplay
+      // 3. Tocar áudio
       if (data.audio) {
         setVoiceState('speaking')
         const audioBlob = base64ToBlob(data.audio, 'audio/mpeg')
         const url = URL.createObjectURL(audioBlob)
 
-        // Reutiliza ou cria elemento de áudio
         if (!audioRef.current) {
           audioRef.current = new Audio()
           audioRef.current.autoplay = true
@@ -78,21 +78,16 @@ export function useAlphaVoice() {
         audioRef.current.src = url
         audioRef.current.onended = () => {
           URL.revokeObjectURL(url)
-          // Loop: volta a ouvir automaticamente
-          if (iniciarEscutaRef.current) {
-            iniciarEscutaRef.current()
-          }
+          if (iniciarEscutaRef.current) iniciarEscutaRef.current()
         }
         audioRef.current.onerror = () => {
           URL.revokeObjectURL(url)
           setVoiceState('idle')
         }
 
-        // Tenta tocar — se bloqueado pelo browser, vai para idle
         try {
           await audioRef.current.play()
         } catch {
-          // Autoplay bloqueado: mostra resposta em texto e volta a ouvir
           setVoiceState('listening')
           if (iniciarEscutaRef.current) iniciarEscutaRef.current()
         }
@@ -107,7 +102,15 @@ export function useAlphaVoice() {
 
   const iniciarEscuta = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      // Pede microfone com filtros de ruído nativos do browser
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation:     true,  // cancela eco
+          noiseSuppression:     true,  // suprime ruído de fundo
+          autoGainControl:      true,  // ajusta volume da voz automaticamente
+          sampleRate:           16000, // 16kHz — ideal para Whisper
+        }
+      })
       streamRef.current = stream
 
       const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
@@ -127,34 +130,42 @@ export function useAlphaVoice() {
       mediaRecorderRef.current = recorder
       setVoiceState('listening')
 
-      // Detecção de silêncio via AudioContext
+      // Detecção de silêncio
       const ctx      = new AudioContext()
       const analyser = ctx.createAnalyser()
       analyser.fftSize = 512
       const source = ctx.createMediaStreamSource(stream)
       source.connect(analyser)
       audioCtxRef.current = ctx
-      analyserRef.current = analyser
 
-      const dataArr    = new Uint8Array(analyser.frequencyBinCount)
-      const THRESHOLD  = 10
-      const SILENCE_MS = 1500
+      const dataArr = new Uint8Array(analyser.frequencyBinCount)
+
+      // THRESHOLD alto (25) → ignora ruídos leves, só captura voz próxima
+      // SILENCE_MS baixo (800ms) → para rápido quando você termina de falar
+      const THRESHOLD  = 25
+      const SILENCE_MS = 800
+
       let silenceStart: number | null = null
+      let faleiAlgo = false  // garante que só processa se houve fala de verdade
 
       const verificar = () => {
         analyser.getByteFrequencyData(dataArr)
         const media = dataArr.reduce((a, b) => a + b, 0) / dataArr.length
 
-        if (media < THRESHOLD) {
-          if (silenceStart === null) silenceStart = Date.now()
-          else if (Date.now() - silenceStart >= SILENCE_MS) {
-            if (mediaRecorderRef.current?.state === 'recording') {
-              mediaRecorderRef.current.stop()
-            }
-            return
-          }
-        } else {
+        if (media >= THRESHOLD) {
+          faleiAlgo = true
           silenceStart = null
+        } else {
+          if (faleiAlgo) {
+            // Só conta silêncio se já houve fala antes
+            if (silenceStart === null) silenceStart = Date.now()
+            else if (Date.now() - silenceStart >= SILENCE_MS) {
+              if (mediaRecorderRef.current?.state === 'recording') {
+                mediaRecorderRef.current.stop()
+              }
+              return
+            }
+          }
         }
         rafRef.current = requestAnimationFrame(verificar)
       }
@@ -166,7 +177,6 @@ export function useAlphaVoice() {
     }
   }, [pararMonitoramento, pararStream, processarAudio])
 
-  // Mantém ref atualizada para o loop funcionar
   iniciarEscutaRef.current = iniciarEscuta
 
   const startListening = useCallback(() => {
