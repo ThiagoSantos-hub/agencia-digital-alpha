@@ -11,6 +11,9 @@ const EMPTY_FORM: ColaboradorInput = {
   email: '',
   phone: '',
   status: 'ativo',
+  salary: undefined,
+  salary_frequency: undefined,
+  salary_day: undefined,
 }
 
 export default function ColaboradoresPage() {
@@ -66,6 +69,9 @@ export default function ColaboradoresPage() {
       email: c.email ?? '',
       phone: c.phone ?? '',
       status: c.status,
+      salary: c.salary ?? undefined,
+      salary_frequency: c.salary_frequency ?? undefined,
+      salary_day: c.salary_day ?? undefined,
     })
     setFormError(null)
     setModalOpen(true)
@@ -219,7 +225,7 @@ export default function ColaboradoresPage() {
       {/* Modal Criar/Editar */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-md shadow-2xl">
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]">
             <div className="p-6 border-b border-gray-800">
               <h2 className="text-lg font-bold text-white">
                 {editingId ? 'Editar Colaborador' : 'Novo Colaborador'}
@@ -274,6 +280,53 @@ export default function ColaboradoresPage() {
                   className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
                 />
               </div>
+
+              {/* Campos de Salário (Fase 2) */}
+              <div className="pt-4 border-t border-gray-800 space-y-4">
+                <h3 className="text-sm font-semibold text-emerald-400 uppercase tracking-wider">Informações Financeiras</h3>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                    Salário
+                  </label>
+                  <input
+                    type="number"
+                    value={form.salary || ''}
+                    onChange={(e) => setForm({ ...form, salary: e.target.value ? Number(e.target.value) : undefined })}
+                    placeholder="Ex: 2500.00"
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                    Frequência
+                  </label>
+                  <select
+                    value={form.salary_frequency || ''}
+                    onChange={(e) => setForm({ ...form, salary_frequency: (e.target.value as any) || undefined })}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+                  >
+                    <option value="">Selecione...</option>
+                    <option value="mensal">Mensal</option>
+                    <option value="quinzenal">Quinzenal</option>
+                    <option value="semanal">Semanal</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                    Dia de pagamento
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={form.salary_day || ''}
+                    onChange={(e) => setForm({ ...form, salary_day: e.target.value ? Number(e.target.value) : undefined })}
+                    placeholder="Ex: 5"
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
               {editingId && (
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1.5">Status</label>
