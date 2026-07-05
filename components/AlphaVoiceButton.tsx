@@ -27,7 +27,7 @@ function WaveIcon() {
       {[0, 1, 2, 3, 4].map(i => (
         <span key={i} className="alpha-wave-bar" style={{
           display: 'block', width: 3, borderRadius: 2,
-          background: '#0a0f0c',
+          background: '#00ff88',
           animationName: 'alphaWave',
           animationDuration: '0.9s',
           animationTimingFunction: 'ease-in-out',
@@ -43,7 +43,7 @@ function Spinner() {
   return (
     <span style={{
       width: 20, height: 20,
-      border: '2.5px solid #0a0f0c',
+      border: '2.5px solid #00ff88',
       borderTopColor: 'transparent',
       borderRadius: '50%',
       display: 'inline-block',
@@ -52,30 +52,16 @@ function Spinner() {
   )
 }
 
-const LABELS: Record<VoiceState, string> = {
-  idle:       '',
-  listening:  'Ouvindo...',
-  processing: 'Pensando...',
-  speaking:   'Alpha falando...',
-}
-
 export function AlphaVoiceButton() {
-  const { voiceState, transcript, lastResponse, error, startListening, stopListening } = useAlphaVoice()
+  const { voiceState, startListening, stopListening } = useAlphaVoice()
 
   const isActive = voiceState !== 'idle'
 
   const btnBg: Record<VoiceState, string> = {
     idle:       '#0f1a14',
     listening:  '#ef4444',
-    processing: '#f59e0b',
+    processing: '#0f1a14',
     speaking:   '#0f1a14',
-  }
-
-  const iconColor: Record<VoiceState, string> = {
-    idle:       '#00ff88',
-    listening:  '#ffffff',
-    processing: '#0a0f0c',
-    speaking:   '#00ff88',
   }
 
   return (
@@ -95,50 +81,12 @@ export function AlphaVoiceButton() {
         .alpha-wave-bar { height: 5px; }
       `}</style>
 
-      {/* Painel de info — aparece quando ativo, à esquerda do botão */}
-      {isActive && (
-        <div style={{
-          position:      'fixed',
-          bottom:        100,
-          right:         24,
-          zIndex:        59,
-          background:    '#0f1a14',
-          border:        '1px solid #1a3a24',
-          borderRadius:  14,
-          padding:       '10px 14px',
-          maxWidth:      260,
-          display:       'flex',
-          flexDirection: 'column',
-          gap:           5,
-          pointerEvents: 'none',
-        }}>
-          <span style={{ fontSize: 11, color: '#00ff88', fontWeight: 600, letterSpacing: '0.05em' }}>
-            {LABELS[voiceState]}
-          </span>
-          {transcript && (
-            <span style={{ fontSize: 12, color: '#9ca3af', lineHeight: 1.5 }}>
-              <span style={{ color: '#6b7280' }}>Você: </span>{transcript}
-            </span>
-          )}
-          {lastResponse && (
-            <span style={{ fontSize: 12, color: '#d1fae5', lineHeight: 1.5 }}>
-              <span style={{ color: '#00ff88' }}>Alpha: </span>
-              {lastResponse.slice(0, 100)}{lastResponse.length > 100 ? '…' : ''}
-            </span>
-          )}
-          {error && (
-            <span style={{ fontSize: 11, color: '#f87171' }}>{error}</span>
-          )}
-        </div>
-      )}
-
-      {/* Botão — fica ACIMA do botão do ElevenLabs (bottom: 100) */}
       <button
         onClick={() => isActive ? stopListening() : startListening()}
-        title={isActive ? 'Parar Alpha AI' : 'Alpha AI (texto → voz)'}
+        title={isActive ? 'Parar Alpha AI' : 'Falar com Alpha AI'}
         style={{
           position:       'fixed',
-          bottom:         100,   // ← acima do ElevenLabs que fica em bottom: 24
+          bottom:         100,
           right:          24,
           zIndex:         60,
           width:          48,
@@ -147,7 +95,7 @@ export function AlphaVoiceButton() {
           border:         '2px solid #00ff88',
           cursor:         'pointer',
           background:     btnBg[voiceState],
-          color:          iconColor[voiceState],
+          color:          '#00ff88',
           display:        'flex',
           alignItems:     'center',
           justifyContent: 'center',
