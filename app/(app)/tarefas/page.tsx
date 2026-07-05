@@ -7,13 +7,13 @@ import { useAuth } from '@/hooks/useAuth'
 import { 
   Plus, 
   Search, 
-  Filter, 
   Trash2, 
   Clock, 
   Play, 
   CheckCircle2,
   AlertCircle,
-  X
+  X,
+  User
 } from 'lucide-react'
 
 export default function AdminTarefasPage() {
@@ -23,7 +23,6 @@ export default function AdminTarefasPage() {
   
   const [modalOpen, setModalOpen] = useState(false)
   const [search, setSearch] = useState('')
-  const [filterStatus, setFilterStatus] = useState<string>('todos')
   const [saving, setSaving] = useState(false)
   
   const [form, setForm] = useState({
@@ -37,12 +36,25 @@ export default function AdminTarefasPage() {
   }, [listTasks])
 
   const filteredTasks = useMemo(() => {
-    return tasks.filter(t => {
-      const matchSearch = t.title.toLowerCase().includes(search.toLowerCase())
-      const matchStatus = filterStatus === 'todos' ? true : t.status === filterStatus
-      return matchSearch && matchStatus
-    })
-  }, [tasks, search, filterStatus])
+    return tasks.filter(t => 
+      t.title.toLowerCase().includes(search.toLowerCase()) ||
+      colaboradores.find(c => c.id === t.collaborator_id)?.name.toLowerCase().includes(search.toLowerCase())
+    )
+  }, [tasks, search, colaboradores])
+
+  const columns: { label: string; status: TaskStatus; icon: any; color: string }[] = [
+    { label: 'A Fazer', status: 'a_fazer', icon: Clock, color: 'text-gray-400' },
+    { label: 'Em Andamento', status: 'em_andamento', icon: Play, color: 'text-emerald-400' },
+    { label: 'Finalizada', status: 'finalizada', icon: CheckCircle2, color: 'text-blue-400' },
+  ]
+
+  const tasksByStatus = useMemo(() => {
+    return {
+      a_fazer: filteredTasks.filter(t => t.status === 'a_fazer'),
+      em_andamento: filteredTasks.filter(t => t.status === 'em_andamento'),
+      finalizada: filteredTasks.filter(t => t.status === 'finalizada'),
+    }
+  }, [filteredTasks])
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -71,15 +83,6 @@ export default function AdminTarefasPage() {
     }
   }
 
-  const getStatusInfo = useCallback((status: string) => {
-    switch (status) {
-      case 'a_fazer': return { label: 'A Fazer', color: 'text-gray-400', icon: Clock, bg: 'bg-gray-400/10' }
-      case 'em_andamento': return { label: 'Em Andamento', color: 'text-emerald-400', icon: Play, bg: 'bg-emerald-400/10' }
-      case 'finalizada': return { label: 'Finalizada', color: 'text-blue-400', icon: CheckCircle2, bg: 'bg-blue-400/10' }
-      default: return { label: status, color: 'text-gray-400', icon: AlertCircle, bg: 'bg-gray-400/10' }
-    }
-  }, [])
-
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
@@ -101,11 +104,11 @@ export default function AdminTarefasPage() {
   }
 
   return (
-    <div className="p-8 space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="p-8 h-[calc(100vh-64px)] flex flex-col space-y-8 overflow-hidden">
+      <div className="flex items-center justify-between shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-white">Gestão de Tarefas</h1>
-          <p className="text-gray-400 text-sm mt-1">Atribua e acompanhe as tarefas da equipe.</p>
+          <p className="text-gray-400 text-sm mt-1">Visão geral do progresso de toda a equipe.</p>
         </div>
         <button 
           onClick={() => setModalOpen(true)}
@@ -116,91 +119,81 @@ export default function AdminTarefasPage() {
         </button>
       </div>
 
-      {/* Filtros */}
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-          <input 
-            type="text" 
-            placeholder="Buscar tarefas..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
-          />
-        </div>
-        <select 
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
-        >
-          <option value="todos">Todos os status</option>
-          <option value="a_fazer">A Fazer</option>
-          <option value="em_andamento">Em Andamento</option>
-          <option value="finalizada">Finalizada</option>
-        </select>
+      {/* Busca */}
+      <div className="relative shrink-0">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+        <input 
+          type="text" 
+          placeholder="Buscar por tarefa ou colaborador..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+        />
       </div>
 
-      {/* Tabela de Tarefas */}
-      <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="border-b border-[#1a3a24] bg-[#0d1410]">
-              <th className="px-6 py-4 text-xs font-black text-emerald-500 uppercase tracking-widest">Tarefa</th>
-              <th className="px-6 py-4 text-xs font-black text-emerald-500 uppercase tracking-widest">Colaborador</th>
-              <th className="px-6 py-4 text-xs font-black text-emerald-500 uppercase tracking-widest">Status</th>
-              <th className="px-6 py-4 text-xs font-black text-emerald-500 uppercase tracking-widest">Criada em</th>
-              <th className="px-6 py-4 text-xs font-black text-emerald-500 uppercase tracking-widest text-right">Ações</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#1a3a24]">
-            {tasksLoading ? (
-              <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500 italic">Carregando tarefas...</td></tr>
-            ) : filteredTasks.length === 0 ? (
-              <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500 italic">Nenhuma tarefa encontrada.</td></tr>
-            ) : (
-              filteredTasks.map((task) => {
-                const statusInfo = getStatusInfo(task.status)
-                const collaborator = colaboradores.find(c => c.id === task.collaborator_id)
-                const StatusIcon = statusInfo.icon
+      {/* Board Kanban */}
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 overflow-hidden">
+        {columns.map((col) => (
+          <div key={col.status} className="flex flex-col bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl overflow-hidden">
+            <div className="p-4 border-b border-[#1a3a24] flex items-center justify-between bg-[#0d1410]">
+              <div className="flex items-center gap-2">
+                <col.icon size={18} className={col.color} />
+                <h3 className="font-bold text-sm text-white uppercase tracking-wider">{col.label}</h3>
+              </div>
+              <span className="bg-[#1a3a24] text-emerald-500 text-[10px] font-black px-2 py-0.5 rounded-full">
+                {tasksByStatus[col.status].length}
+              </span>
+            </div>
 
-                return (
-                  <tr key={task.id} className="hover:bg-[#121a15] transition-colors group">
-                    <td className="px-6 py-4">
-                      <p className="text-sm font-bold text-white">{task.title}</p>
-                      {task.description && <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{task.description}</p>}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="h-6 w-6 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-[10px] font-bold text-emerald-400 uppercase">
-                          {collaborator?.name?.[0] || '?'}
+            <div className="flex-1 p-4 space-y-4 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500/20">
+              {tasksLoading && tasks.length === 0 ? (
+                <div className="py-8 text-center text-gray-600 text-xs italic">Carregando...</div>
+              ) : tasksByStatus[col.status].length === 0 ? (
+                <div className="py-8 text-center text-gray-600 text-xs italic border-2 border-dashed border-[#1a3a24] rounded-xl">
+                  Nenhuma tarefa
+                </div>
+              ) : (
+                tasksByStatus[col.status].map((task) => {
+                  const collaborator = colaboradores.find(c => c.id === task.collaborator_id)
+                  return (
+                    <div key={task.id} className="bg-[#121a15] border border-[#1a3a24] p-4 rounded-xl group hover:border-emerald-500/50 transition-all shadow-sm">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <h4 className="text-sm font-bold text-gray-100 leading-tight">{task.title}</h4>
+                        <button 
+                          onClick={() => handleDelete(task.id)}
+                          className="text-gray-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                          title="Excluir tarefa"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                      
+                      {task.description && (
+                        <p className="text-xs text-gray-500 line-clamp-2 mb-4 leading-relaxed">
+                          {task.description}
+                        </p>
+                      )}
+
+                      <div className="flex items-center justify-between pt-3 border-t border-[#1a3a24]">
+                        <div className="flex items-center gap-1.5">
+                          <div className="h-5 w-5 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-[8px] font-bold text-emerald-400 uppercase">
+                            {collaborator?.name?.[0] || '?'}
+                          </div>
+                          <span className="text-[10px] text-gray-400 font-medium">
+                            {collaborator?.name || 'Não atribuído'}
+                          </span>
                         </div>
-                        <span className="text-sm text-gray-300">{collaborator?.name || 'Não atribuído'}</span>
+                        <span className="text-[9px] text-gray-600 font-medium">
+                          {new Date(task.created_at).toLocaleDateString('pt-BR')}
+                        </span>
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${statusInfo.bg} ${statusInfo.color} text-[10px] font-black uppercase tracking-wider`}>
-                        <StatusIcon size={12} />
-                        {statusInfo.label}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-xs text-gray-500 font-medium">
-                      {new Date(task.created_at).toLocaleDateString('pt-BR')}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button 
-                        onClick={() => handleDelete(task.id)}
-                        className="p-2 text-gray-600 hover:text-red-400 transition-colors"
-                        title="Excluir tarefa"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                )
-              })
-            )}
-          </tbody>
-        </table>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Modal Nova Tarefa */}
