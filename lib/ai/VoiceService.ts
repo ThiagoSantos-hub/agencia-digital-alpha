@@ -1,30 +1,36 @@
-// lib/ai/VoiceService.ts — v1.1.0
-// Lazy initialization: provider só é criado na primeira chamada,
-// não no import (evita throw em build time na Vercel)
+// lib/ai/VoiceService.ts — v2.0.0
+// Suporta dois providers: 'openai' (padrão) e 'elevenlabs'
 import type { VoiceProvider } from './types'
 
+export type VoiceProviderName = 'openai' | 'elevenlabs'
+
 export class VoiceService {
-  private provider: VoiceProvider | null = null
+  private providers: Partial<Record<VoiceProviderName, VoiceProvider>> = {}
 
-  private getProvider(): VoiceProvider {
-    if (!this.provider) {
-      const { ElevenLabsProvider } = require('./providers/elevenlabs.provider')
-      this.provider = new ElevenLabsProvider()
+  private getProvider(nome: VoiceProviderName = 'openai'): VoiceProvider {
+    if (!this.providers[nome]) {
+      if (nome === 'elevenlabs') {
+        const { ElevenLabsProvider } = require('./providers/elevenlabs.provider')
+        this.providers['elevenlabs'] = new ElevenLabsProvider()
+      } else {
+        const { OpenAITTSProvider } = require('./providers/openai-tts.provider')
+        this.providers['openai'] = new OpenAITTSProvider()
+      }
     }
-    return this.provider!
+    return this.providers[nome]!
   }
 
-  async sintetizar(texto: string): Promise<Buffer> {
-    return this.getProvider().sintetizar(texto)
+  async sintetizar(texto: string, provider: VoiceProviderName = 'openai'): Promise<Buffer> {
+    return this.getProvider(provider).sintetizar(texto)
   }
 
-  async sintetizarBase64(texto: string): Promise<string> {
-    const buffer = await this.getProvider().sintetizar(texto)
+  async sintetizarBase64(texto: string, provider: VoiceProviderName = 'openai'): Promise<string> {
+    const buffer = await this.getProvider(provider).sintetizar(texto)
     return buffer.toString('base64')
   }
 
   async transcrever(audioBuffer: Buffer, mimeType = 'audio/webm'): Promise<string> {
-    return this.getProvider().transcrever(audioBuffer, mimeType)
+    return this.getProvider('openai').transcrever(audioBuffer, mimeType)
   }
 }
 
