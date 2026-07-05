@@ -38,6 +38,7 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/tarefas') ||
     request.nextUrl.pathname.startsWith('/integracoes') ||
     request.nextUrl.pathname.startsWith('/financeiro') ||
+    request.nextUrl.pathname.startsWith('/colaboradores') ||
     request.nextUrl.pathname.startsWith('/ai') ||
     request.nextUrl.pathname.startsWith('/perfil')
 
@@ -60,6 +61,7 @@ export const config = {
     '/tarefas/:path*',
     '/integracoes/:path*',
     '/financeiro/:path*',
+    '/colaboradores/:path*',
     '/ai/:path*',
     '/perfil/:path*',
     '/login',
