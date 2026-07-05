@@ -10,6 +10,12 @@ function base64ToBlob(base64: string, mimeType: string): Blob {
   return new Blob([buffer], { type: mimeType })
 }
 
+// Verifica se o texto contém a wake word "Alpha" (variações comuns)
+function contemWakeWord(texto: string): boolean {
+  const normalizado = texto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  return /\balfa\b|\balpha\b/.test(normalizado)
+}
+
 export function useAlphaVoice() {
   const [voiceState,   setVoiceState]   = useState<VoiceState>('idle')
   const [transcript,   setTranscript]   = useState<string>('')
@@ -47,12 +53,21 @@ export function useAlphaVoice() {
       const transRes = await fetch('/api/ai/transcribe', { method: 'POST', body: formData })
       if (!transRes.ok) throw new Error('Erro na transcrição')
       const { texto } = await transRes.json()
+
+      // Sem texto ou só ruído → volta a ouvir
       if (!texto?.trim()) {
-        // Ruído sem fala — volta a ouvir sem processar
         if (iniciarEscutaRef.current) iniciarEscutaRef.current()
         return
       }
+
       setTranscript(texto.trim())
+
+      // Wake word: só processa se disser "Alpha" ou "Alfa"
+      if (!contemWakeWord(texto)) {
+        // Não falou "Alpha" — volta a ouvir sem chamar a API
+        if (iniciarEscutaRef.current) iniciarEscutaRef.current()
+        return
+      }
 
       // 2. Consultar Alpha
       const aiRes = await fetch('/api/ai', {
@@ -102,13 +117,12 @@ export function useAlphaVoice() {
 
   const iniciarEscuta = useCallback(async () => {
     try {
-      // Pede microfone com filtros de ruído nativos do browser
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          echoCancellation:     true,  // cancela eco
-          noiseSuppression:     true,  // suprime ruído de fundo
-          autoGainControl:      true,  // ajusta volume da voz automaticamente
-          sampleRate:           16000, // 16kHz — ideal para Whisper
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl:  true,
+          sampleRate:       16000,
         }
       })
       streamRef.current = stream
@@ -130,7 +144,6 @@ export function useAlphaVoice() {
       mediaRecorderRef.current = recorder
       setVoiceState('listening')
 
-      // Detecção de silêncio
       const ctx      = new AudioContext()
       const analyser = ctx.createAnalyser()
       analyser.fftSize = 512
@@ -140,13 +153,11 @@ export function useAlphaVoice() {
 
       const dataArr = new Uint8Array(analyser.frequencyBinCount)
 
-      // THRESHOLD alto (25) → ignora ruídos leves, só captura voz próxima
-      // SILENCE_MS baixo (800ms) → para rápido quando você termina de falar
-      const THRESHOLD  = 25
-      const SILENCE_MS = 800
+      const THRESHOLD  = 25    // ignora ruídos leves
+      const SILENCE_MS = 1500  // 1.5s de silêncio para processar — tempo suficiente para terminar a frase
 
       let silenceStart: number | null = null
-      let faleiAlgo = false  // garante que só processa se houve fala de verdade
+      let faleiAlgo = false
 
       const verificar = () => {
         analyser.getByteFrequencyData(dataArr)
@@ -157,7 +168,6 @@ export function useAlphaVoice() {
           silenceStart = null
         } else {
           if (faleiAlgo) {
-            // Só conta silêncio se já houve fala antes
             if (silenceStart === null) silenceStart = Date.now()
             else if (Date.now() - silenceStart >= SILENCE_MS) {
               if (mediaRecorderRef.current?.state === 'recording') {
