@@ -5,7 +5,12 @@ import { useColaboradores, ColaboradorInput } from '@/hooks/useColaboradores'
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
 
-const EMPTY_FORM: ColaboradorInput = {
+// Interface estendida para incluir password localmente no formulário
+interface ColaboradorFormInput extends ColaboradorInput {
+  password?: string
+}
+
+const EMPTY_FORM: ColaboradorFormInput = {
   name: '',
   role: '',
   email: '',
@@ -14,6 +19,7 @@ const EMPTY_FORM: ColaboradorInput = {
   salary: undefined,
   salary_frequency: undefined,
   salary_day: undefined,
+  password: '',
 }
 
 export default function ColaboradoresPage() {
@@ -32,16 +38,25 @@ export default function ColaboradoresPage() {
   const [filterStatus, setFilterStatus] = useState<'todos' | 'ativo' | 'inativo'>('todos')
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [form, setForm] = useState<ColaboradorInput>(EMPTY_FORM)
+  const [form, setForm] = useState<ColaboradorFormInput>(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
   useEffect(() => {
     if (!authLoading && profile && profile.role !== 'admin') {
       router.replace('/dashboard')
     }
   }, [authLoading, profile, router])
+
+  // Limpar toast após 5 segundos
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [toast])
 
   const filtered = useMemo(() => {
     return colaboradores.filter((c) => {
@@ -72,6 +87,7 @@ export default function ColaboradoresPage() {
       salary: c.salary ?? undefined,
       salary_frequency: c.salary_frequency ?? undefined,
       salary_day: c.salary_day ?? undefined,
+      password: '', // Não usado na edição
     })
     setFormError(null)
     setModalOpen(true)
@@ -80,17 +96,45 @@ export default function ColaboradoresPage() {
   const handleSave = async () => {
     if (!form.name.trim()) { setFormError('Nome é obrigatório.'); return }
     if (!form.role.trim()) { setFormError('Cargo é obrigatório.'); return }
+    if (!editingId && !form.password?.trim()) { setFormError('Senha é obrigatória para novos colaboradores.'); return }
+    
     setSaving(true)
     setFormError(null)
     try {
       if (editingId) {
-        await updateColaborador(editingId, form)
+        const { password, ...updateData } = form
+        await updateColaborador(editingId, updateData)
+        setToast({ message: 'Colaborador atualizado com sucesso!', type: 'success' })
       } else {
-        await createColaborador(form)
+        // 1. Criar no banco (tabela collaborators)
+        const { password, ...createData } = form
+        await createColaborador(createData)
+        
+        // 2. Chamar API de convite (Auth + Email)
+        const inviteRes = await fetch('/api/collaborators/invite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: form.name,
+            email: form.email,
+            password: form.password,
+            cargo: form.role
+          })
+        })
+        
+        const inviteData = await inviteRes.json()
+        
+        if (!inviteRes.ok) {
+          throw new Error(inviteData.error || 'Erro ao enviar convite.')
+        }
+        
+        setToast({ message: 'Colaborador convidado! Email enviado com as credenciais de acesso.', type: 'success' })
       }
       setModalOpen(false)
     } catch (err: unknown) {
-      setFormError(err instanceof Error ? err.message : 'Erro ao salvar.')
+      const msg = err instanceof Error ? err.message : 'Erro ao processar.'
+      setFormError(msg)
+      setToast({ message: msg, type: 'error' })
     } finally {
       setSaving(false)
     }
@@ -100,8 +144,11 @@ export default function ColaboradoresPage() {
     try {
       await deleteColaborador(id)
       setDeleteConfirmId(null)
+      setToast({ message: 'Colaborador excluído com sucesso!', type: 'success' })
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Erro ao excluir.')
+      const msg = err instanceof Error ? err.message : 'Erro ao excluir.'
+      alert(msg)
+      setToast({ message: msg, type: 'error' })
     }
   }
 
@@ -111,6 +158,17 @@ export default function ColaboradoresPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 p-6">
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed top-6 right-6 z-[60] px-6 py-3 rounded-xl shadow-2xl border transition-all animate-in slide-in-from-right ${
+          toast.type === 'success' 
+            ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' 
+            : 'bg-red-500/10 border-red-500/50 text-red-400'
+        }`}>
+          {toast.message}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -268,6 +326,22 @@ export default function ColaboradoresPage() {
                   className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
                 />
               </div>
+              
+              {!editingId && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                    Senha <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    placeholder="Defina uma senha de acesso"
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1.5">
                   Telefone
@@ -358,7 +432,7 @@ export default function ColaboradoresPage() {
                 disabled={saving}
                 className="px-4 py-2 text-sm font-semibold bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black rounded-lg transition-colors"
               >
-                {saving ? 'Salvando...' : editingId ? 'Salvar alterações' : 'Cadastrar'}
+                {saving ? 'Processando...' : editingId ? 'Salvar alterações' : 'Convidar Colaborador'}
               </button>
             </div>
           </div>
