@@ -290,6 +290,8 @@ function ModalConfirmarExclusao({ name, onClose, onConfirm }: { name: string; on
 }
 
 export default function ClientesPage() {
+  const { profile } = useAuth()
+  const isCollaborator = profile?.role === 'collaborator'
   const { clients, loading, deleteCliente, updateCliente } = useClientes()
   const [search, setSearch] = useState('')
   const [valoresVisiveis, setValoresVisiveis] = useState(true)
@@ -367,27 +369,29 @@ export default function ClientesPage() {
               <tr className="border-b border-[#2a2a2a] bg-[#1f1f1f]/50">
                 <th className="px-5 py-3 text-gray-500 font-medium">CLIENTE / EMPRESA</th>
                 <th className="px-5 py-3 text-gray-500 font-medium">CONTATO</th>
-                <th className="px-5 py-3 text-gray-500 font-medium">
-                  <div className="flex items-center gap-2">
-                    FINANCEIRO
-                    <button
-                      onClick={() => setValoresVisiveis(v => !v)}
-                      className="text-gray-600 hover:text-gray-300 transition-colors"
-                      title={valoresVisiveis ? 'Ocultar valores' : 'Mostrar valores'}
-                    >
-                      {valoresVisiveis ? <EyeOff size={13} /> : <Eye size={13} />}
-                    </button>
-                  </div>
-                </th>
+                {!isCollaborator && (
+                  <th className="px-5 py-3 text-gray-500 font-medium">
+                    <div className="flex items-center gap-2">
+                      FINANCEIRO
+                      <button
+                        onClick={() => setValoresVisiveis(v => !v)}
+                        className="text-gray-600 hover:text-gray-300 transition-colors"
+                        title={valoresVisiveis ? 'Ocultar valores' : 'Mostrar valores'}
+                      >
+                        {valoresVisiveis ? <EyeOff size={13} /> : <Eye size={13} />}
+                      </button>
+                    </div>
+                  </th>
+                )}
                 <th className="px-5 py-3 text-gray-500 font-medium">STATUS</th>
                 {title.includes('Inativos') && <th className="px-5 py-3 text-gray-500 font-medium">INATIVADO EM</th>}
-                <th className="px-5 py-3 text-gray-500 font-medium text-right pr-12">AÇÕES</th>
+                {!isCollaborator && <th className="px-5 py-3 text-gray-500 font-medium text-right pr-12">AÇÕES</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-[#2a2a2a]/50">
               {list.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-10 text-center text-gray-600">
+                  <td colSpan={isCollaborator ? 4 : 6} className="px-5 py-10 text-center text-gray-600">
                     Nenhum cliente encontrado nesta seção.
                   </td>
                 </tr>
@@ -408,18 +412,20 @@ export default function ClientesPage() {
                         <span className="text-gray-600 text-[10px]">{c.email || '—'}</span>
                       </div>
                     </td>
-                    <td className="px-5 py-4">
-                      <div className="flex flex-col">
-                        <span className="text-white font-medium text-sm">
-                          {c.monthly_fee
-                            ? (valoresVisiveis
-                                ? `R$ ${c.monthly_fee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                                : '••••••')
-                            : '—'}
-                        </span>
-                        <span className="text-gray-500 text-[10px]">Dia {c.payment_day || '—'}</span>
-                      </div>
-                    </td>
+                    {!isCollaborator && (
+                      <td className="px-5 py-4">
+                        <div className="flex flex-col">
+                          <span className="text-white font-medium text-sm">
+                            {c.monthly_fee
+                              ? (valoresVisiveis
+                                  ? `R$ ${c.monthly_fee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                                  : '••••••')
+                              : '—'}
+                          </span>
+                          <span className="text-gray-500 text-[10px]">Dia {c.payment_day || '—'}</span>
+                        </div>
+                      </td>
+                    )}
                     <td className="px-5 py-4">
                       <div className="flex flex-col gap-1.5">
                         <span className={`inline-flex items-center w-fit px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${statusConfig[c.status].className}`}>
@@ -438,30 +444,32 @@ export default function ClientesPage() {
                         {c.inativo_em ? new Date(c.inativo_em).toLocaleDateString('pt-BR') : '—'}
                       </td>
                     )}
-                    <td className="px-5 py-4 pr-12">
-                      <div className="flex items-center justify-end gap-1">
-                        <div className="flex items-center bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-0.5 mr-2">
-                          <button onClick={() => handleQuickStatus(c.id, 'ativo')} title="Marcar como Ativo"
-                            className={`p-1 rounded-lg transition-all ${c.status === 'ativo' ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-600 hover:text-emerald-400'}`}>
-                            <CheckCircle2 size={13} />
+                    {!isCollaborator && (
+                      <td className="px-5 py-4 pr-12">
+                        <div className="flex items-center justify-end gap-1">
+                          <div className="flex items-center bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-0.5 mr-2">
+                            <button onClick={() => handleQuickStatus(c.id, 'ativo')} title="Marcar como Ativo"
+                              className={`p-1 rounded-lg transition-all ${c.status === 'ativo' ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-600 hover:text-emerald-400'}`}>
+                              <CheckCircle2 size={13} />
+                            </button>
+                            <button onClick={() => handleQuickStatus(c.id, 'atrasado')} title="Marcar como Atrasado"
+                              className={`p-1 rounded-lg transition-all ${c.status === 'atrasado' ? 'bg-amber-500/20 text-amber-400' : 'text-gray-600 hover:text-amber-400'}`}>
+                              <Clock size={13} />
+                            </button>
+                            <button onClick={() => handleQuickStatus(c.id, 'inativo')} title="Marcar como Inativo"
+                              className={`p-1 rounded-lg transition-all ${c.status === 'inativo' ? 'bg-gray-500/20 text-gray-400' : 'text-gray-600 hover:text-white'}`}>
+                              <Ban size={13} />
+                            </button>
+                          </div>
+                          <button onClick={() => setClienteEditar(c)} className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all">
+                            <Pencil size={15} />
                           </button>
-                          <button onClick={() => handleQuickStatus(c.id, 'atrasado')} title="Marcar como Atrasado"
-                            className={`p-1 rounded-lg transition-all ${c.status === 'atrasado' ? 'bg-amber-500/20 text-amber-400' : 'text-gray-600 hover:text-amber-400'}`}>
-                            <Clock size={13} />
-                          </button>
-                          <button onClick={() => handleQuickStatus(c.id, 'inativo')} title="Marcar como Inativo"
-                            className={`p-1 rounded-lg transition-all ${c.status === 'inativo' ? 'bg-gray-500/20 text-gray-400' : 'text-gray-600 hover:text-white'}`}>
-                            <Ban size={13} />
+                          <button onClick={() => setClienteExcluir(c)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/5 rounded-xl transition-all">
+                            <Trash2 size={15} />
                           </button>
                         </div>
-                        <button onClick={() => setClienteEditar(c)} className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all">
-                          <Pencil size={15} />
-                        </button>
-                        <button onClick={() => setClienteExcluir(c)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/5 rounded-xl transition-all">
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </td>
+                      </td>
+                    )}
                   </tr>
                 ))
               )}
@@ -479,18 +487,20 @@ export default function ClientesPage() {
           <h1 className="text-white text-2xl font-bold">Gestão de Clientes</h1>
           <p className="text-gray-400 text-sm mt-1">Gerencie seus clientes ativos, atrasados e o histórico de inativos.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <input type="file" ref={fileInputRef} onChange={handleImport} accept=".xlsx,.xls" className="hidden" />
-          <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-3 py-2 bg-[#1a1a1a] border border-[#2a2a2a] text-gray-400 hover:text-white rounded-xl text-sm transition-all">
-            <Upload size={15} /> Importar
-          </button>
-          <button onClick={handleExport} className="flex items-center gap-2 px-3 py-2 bg-[#1a1a1a] border border-[#2a2a2a] text-gray-400 hover:text-white rounded-xl text-sm transition-all">
-            <Download size={15} /> Exportar
-          </button>
-          <button onClick={() => setModalNovo(true)} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-500/20">
-            <UserPlus size={16} /> Novo Cliente
-          </button>
-        </div>
+        {!isCollaborator && (
+          <div className="flex items-center gap-3">
+            <input type="file" ref={fileInputRef} onChange={handleImport} accept=".xlsx,.xls" className="hidden" />
+            <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-3 py-2 bg-[#1a1a1a] border border-[#2a2a2a] text-gray-400 hover:text-white rounded-xl text-sm transition-all">
+              <Upload size={15} /> Importar
+            </button>
+            <button onClick={handleExport} className="flex items-center gap-2 px-3 py-2 bg-[#1a1a1a] border border-[#2a2a2a] text-gray-400 hover:text-white rounded-xl text-sm transition-all">
+              <Download size={15} /> Exportar
+            </button>
+            <button onClick={() => setModalNovo(true)} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-500/20">
+              <UserPlus size={16} /> Novo Cliente
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="relative max-w-md">
