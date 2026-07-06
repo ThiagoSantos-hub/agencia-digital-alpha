@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { useColaboradores, ColaboradorInput } from '@/hooks/useColaboradores'
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
+import { Eye, EyeOff } from 'lucide-react'
 
 // Interface estendida para incluir password localmente no formulário
 interface ColaboradorFormInput extends ColaboradorInput {
@@ -43,6 +44,7 @@ export default function ColaboradoresPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
     if (!authLoading && profile && profile.role !== 'admin') {
@@ -73,6 +75,7 @@ export default function ColaboradoresPage() {
     setEditingId(null)
     setForm(EMPTY_FORM)
     setFormError(null)
+    setShowPassword(false)
     setModalOpen(true)
   }
 
@@ -90,6 +93,7 @@ export default function ColaboradoresPage() {
       password: '', // Não usado na edição
     })
     setFormError(null)
+    setShowPassword(false)
     setModalOpen(true)
   }
 
@@ -332,13 +336,22 @@ export default function ColaboradoresPage() {
                   <label className="block text-sm font-medium text-gray-300 mb-1.5">
                     Senha <span className="text-red-400">*</span>
                   </label>
-                  <input
-                    type="password"
-                    value={form.password}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    placeholder="Defina uma senha de acesso"
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={form.password}
+                      onChange={(e) => setForm({ ...form, password: e.target.value })}
+                      placeholder="Defina uma senha de acesso"
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg pl-4 pr-10 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
               )}
 
