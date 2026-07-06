@@ -19,7 +19,8 @@ import { createClient } from '@/lib/supabase'
 const menuItems = [
   { label: 'Dashboard', href: '/colaborador/dashboard', icon: LayoutDashboard },
   { label: 'Tarefas', href: '/colaborador/tarefas', icon: CheckSquare },
-  { label: 'Clientes', href: '/colaborador/clientes', icon: Users },
+  { label: 'Meus Clientes', href: '/colaborador/meus-clientes', icon: Users },
+  { label: 'Clientes Agência', href: '/colaborador/clientes', icon: Users },
   { label: 'Campanhas', href: '/colaborador/campanhas', icon: Megaphone },
   { label: 'Financeiro', href: '/colaborador/financeiro', icon: Wallet },
   { label: 'Integrações', href: '/colaborador/integracoes', icon: Plug },
