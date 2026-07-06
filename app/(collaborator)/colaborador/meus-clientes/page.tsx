@@ -3,7 +3,8 @@
 import { useState, useMemo } from 'react'
 import { useClientes, Client } from '@/hooks/useClientes'
 import { useAuth } from '@/hooks/useAuth'
-import { Search, UserPlus, X, Loader2, Pencil, Trash2, Clock, CheckCircle2, Ban, Target, Eye, EyeOff } from 'lucide-react'
+import { useColaboradorFinance } from '@/hooks/useColaboradorFinance'
+import { Search, UserPlus, X, Loader2, Pencil, Clock, CheckCircle2, Ban, Target, Eye, EyeOff } from 'lucide-react'
 
 type ClienteForm = {
   name: string
@@ -13,6 +14,8 @@ type ClienteForm = {
   status: 'ativo' | 'inativo' | 'atrasado'
   meta_ad_account_id: string
   show_campaigns: boolean
+  monthly_fee: string
+  payment_day: string
 }
 
 const statusConfig = {
@@ -78,6 +81,20 @@ function FormFields({ form, set }: { form: ClienteForm; set: (f: keyof ClienteFo
       </div>
 
       <div className="space-y-1.5">
+        <label className="block text-xs font-medium text-gray-400">Valor Mensal (R$)</label>
+        <input type="number" step="0.01" placeholder="0.00" value={form.monthly_fee}
+          onChange={(e) => set('monthly_fee', e.target.value)}
+          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="block text-xs font-medium text-gray-400">Dia de Pagamento</label>
+        <input type="number" min="1" max="31" placeholder="Ex: 10" value={form.payment_day}
+          onChange={(e) => set('payment_day', e.target.value)}
+          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+      </div>
+
+      <div className="space-y-1.5">
         <label className="block text-xs font-medium text-gray-400">E-mail de contato</label>
         <input type="email" placeholder="contato@empresa.com" value={form.email}
           onChange={(e) => set('email', e.target.value)}
@@ -90,10 +107,12 @@ function FormFields({ form, set }: { form: ClienteForm; set: (f: keyof ClienteFo
 function ModalNovoCliente({ onClose }: { onClose: () => void }) {
   const { createCliente } = useClientes()
   const { profile } = useAuth()
+  const { createFinance } = useColaboradorFinance()
 
   const [form, setForm] = useState<ClienteForm>({
     name: '', company: '', email: '', phone: '',
-    status: 'ativo', meta_ad_account_id: '', show_campaigns: true
+    status: 'ativo', meta_ad_account_id: '', show_campaigns: true,
+    monthly_fee: '', payment_day: ''
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -105,22 +124,39 @@ function ModalNovoCliente({ onClose }: { onClose: () => void }) {
     if (!form.name.trim()) { setError('O nome é obrigatório.'); return }
     setLoading(true)
     setError(null)
-    const { error } = await createCliente({
+    
+    const { error: clientError } = await createCliente({
       name:        form.name.trim(),
       company:     form.company.trim() || null,
       email:       form.email.trim() || null,
       phone:       form.phone.trim() || null,
       status:      form.status,
-      monthly_fee: null,
+      monthly_fee: form.monthly_fee ? parseFloat(form.monthly_fee) : null,
       start_date:  new Date().toISOString().split('T')[0],
-      payment_day: null,
+      payment_day: form.payment_day ? parseInt(form.payment_day) : null,
       manager_id:  profile?.id ?? null,
       inativo_em:  null,
       meta_ad_account_id: form.meta_ad_account_id.trim() || null,
       show_campaigns: form.show_campaigns
     })
-    if (error) { setError('Erro ao salvar. Tente novamente.'); setLoading(false) }
-    else onClose()
+
+    if (clientError) { 
+      setError('Erro ao salvar cliente. Tente novamente.'); 
+      setLoading(false);
+      return;
+    }
+
+    // Lançamento automático no financeiro do colaborador
+    if (form.monthly_fee) {
+      await createFinance({
+        type: 'receita',
+        description: `Cliente: ${form.name.trim()}`,
+        amount: parseFloat(form.monthly_fee),
+        date: new Date().toISOString().split('T')[0]
+      })
+    }
+
+    onClose()
   }
 
   return (
@@ -162,7 +198,9 @@ function ModalEditarCliente({ client, onClose }: { client: Client; onClose: () =
     phone:       client.phone ?? '',
     status:      client.status,
     meta_ad_account_id: client.meta_ad_account_id ?? '',
-    show_campaigns: client.show_campaigns ?? true
+    show_campaigns: client.show_campaigns ?? true,
+    monthly_fee: client.monthly_fee != null ? String(client.monthly_fee) : '',
+    payment_day: client.payment_day != null ? String(client.payment_day) : ''
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -181,7 +219,9 @@ function ModalEditarCliente({ client, onClose }: { client: Client; onClose: () =
       phone:       form.phone.trim() || null,
       status:      form.status,
       meta_ad_account_id: form.meta_ad_account_id.trim() || null,
-      show_campaigns: form.show_campaigns
+      show_campaigns: form.show_campaigns,
+      monthly_fee: form.monthly_fee ? parseFloat(form.monthly_fee) : null,
+      payment_day: form.payment_day ? parseInt(form.payment_day) : null
     })
     if (error) { setError('Erro ao salvar. Tente novamente.'); setLoading(false) }
     else onClose()
@@ -261,6 +301,7 @@ export default function MeusClientesPage() {
               <tr className="border-b border-[#2a2a2a] bg-[#1f1f1f]/50">
                 <th className="px-5 py-3 text-gray-500 font-medium">CLIENTE / EMPRESA</th>
                 <th className="px-5 py-3 text-gray-500 font-medium">CONTATO</th>
+                <th className="px-5 py-3 text-gray-500 font-medium">FINANCEIRO</th>
                 <th className="px-5 py-3 text-gray-500 font-medium">STATUS</th>
                 <th className="px-5 py-3 text-gray-500 font-medium text-right pr-12">AÇÕES</th>
               </tr>
@@ -268,7 +309,7 @@ export default function MeusClientesPage() {
             <tbody className="divide-y divide-[#2a2a2a]/50">
               {list.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-5 py-10 text-center text-gray-600">
+                  <td colSpan={5} className="px-5 py-10 text-center text-gray-600">
                     Nenhum cliente cadastrado por você.
                   </td>
                 </tr>
@@ -285,6 +326,18 @@ export default function MeusClientesPage() {
                       <div className="flex flex-col gap-0.5">
                         <span className="text-gray-400 text-xs">{c.phone || '—'}</span>
                         <span className="text-gray-600 text-[10px]">{c.email || '—'}</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex flex-col">
+                        <span className="text-white font-medium text-sm">
+                          {c.monthly_fee
+                            ? c.monthly_fee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                            : '—'}
+                        </span>
+                        <span className="text-gray-500 text-[10px]">
+                          {c.payment_day ? `Dia ${c.payment_day}` : '—'}
+                        </span>
                       </div>
                     </td>
                     <td className="px-5 py-4">
