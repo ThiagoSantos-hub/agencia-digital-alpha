@@ -10,29 +10,46 @@ export async function POST(request: Request) {
   try {
     const { name, email, password, cargo } = await request.json()
 
-    // 1. Criar usuário no Supabase Auth usando o cliente admin (service role key)
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: { name, role: 'collaborator' }
-    })
+    let userId: string
 
-    if (authError) {
-      return NextResponse.json({ error: authError.message }, { status: 400 })
+    // 1. Verificar se usuário já existe no Supabase Auth
+    const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers()
+    
+    if (listError) {
+      return NextResponse.json({ error: listError.message }, { status: 400 })
     }
 
-    // 2. Vincular user_id ao registro do colaborador
+    const found = existingUsers?.users?.find(u => u.email === email)
+
+    if (found) {
+      // Usuário já existe, apenas capturamos o ID
+      userId = found.id
+    } else {
+      // 2. Criar novo usuário no Supabase Auth usando o cliente admin
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { name, role: 'collaborator' }
+      })
+
+      if (authError) {
+        return NextResponse.json({ error: authError.message }, { status: 400 })
+      }
+      userId = authData.user.id
+    }
+
+    // 3. Vincular user_id ao registro do colaborador
     const { error: updateError } = await supabaseAdmin
       .from('collaborators')
-      .update({ user_id: authData.user.id })
+      .update({ user_id: userId })
       .eq('email', email)
 
     if (updateError) {
       return NextResponse.json({ error: updateError.message }, { status: 400 })
     }
 
-    // 3. Enviar email via Brevo
+    // 4. Enviar email via Brevo
     const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
@@ -55,11 +72,12 @@ export async function POST(request: Request) {
     })
 
     if (!brevoRes.ok) {
-      return NextResponse.json({ error: 'Erro ao enviar email' }, { status: 500 })
+      const brevoError = await brevoRes.json()
+      return NextResponse.json({ error: brevoError.message || 'Erro ao enviar email via Brevo' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
-  } catch (error) {
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Erro interno no servidor' }, { status: 500 })
   }
 }
