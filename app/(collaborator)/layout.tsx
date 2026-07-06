@@ -19,6 +19,7 @@ import { createClient } from '@/lib/supabase'
 const menuItems = [
   { label: 'Dashboard', href: '/colaborador/dashboard', icon: LayoutDashboard },
   { label: 'Tarefas', href: '/colaborador/tarefas', icon: CheckSquare },
+  { label: 'Checklists', href: '/colaborador/checklists', icon: CheckSquare },
   { label: 'Meus Clientes', href: '/colaborador/meus-clientes', icon: Users },
   { label: 'Clientes Agência', href: '/colaborador/clientes', icon: Users },
   { label: 'Campanhas', href: '/colaborador/campanhas', icon: Megaphone },
