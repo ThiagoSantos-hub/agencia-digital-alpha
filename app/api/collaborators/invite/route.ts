@@ -16,6 +16,7 @@ export async function POST(request: Request) {
     const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers()
     
     if (listError) {
+      console.error('❌ Erro ao listar usuários Auth:', listError)
       return NextResponse.json({ error: listError.message }, { status: 400 })
     }
 
@@ -24,6 +25,7 @@ export async function POST(request: Request) {
     if (found) {
       // Usuário já existe, apenas capturamos o ID
       userId = found.id
+      console.log('✅ Usuário já existente no Auth:', userId)
     } else {
       // 2. Criar novo usuário no Supabase Auth usando o cliente admin
       const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -34,9 +36,11 @@ export async function POST(request: Request) {
       })
 
       if (authError) {
+        console.error('❌ Erro ao criar usuário no Auth:', authError)
         return NextResponse.json({ error: authError.message }, { status: 400 })
       }
       userId = authData.user.id
+      console.log('✅ Usuário criado no Auth:', userId)
     }
 
     // 3. Vincular user_id ao registro do colaborador
@@ -46,10 +50,13 @@ export async function POST(request: Request) {
       .eq('email', email)
 
     if (updateError) {
+      console.error('❌ Erro ao vincular user_id na tabela collaborators:', updateError)
       return NextResponse.json({ error: updateError.message }, { status: 400 })
     }
 
     // 4. Enviar email via Brevo
+    console.log('📧 Enviando email via Brevo para:', email)
+    
     const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
@@ -71,13 +78,17 @@ export async function POST(request: Request) {
       })
     })
 
+    const brevoBody = await brevoRes.json()
+    console.log('📧 Resposta Brevo:', brevoRes.status, JSON.stringify(brevoBody))
+
     if (!brevoRes.ok) {
-      const brevoError = await brevoRes.json()
-      return NextResponse.json({ error: brevoError.message || 'Erro ao enviar email via Brevo' }, { status: 500 })
+      console.error('❌ Erro Brevo:', brevoBody)
+      return NextResponse.json({ error: 'Erro ao enviar email', details: brevoBody }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
+    console.error('❌ Erro interno na rota de convite:', error)
     return NextResponse.json({ error: error.message || 'Erro interno no servidor' }, { status: 500 })
   }
 }
