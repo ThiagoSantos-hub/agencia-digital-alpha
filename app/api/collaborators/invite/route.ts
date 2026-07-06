@@ -69,9 +69,9 @@ export async function POST(request: Request) {
     console.log('📧 Enviando email via Brevo para:', email, 'Remetente:', brevoSenderEmail)
     
     const brevoPayload = {
-      sender: { name: 'Agência Digital Alpha', email: brevoSenderEmail },
-      to: [{ email, name }],
-      replyTo: { name: 'Agência Digital Alpha', email: brevoSenderEmail },
+        sender: { name: 'Digital Alpha', email: brevoSenderEmail },
+        to: [{ email, name }],
+        replyTo: { name: 'Digital Alpha', email: brevoSenderEmail },
       subject: 'Seu acesso ao sistema foi criado!',
       htmlContent: `
         <!DOCTYPE html>
