@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { 
@@ -15,7 +15,8 @@ import {
   HardDrive,
   Cpu,
   Save,
-  Lock
+  Lock,
+  LogOut
 } from 'lucide-react'
 
 type IntegrationType = 'openai' | 'elevenlabs' | 'whatsapp' | 'meta_ads' | 'google_ads' | 'google_drive'
@@ -36,7 +37,16 @@ export default function IntegracoesColaboradorPage() {
   const [saving, setSaving] = useState<string | null>(null)
   const supabase = createClient()
 
+  const [feedbackMessage, setFeedbackMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('success') === 'meta_connected') {
+      setFeedbackMessage({ type: 'success', text: 'Meta Ads conectado com sucesso!' })
+    } else if (params.get('error')) {
+      setFeedbackMessage({ type: 'error', text: 'Erro ao conectar. Tente novamente.' })
+    }
+
     async function fetchData() {
       if (!user) return
 
@@ -120,6 +130,38 @@ export default function IntegracoesColaboradorPage() {
     }
   }
 
+  const MetaAdsConnectButton = ({ integration, onDisconnect }: { integration?: Integration, onDisconnect: () => void }) => {
+    const isConnected = !!integration?.api_key
+
+    if (isConnected) {
+      return (
+        <div className="space-y-3">
+          <div className="flex items-center justify-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase tracking-wider">
+            <CheckCircle2 size={10} />
+            Conectado
+          </div>
+          <button 
+            onClick={onDisconnect}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded-xl transition-all"
+          >
+            <LogOut size={14} />
+            Desconectar
+          </button>
+        </div>
+      )
+    }
+
+    return (
+      <a 
+        href="/api/integrations/connect/meta-collaborator"
+        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all"
+      >
+        <Share2 size={14} />
+        Conectar Meta Ads
+      </a>
+    )
+  }
+
   const IntegrationCard = ({ 
     type, 
     title, 
@@ -128,7 +170,8 @@ export default function IntegracoesColaboradorPage() {
     color, 
     bg,
     canEdit = true,
-    isAdmin = false
+    isAdmin = false,
+    renderCustomConnect
   }: { 
     type: IntegrationType, 
     title: string, 
@@ -137,7 +180,8 @@ export default function IntegracoesColaboradorPage() {
     color: string, 
     bg: string,
     canEdit?: boolean,
-    isAdmin?: boolean
+    isAdmin?: boolean,
+    renderCustomConnect?: () => React.ReactNode
   }) => {
     const integration = integrations.find(i => i.type === type)
     const [apiKey, setApiKey] = useState(integration?.api_key || '')
@@ -176,7 +220,9 @@ export default function IntegracoesColaboradorPage() {
           </p>
         </div>
 
-        {canEdit ? (
+        {renderCustomConnect && canEdit ? (
+          renderCustomConnect()
+        ) : canEdit ? (
           <div className="space-y-3">
             <div className="relative">
               <input 
@@ -216,6 +262,11 @@ export default function IntegracoesColaboradorPage() {
 
   return (
     <div className="p-8 space-y-8">
+      {feedbackMessage && (
+        <div className={`p-4 rounded-xl text-sm font-medium ${feedbackMessage.type === 'success' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+          {feedbackMessage.text}
+        </div>
+      )}
       <div>
         <h1 className="text-2xl font-bold text-white">Integrações</h1>
         <p className="text-gray-400 text-sm mt-1">Gerencie suas chaves de API e visualize as integrações da agência.</p>
@@ -284,6 +335,12 @@ export default function IntegracoesColaboradorPage() {
           icon={TrendingUp}
           color="text-emerald-400"
           bg="bg-emerald-400/10"
+          renderCustomConnect={() => (
+            <MetaAdsConnectButton 
+              integration={integrations.find(i => i.type === 'meta_ads')}
+              onDisconnect={() => handleSave('meta_ads', '')}
+            />
+          )}
         />
 
         {/* Google Ads Admin */}
