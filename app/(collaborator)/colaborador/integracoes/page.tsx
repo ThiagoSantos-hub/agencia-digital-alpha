@@ -385,7 +385,7 @@ export default function IntegracoesColaboradorPage() {
                 <IntegrationIcon type="email" />
               </div>
               <div>
-                <p className="text-white text-sm font-medium">E-mail</p>
+                <p className="text-white text-sm font-medium">Google E-mail</p>
                 <p className="text-xs mt-0.5" style={{ color: emailConnected ? '#00ff88' : '#4a7a5a' }}>
                   {emailConnected ? 'Conectado' : 'Desconectado'}
                 </p>
