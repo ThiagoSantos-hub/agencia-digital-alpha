@@ -1,165 +1,426 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
-import { createClient } from '@/lib/supabase'
-import { 
-  Megaphone, 
-  Search, 
-  Calendar,
-  Clock,
-  CheckCircle2,
-  AlertCircle
+import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useCampanhas, Campaign, CampaignMetric, MetaMetricOption } from '@/hooks/useCampanhas'
+import { useClientes, Client } from '@/hooks/useClientes'
+import {
+  Search, Megaphone, BarChart2, RefreshCw, Calendar,
+  ExternalLink, Filter, AlertTriangle, ChevronDown,
+  ChevronUp, User, Settings2, X, Check, CreditCard,
+  Wallet, PiggyBank,
 } from 'lucide-react'
 
-interface Campaign {
-  id: string
-  name: string
-  status: 'planejamento' | 'ativa' | 'pausada' | 'finalizada'
-  start_date: string | null
-  end_date: string | null
-  client_id: string | null
-  clients?: { name: string } | null
+const statusConfig = {
+  ativa:      { label: 'Ativa',      className: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
+  pausada:    { label: 'Pausada',    className: 'text-amber-400 bg-amber-500/10 border-amber-500/30'       },
+  finalizada: { label: 'Finalizada', className: 'text-gray-400 bg-gray-500/10 border-gray-500/30'          },
+  rascunho:   { label: 'Rascunho',   className: 'text-blue-400 bg-blue-500/10 border-blue-500/30'          },
 }
 
-export default function ColaboradorCampanhasPage() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([])
-  const [clients, setClients] = useState<{ id: string; name: string }[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [search, setSearch] = useState('')
-  const supabase = createClient()
+interface MetaAccountInfo {
+  saldo: string | null
+  temCartao: boolean
+  contaBloqueada: boolean
+}
+
+function useMetaAccount(adAccountId: string | null) {
+  const [info, setInfo] = useState<MetaAccountInfo | null>(null)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        setError(null)
-        
-        // Buscar campanhas
-        const { data: campaignsData, error: campaignsError } = await supabase
-          .from('campaigns')
-          .select(`*, clients(name)`)
-          .order('created_at', { ascending: false })
+    if (!adAccountId) return
+    let cancelled = false
+    setLoading(true)
+    fetch(`/api/meta/account?adAccountId=${encodeURIComponent(adAccountId)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (!cancelled && !data.error) setInfo(data)
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [adAccountId])
 
-        if (campaignsError) throw campaignsError
+  return { info, loading }
+}
 
-        // Buscar clientes
-        const { data: clientsData, error: clientsError } = await supabase
-          .from('clients')
-          .select('id, name')
+function MetricSelectorModal({ campaign, allOptions, onSave, onClose }: {
+  campaign: Campaign
+  allOptions: MetaMetricOption[]
+  onSave: (keys: string[]) => Promise<void>
+  onClose: () => void
+}) {
+  const [selected, setSelected] = useState<string[]>(campaign.selected_metrics ?? [])
+  const [saving, setSaving] = useState(false)
 
-        if (clientsError) throw clientsError
-
-        setCampaigns(campaignsData || [])
-        setClients(clientsData || [])
-      } catch (err: any) {
-        console.error('Erro ao buscar dados:', err)
-        setError('Erro ao carregar campanhas. Tente novamente mais tarde.')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [supabase])
-
-  const filteredCampaigns = useMemo(() => {
-    return campaigns.filter(c => {
-      const clientName = clients.find(cl => cl.id === c.client_id)?.name || ''
-      return c.name.toLowerCase().includes(search.toLowerCase()) ||
-             clientName.toLowerCase().includes(search.toLowerCase())
-    })
-  }, [campaigns, clients, search])
-
-  const getStatusInfo = (status: string) => {
-    switch (status) {
-      case 'planejamento': return { label: 'Planejamento', color: 'text-gray-400', icon: Clock, bg: 'bg-gray-400/10' }
-      case 'ativa': return { label: 'Ativa', color: 'text-emerald-400', icon: Megaphone, bg: 'bg-emerald-400/10' }
-      case 'pausada': return { label: 'Pausada', color: 'text-amber-400', icon: AlertCircle, bg: 'bg-amber-400/10' }
-      case 'finalizada': return { label: 'Finalizada', color: 'text-blue-400', icon: CheckCircle2, bg: 'bg-blue-400/10' }
-      default: return { label: status, color: 'text-gray-400', icon: Clock, bg: 'bg-gray-400/10' }
-    }
+  const toggle = (key: string) => {
+    setSelected(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    )
   }
 
-  const formatDate = (date: string | null) => {
-    if (!date) return '—'
-    return new Date(date).toLocaleDateString('pt-BR')
+  const handleSave = async () => {
+    setSaving(true)
+    await onSave(selected)
+    setSaving(false)
+    onClose()
   }
 
   return (
-    <div className="p-8 space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Campanhas</h1>
-        <p className="text-gray-400 text-sm mt-1">Visualização direta dos anúncios sincronizados com o Meta Ads da agência.</p>
-      </div>
-
-      {/* Filtro */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-        <input 
-          type="text" 
-          placeholder="Buscar campanhas ou clientes..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
-        />
-      </div>
-
-      {/* Grid de Campanhas */}
-      {loading ? (
-        <div className="py-12 text-center text-gray-500 italic">Carregando campanhas...</div>
-      ) : error ? (
-        <div className="py-12 text-center text-red-400 font-medium border-2 border-dashed border-red-900/30 rounded-2xl bg-red-900/10">
-          {error}
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-lg bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl shadow-2xl flex flex-col max-h-[85vh]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#1a3a24]">
+          <div>
+            <h2 className="text-white font-bold text-sm">Configurar Métricas</h2>
+            <p className="text-gray-500 text-xs mt-0.5 truncate max-w-[340px]">{campaign.name}</p>
+          </div>
+          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
+            <X size={18} />
+          </button>
         </div>
-      ) : filteredCampaigns.length === 0 ? (
-        <div className="py-12 text-center text-gray-500 italic border-2 border-dashed border-[#1a3a24] rounded-2xl px-4">
-          Nenhuma campanha encontrada. Verifique com o administrador se o Meta Ads está conectado.
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          <p className="text-gray-500 text-xs mb-4">Selecione as métricas que deseja visualizar para esta campanha. A escolha fica salva até você editar novamente.</p>
+          <div className="grid grid-cols-2 gap-2">
+            {allOptions.map(opt => {
+              const ativo = selected.includes(opt.key)
+              return (
+                <button key={opt.key} onClick={() => toggle(opt.key)}
+                  className={`flex items-center justify-between px-3 py-2.5 rounded-xl border text-left text-xs font-medium transition-all ${ativo ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300' : 'bg-[#121a15] border-[#1a3a24] text-gray-400 hover:text-white hover:border-[#1a3a24]'}`}>
+                  <span>{opt.label}</span>
+                  {ativo && <Check size={12} className="text-emerald-400 shrink-0 ml-2" />}
+                </button>
+              )
+            })}
+          </div>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCampaigns.map((campaign) => {
-            const status = getStatusInfo(campaign.status)
-            const StatusIcon = status.icon
+        <div className="px-6 py-4 border-t border-[#1a3a24] flex gap-3">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-[#1a3a24] text-gray-400 text-sm hover:text-white transition-colors">Cancelar</button>
+          <button onClick={handleSave} disabled={saving || selected.length === 0}
+            className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 disabled:opacity-50 transition-colors">
+            {saving ? 'Salvando...' : `Salvar (${selected.length})`}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
-            return (
-              <div key={campaign.id} className="bg-[#0a0f0c] border border-[#1a3a24] p-6 rounded-2xl group hover:border-emerald-500/30 transition-all shadow-sm">
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${status.bg} ${status.color} text-[10px] font-black uppercase tracking-wider`}>
-                    <StatusIcon size={12} />
-                    {status.label}
-                  </div>
-                </div>
+function CampaignCard({ campaign, fetchMetrics, fetchAllMetricOptions, saveSelectedMetrics, dateStart, dateEnd }: {
+  campaign: Campaign
+  fetchMetrics: (id: string, metaId: string, selected?: string[], start?: string, end?: string) => Promise<CampaignMetric[]>
+  fetchAllMetricOptions: () => Promise<MetaMetricOption[]>
+  saveSelectedMetrics: (id: string, keys: string[]) => Promise<boolean>
+  dateStart: string
+  dateEnd: string
+}) {
+  const [expandido, setExpandido] = useState(false)
+  const [metrics, setMetrics] = useState<CampaignMetric[]>([])
+  const [loadingMetrics, setLoadingMetrics] = useState(false)
+  const [modalAberto, setModalAberto] = useState(false)
+  const [allOptions, setAllOptions] = useState<MetaMetricOption[]>([])
 
-                <div className="space-y-1 mb-6">
-                  <h3 className="text-lg font-bold text-white leading-tight group-hover:text-emerald-400 transition-colors">
-                    {campaign.name}
-                  </h3>
-                  <p className="text-sm text-gray-500 font-medium">
-                    {clients.find(cl => cl.id === campaign.client_id)?.name || 'Cliente não identificado'}
-                  </p>
-                </div>
+  useEffect(() => {
+    if (!expandido) return
+    let cancelled = false
+    const reload = async () => {
+      setLoadingMetrics(true)
+      const data = await fetchMetrics(campaign.id, campaign.meta_campaign_id || '', campaign.selected_metrics ?? undefined, dateStart || undefined, dateEnd || undefined)
+      if (!cancelled) { setMetrics(data); setLoadingMetrics(false) }
+    }
+    reload()
+    return () => { cancelled = true }
+  }, [dateStart, dateEnd])
 
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[#1a3a24]">
-                  <div>
-                    <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">Início</p>
-                    <div className="flex items-center gap-1.5 text-xs text-gray-300">
-                      <Calendar size={12} className="text-emerald-500/50" />
-                      {formatDate(campaign.start_date)}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">Término</p>
-                    <div className="flex items-center gap-1.5 text-xs text-gray-300">
-                      <Calendar size={12} className="text-emerald-500/50" />
-                      {formatDate(campaign.end_date)}
-                    </div>
-                  </div>
-                </div>
+  const loadMetrics = async () => {
+    if (!expandido) {
+      setLoadingMetrics(true)
+      const data = await fetchMetrics(campaign.id, campaign.meta_campaign_id || '', campaign.selected_metrics ?? undefined, dateStart || undefined, dateEnd || undefined)
+      setMetrics(data)
+      setLoadingMetrics(false)
+    }
+    setExpandido(!expandido)
+  }
+
+  const abrirConfig = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (allOptions.length === 0) {
+      const opts = await fetchAllMetricOptions()
+      setAllOptions(opts)
+    }
+    setModalAberto(true)
+  }
+
+  const handleSaveMetrics = async (keys: string[]) => {
+    await saveSelectedMetrics(campaign.id, keys)
+    if (expandido) {
+      setLoadingMetrics(true)
+      const data = await fetchMetrics(campaign.id, campaign.meta_campaign_id || '', keys, dateStart || undefined, dateEnd || undefined)
+      setMetrics(data)
+      setLoadingMetrics(false)
+    }
+  }
+
+  const statusInfo = statusConfig[campaign.status] || statusConfig.rascunho
+
+  return (
+    <>
+      <div className="bg-[#121a15] border border-[#1a3a24] rounded-2xl overflow-hidden hover:border-emerald-500/30 transition-all shadow-xl">
+        <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shadow-inner">
+              <Megaphone size={22} />
+            </div>
+            <div>
+              <h3 className="text-white font-bold text-base leading-tight">{campaign.name}</h3>
+              <div className="flex items-center gap-3 mt-1">
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusInfo.className}`}>{statusInfo.label}</span>
+                <span className="text-gray-500 text-[10px]">ID: {campaign.meta_campaign_id || campaign.id}</span>
               </div>
-            )
-          })}
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="text-right hidden sm:block">
+              <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider">Orçamento Diário</p>
+              <p className="text-white font-semibold text-sm">{campaign.budget ? `R$ ${campaign.budget.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'}</p>
+            </div>
+            <button onClick={abrirConfig} className="w-8 h-8 rounded-xl bg-[#0a0f0c] border border-[#1a3a24] flex items-center justify-center text-gray-500 hover:text-emerald-400 hover:border-emerald-500/30 transition-all" title="Configurar métricas">
+              <Settings2 size={14} />
+            </button>
+            <button onClick={loadMetrics} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${expandido ? 'bg-emerald-600 text-white' : 'bg-[#0a0f0c] border border-[#1a3a24] text-gray-400 hover:text-white'}`}>
+              <BarChart2 size={14} />
+              {expandido ? 'Ocultar Métricas' : 'Ver Métricas'}
+            </button>
+          </div>
+        </div>
+
+        {expandido && (
+          <div className="px-5 pb-5 pt-2 border-t border-[#1a3a24] bg-[#0a0f0c]/50">
+            {loadingMetrics ? (
+              <div className="flex items-center justify-center py-8 gap-2 text-gray-500 text-xs">
+                <RefreshCw size={16} className="animate-spin text-emerald-500" /> Buscando dados reais do Meta Ads...
+              </div>
+            ) : metrics.length === 0 ? (
+              <div className="text-center py-8 text-gray-600 text-xs italic">
+                Nenhuma métrica encontrada. Configure as métricas clicando no ícone <Settings2 size={11} className="inline" /> ao lado.
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {metrics.map((m) => (
+                  <div key={m.id} className="bg-[#121a15] border border-[#1a3a24] rounded-xl p-3 shadow-sm">
+                    <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider mb-1">{m.metric_label}</p>
+                    <p className="text-white font-bold text-sm">{m.metric_value ?? '—'}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="mt-4 flex justify-end">
+              <a href={`https://www.facebook.com/adsmanager/manage/campaigns?act=${campaign.meta_campaign_id}`} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-[10px] font-bold text-gray-600 hover:text-white transition-colors uppercase tracking-widest">
+                Abrir no Gerenciador <ExternalLink size={12} />
+              </a>
+            </div>
+          </div>
+        )}
+      </div>
+      {modalAberto && (
+        <MetricSelectorModal campaign={campaign} allOptions={allOptions} onSave={handleSaveMetrics} onClose={() => setModalAberto(false)} />
+      )}
+    </>
+  )
+}
+
+function ClienteAccordion({ clienteId, clienteNome, adAccountId, campaigns, fetchMetrics, fetchAllMetricOptions, saveSelectedMetrics, statusFilter, search, dateStart, dateEnd }: {
+  clienteId: string
+  clienteNome: string
+  adAccountId: string | null
+  campaigns: Campaign[]
+  fetchMetrics: (id: string, metaId: string, selected?: string[], start?: string, end?: string) => Promise<CampaignMetric[]>
+  fetchAllMetricOptions: () => Promise<MetaMetricOption[]>
+  saveSelectedMetrics: (id: string, keys: string[]) => Promise<boolean>
+  statusFilter: string
+  search: string
+  dateStart: string
+  dateEnd: string
+}) {
+  const [aberto, setAberto] = useState(false)
+  const { info: metaInfo, loading: metaLoading } = useMetaAccount(adAccountId)
+
+  const campanhasFiltradas = useMemo(() => {
+    return campaigns.filter(c => {
+      const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase())
+      const matchesStatus = statusFilter === 'todas' || c.status === statusFilter
+      return matchesSearch && matchesStatus
+    })
+  }, [campaigns, search, statusFilter])
+
+  if (campanhasFiltradas.length === 0) return null
+
+  const ativas = campanhasFiltradas.filter(c => c.status === 'ativa').length
+
+  return (
+    <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl overflow-hidden">
+      <button onClick={() => setAberto(!aberto)} className="w-full flex items-center justify-between px-6 py-4 hover:bg-[#121a15] transition-colors">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+            <User size={16} className="text-emerald-400" />
+          </div>
+          <div className="text-left">
+            <div className="flex items-center gap-2">
+              <p className={`text-white font-medium ${metaInfo?.contaBloqueada ? 'text-red-400' : ''}`}>{clienteNome}</p>
+              {metaInfo?.contaBloqueada && (
+                <span className="text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/30 px-2 py-0.5 rounded-full">Conta bloqueada</span>
+              )}
+            </div>
+            <p className="text-gray-500 text-xs">{campanhasFiltradas.length} campanha{campanhasFiltradas.length !== 1 ? 's' : ''} • {ativas} ativa{ativas !== 1 ? 's' : ''}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 mr-4">
+          {metaLoading ? (
+            <RefreshCw size={12} className="animate-spin text-gray-600" />
+          ) : metaInfo ? (
+            <>
+              {metaInfo.contaBloqueada && (
+                <div className="flex items-center gap-1.5 bg-red-500/20 border border-red-500/40 px-2.5 py-1 rounded-full">
+                  <AlertTriangle size={11} className="text-red-400" />
+                  <span className="text-red-400 text-[10px] font-bold">Conta Bloqueada</span>
+                </div>
+              )}
+              {metaInfo.temCartao && (
+                <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
+                  <CreditCard size={11} className="text-emerald-400" />
+                  <span className="text-emerald-400 text-[10px] font-bold">Cartão</span>
+                </div>
+              )}
+              {metaInfo.saldo && (
+                <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
+                  <Wallet size={11} className="text-emerald-400" />
+                  <span className="text-emerald-400 text-[10px] font-bold">Saldo: {metaInfo.saldo}</span>
+                </div>
+              )}
+            </>
+          ) : null}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <span className="text-emerald-400 text-xs font-bold bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">{campanhasFiltradas.length}</span>
+          {aberto ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+        </div>
+      </button>
+
+      {aberto && (
+        <div className="px-4 pb-4 space-y-3 border-t border-[#1a3a24] pt-4">
+          {campanhasFiltradas.map(campaign => (
+            <CampaignCard key={campaign.id} campaign={campaign} fetchMetrics={fetchMetrics} fetchAllMetricOptions={fetchAllMetricOptions} saveSelectedMetrics={saveSelectedMetrics} dateStart={dateStart} dateEnd={dateEnd} />
+          ))}
         </div>
       )}
+    </div>
+  )
+}
+
+export default function ColaboradorCampanhasPage() {
+  const { campaigns, loading, error, syncAllMetaCampaigns, fetchMetrics, fetchAllMetricOptions, saveSelectedMetrics } = useCampanhas()
+  const { clients } = useClientes()
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('todas')
+  const [dateStart, setDateStart] = useState('')
+  const [dateEnd, setDateEnd] = useState('')
+  const [localError, setLocalError] = useState<string | null>(null)
+
+  const campanhasPorCliente = useMemo(() => {
+    const grupos: Record<string, { nome: string; adAccountId: string | null; campaigns: Campaign[] }> = {}
+    campaigns.forEach(c => {
+      if (!grupos[c.client_id]) {
+        const cliente = clients.find(cl => cl.id === c.client_id)
+        grupos[c.client_id] = {
+          nome: cliente?.name ?? `Cliente ${c.client_id.slice(0, 8)}`,
+          adAccountId: cliente?.meta_ad_account_id ?? null,
+          campaigns: [],
+        }
+      }
+      grupos[c.client_id].campaigns.push(c)
+    })
+    return grupos
+  }, [campaigns, clients])
+
+  const handleSync = async () => {
+    setLocalError(null)
+    try {
+      await syncAllMetaCampaigns()
+    } catch (err: any) {
+      setLocalError(err.message || 'Falha na sincronização')
+    }
+  }
+
+  return (
+    <div className="p-8 space-y-8 pb-20 bg-[#0a0f0c] min-h-screen">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-white text-3xl font-bold tracking-tight">Campanhas</h1>
+          <p className="text-gray-400 text-sm mt-1">Visualização direta dos anúncios sincronizados com o Meta Ads da agência.</p>
+        </div>
+        <button onClick={handleSync} disabled={loading}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-medium transition-all ${loading ? 'bg-emerald-500/20 text-emerald-400' : 'bg-[#121a15] border border-[#1a3a24] text-gray-300 hover:text-white'}`}>
+          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+          {loading ? 'Sincronizando...' : 'Sincronizar Meta'}
+        </button>
+      </div>
+
+      {(error || localError) && (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex items-start gap-3 text-red-400">
+          <AlertTriangle size={20} className="shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="text-sm font-bold">Erro na Sincronização</p>
+            <p className="text-xs opacity-80">{error || localError}. Verifique sua conexão com o Meta Ads nas Integrações.</p>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center gap-4 bg-[#121a15] p-3 rounded-2xl border border-[#1a3a24] shadow-lg">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+          <input type="text" placeholder="Buscar campanha pelo nome..." value={search} onChange={e => setSearch(e.target.value)}
+            className="w-full pl-12 pr-4 py-2.5 bg-[#0a0f0c] border border-[#1a3a24] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-all" />
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2 bg-[#0a0f0c] border border-[#1a3a24] rounded-xl">
+          <Filter size={16} className="text-emerald-400" />
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="bg-transparent text-white text-sm focus:outline-none cursor-pointer">
+            <option value="todas">Todos os Status</option>
+            <option value="ativa">Ativas</option>
+            <option value="pausada">Pausadas</option>
+            <option value="finalizada">Finalizadas</option>
+          </select>
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2 bg-[#0a0f0c] border border-[#1a3a24] rounded-xl">
+          <Calendar size={16} className="text-emerald-400" />
+          <input type="date" value={dateStart} onChange={e => setDateStart(e.target.value)} className="bg-transparent text-white text-sm focus:outline-none" style={{ colorScheme: 'dark' }} />
+          <span className="text-gray-600">—</span>
+          <input type="date" value={dateEnd} onChange={e => setDateEnd(e.target.value)} className="bg-transparent text-white text-sm focus:outline-none" style={{ colorScheme: 'dark' }} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4">
+        {loading && campaigns.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <RefreshCw size={32} className="animate-spin text-emerald-500" />
+            <p className="text-gray-500 text-sm">Buscando campanhas no Meta Ads...</p>
+          </div>
+        ) : Object.keys(campanhasPorCliente).length === 0 ? (
+          <div className="bg-[#121a15] border border-[#1a3a24] rounded-3xl p-20 text-center">
+            <Megaphone size={48} className="text-gray-700 mx-auto mb-4" />
+            <h3 className="text-white font-medium text-lg">Nenhuma campanha encontrada</h3>
+            <p className="text-gray-500 text-sm mt-1">Verifique sua conexão com o Meta Ads ou tente outro filtro.</p>
+          </div>
+        ) : (
+          Object.entries(campanhasPorCliente).map(([clienteId, { nome, adAccountId, campaigns: cams }]) => (
+            <ClienteAccordion key={clienteId} clienteId={clienteId} clienteNome={nome} adAccountId={adAccountId} campaigns={cams}
+              fetchMetrics={fetchMetrics} fetchAllMetricOptions={fetchAllMetricOptions} saveSelectedMetrics={saveSelectedMetrics}
+              statusFilter={statusFilter} search={search} dateStart={dateStart} dateEnd={dateEnd} />
+          ))
+        )}
+      </div>
     </div>
   )
 }
