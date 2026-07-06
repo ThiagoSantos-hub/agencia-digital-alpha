@@ -6,6 +6,7 @@ import { useEffect } from 'react'
 import Link from 'next/link'
 import { 
   LayoutDashboard, 
+  Users,
   CheckSquare, 
   Megaphone, 
   Wallet, 
@@ -18,6 +19,7 @@ import { createClient } from '@/lib/supabase'
 const menuItems = [
   { label: 'Dashboard', href: '/colaborador/dashboard', icon: LayoutDashboard },
   { label: 'Tarefas', href: '/colaborador/tarefas', icon: CheckSquare },
+  { label: 'Clientes', href: '/colaborador/clientes', icon: Users },
   { label: 'Campanhas', href: '/colaborador/campanhas', icon: Megaphone },
   { label: 'Financeiro', href: '/colaborador/financeiro', icon: Wallet },
   { label: 'Integrações', href: '/colaborador/integracoes', icon: Plug },
