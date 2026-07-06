@@ -1,37 +1,17 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 export async function POST(request: Request) {
   try {
     const { name, email, password, cargo } = await request.json()
 
-    const cookieStore = cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-          set(name: string, value: string, options: CookieOptions) {
-            cookieStore.set({ name, value, ...options })
-          },
-          remove(name: string, options: CookieOptions) {
-            cookieStore.set({ name, value: '', ...options })
-          },
-        },
-      }
-    )
-
-    // 1. Criar usuário no Supabase Auth (usando a service role para admin operations se necessário, 
-    // mas aqui seguiremos a lógica do usuário autenticado se ele tiver permissão)
-    // Nota: createUser via admin requer service_role key. 
-    // Se o cliente supabase acima usar a anon key, auth.admin não funcionará a menos que o usuário seja superadmin.
-    // No entanto, vou manter a estrutura lógica solicitada, apenas corrigindo os imports.
-    
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    // 1. Criar usuário no Supabase Auth usando o cliente admin (service role key)
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
@@ -43,7 +23,7 @@ export async function POST(request: Request) {
     }
 
     // 2. Vincular user_id ao registro do colaborador
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from('collaborators')
       .update({ user_id: authData.user.id })
       .eq('email', email)
