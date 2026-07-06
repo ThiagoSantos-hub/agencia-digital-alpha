@@ -32,11 +32,16 @@ export interface MetaMetricOption {
 
 export function useCampanhas() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const lastFetchTime = useRef<number>(0)
+  const CACHE_DURATION = 5 * 60 * 1000 // 5 minutos
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const supabase = useMemo(() => createClient(), [])
 
-  const fetchCampaigns = useCallback(async (clientId?: string) => {
+  const fetchCampaigns = useCallback(async (clientId?: string, forceRefetch = false) => {
+    if (!forceRefetch && Date.now() - lastFetchTime.current < CACHE_DURATION && campaigns.length > 0) {
+      return // Usar cache se recente
+    }
     setLoading(true)
     try {
       let query = supabase
@@ -52,10 +57,11 @@ export function useCampanhas() {
       setError(err.message)
     } finally {
       setLoading(false)
+      lastFetchTime.current = Date.now()
     }
   }, [supabase])
 
-  useEffect(() => { fetchCampaigns() }, [fetchCampaigns])
+  useEffect(() => { fetchCampaigns(undefined, true) }, [fetchCampaigns])
 
   // Busca lista de todas as métricas disponíveis no Meta
   const fetchAllMetricOptions = useCallback(async (): Promise<MetaMetricOption[]> => {
@@ -131,11 +137,12 @@ export function useCampanhas() {
           body: JSON.stringify({ clientId: client.id, adAccountId: client.meta_ad_account_id }),
         })
       }
-      await fetchCampaigns()
+      await fetchCampaigns(undefined, true)
     } catch (err: any) {
       setError(err.message)
     } finally {
       setLoading(false)
+      lastFetchTime.current = Date.now()
     }
   }, [supabase, fetchCampaigns])
 

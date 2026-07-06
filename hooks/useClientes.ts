@@ -42,11 +42,16 @@ function calcularDiasAtrasoPorPaymentDay(paymentDay: number): number {
 
 export function useClientes() {
   const [clients, setClients] = useState<Client[]>([])
+  const lastFetchTime = useRef<number>(0)
+  const CACHE_DURATION = 5 * 60 * 1000 // 5 minutos
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const supabase = useMemo(() => createClient(), [])
 
-  const fetchClients = useCallback(async () => {
+  const fetchClients = useCallback(async (forceRefetch = false) => {
+    if (!forceRefetch && Date.now() - lastFetchTime.current < CACHE_DURATION && clients.length > 0) {
+      return // Usar cache se recente
+    }
     if (clients.length === 0) setLoading(true)
     
     try {
@@ -112,11 +117,12 @@ export function useClientes() {
       setError(err.message)
     } finally {
       setLoading(false)
+      lastFetchTime.current = Date.now()
     }
   }, [supabase, clients.length])
 
   useEffect(() => {
-    fetchClients()
+    fetchClients(true)
   }, [fetchClients])
 
   const createCliente = async (input: ClientInput) => {

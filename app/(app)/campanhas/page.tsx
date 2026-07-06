@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import React, { useState, useMemo, useCallback, useEffect } from 'react'
+import { useMetaAccount } from '@/hooks/useMetaAccount'
 import { useCampanhas, Campaign, CampaignMetric, MetaMetricOption } from '@/hooks/useCampanhas'
 import { useClientes, Client } from '@/hooks/useClientes'
 import {
@@ -17,34 +18,9 @@ const statusConfig = {
   rascunho:   { label: 'Rascunho',   className: 'text-blue-400 bg-blue-500/10 border-blue-500/30'          },
 }
 
-interface MetaAccountInfo {
-  saldo: string | null
-  temCartao: boolean
-  contaBloqueada: boolean
-}
 
-function useMetaAccount(adAccountId: string | null) {
-  const [info, setInfo] = useState<MetaAccountInfo | null>(null)
-  const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    if (!adAccountId) return
-    let cancelled = false
-    setLoading(true)
-    fetch(`/api/meta/account?adAccountId=${encodeURIComponent(adAccountId)}`)
-      .then(r => r.json())
-      .then(data => {
-        if (!cancelled && !data.error) setInfo(data)
-      })
-      .catch(() => {})
-      .finally(() => { if (!cancelled) setLoading(false) })
-    return () => { cancelled = true }
-  }, [adAccountId])
-
-  return { info, loading }
-}
-
-function MetricSelectorModal({ campaign, allOptions, onSave, onClose }: {
+const MetricSelectorModal = React.memo(function MetricSelectorModal({ campaign, allOptions, onSave, onClose }: {
   campaign: Campaign
   allOptions: MetaMetricOption[]
   onSave: (keys: string[]) => Promise<void>
@@ -105,8 +81,9 @@ function MetricSelectorModal({ campaign, allOptions, onSave, onClose }: {
     </div>
   )
 }
+)
 
-function CampaignCard({ campaign, fetchMetrics, fetchAllMetricOptions, saveSelectedMetrics, dateStart, dateEnd }: {
+const CampaignCard = React.memo(function CampaignCard({ campaign, fetchMetrics, fetchAllMetricOptions, saveSelectedMetrics, dateStart, dateEnd }: {
   campaign: Campaign
   fetchMetrics: (id: string, metaId: string, selected?: string[], start?: string, end?: string) => Promise<CampaignMetric[]>
   fetchAllMetricOptions: () => Promise<MetaMetricOption[]>
@@ -229,8 +206,9 @@ function CampaignCard({ campaign, fetchMetrics, fetchAllMetricOptions, saveSelec
     </>
   )
 }
+)
 
-function ClienteAccordion({ clienteId, clienteNome, adAccountId, campaigns, fetchMetrics, fetchAllMetricOptions, saveSelectedMetrics, statusFilter, search, dateStart, dateEnd, onStatusDetected }: {
+const ClienteAccordion = React.memo(function ClienteAccordion({ clienteId, clienteNome, adAccountId, campaigns, fetchMetrics, fetchAllMetricOptions, saveSelectedMetrics, statusFilter, search, dateStart, dateEnd, onStatusDetected }: {
   clienteId: string
   clienteNome: string
   adAccountId: string | null
@@ -326,6 +304,7 @@ function ClienteAccordion({ clienteId, clienteNome, adAccountId, campaigns, fetc
     </div>
   )
 }
+)
 
 export default function CampanhasPage() {
   const { campaigns, loading, error, syncAllMetaCampaigns, fetchMetrics, fetchAllMetricOptions, saveSelectedMetrics } = useCampanhas()
