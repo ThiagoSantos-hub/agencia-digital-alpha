@@ -321,9 +321,15 @@ export default function CampanhasPage() {
   const handleStatusDetected = useCallback((clienteId: string, bloqueada: boolean) => {
     setBlockedClientIds(prev => {
       const next = new Set(prev)
-      if (bloqueada) next.add(clienteId)
-      else next.delete(clienteId)
-      return next
+      const had = next.has(clienteId)
+      if (bloqueada && !had) {
+        next.add(clienteId)
+        return next
+      } else if (!bloqueada && had) {
+        next.delete(clienteId)
+        return next
+      }
+      return prev // Retorna o estado anterior se não houver mudança real
     })
   }, [])
 
