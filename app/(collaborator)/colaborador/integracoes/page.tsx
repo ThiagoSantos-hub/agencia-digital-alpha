@@ -18,6 +18,8 @@ const INTEGRATION_EMOJI: Record<string, string> = {
   elevenlabs: '🎙️',
   google_drive: '📁',
   google_ads: '🎯',
+  google_calendar: '📅',
+  email: '📧',
 }
 
 function IntegrationIcon({ type }: { type: string }) {
@@ -45,6 +47,8 @@ export default function IntegracoesColaboradorPage() {
   const [metaConnected, setMetaConnected] = useState(false)
   const [googleAdsConnected, setGoogleAdsConnected] = useState(false)
   const [googleDriveConnected, setGoogleDriveConnected] = useState(false)
+  const [googleCalendarConnected, setGoogleCalendarConnected] = useState(false)
+  const [emailConnected, setEmailConnected] = useState(false)
   
   const [openaiKey, setOpenaiKey] = useState('')
   const [elevenlabsKey, setElevenlabsKey] = useState('')
@@ -85,6 +89,8 @@ export default function IntegracoesColaboradorPage() {
             if (int.type === 'meta_ads') setMetaConnected(!!int.api_key)
             if (int.type === 'google_ads') setGoogleAdsConnected(!!int.api_key)
             if (int.type === 'google_drive') setGoogleDriveConnected(!!int.api_key)
+            if (int.type === 'google_calendar') setGoogleCalendarConnected(!!int.api_key)
+            if (int.type === 'email') setEmailConnected(!!int.api_key)
             if (int.type === 'openai') setOpenaiKey(int.api_key || '')
             if (int.type === 'elevenlabs') setElevenlabsKey(int.api_key || '')
             if (int.type === 'whatsapp') setWhatsappKey(int.api_key || '')
@@ -110,6 +116,8 @@ export default function IntegracoesColaboradorPage() {
     if (type === 'meta_ads') setMetaConnected(false)
     if (type === 'google_ads') setGoogleAdsConnected(false)
     if (type === 'google_drive') setGoogleDriveConnected(false)
+    if (type === 'google_calendar') setGoogleCalendarConnected(false)
+    if (type === 'email') setEmailConnected(false)
     
     setSuccessMsg(`${type.replace('_', ' ')} desconectado.`)
   }
@@ -331,6 +339,66 @@ export default function IntegracoesColaboradorPage() {
               </button>
             ) : (
               <a href="/api/integrations/connect/google?type=google_drive"
+                className="text-xs px-3 py-1.5 rounded-lg font-medium transition-colors"
+                style={{ backgroundColor: '#00ff88', color: '#0a0f0c' }}>
+                Conectar
+              </a>
+            )}
+          </div>
+
+          {/* Google Agenda — OAuth */}
+          <div className="rounded-xl p-4 flex items-center justify-between"
+            style={{ backgroundColor: '#0f1f14', border: '1px solid #1a3a24' }}>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 flex items-center justify-center rounded-lg"
+                style={{ backgroundColor: '#0a0f0c' }}>
+                <IntegrationIcon type="google_calendar" />
+              </div>
+              <div>
+                <p className="text-white text-sm font-medium">Google Agenda</p>
+                <p className="text-xs mt-0.5" style={{ color: googleCalendarConnected ? '#00ff88' : '#4a7a5a' }}>
+                  {googleCalendarConnected ? 'Conectado' : 'Desconectado'}
+                </p>
+              </div>
+            </div>
+            {googleCalendarConnected ? (
+              <button onClick={() => handleDisconnectOAuth('google_calendar')}
+                className="text-xs px-3 py-1.5 rounded-lg transition-colors"
+                style={{ backgroundColor: '#1a0a0a', color: '#ff4444', border: '1px solid #3a1a1a' }}>
+                Desconectar
+              </button>
+            ) : (
+              <a href="/api/integrations/connect/google?type=google_calendar"
+                className="text-xs px-3 py-1.5 rounded-lg font-medium transition-colors"
+                style={{ backgroundColor: '#00ff88', color: '#0a0f0c' }}>
+                Conectar
+              </a>
+            )}
+          </div>
+
+          {/* E-mail — OAuth */}
+          <div className="rounded-xl p-4 flex items-center justify-between"
+            style={{ backgroundColor: '#0f1f14', border: '1px solid #1a3a24' }}>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 flex items-center justify-center rounded-lg"
+                style={{ backgroundColor: '#0a0f0c' }}>
+                <IntegrationIcon type="email" />
+              </div>
+              <div>
+                <p className="text-white text-sm font-medium">E-mail</p>
+                <p className="text-xs mt-0.5" style={{ color: emailConnected ? '#00ff88' : '#4a7a5a' }}>
+                  {emailConnected ? 'Conectado' : 'Desconectado'}
+                </p>
+              </div>
+            </div>
+            {emailConnected ? (
+              <button onClick={() => handleDisconnectOAuth('email')}
+                className="text-xs px-3 py-1.5 rounded-lg transition-colors"
+                style={{ backgroundColor: '#1a0a0a', color: '#ff4444', border: '1px solid #3a1a1a' }}>
+                Desconectar
+              </button>
+            ) : (
+              <a href="/api/integrations/connect/google?type=email"
                 className="text-xs px-3 py-1.5 rounded-lg font-medium transition-colors"
                 style={{ backgroundColor: '#00ff88', color: '#0a0f0c' }}>
                 Conectar
