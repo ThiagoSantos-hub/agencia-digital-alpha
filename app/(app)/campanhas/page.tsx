@@ -230,7 +230,7 @@ function CampaignCard({ campaign, fetchMetrics, fetchAllMetricOptions, saveSelec
   )
 }
 
-function ClienteAccordion({ clienteId, clienteNome, adAccountId, campaigns, fetchMetrics, fetchAllMetricOptions, saveSelectedMetrics, statusFilter, search, dateStart, dateEnd }: {
+function ClienteAccordion({ clienteId, clienteNome, adAccountId, campaigns, fetchMetrics, fetchAllMetricOptions, saveSelectedMetrics, statusFilter, search, dateStart, dateEnd, onStatusDetected }: {
   clienteId: string
   clienteNome: string
   adAccountId: string | null
@@ -242,9 +242,16 @@ function ClienteAccordion({ clienteId, clienteNome, adAccountId, campaigns, fetc
   search: string
   dateStart: string
   dateEnd: string
+  onStatusDetected?: (bloqueada: boolean) => void
 }) {
   const [aberto, setAberto] = useState(false)
   const { info: metaInfo, loading: metaLoading } = useMetaAccount(adAccountId)
+
+  useEffect(() => {
+    if (metaInfo && onStatusDetected) {
+      onStatusDetected(metaInfo.contaBloqueada)
+    }
+  }, [metaInfo, onStatusDetected])
 
   const campanhasFiltradas = useMemo(() => {
     return campaigns.filter(c => {
@@ -267,7 +274,7 @@ function ClienteAccordion({ clienteId, clienteNome, adAccountId, campaigns, fetc
           </div>
           <div className="text-left">
             <div className="flex items-center gap-2">
-              <p className={metaInfo?.contaBloqueada ? 'text-red-400 font-semibold' : ''}>{clienteNome}</p>
+              <p className={`text-white font-medium ${metaInfo?.contaBloqueada ? 'text-red-400' : ''}`}>{clienteNome}</p>
               {metaInfo?.contaBloqueada && (
                 <span className="text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/30 px-2 py-0.5 rounded-full">Conta bloqueada</span>
               )}
@@ -329,6 +336,18 @@ export default function CampanhasPage() {
   const [dateEnd, setDateEnd] = useState('')
   const [localError, setLocalError] = useState<string | null>(null)
 
+  // Estado para rastrear quais clientes estão bloqueados
+  const [blockedClientIds, setBlockedClientIds] = useState<Set<string>>(new Set())
+
+  const handleStatusDetected = useCallback((clienteId: string, bloqueada: boolean) => {
+    setBlockedClientIds(prev => {
+      const next = new Set(prev)
+      if (bloqueada) next.add(clienteId)
+      else next.delete(clienteId)
+      return next
+    })
+  }, [])
+
   const campanhasPorCliente = useMemo(() => {
     const grupos: Record<string, { nome: string; adAccountId: string | null; campaigns: Campaign[] }> = {}
     campaigns.forEach(c => {
@@ -344,6 +363,14 @@ export default function CampanhasPage() {
     })
     return grupos
   }, [campaigns, clients])
+
+  const { ativos, bloqueados } = useMemo(() => {
+    const entries = Object.entries(campanhasPorCliente)
+    return {
+      ativos: entries.filter(([id]) => !blockedClientIds.has(id)),
+      bloqueados: entries.filter(([id]) => blockedClientIds.has(id))
+    }
+  }, [campanhasPorCliente, blockedClientIds])
 
   const handleSync = async () => {
     setLocalError(null)
@@ -401,7 +428,7 @@ export default function CampanhasPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
+      <div className="space-y-10">
         {loading && campaigns.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <RefreshCw size={32} className="animate-spin text-indigo-500" />
@@ -414,11 +441,44 @@ export default function CampanhasPage() {
             <p className="text-gray-500 text-sm mt-1">Verifique sua conexão com o Meta Ads ou tente outro filtro.</p>
           </div>
         ) : (
-          Object.entries(campanhasPorCliente).map(([clienteId, { nome, adAccountId, campaigns: cams }]) => (
-            <ClienteAccordion key={clienteId} clienteId={clienteId} clienteNome={nome} adAccountId={adAccountId} campaigns={cams}
-              fetchMetrics={fetchMetrics} fetchAllMetricOptions={fetchAllMetricOptions} saveSelectedMetrics={saveSelectedMetrics}
-              statusFilter={statusFilter} search={search} dateStart={dateStart} dateEnd={dateEnd} />
-          ))
+          <>
+            {/* Seção Contas Ativas */}
+            {ativos.length > 0 && (
+              <div className="space-y-4">
+                <h2 className="text-emerald-400 text-xs font-black uppercase tracking-[0.2em] flex items-center gap-2">
+                  <span className="text-[8px]">●</span> Contas ativas
+                </h2>
+                <div className="grid grid-cols-1 gap-4">
+                  {ativos.map(([clienteId, { nome, adAccountId, campaigns: cams }]) => (
+                    <ClienteAccordion key={clienteId} clienteId={clienteId} clienteNome={nome} adAccountId={adAccountId} campaigns={cams}
+                      fetchMetrics={fetchMetrics} fetchAllMetricOptions={fetchAllMetricOptions} saveSelectedMetrics={saveSelectedMetrics}
+                      statusFilter={statusFilter} search={search} dateStart={dateStart} dateEnd={dateEnd}
+                      onStatusDetected={(bloqueada) => handleStatusDetected(clienteId, bloqueada)} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Divisor e Seção Contas Bloqueadas */}
+            {bloqueados.length > 0 && (
+              <>
+                {ativos.length > 0 && <div className="border-t border-[#2a2a2a] my-8" />}
+                <div className="space-y-4">
+                  <h2 className="text-red-400 text-xs font-black uppercase tracking-[0.2em] flex items-center gap-2">
+                    <span className="text-[8px]">●</span> Contas bloqueadas
+                  </h2>
+                  <div className="grid grid-cols-1 gap-4">
+                    {bloqueados.map(([clienteId, { nome, adAccountId, campaigns: cams }]) => (
+                      <ClienteAccordion key={clienteId} clienteId={clienteId} clienteNome={nome} adAccountId={adAccountId} campaigns={cams}
+                        fetchMetrics={fetchMetrics} fetchAllMetricOptions={fetchAllMetricOptions} saveSelectedMetrics={saveSelectedMetrics}
+                        statusFilter={statusFilter} search={search} dateStart={dateStart} dateEnd={dateEnd}
+                        onStatusDetected={(bloqueada) => handleStatusDetected(clienteId, bloqueada)} />
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </>
         )}
       </div>
     </div>
