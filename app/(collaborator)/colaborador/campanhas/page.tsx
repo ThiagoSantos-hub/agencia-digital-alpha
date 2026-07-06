@@ -23,39 +23,52 @@ interface Campaign {
 
 export default function ColaboradorCampanhasPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [clients, setClients] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const supabase = createClient()
 
   useEffect(() => {
-    async function fetchCampaigns() {
+    async function fetchData() {
       try {
         setError(null)
-        const { data, error: fetchError } = await supabase
+        
+        // Buscar campanhas
+        const { data: campaignsData, error: campaignsError } = await supabase
           .from('campaigns')
           .select(`*, clients(name)`)
           .order('created_at', { ascending: false })
 
-        if (fetchError) throw fetchError
-        setCampaigns(data || [])
+        if (campaignsError) throw campaignsError
+
+        // Buscar clientes
+        const { data: clientsData, error: clientsError } = await supabase
+          .from('clients')
+          .select('id, name')
+
+        if (clientsError) throw clientsError
+
+        setCampaigns(campaignsData || [])
+        setClients(clientsData || [])
       } catch (err: any) {
-        console.error('Erro ao buscar campanhas:', err)
+        console.error('Erro ao buscar dados:', err)
         setError('Erro ao carregar campanhas. Tente novamente mais tarde.')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchCampaigns()
+    fetchData()
   }, [supabase])
 
   const filteredCampaigns = useMemo(() => {
-    return campaigns.filter(c => 
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.clients?.name?.toLowerCase().includes(search.toLowerCase())
-    )
-  }, [campaigns, search])
+    return campaigns.filter(c => {
+      const clientName = clients.find(cl => cl.id === c.client_id)?.name || ''
+      return c.name.toLowerCase().includes(search.toLowerCase()) ||
+             clientName.toLowerCase().includes(search.toLowerCase())
+    })
+  }, [campaigns, clients, search])
 
   const getStatusInfo = (status: string) => {
     switch (status) {
@@ -122,7 +135,7 @@ export default function ColaboradorCampanhasPage() {
                     {campaign.name}
                   </h3>
                   <p className="text-sm text-gray-500 font-medium">
-                    {campaign.clients?.name || 'Cliente não identificado'}
+                    {clients.find(cl => cl.id === campaign.client_id)?.name || 'Cliente não identificado'}
                   </p>
                 </div>
 
