@@ -24,21 +24,24 @@ interface Campaign {
 export default function ColaboradorCampanhasPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const supabase = createClient()
 
   useEffect(() => {
     async function fetchCampaigns() {
       try {
-        const { data, error } = await supabase
+        setError(null)
+        const { data, error: fetchError } = await supabase
           .from('campaigns')
           .select(`*, clients(name)`)
           .order('created_at', { ascending: false })
 
-        if (error) throw error
+        if (fetchError) throw fetchError
         setCampaigns(data || [])
-      } catch (error) {
-        console.error('Erro ao buscar campanhas:', error)
+      } catch (err: any) {
+        console.error('Erro ao buscar campanhas:', err)
+        setError('Erro ao carregar campanhas. Tente novamente mais tarde.')
       } finally {
         setLoading(false)
       }
@@ -73,7 +76,7 @@ export default function ColaboradorCampanhasPage() {
     <div className="p-8 space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-white">Campanhas</h1>
-        <p className="text-gray-400 text-sm mt-1">Visualize as campanhas ativas e planejadas da agência.</p>
+        <p className="text-gray-400 text-sm mt-1">Visualização direta dos anúncios sincronizados com o Meta Ads da agência.</p>
       </div>
 
       {/* Filtro */}
@@ -91,9 +94,13 @@ export default function ColaboradorCampanhasPage() {
       {/* Grid de Campanhas */}
       {loading ? (
         <div className="py-12 text-center text-gray-500 italic">Carregando campanhas...</div>
+      ) : error ? (
+        <div className="py-12 text-center text-red-400 font-medium border-2 border-dashed border-red-900/30 rounded-2xl bg-red-900/10">
+          {error}
+        </div>
       ) : filteredCampaigns.length === 0 ? (
-        <div className="py-12 text-center text-gray-500 italic border-2 border-dashed border-[#1a3a24] rounded-2xl">
-          Nenhuma campanha encontrada.
+        <div className="py-12 text-center text-gray-500 italic border-2 border-dashed border-[#1a3a24] rounded-2xl px-4">
+          Nenhuma campanha encontrada. Verifique com o administrador se o Meta Ads está conectado.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
