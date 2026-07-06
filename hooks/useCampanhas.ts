@@ -61,7 +61,7 @@ export function useCampanhas() {
     }
   }, [supabase])
 
-  useEffect(() => { fetchCampaigns(undefined, true) }, [fetchCampaigns])
+  useEffect(() => { fetchCampaigns(undefined, false) }, [fetchCampaigns])
 
   // Busca lista de todas as métricas disponíveis no Meta
   const fetchAllMetricOptions = useCallback(async (): Promise<MetaMetricOption[]> => {
