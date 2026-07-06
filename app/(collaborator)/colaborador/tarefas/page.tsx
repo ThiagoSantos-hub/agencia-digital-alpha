@@ -10,14 +10,22 @@ import {
   Clock, 
   MoreHorizontal,
   ArrowRight,
-  RotateCcw
+  RotateCcw,
+  Plus,
+  X,
+  Trash2,
+  Loader2
 } from 'lucide-react'
 
 export default function ColaboradorTarefasPage() {
   const { user } = useAuth()
-  const { tasks, listTasks, updateTaskStatus, loading } = useTasks()
+  const { tasks, listTasks, updateTaskStatus, createTask, deleteTask, loading } = useTasks()
   const [collaboratorId, setCollaboratorId] = useState<string | null>(null)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
+
+  const [modalOpen, setModalOpen] = useState(false)
+  const [form, setForm] = useState({ title: '', description: '' })
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     async function getCollaborator() {
@@ -59,11 +67,33 @@ export default function ColaboradorTarefasPage() {
     }
   }
 
+  const handleCreate = async () => {
+    if (!form.title || !collaboratorId) return
+    setSaving(true)
+    await createTask({ title: form.title, description: form.description, collaborator_id: collaboratorId })
+    setModalOpen(false)
+    setForm({ title: '', description: '' })
+    listTasks(collaboratorId)
+    setSaving(false)
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Deseja excluir esta tarefa?')) return
+    await deleteTask(id)
+    if (collaboratorId) listTasks(collaboratorId)
+  }
+
   return (
     <div className="p-8 h-[calc(100vh-64px)] flex flex-col space-y-8 overflow-hidden">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Minhas Tarefas</h1>
-        <p className="text-gray-400 text-sm mt-1">Gerencie seu fluxo de trabalho no Kanban.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Minhas Tarefas</h1>
+          <p className="text-gray-400 text-sm mt-1">Gerencie seu fluxo de trabalho no Kanban.</p>
+        </div>
+        <button onClick={() => setModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-emerald-500/20">
+          <Plus size={16} /> Nova Tarefa
+        </button>
       </div>
 
       <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 overflow-hidden">
@@ -91,9 +121,15 @@ export default function ColaboradorTarefasPage() {
                   <div key={task.id} className="bg-[#121a15] border border-[#1a3a24] p-4 rounded-xl group hover:border-emerald-500/50 transition-all shadow-sm">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <h4 className="text-sm font-bold text-gray-100 leading-tight">{task.title}</h4>
-                      <button className="text-gray-600 hover:text-emerald-500 transition-colors">
-                        <MoreHorizontal size={16} />
-                      </button>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={() => handleDelete(task.id)}
+                          className="text-gray-600 hover:text-red-500 transition-colors p-1"
+                          title="Excluir tarefa"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
                     
                     {task.description && (
@@ -153,6 +189,60 @@ export default function ColaboradorTarefasPage() {
           </div>
         ))}
       </div>
+
+      {/* Modal Nova Tarefa */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold text-white">Nova Tarefa</h2>
+              <button onClick={() => setModalOpen(false)} className="text-gray-500 hover:text-white transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Título</label>
+                <input 
+                  type="text" 
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  placeholder="O que precisa ser feito?"
+                  className="w-full bg-[#121a15] border border-[#1a3a24] rounded-xl px-4 py-3 text-sm text-white placeholder-gray-700 focus:outline-none focus:border-emerald-500/50 transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Descrição (opcional)</label>
+                <textarea 
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="Detalhes da tarefa..."
+                  rows={4}
+                  className="w-full bg-[#121a15] border border-[#1a3a24] rounded-xl px-4 py-3 text-sm text-white placeholder-gray-700 focus:outline-none focus:border-emerald-500/50 transition-all resize-none"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button 
+                  onClick={() => setModalOpen(false)}
+                  className="flex-1 px-4 py-3 rounded-xl bg-gray-900 text-gray-400 text-sm font-bold hover:text-white transition-all"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={handleCreate}
+                  disabled={saving || !form.title}
+                  className="flex-1 px-4 py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                >
+                  {saving ? <Loader2 size={16} className="animate-spin" /> : 'Criar Tarefa'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
