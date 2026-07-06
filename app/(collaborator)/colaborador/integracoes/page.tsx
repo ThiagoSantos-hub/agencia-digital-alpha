@@ -1,57 +1,62 @@
+
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
-import { 
-  Plus, 
-  CheckCircle2, 
-  AlertCircle, 
-  MessageSquare, 
-  Video, 
-  Share2, 
-  TrendingUp, 
-  Search, 
-  HardDrive,
-  Cpu,
-  Save,
-  Lock,
-  LogOut
-} from 'lucide-react'
+import { CheckCircle2, AlertCircle, Lock } from 'lucide-react'
 
-type IntegrationType = 'openai' | 'elevenlabs' | 'whatsapp' | 'meta_ads' | 'google_ads' | 'google_drive'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://agencia-digital-alpha.vercel.app'
 
-interface Integration {
-  id?: string
-  type: IntegrationType
-  api_key: string | null
-  is_admin?: boolean
+const INTEGRATION_ICONS: Record<string, string> = {
+  meta_ads: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/200px-Meta_Platforms_Inc._logo.svg.png',
+}
+
+const INTEGRATION_EMOJI: Record<string, string> = {
+  meta_ads: '📣',
+  whatsapp: '💬',
+  openai: '🤖',
+  elevenlabs: '🎙️',
+  google_drive: '📁',
+  google_ads: '🎯',
+}
+
+function IntegrationIcon({ type }: { type: string }) {
+  const [error, setError] = useState(false)
+  const src = INTEGRATION_ICONS[type]
+  if (!src || error) {
+    return <span className="text-2xl">{INTEGRATION_EMOJI[type] ?? '🔌'}</span>
+  }
+  return (
+    <img src={src} alt={type} width={32} height={32}
+      className="w-8 h-8 object-contain"
+      onError={() => setError(true)} />
+  )
 }
 
 export default function IntegracoesColaboradorPage() {
   const { user } = useAuth()
   const [collaboratorId, setCollaboratorId] = useState<string | null>(null)
-  const [integrations, setIntegrations] = useState<Integration[]>([])
-  const [adminIntegrations, setAdminIntegrations] = useState<Integration[]>([])
+  const [metaConnected, setMetaConnected] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState<string | null>(null)
+  const [successMsg, setSuccessMsg] = useState<string | null>(null)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const supabase = createClient()
-
-  const [feedbackMessage, setFeedbackMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('success') === 'meta_connected') {
-      setFeedbackMessage({ type: 'success', text: 'Meta Ads conectado com sucesso!' })
-    } else if (params.get('error')) {
-      setFeedbackMessage({ type: 'error', text: 'Erro ao conectar. Tente novamente.' })
+      setSuccessMsg('Meta Ads conectado com sucesso!')
     }
+    if (params.get('error')) {
+      setErrorMsg('Erro ao conectar. Tente novamente.')
+    }
+  }, [])
 
+  useEffect(() => {
     async function fetchData() {
       if (!user) return
-
       try {
-        // 1. Buscar ID do colaborador
         const { data: collaborator } = await supabase
           .from('collaborators')
           .select('id')
@@ -61,320 +66,132 @@ export default function IntegracoesColaboradorPage() {
         if (!collaborator) return
         setCollaboratorId(collaborator.id)
 
-        // 2. Buscar integrações do colaborador
-        const { data: collabIntegrations } = await supabase
+        const { data: integration } = await supabase
           .from('collaborator_integrations')
-          .select('*')
+          .select('api_key')
           .eq('collaborator_id', collaborator.id)
+          .eq('type', 'meta_ads')
+          .maybeSingle()
 
-        setIntegrations(collabIntegrations || [])
-
-        // 3. Buscar integrações do admin (para exibição somente leitura)
-        // Nota: Assumindo que o admin é identificado por role ou tabela específica
-        // Para esta tarefa, vamos simular que buscamos de uma tabela de configurações globais ou similar
-        const { data: adminData } = await supabase
-          .from('admin_integrations') // Ajustar se o nome da tabela for outro
-          .select('type')
-        
-        setAdminIntegrations(adminData?.map(i => ({ ...i, is_admin: true, api_key: '********' })) || [])
-
+        setMetaConnected(!!integration?.api_key)
       } catch (error) {
         console.error('Erro ao buscar integrações:', error)
       } finally {
         setLoading(false)
       }
     }
-
     fetchData()
   }, [user, supabase])
 
-  const handleSave = async (type: IntegrationType, apiKey: string) => {
+  const handleDisconnectMeta = async () => {
     if (!collaboratorId) return
-    setSaving(type)
-
-    try {
-      const existing = integrations.find(i => i.type === type)
-
-      if (existing) {
-        const { error } = await supabase
-          .from('collaborator_integrations')
-          .update({ api_key: apiKey, updated_at: new Date().toISOString() })
-          .eq('id', existing.id)
-
-        if (error) throw error
-      } else {
-        const { error } = await supabase
-          .from('collaborator_integrations')
-          .insert([{
-            collaborator_id: collaboratorId,
-            type,
-            api_key: apiKey
-          }])
-
-        if (error) throw error
-      }
-
-      // Recarregar dados
-      const { data: updated } = await supabase
-        .from('collaborator_integrations')
-        .select('*')
-        .eq('collaborator_id', collaboratorId)
-      
-      setIntegrations(updated || [])
-      alert('Integração atualizada com sucesso!')
-    } catch (error) {
-      console.error('Erro ao salvar integração:', error)
-      alert('Erro ao salvar integração.')
-    } finally {
-      setSaving(null)
-    }
-  }
-
-  const MetaAdsConnectButton = ({ integration, onDisconnect }: { integration?: Integration, onDisconnect: () => void }) => {
-    const isConnected = !!integration?.api_key
-
-    if (isConnected) {
-      return (
-        <div className="space-y-3">
-          <div className="flex items-center justify-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase tracking-wider">
-            <CheckCircle2 size={10} />
-            Conectado
-          </div>
-          <button 
-            onClick={onDisconnect}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded-xl transition-all"
-          >
-            <LogOut size={14} />
-            Desconectar
-          </button>
-        </div>
-      )
-    }
-
-    return (
-      <a 
-        href="/api/integrations/connect/meta-collaborator"
-        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all"
-      >
-        <Share2 size={14} />
-        Conectar Meta Ads
-      </a>
-    )
-  }
-
-  const IntegrationCard = ({ 
-    type, 
-    title, 
-    description, 
-    icon: Icon, 
-    color, 
-    bg,
-    canEdit = true,
-    isAdmin = false,
-    renderCustomConnect
-  }: { 
-    type: IntegrationType, 
-    title: string, 
-    description: string, 
-    icon: any, 
-    color: string, 
-    bg: string,
-    canEdit?: boolean,
-    isAdmin?: boolean,
-    renderCustomConnect?: () => React.ReactNode
-  }) => {
-    const integration = integrations.find(i => i.type === type)
-    const [apiKey, setApiKey] = useState(integration?.api_key || '')
-    const isConnected = !!integration?.api_key
-
-    return (
-      <div className={`bg-[#0a0f0c] border ${isAdmin ? 'border-blue-500/20' : 'border-[#1a3a24]'} p-6 rounded-2xl flex flex-col h-full group hover:border-emerald-500/30 transition-all shadow-sm`}>
-        <div className="flex items-start justify-between mb-4">
-          <div className={`p-2.5 rounded-xl ${bg} ${color}`}>
-            <Icon size={20} />
-          </div>
-          {isAdmin ? (
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase tracking-wider">
-              <Lock size={10} />
-              Admin
-            </div>
-          ) : isConnected ? (
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase tracking-wider">
-              <CheckCircle2 size={10} />
-              Conectado
-            </div>
-          ) : (
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-gray-500/10 text-gray-500 text-[10px] font-black uppercase tracking-wider">
-              <AlertCircle size={10} />
-              Pendente
-            </div>
-          )}
-        </div>
-
-        <div className="flex-1 space-y-2 mb-6">
-          <h3 className="text-lg font-bold text-white group-hover:text-emerald-400 transition-colors">
-            {title}
-          </h3>
-          <p className="text-sm text-gray-500 leading-relaxed">
-            {description}
-          </p>
-        </div>
-
-        {renderCustomConnect && canEdit ? (
-          renderCustomConnect()
-        ) : canEdit ? (
-          <div className="space-y-3">
-            <div className="relative">
-              <input 
-                type="password" 
-                placeholder="Insira sua API Key..."
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/50 transition-all"
-              />
-            </div>
-            <button 
-              onClick={() => handleSave(type, apiKey)}
-              disabled={saving === type || !apiKey}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-[#0a0f0c] text-xs font-bold rounded-xl transition-all disabled:opacity-50"
-            >
-              <Save size={14} />
-              {saving === type ? 'Salvando...' : isConnected ? 'Atualizar' : 'Conectar'}
-            </button>
-          </div>
-        ) : (
-          <div className="mt-auto pt-4 border-t border-[#1a3a24]">
-            <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-1">Status</p>
-            <p className="text-xs text-emerald-500 font-medium">Ativo pela agência</p>
-          </div>
-        )}
-      </div>
-    )
+    await supabase
+      .from('collaborator_integrations')
+      .delete()
+      .eq('collaborator_id', collaboratorId)
+      .eq('type', 'meta_ads')
+    setMetaConnected(false)
+    setSuccessMsg('Meta Ads desconectado.')
   }
 
   if (loading) {
     return (
-      <div className="p-8 py-16 text-center text-gray-500 italic">
-        Carregando integrações...
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-2 rounded-full animate-spin"
+          style={{ borderColor: '#00ff88', borderTopColor: 'transparent' }} />
       </div>
     )
   }
 
   return (
-    <div className="p-8 space-y-8">
-      {feedbackMessage && (
-        <div className={`p-4 rounded-xl text-sm font-medium ${feedbackMessage.type === 'success' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
-          {feedbackMessage.text}
+    <div className="p-6 max-w-4xl mx-auto space-y-8">
+      <div>
+        <h1 className="text-white text-2xl font-bold">Integrações</h1>
+        <p className="text-sm mt-1" style={{ color: '#4a7a5a' }}>
+          Conecte suas ferramentas e visualize as integrações da agência.
+        </p>
+      </div>
+
+      {successMsg && (
+        <div className="p-3 rounded-lg text-sm font-medium"
+          style={{ backgroundColor: '#0a2a1a', color: '#00ff88', border: '1px solid #1a3a24' }}>
+          ✅ {successMsg}
         </div>
       )}
-      <div>
-        <h1 className="text-2xl font-bold text-white">Integrações</h1>
-        <p className="text-gray-400 text-sm mt-1">Gerencie suas chaves de API e visualize as integrações da agência.</p>
-      </div>
+      {errorMsg && (
+        <div className="p-3 rounded-lg text-sm font-medium"
+          style={{ backgroundColor: '#2a0a0a', color: '#ff4444', border: '1px solid #3a1a1a' }}>
+          ❌ {errorMsg}
+        </div>
+      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* OpenAI */}
-        <IntegrationCard 
-          type="openai"
-          title="OpenAI"
-          description="Utilize sua própria chave para gerar conteúdos e análises com modelos GPT."
-          icon={Cpu}
-          color="text-emerald-400"
-          bg="bg-emerald-400/10"
-        />
+      <section>
+        <h2 className="text-white text-lg font-semibold mb-4">Minhas Conexões</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-        {/* ElevenLabs */}
-        <IntegrationCard 
-          type="elevenlabs"
-          title="ElevenLabs"
-          description="Gere vozes ultra-realistas com sua própria conta ElevenLabs."
-          icon={Video}
-          color="text-purple-400"
-          bg="bg-purple-400/10"
-        />
+          {/* Meta Ads Pessoal — OAuth */}
+          <div className="rounded-xl p-4 flex items-center justify-between"
+            style={{ backgroundColor: '#0f1f14', border: '1px solid #1a3a24' }}>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 flex items-center justify-center rounded-lg"
+                style={{ backgroundColor: '#0a0f0c' }}>
+                <IntegrationIcon type="meta_ads" />
+              </div>
+              <div>
+                <p className="text-white text-sm font-medium">Meta Ads Pessoal</p>
+                <p className="text-xs mt-0.5" style={{ color: metaConnected ? '#00ff88' : '#4a7a5a' }}>
+                  {metaConnected ? 'Conectado' : 'Desconectado'}
+                </p>
+              </div>
+            </div>
+            {metaConnected ? (
+              <button onClick={handleDisconnectMeta}
+                className="text-xs px-3 py-1.5 rounded-lg transition-colors"
+                style={{ backgroundColor: '#1a0a0a', color: '#ff4444', border: '1px solid #3a1a1a' }}>
+                Desconectar
+              </button>
+            ) : (
+              <a href="/api/integrations/connect/meta-collaborator"
+                className="text-xs px-3 py-1.5 rounded-lg font-medium transition-colors"
+                style={{ backgroundColor: '#00ff88', color: '#0a0f0c' }}>
+                Conectar
+              </a>
+            )}
+          </div>
 
-        {/* WhatsApp Admin */}
-        <IntegrationCard 
-          type="whatsapp"
-          title="WhatsApp (Agência)"
-          description="Conexão oficial da agência para disparo de mensagens."
-          icon={MessageSquare}
-          color="text-blue-400"
-          bg="bg-blue-400/10"
-          canEdit={false}
-          isAdmin={true}
-        />
+        </div>
+      </section>
 
-        {/* WhatsApp Pessoal */}
-        <IntegrationCard 
-          type="whatsapp"
-          title="WhatsApp Pessoal"
-          description="Conecte seu próprio número para automações individuais."
-          icon={MessageSquare}
-          color="text-emerald-400"
-          bg="bg-emerald-400/10"
-        />
+      <section>
+        <h2 className="text-white text-lg font-semibold mb-2">Integrações da Agência</h2>
+        <p className="text-xs mb-4" style={{ color: '#4a7a5a' }}>
+          Gerenciadas pelo administrador. Você utiliza automaticamente.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-        {/* Meta Ads Admin */}
-        <IntegrationCard 
-          type="meta_ads"
-          title="Meta Ads (Agência)"
-          description="Acesso às contas de anúncio gerenciadas pela agência."
-          icon={TrendingUp}
-          color="text-blue-400"
-          bg="bg-blue-400/10"
-          canEdit={false}
-          isAdmin={true}
-        />
+          {/* Meta Ads Agência — somente leitura */}
+          <div className="rounded-xl p-4 flex items-center justify-between"
+            style={{ backgroundColor: '#0f1f14', border: '1px solid #1a3a24', opacity: 0.7 }}>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 flex items-center justify-center rounded-lg"
+                style={{ backgroundColor: '#0a0f0c' }}>
+                <IntegrationIcon type="meta_ads" />
+              </div>
+              <div>
+                <p className="text-white text-sm font-medium">Meta Ads (Agência)</p>
+                <p className="text-xs mt-0.5" style={{ color: '#00ff88' }}>
+                  Ativo pela agência
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-full"
+              style={{ backgroundColor: '#0a1a2a', color: '#4a8aaa', border: '1px solid #1a3a4a' }}>
+              <Lock size={10} /> Admin
+            </div>
+          </div>
 
-        {/* Meta Ads Pessoal */}
-        <IntegrationCard 
-          type="meta_ads"
-          title="Meta Ads Pessoal"
-          description="Vincule sua conta de anúncios pessoal para gestão direta."
-          icon={TrendingUp}
-          color="text-emerald-400"
-          bg="bg-emerald-400/10"
-          renderCustomConnect={() => (
-            <MetaAdsConnectButton 
-              integration={integrations.find(i => i.type === 'meta_ads')}
-              onDisconnect={() => handleSave('meta_ads', '')}
-            />
-          )}
-        />
-
-        {/* Google Ads Admin */}
-        <IntegrationCard 
-          type="google_ads"
-          title="Google Ads (Agência)"
-          description="Acesso às contas Google Ads da agência."
-          icon={Search}
-          color="text-blue-400"
-          bg="bg-blue-400/10"
-          canEdit={false}
-          isAdmin={true}
-        />
-
-        {/* Google Ads Pessoal */}
-        <IntegrationCard 
-          type="google_ads"
-          title="Google Ads Pessoal"
-          description="Vincule sua conta Google Ads pessoal."
-          icon={Search}
-          color="text-emerald-400"
-          bg="bg-emerald-400/10"
-        />
-
-        {/* Google Drive */}
-        <IntegrationCard 
-          type="google_drive"
-          title="Google Drive"
-          description="Acesse e gerencie seus arquivos e documentos do Drive."
-          icon={HardDrive}
-          color="text-amber-400"
-          bg="bg-amber-400/10"
-        />
-      </div>
+        </div>
+      </section>
     </div>
   )
 }
