@@ -16,14 +16,12 @@ export default function ColaboradorChecklistsPage() {
   } = useChecklists()
 
   const [newListTitle, setNewListTitle] = useState('')
-  const [isAddingList, setIsAddingList] = useState(false)
   const [newItemTexts, setNewItemTexts] = useState<{ [key: string]: string }>({})
 
   const handleCreateList = async () => {
     if (!newListTitle.trim()) return
     await createChecklist(newListTitle)
     setNewListTitle('')
-    setIsAddingList(false)
   }
 
   const handleAddItem = async (checklistId: string) => {
@@ -43,45 +41,30 @@ export default function ColaboradorChecklistsPage() {
 
   return (
     <div className="p-8 min-h-screen bg-[#0a0f0c] text-gray-100">
-      <div className="flex justify-between items-start mb-8">
+      <div className="flex flex-col gap-8 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-white">Checklists</h1>
           <p className="text-gray-400 text-sm">Suas listas pessoais de tarefas.</p>
         </div>
         
-        {!isAddingList ? (
+        <div className="flex items-center gap-2 max-w-md">
+          <input
+            type="text"
+            value={newListTitle}
+            onChange={(e) => setNewListTitle(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleCreateList()}
+            placeholder="Nome da lista (ex: Segunda-feira, Empresa X)..."
+            className="flex-1 px-4 py-2 bg-[#111] border border-[#1a3a24] rounded-lg text-sm focus:outline-none focus:border-emerald-500 transition-colors"
+          />
           <button 
-            onClick={() => setIsAddingList(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-[#0a0f0c] rounded-lg transition-colors text-sm font-bold"
+            onClick={handleCreateList}
+            disabled={!newListTitle.trim()}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-[#0a0f0c] rounded-lg transition-colors text-sm font-bold whitespace-nowrap"
           >
             <Plus size={18} />
-            Nova Lista
+            Criar Lista
           </button>
-        ) : (
-          <div className="flex items-center gap-2">
-            <input
-              autoFocus
-              type="text"
-              value={newListTitle}
-              onChange={(e) => setNewListTitle(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleCreateList()}
-              placeholder="Nome da lista..."
-              className="px-3 py-2 bg-[#111] border border-[#1a3a24] rounded-lg text-sm focus:outline-none focus:border-emerald-500"
-            />
-            <button 
-              onClick={handleCreateList}
-              className="px-3 py-2 bg-emerald-500 text-[#0a0f0c] rounded-lg text-sm font-bold"
-            >
-              Criar
-            </button>
-            <button 
-              onClick={() => setIsAddingList(false)}
-              className="p-2 text-gray-400 hover:text-white"
-            >
-              <X size={18} />
-            </button>
-          </div>
-        )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -135,7 +118,7 @@ export default function ColaboradorChecklistsPage() {
                   value={newItemTexts[list.id] || ''}
                   onChange={(e) => setNewItemTexts(prev => ({ ...prev, [list.id]: e.target.value }))}
                   onKeyDown={(e) => e.key === 'Enter' && handleAddItem(list.id)}
-                  className="flex-1 px-3 py-1.5 bg-[#0a0f0c] border border-[#1a3a24] rounded-lg text-xs focus:outline-none focus:border-emerald-500"
+                  className="flex-1 px-3 py-1.5 bg-[#0a0f0c] border border-[#1a3a24] rounded-lg text-xs focus:outline-none focus:border-emerald-500 transition-colors"
                 />
                 <button 
                   onClick={() => handleAddItem(list.id)}

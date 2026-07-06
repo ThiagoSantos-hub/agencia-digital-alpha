@@ -52,10 +52,20 @@ export function useChecklists() {
 
   const createChecklist = async (title: string) => {
     if (!user) return
-    const { error } = await supabase
-      .from('checklists')
-      .insert({ title, user_id: user.id })
-    if (!error) await fetchChecklists()
+    try {
+      const { error } = await supabase
+        .from('checklists')
+        .insert({ title, user_id: user.id })
+      
+      if (error) {
+        console.error('Erro ao criar checklist no Supabase:', error)
+        throw error
+      }
+      
+      await fetchChecklists()
+    } catch (err) {
+      console.error('Erro na função createChecklist:', err)
+    }
   }
 
   const deleteChecklist = async (id: string) => {
