@@ -100,6 +100,14 @@ export function useChecklists() {
     if (!error) await fetchChecklists()
   }
 
+  const uncheckAll = async (checklist_id: string) => {
+    const { error } = await supabase
+      .from('checklist_items')
+      .update({ completed: false })
+      .eq('checklist_id', checklist_id)
+    if (!error) await fetchChecklists()
+  }
+
   return {
     checklists,
     loading,
@@ -109,5 +117,6 @@ export function useChecklists() {
     addItem,
     toggleItem,
     deleteItem,
+    uncheckAll,
   }
 }

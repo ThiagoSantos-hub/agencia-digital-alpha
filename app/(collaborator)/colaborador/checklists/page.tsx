@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useChecklists } from '@/hooks/useChecklists'
-import { Trash2, X, Plus, CheckSquare, Loader2 } from 'lucide-react'
+import { Trash2, X, Plus, CheckSquare, Loader2, RotateCcw } from 'lucide-react'
 
 export default function ColaboradorChecklistsPage() {
   const { 
@@ -12,7 +12,8 @@ export default function ColaboradorChecklistsPage() {
     deleteChecklist, 
     addItem, 
     toggleItem, 
-    deleteItem 
+    deleteItem,
+    uncheckAll
   } = useChecklists()
 
   const [newListTitle, setNewListTitle] = useState('')
@@ -77,9 +78,21 @@ export default function ColaboradorChecklistsPage() {
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="font-semibold text-white">{list.title}</h3>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {completedCount}/{items.length} concluídos
-                  </p>
+                  <div className="flex items-center gap-3 mt-1">
+                    <p className="text-xs text-gray-500">
+                      {completedCount}/{items.length} concluídos
+                    </p>
+                    {completedCount > 0 && (
+                      <button
+                        onClick={() => uncheckAll(list.id)}
+                        className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-white transition-colors"
+                        title="Desmarcar tudo"
+                      >
+                        <RotateCcw size={10} />
+                        Desmarcar tudo
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <button 
                   onClick={() => confirm('Excluir esta lista?') && deleteChecklist(list.id)}
