@@ -68,30 +68,43 @@ export async function POST(request: Request) {
 
     console.log('📧 Enviando email via Brevo para:', email, 'Remetente:', brevoSenderEmail)
     
-    const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'api-key': brevoApiKey
-      },
-      body: JSON.stringify({
-        sender: { name: 'Agência Digital Alpha', email: brevoSenderEmail },
-        to: [{ email, name }],
-        subject: 'Seu acesso ao sistema foi criado!',
-        htmlContent: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+    const brevoPayload = {
+      sender: { name: 'Agência Digital Alpha', email: brevoSenderEmail },
+      to: [{ email, name }],
+      replyTo: { name: 'Agência Digital Alpha', email: brevoSenderEmail },
+      subject: 'Seu acesso ao sistema foi criado!',
+      htmlContent: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+        </head>
+        <body style="font-family: sans-serif; background-color: #ffffff; margin: 0; padding: 20px;">
+          <div style="max-width: 600px; margin: 0 auto; background: #ffffff;">
             <h2 style="color: #10b981;">Olá, ${name}!</h2>
             <p>Seu acesso ao sistema da Agência Digital Alpha foi criado com sucesso.</p>
             <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <p style="margin: 0;"><strong>E-mail:</strong> ${email}</p>
               <p style="margin: 10px 0 0 0;"><strong>Senha temporária:</strong> ${password}</p>
             </div>
-            <p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://agencia-digital-alpha.vercel.app'}/login" style="display: inline-block; background: #10b981; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">Acessar o Sistema</a></p>
+            <p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://agencia-digital-alpha.vercel.app'}/login" style="display: inline-block; background: #10b981; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">Acessar o Sistema</a></p>
             <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 30px 0;" />
             <p style="color: #6b7280; font-size: 12px;">Recomendamos trocar sua senha após o primeiro acesso para sua segurança.</p>
           </div>
-        `
-      })
+        </body>
+        </html>
+      `
+    }
+
+    console.log('📧 Payload do Brevo preparado. Remetente:', brevoSenderEmail, 'Destinatário:', email)
+
+    const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'api-key': brevoApiKey
+      },
+      body: JSON.stringify(brevoPayload)
     })
 
     const brevoBody = await brevoRes.json()
