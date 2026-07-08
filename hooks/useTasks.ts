@@ -59,14 +59,20 @@ export function useTasks() {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       const user = session?.user
+      
+      // Remove campos nulos ou vazios para evitar erros de constraint no Postgres
+      const taskData = {
+        title: input.title,
+        description: input.description || null,
+        collaborator_id: input.collaborator_id || null,
+        status: 'a_fazer',
+        created_by: user?.id,
+        assignee_id: user?.id
+      }
+
       const { data, error } = await supabase
         .from('tasks')
-        .insert([{
-          ...input,
-          status: 'a_fazer',
-          created_by: user?.id,
-          assignee_id: user?.id // Também define como assignee para garantir visibilidade via RLS
-        }])
+        .insert([taskData])
         .select()
         .single()
 
