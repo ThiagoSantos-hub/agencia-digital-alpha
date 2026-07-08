@@ -8,7 +8,6 @@ import {
   Calendar, 
   Clock, 
   X,
-  AlertCircle,
   Circle,
   PlayCircle,
   CheckCircle2,
@@ -44,7 +43,7 @@ export default function AdminTasksPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
-  const [colaboradores, setColaboradores] = useState<{id: string, name: string, email: string}[]>([])
+  const [allUsers, setAllUsers] = useState<{id: string, name: string, email: string, role: string}[]>([])
   const [activeTask, setActiveTask] = useState<Task | null>(null)
   
   const [newTask, setNewTask] = useState({
@@ -83,15 +82,15 @@ export default function AdminTasksPage() {
   }, [tasks])
 
   useEffect(() => {
-    async function fetchColaboradores() {
+    async function fetchUsers() {
       const supabase = createClient()
       const { data } = await supabase
         .from('profiles')
-        .select('id, name, email')
-        .eq('role', 'collaborator')
-      setColaboradores(data || [])
+        .select('id, name, email, role')
+        .order('name')
+      setAllUsers(data || [])
     }
-    fetchColaboradores()
+    fetchUsers()
   }, [])
 
   const handleCreateTask = async (e: React.FormEvent) => {
@@ -146,7 +145,6 @@ export default function AdminTasksPage() {
 
     if (activeId === overId) return
 
-    // Se estiver sobre uma coluna
     const isOverAColumn = COLUMNS.some((col) => col.id === overId)
     if (isOverAColumn) {
       const task = tasks.find((t) => t.id === activeId)
@@ -165,7 +163,6 @@ export default function AdminTasksPage() {
     const activeId = active.id
     const overId = over.id
 
-    // Se o destino for uma tarefa diferente, atualiza o status se necessário
     const overTask = tasks.find((t) => t.id === overId)
     const activeTask = tasks.find((t) => t.id === activeId)
 
@@ -300,8 +297,8 @@ export default function AdminTasksPage() {
                     className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
                   >
                     <option value="">Selecione...</option>
-                    {colaboradores.map(c => (
-                      <option key={c.id} value={c.id}>{c.name || c.email}</option>
+                    {allUsers.map(u => (
+                      <option key={u.id} value={u.id}>{u.role === 'admin' ? 'ADM: ' : ''}{u.name || u.email}</option>
                     ))}
                   </select>
                 </div>
@@ -378,10 +375,10 @@ export default function AdminTasksPage() {
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Descrição</label>
                 <textarea 
-                  rows={4}
+                  rows={3}
                   value={editingTask.description || ''}
                   onChange={e => setEditingTask({...editingTask, description: e.target.value})}
-                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50 resize-none whitespace-pre-wrap"
+                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50 resize-none"
                 />
               </div>
 
@@ -394,8 +391,9 @@ export default function AdminTasksPage() {
                     onChange={e => setEditingTask({...editingTask, assigned_to: e.target.value})}
                     className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
                   >
-                    {colaboradores.map(c => (
-                      <option key={c.id} value={c.id}>{c.name || c.email}</option>
+                    <option value="">Selecione...</option>
+                    {allUsers.map(u => (
+                      <option key={u.id} value={u.id}>{u.role === 'admin' ? 'ADM: ' : ''}{u.name || u.email}</option>
                     ))}
                   </select>
                 </div>
@@ -440,7 +438,7 @@ export default function AdminTasksPage() {
 
               <button 
                 type="submit"
-                className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-[#0a0f0c] font-bold rounded-xl transition-all mt-4"
+                className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-[#0a0f0c] font-bold rounded-xl transition-all mt-4 shadow-lg shadow-emerald-500/20"
               >
                 Salvar Alterações
               </button>
@@ -481,20 +479,17 @@ export default function AdminTasksPage() {
                 <div>
                   <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Status</h3>
                   <div className="bg-[#1a3a24]/30 p-3 rounded-xl border border-[#1a3a24]">
-                    <p className="text-sm text-white font-medium">
+                    <p className="text-sm text-white font-medium capitalize">
                       {COLUMNS.find(c => c.id === selectedTask.status)?.label}
                     </p>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Responsável</h3>
-                  <div className="flex items-center gap-2 bg-[#1a3a24]/30 p-3 rounded-xl border border-[#1a3a24]">
-                    <div className="w-6 h-6 rounded-full bg-[#00ff88]/10 flex items-center justify-center text-[10px] text-[#00ff88] font-bold uppercase">
-                      {selectedTask.assignee?.name?.[0] || selectedTask.assignee?.email?.[0]}
-                    </div>
-                    <p className="text-sm text-white font-medium truncate">
-                      {selectedTask.assignee?.name || selectedTask.assignee?.email}
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Atribuído a</h3>
+                  <div className="bg-[#1a3a24]/30 p-3 rounded-xl border border-[#1a3a24]">
+                    <p className="text-sm text-white font-medium">
+                      {selectedTask.assignee?.name || selectedTask.assignee?.email || 'Não atribuído'}
                     </p>
                   </div>
                 </div>
