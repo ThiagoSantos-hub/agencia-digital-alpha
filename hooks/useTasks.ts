@@ -57,13 +57,15 @@ export function useTasks() {
     setLoading(true)
     setError(null)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       const { data, error } = await supabase
         .from('tasks')
         .insert([{
           ...input,
           status: 'a_fazer',
-          created_by: user?.id
+          created_by: user?.id,
+          assignee_id: user?.id // Também define como assignee para garantir visibilidade via RLS
         }])
         .select()
         .single()
