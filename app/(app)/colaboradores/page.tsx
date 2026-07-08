@@ -116,6 +116,7 @@ export default function ColaboradoresPage() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+              name: form.name,
               email: form.email,
               password: password
             })
