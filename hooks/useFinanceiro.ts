@@ -316,7 +316,20 @@ export function useFinanceiro(filtrosIniciais?: Partial<FiltrosFinanceiro>) {
     }
   }, [filtros])
 
-  useEffect(() => { fetchLancamentos() }, [fetchLancamentos])
+  useEffect(() => { 
+    fetchLancamentos() 
+
+    const channel = supabase
+      .channel('public:finances')
+      .on('postgres_changes', { event: '*', table: 'finances', schema: 'public' }, () => {
+        fetchLancamentos()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [fetchLancamentos, supabase])
 
   // ── CREATE ─────────────────────────────────────────────────
   /**
