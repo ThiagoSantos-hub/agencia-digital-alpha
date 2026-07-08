@@ -34,9 +34,9 @@ export default function AdminTarefasPage() {
   }, [tasks, search, colaboradores])
 
   const columns: { label: string; status: TaskStatus; icon: any; color: string; bgColor: string }[] = [
-    { label: 'Pendente', status: 'a_fazer', icon: Clock, color: 'text-gray-500', bgColor: 'bg-gray-500/5' },
-    { label: 'Em Curso', status: 'em_andamento', icon: Play, color: 'text-emerald-400', bgColor: 'bg-emerald-500/5' },
-    { label: 'Concluído', status: 'finalizada', icon: CheckCircle2, color: 'text-blue-400', bgColor: 'bg-blue-500/5' },
+    { label: 'A Fazer', status: 'a_fazer', icon: Clock, color: 'text-gray-500', bgColor: 'bg-gray-500/5' },
+    { label: 'Em Andamento', status: 'em_andamento', icon: Play, color: 'text-emerald-400', bgColor: 'bg-emerald-500/5' },
+    { label: 'Finalizada', status: 'finalizada', icon: CheckCircle2, color: 'text-blue-400', bgColor: 'bg-blue-500/5' },
   ]
 
   const tasksByStatus = useMemo(() => {
@@ -64,7 +64,7 @@ export default function AdminTarefasPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Excluir?')) return
+    if (!confirm('Excluir tarefa?')) return
     try { await deleteTask(id) } catch (error) {}
   }
 
@@ -79,7 +79,7 @@ export default function AdminTarefasPage() {
       {/* Mini Header */}
       <div className="flex items-center justify-between gap-4 shrink-0 px-2">
         <div className="flex items-center gap-3">
-          <h1 className="text-xl font-black text-white tracking-tighter">Tarefas</h1>
+          <h1 className="text-xl font-black text-white tracking-tighter">Fluxo de Tarefas</h1>
           <div className="h-4 w-[1px] bg-gray-800"></div>
           <p className="text-gray-600 text-[9px] font-bold uppercase tracking-widest">Digital Alpha</p>
         </div>
@@ -87,7 +87,7 @@ export default function AdminTarefasPage() {
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-700" size={12} />
             <input 
-              type="text" placeholder="Filtrar..." value={search}
+              type="text" placeholder="Buscar..." value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="bg-[#0d1410] border border-[#1a3a24] rounded-lg pl-8 pr-2 py-1 text-[10px] text-white focus:outline-none focus:border-emerald-500/30 w-32 transition-all"
             />
@@ -96,12 +96,12 @@ export default function AdminTarefasPage() {
             onClick={() => setModalOpen(true)}
             className="bg-[#00ff88] hover:bg-[#00ff88]/90 text-black font-black px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all text-[10px]"
           >
-            <Plus size={12} /> NOVO JOB
+            <Plus size={12} /> NOVA TAREFA
           </button>
         </div>
       </div>
 
-      {/* Ultra Compact Kanban */}
+      {/* Kanban Board */}
       <div className="flex-1 flex gap-3 overflow-x-auto pb-2 scrollbar-none">
         {columns.map((col) => (
           <div key={col.status} className="flex flex-col min-w-[260px] w-1/3 bg-[#0d1410]/20 border border-[#1a3a24]/20 rounded-2xl overflow-hidden">
@@ -144,12 +144,12 @@ export default function AdminTarefasPage() {
         ))}
       </div>
 
-      {/* Ultra Compact Modal */}
+      {/* Modal Nova Tarefa */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden">
             <div className="px-6 py-4 border-b border-[#1a3a24] bg-[#0d1410] flex items-center justify-between">
-              <h2 className="text-sm font-black text-white uppercase tracking-widest">Novo Job</h2>
+              <h2 className="text-sm font-black text-white uppercase tracking-widest">Nova Tarefa</h2>
               <button onClick={() => setModalOpen(false)} className="text-gray-600 hover:text-white p-1"><X size={16} /></button>
             </div>
             
@@ -161,17 +161,17 @@ export default function AdminTarefasPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[8px] font-black text-emerald-500 uppercase tracking-widest ml-1">Briefing</label>
+                <label className="text-[8px] font-black text-emerald-500 uppercase tracking-widest ml-1">Descrição</label>
                 <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
                   placeholder="Detalhes..." rows={2} className="w-full bg-[#121a15] border border-[#1a3a24] rounded-xl px-3 py-2 text-[11px] text-white focus:outline-none focus:border-emerald-500 resize-none" />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-[8px] font-black text-emerald-500 uppercase tracking-widest ml-1">Time</label>
+                  <label className="text-[8px] font-black text-emerald-500 uppercase tracking-widest ml-1">Responsável</label>
                   <select value={form.collaborator_id} onChange={(e) => setForm({ ...form, collaborator_id: e.target.value })}
                     className="w-full bg-[#121a15] border border-[#1a3a24] rounded-xl px-2 py-2 text-[10px] text-white focus:outline-none appearance-none cursor-pointer">
-                    <option value="">Ninguém</option>
+                    <option value="">Selecione...</option>
                     {colaboradores.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
@@ -188,7 +188,7 @@ export default function AdminTarefasPage() {
               </div>
 
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setModalOpen(false)} className="flex-1 py-2 rounded-xl border border-[#1a3a24] text-gray-600 font-black text-[10px] uppercase">Sair</button>
+                <button type="button" onClick={() => setModalOpen(false)} className="flex-1 py-2 rounded-xl border border-[#1a3a24] text-gray-600 font-black text-[10px] uppercase">Cancelar</button>
                 <button type="submit" disabled={saving} className="flex-1 py-2 rounded-xl bg-[#00ff88] text-black font-black text-[10px] uppercase disabled:opacity-50">
                   {saving ? '...' : 'CRIAR'}
                 </button>
