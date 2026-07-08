@@ -27,21 +27,36 @@ const statusConfig = {
 function FormFields({ form, set }: { form: ClienteForm; set: (f: keyof ClienteForm, v: string | boolean) => void }) {
   return (
     <div className="space-y-3">
-      <div className="space-y-1.5">
-        <label className="block text-xs font-medium text-gray-400">Nome <span className="text-red-400">*</span></label>
+      <div className="space-y-1">
+        <label className="block text-[11px] font-medium text-gray-400">Nome <span className="text-red-400">*</span></label>
         <input type="text" placeholder="Nome do responsável" value={form.name}
           onChange={(e) => set('name', e.target.value)}
-          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+          className="w-full px-3 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
       </div>
 
-      <div className="space-y-1.5">
-        <label className="block text-xs font-medium text-gray-400">Empresa</label>
-        <input type="text" placeholder="Nome da empresa" value={form.company}
-          onChange={(e) => set('company', e.target.value)}
-          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <label className="block text-[11px] font-medium text-gray-400">Empresa</label>
+          <input type="text" placeholder="Nome da empresa" value={form.company}
+            onChange={(e) => set('company', e.target.value)}
+            className="w-full px-3 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+        </div>
+        <div className="space-y-1">
+          <label className="block text-[11px] font-medium text-gray-400">Telefone</label>
+          <input type="tel" placeholder="(85) 99999-9999" value={form.phone}
+            onChange={(e) => set('phone', e.target.value)}
+            className="w-full px-3 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+        </div>
       </div>
 
-      <div className="bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-3 space-y-3">
+      <div className="space-y-1">
+        <label className="block text-[11px] font-medium text-gray-400">E-mail de contato</label>
+        <input type="email" placeholder="contato@empresa.com" value={form.email}
+          onChange={(e) => set('email', e.target.value)}
+          className="w-full px-3 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+      </div>
+
+      <div className="bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg p-3 space-y-2">
         <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
           <Target size={12} /> Integração Meta Ads
         </p>
@@ -63,42 +78,29 @@ function FormFields({ form, set }: { form: ClienteForm; set: (f: keyof ClienteFo
         </div>
       </div>
 
-      <div className="space-y-1.5">
-        <label className="block text-xs font-medium text-gray-400">Status</label>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <label className="block text-[11px] font-medium text-gray-400">Valor Mensal (R$)</label>
+          <input type="number" step="0.01" placeholder="0.00" value={form.monthly_fee}
+            onChange={(e) => set('monthly_fee', e.target.value)}
+            className="w-full px-3 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+        </div>
+        <div className="space-y-1">
+          <label className="block text-[11px] font-medium text-gray-400">Dia de Pagamento</label>
+          <input type="number" min="1" max="31" placeholder="Ex: 10" value={form.payment_day}
+            onChange={(e) => set('payment_day', e.target.value)}
+            className="w-full px-3 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+        </div>
+      </div>
+
+      <div className="space-y-1">
+        <label className="block text-[11px] font-medium text-gray-400">Status</label>
         <select value={form.status} onChange={(e) => set('status', e.target.value as ClienteForm['status'])}
-          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500/50 transition-colors">
+          className="w-full px-3 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-emerald-500/50 transition-colors">
           <option value="ativo">Ativo</option>
           <option value="atrasado">Atrasado</option>
           <option value="inativo">Inativo</option>
         </select>
-      </div>
-
-      <div className="space-y-1.5">
-        <label className="block text-xs font-medium text-gray-400">Telefone</label>
-        <input type="tel" placeholder="(85) 99999-9999" value={form.phone}
-          onChange={(e) => set('phone', e.target.value)}
-          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
-      </div>
-
-      <div className="space-y-1.5">
-        <label className="block text-xs font-medium text-gray-400">Valor Mensal (R$)</label>
-        <input type="number" step="0.01" placeholder="0.00" value={form.monthly_fee}
-          onChange={(e) => set('monthly_fee', e.target.value)}
-          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
-      </div>
-
-      <div className="space-y-1.5">
-        <label className="block text-xs font-medium text-gray-400">Dia de Pagamento</label>
-        <input type="number" min="1" max="31" placeholder="Ex: 10" value={form.payment_day}
-          onChange={(e) => set('payment_day', e.target.value)}
-          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
-      </div>
-
-      <div className="space-y-1.5">
-        <label className="block text-xs font-medium text-gray-400">E-mail de contato</label>
-        <input type="email" placeholder="contato@empresa.com" value={form.email}
-          onChange={(e) => set('email', e.target.value)}
-          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
       </div>
     </div>
   )
@@ -146,7 +148,6 @@ function ModalNovoCliente({ onClose }: { onClose: () => void }) {
       return;
     }
 
-    // Lançamento automático no financeiro do colaborador
     if (form.monthly_fee) {
       await createFinance({
         type: 'receita',
@@ -162,7 +163,7 @@ function ModalNovoCliente({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="w-full max-w-md bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="w-full max-w-md bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-5 space-y-3 shadow-2xl">
         <div className="flex items-center justify-between">
           <h2 className="text-white font-semibold text-base">Novo Cliente</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors p-1 rounded-lg">
@@ -171,15 +172,15 @@ function ModalNovoCliente({ onClose }: { onClose: () => void }) {
         </div>
         <FormFields form={form} set={set} />
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">{error}</div>
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-red-400 text-sm">{error}</div>
         )}
-        <div className="flex gap-3 pt-1">
+        <div className="flex gap-2 pt-1">
           <button onClick={onClose} disabled={loading}
-            className="flex-1 py-2.5 rounded-xl text-sm font-medium text-gray-400 bg-[#0f0f0f] border border-[#2a2a2a] hover:text-white transition-colors">
+            className="flex-1 py-2 rounded-lg text-sm font-medium text-gray-400 bg-[#0f0f0f] border border-[#2a2a2a] hover:text-white transition-colors">
             Cancelar
           </button>
           <button onClick={handleSubmit} disabled={loading}
-            className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white flex items-center justify-center gap-2 transition-colors">
+            className="flex-1 py-2 rounded-lg text-sm font-medium bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white flex items-center justify-center gap-2 transition-colors">
             {loading ? <><Loader2 size={14} className="animate-spin" /> Salvando...</> : 'Salvar Cliente'}
           </button>
         </div>
@@ -230,7 +231,7 @@ function ModalEditarCliente({ client, onClose }: { client: Client; onClose: () =
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="w-full max-w-md bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="w-full max-w-md bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-5 space-y-3 shadow-2xl">
         <div className="flex items-center justify-between">
           <h2 className="text-white font-semibold text-base">Editar Cliente</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors p-1 rounded-lg">
@@ -239,15 +240,15 @@ function ModalEditarCliente({ client, onClose }: { client: Client; onClose: () =
         </div>
         <FormFields form={form} set={set} />
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">{error}</div>
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-red-400 text-sm">{error}</div>
         )}
-        <div className="flex gap-3 pt-1">
+        <div className="flex gap-2 pt-1">
           <button onClick={onClose} disabled={loading}
-            className="flex-1 py-2.5 rounded-xl text-sm font-medium text-gray-400 bg-[#0f0f0f] border border-[#2a2a2a] hover:text-white transition-colors">
+            className="flex-1 py-2 rounded-lg text-sm font-medium text-gray-400 bg-[#0f0f0f] border border-[#2a2a2a] hover:text-white transition-colors">
             Cancelar
           </button>
           <button onClick={handleSubmit} disabled={loading}
-            className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white flex items-center justify-center gap-2 transition-colors">
+            className="flex-1 py-2 rounded-lg text-sm font-medium bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white flex items-center justify-center gap-2 transition-colors">
             {loading ? <><Loader2 size={14} className="animate-spin" /> Salvando...</> : 'Salvar Alterações'}
           </button>
         </div>
@@ -263,7 +264,6 @@ export default function MeusClientesPage() {
   const [modalNovo, setModalNovo] = useState(false)
   const [clienteEditar, setClienteEditar] = useState<Client | null>(null)
 
-  // Filtrar apenas os clientes criados por este colaborador
   const myClients = useMemo(() => 
     clients.filter(c => c.manager_id === profile?.id),
   [clients, profile?.id])
@@ -287,48 +287,48 @@ export default function MeusClientesPage() {
   }
 
   const renderTable = (list: Client[], title: string) => (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <div className="flex items-center gap-2 px-1">
-        <h2 className="text-white font-bold text-lg">{title}</h2>
+        <h2 className="text-white font-bold text-sm">{title}</h2>
         <span className="px-2 py-0.5 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] text-gray-500 text-[10px] font-bold">
           {list.length}
         </span>
       </div>
-      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl overflow-hidden shadow-xl">
+      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left border-collapse">
             <thead>
               <tr className="border-b border-[#2a2a2a] bg-[#1f1f1f]/50">
-                <th className="px-5 py-3 text-gray-500 font-medium">CLIENTE / EMPRESA</th>
-                <th className="px-5 py-3 text-gray-500 font-medium">CONTATO</th>
-                <th className="px-5 py-3 text-gray-500 font-medium">FINANCEIRO</th>
-                <th className="px-5 py-3 text-gray-500 font-medium">STATUS</th>
-                <th className="px-5 py-3 text-gray-500 font-medium text-right pr-12">AÇÕES</th>
+                <th className="px-3 py-2 text-gray-500 font-medium text-xs">CLIENTE</th>
+                <th className="px-3 py-2 text-gray-500 font-medium text-xs">CONTATO</th>
+                <th className="px-3 py-2 text-gray-500 font-medium text-xs">FINANCEIRO</th>
+                <th className="px-3 py-2 text-gray-500 font-medium text-xs">STATUS</th>
+                <th className="px-3 py-2 text-gray-500 font-medium text-xs text-right">AÇÕES</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#2a2a2a]/50">
               {list.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-10 text-center text-gray-600">
+                  <td colSpan={5} className="px-3 py-6 text-center text-gray-600 text-sm">
                     Nenhum cliente cadastrado por você.
                   </td>
                 </tr>
               ) : (
                 list.map((c) => (
                   <tr key={c.id} className="hover:bg-white/[0.02] transition-colors group">
-                    <td className="px-5 py-4">
+                    <td className="px-3 py-2.5">
                       <div className="flex flex-col">
                         <span className="text-white font-bold text-sm">{c.name}</span>
                         <span className="text-gray-500 text-xs">{c.company || '—'}</span>
                       </div>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-3 py-2.5">
                       <div className="flex flex-col gap-0.5">
                         <span className="text-gray-400 text-xs">{c.phone || '—'}</span>
                         <span className="text-gray-600 text-[10px]">{c.email || '—'}</span>
                       </div>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-3 py-2.5">
                       <div className="flex flex-col">
                         <span className="text-white font-medium text-sm">
                           {c.monthly_fee
@@ -340,9 +340,9 @@ export default function MeusClientesPage() {
                         </span>
                       </div>
                     </td>
-                    <td className="px-5 py-4">
-                      <div className="flex flex-col gap-1.5">
-                        <span className={`inline-flex items-center w-fit px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${statusConfig[c.status].className}`}>
+                    <td className="px-3 py-2.5">
+                      <div className="flex flex-col gap-1">
+                        <span className={`inline-flex items-center w-fit px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusConfig[c.status].className}`}>
                           {statusConfig[c.status].label}
                         </span>
                         {(c.status === 'atrasado') && ((c.dias_atraso ?? 0) > 0) && (
@@ -352,20 +352,20 @@ export default function MeusClientesPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-5 py-4 pr-12">
+                    <td className="px-3 py-2.5">
                       <div className="flex items-center justify-end gap-1">
-                        <div className="flex items-center bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-0.5 mr-2">
+                        <div className="flex items-center bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg p-0.5">
                           <button onClick={() => handleQuickStatus(c.id, 'ativo')} title="Marcar como Ativo"
-                            className={`p-1 rounded-lg transition-all ${c.status === 'ativo' ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-600 hover:text-emerald-400'}`}>
+                            className={`p-1 rounded-md transition-all ${c.status === 'ativo' ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-600 hover:text-emerald-400'}`}>
                             <CheckCircle2 size={13} />
                           </button>
                           <button onClick={() => handleQuickStatus(c.id, 'inativo')} title="Marcar como Inativo"
-                            className={`p-1 rounded-lg transition-all ${c.status === 'inativo' ? 'bg-gray-500/20 text-gray-400' : 'text-gray-600 hover:text-white'}`}>
+                            className={`p-1 rounded-md transition-all ${c.status === 'inativo' ? 'bg-gray-500/20 text-gray-400' : 'text-gray-600 hover:text-white'}`}>
                             <Ban size={13} />
                           </button>
                         </div>
-                        <button onClick={() => setClienteEditar(c)} className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all">
-                          <Pencil size={15} />
+                        <button onClick={() => setClienteEditar(c)} className="p-1.5 text-gray-500 hover:text-white hover:bg-white/5 rounded-lg transition-all">
+                          <Pencil size={14} />
                         </button>
                       </div>
                     </td>
@@ -380,27 +380,27 @@ export default function MeusClientesPage() {
   )
 
   return (
-    <div className="p-8 space-y-8 pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="p-4 space-y-3">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
-          <h1 className="text-white text-2xl font-bold">Meus Clientes</h1>
-          <p className="text-gray-400 text-sm mt-1">Gerencie os clientes que você cadastrou pessoalmente.</p>
+          <h1 className="text-white text-lg font-bold">Meus Clientes</h1>
+          <p className="text-gray-400 text-xs mt-0.5">Gerencie os clientes que você cadastrou pessoalmente.</p>
         </div>
-        <button onClick={() => setModalNovo(true)} className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-emerald-500/20">
+        <button onClick={() => setModalNovo(true)} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-emerald-500/20">
           <UserPlus size={16} /> Novo Cliente
         </button>
       </div>
 
       <div className="relative max-w-md">
-        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
         <input type="text" placeholder="Buscar em meus clientes..." value={search} onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-12 pr-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-all shadow-inner" />
+          className="w-full pl-10 pr-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-all" />
       </div>
 
-      <div className="space-y-12">
+      <div className="space-y-6">
         {loading && myClients.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <Loader2 size={32} className="animate-spin text-emerald-500" />
+          <div className="flex flex-col items-center justify-center py-12 gap-3">
+            <Loader2 size={24} className="animate-spin text-emerald-500" />
             <p className="text-gray-500 text-sm">Carregando seus clientes...</p>
           </div>
         ) : (
