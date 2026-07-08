@@ -43,7 +43,22 @@ export async function POST(request: Request) {
       console.log('✅ Usuário criado no Auth:', userId)
     }
 
-    // 3. Vincular user_id ao registro do colaborador
+    // 3. Criar registro na tabela 'profiles' para que o sistema reconheça o papel (role)
+    const { error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .upsert({
+        id: userId,
+        email: email,
+        name: name,
+        role: 'collaborator'
+      })
+
+    if (profileError) {
+      console.error('❌ Erro ao criar registro na tabela profiles:', profileError)
+      return NextResponse.json({ error: profileError.message }, { status: 400 })
+    }
+
+    // 4. Vincular user_id ao registro do colaborador
     const { error: updateError } = await supabaseAdmin
       .from('collaborators')
       .update({ user_id: userId })
@@ -54,7 +69,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: updateError.message }, { status: 400 })
     }
 
-    // 4. Enviar email via Brevo
+    // 5. Enviar email via Brevo
     const brevoApiKey = process.env.BREVO_API_KEY
     const brevoSenderEmail = process.env.BREVO_SENDER_EMAIL
 
