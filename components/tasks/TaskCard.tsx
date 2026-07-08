@@ -120,6 +120,13 @@ export function TaskCard({
           </div>
         </div>
 
+        <div className="flex flex-col items-end gap-0.5">
+          <span className="text-[8px] text-gray-500 uppercase font-bold">Criado por:</span>
+          <span className="text-[9px] text-emerald-400 font-medium truncate max-w-[80px]">
+            {task.creator?.name || task.creator?.email?.split('@')[0] || 'Sistema'}
+          </span>
+        </div>
+
         <div className="flex gap-0.5" onClick={(e) => e.stopPropagation()}>
           {task.status !== 'a_fazer' && (
             <button onClick={() => onMove(task.id, 'a_fazer')} title="Mover para A Fazer" className="p-0.5 text-gray-700 hover:text-white transition-colors">
