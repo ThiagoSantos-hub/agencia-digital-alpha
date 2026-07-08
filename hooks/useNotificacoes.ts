@@ -108,14 +108,10 @@ export function useNotificacoes() {
           
           // Disparar Notificação Push Nativa
           if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-            try {
-              new Notification(novaNotif.titulo, {
-                body: novaNotif.mensagem,
-                icon: '/logo.png',
-              })
-            } catch (e) {
-              console.warn('Erro ao disparar notificação push:', e)
-            }
+            new Notification(novaNotif.titulo, {
+              body: novaNotif.mensagem,
+              icon: '/logo.png', // Certifique-se que o logo existe em public/
+            })
           }
 
           setNotificacoes(prev => [novaNotif, ...prev])
