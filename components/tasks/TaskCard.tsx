@@ -70,6 +70,7 @@ export function TaskCard({
   }
 
   const canEdit = userRole === 'admin' || task.created_by === currentUserId
+  const canDelete = userRole === 'admin' || task.created_by === currentUserId
 
   return (
     <div 
@@ -93,9 +94,11 @@ export function TaskCard({
               <Edit size={12} />
             </button>
           )}
-          <button onClick={() => onDelete(task.id)} title="Excluir" className="p-1 text-gray-700 hover:text-red-500">
-            <Trash2 size={12} />
-          </button>
+          {canDelete && (
+            <button onClick={() => onDelete(task.id)} title="Excluir" className="p-1 text-gray-700 hover:text-red-500">
+              <Trash2 size={12} />
+            </button>
+          )}
         </div>
       </div>
 
