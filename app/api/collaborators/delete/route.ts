@@ -1,29 +1,19 @@
-import { createClient } from '@supabase/ssr'
+import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@/lib/supabase-server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
-import { NextResponse, type NextRequest } from 'next/server'
 
 export async function DELETE(request: NextRequest) {
   try {
     // 1. Verificar autenticação — só admin pode deletar
-    const supabaseClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() { return request.cookies.getAll() },
-          setAll() {},
-        },
-      }
-    )
-
-    const { data: { user } } = await supabaseClient.auth.getUser()
+    const supabase = createServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 })
     }
 
     // Verificar se é admin
-    const { data: profile } = await supabaseClient
+    const { data: profile } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
