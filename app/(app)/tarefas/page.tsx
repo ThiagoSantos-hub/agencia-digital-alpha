@@ -53,11 +53,12 @@ export default function AdminTarefasPage() {
   ]
 
   const tasksByStatus = useMemo(() => {
-    return {
+    const map: Record<string, Task[]> = {
       a_fazer: filteredTasks.filter(t => t.status === 'a_fazer' || t.status === 'pendente'),
       em_andamento: filteredTasks.filter(t => t.status === 'em_andamento'),
       finalizada: filteredTasks.filter(t => t.status === 'finalizada' || t.status === 'concluida'),
     }
+    return map
   }, [filteredTasks])
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -154,7 +155,7 @@ export default function AdminTarefasPage() {
                 <h3 className="font-black text-xs text-white uppercase tracking-widest">{col.label}</h3>
               </div>
               <span className="bg-[#1a3a24] text-emerald-400 text-[10px] font-black px-2.5 py-1 rounded-full border border-emerald-500/20">
-                {tasksByStatus[col.status].length}
+                {tasksByStatus[col.status]?.length || 0}
               </span>
             </div>
 
@@ -164,7 +165,7 @@ export default function AdminTarefasPage() {
                   <Loader2 size={24} className="animate-spin mb-2" />
                   <span className="text-[10px] uppercase font-bold tracking-widest">Sincronizando...</span>
                 </div>
-              ) : tasksByStatus[col.status].length === 0 ? (
+              ) : (tasksByStatus[col.status]?.length || 0) === 0 ? (
                 <div className="py-20 text-center border-2 border-dashed border-[#1a3a24]/30 rounded-3xl">
                   <p className="text-gray-700 text-[10px] font-black uppercase tracking-widest">Vazio</p>
                 </div>
