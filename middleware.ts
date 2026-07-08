@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
   const isApiRoute = request.nextUrl.pathname.startsWith('/api/')
+  
   if (isApiRoute) {
     return NextResponse.next()
   }
@@ -27,27 +28,57 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   const isAuthRoute = request.nextUrl.pathname.startsWith('/login')
+  const isCollaboratorRoute = request.nextUrl.pathname.startsWith('/colaborador/')
 
-  // 1. Usuário não autenticado → redireciona para login
+  // Usuário não autenticado tentando acessar app → redireciona para login
   if (!user && !isAuthRoute) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // 2. Usuário autenticado no login → redireciona para o painel correto
+  // Usuário autenticado tentando acessar login → redireciona para o painel correto
   if (user && isAuthRoute) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single()
+    
     const dest = profile?.role === 'collaborator' ? '/colaborador/dashboard' : '/dashboard'
     return NextResponse.redirect(new URL(dest, request.url))
   }
 
-  // 3. Tudo o resto → deixa o layout client-side gerenciar o acesso
-  // O layout admin verifica se é collaborator e redireciona
-  // O layout colaborador verifica se é admin e redireciona
-  // Isso evita qualquer flash de conteúdo durante redirects server-side
+  // Rota do colaborador — PERMITE acesso para qualquer usuário autenticado
+  // A validação de perfil é feita pelo layout.tsx do colaborador (client-side)
+  // Isso evita race condition onde o profile não foi carregado a tempo
+  if (isCollaboratorRoute && user) {
+    return NextResponse.next()
+  }
+
+  // Rota do admin — verifica se o user é collaborator e redireciona
+  const isAdminRoute =
+    request.nextUrl.pathname.startsWith('/dashboard') ||
+    request.nextUrl.pathname.startsWith('/clientes') ||
+    request.nextUrl.pathname.startsWith('/campanhas') ||
+    request.nextUrl.pathname.startsWith('/integracoes') ||
+    request.nextUrl.pathname.startsWith('/financeiro') ||
+    request.nextUrl.pathname.startsWith('/colaboradores') ||
+    request.nextUrl.pathname.startsWith('/ai') ||
+    request.nextUrl.pathname.startsWith('/perfil') ||
+    request.nextUrl.pathname.startsWith('/checklists') ||
+    request.nextUrl.pathname.startsWith('/tarefas')
+
+  if (isAdminRoute && user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    
+    if (profile?.role === 'collaborator') {
+      return NextResponse.redirect(new URL('/colaborador/dashboard', request.url))
+    }
+  }
+
   return supabaseResponse
 }
 
