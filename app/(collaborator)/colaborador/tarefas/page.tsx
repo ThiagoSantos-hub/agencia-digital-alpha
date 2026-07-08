@@ -1,22 +1,37 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useTasks, Task, TaskStatus, TaskPriority } from '@/hooks/useTasks'
 import { useAuth } from '@/hooks/useAuth'
 import { 
   Plus, 
   Calendar, 
   Clock, 
-  CheckCircle2, 
-  Circle, 
-  PlayCircle, 
-  Trash2,
   X,
-  Copy,
-  Edit
+  Circle,
+  PlayCircle,
+  CheckCircle2,
+  PauseCircle
 } from 'lucide-react'
+import { 
+  DndContext, 
+  DragOverlay, 
+  closestCorners, 
+  KeyboardSensor, 
+  PointerSensor, 
+  useSensor, 
+  useSensors,
+  DragStartEvent,
+  DragOverEvent,
+  DragEndEvent,
+  defaultDropAnimationSideEffects
+} from '@dnd-kit/core'
+import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import { KanbanColumn } from '@/components/tasks/KanbanColumn'
+import { TaskCard } from '@/components/tasks/TaskCard'
 
 const COLUMNS: { id: TaskStatus; label: string; icon: any; color: string }[] = [
+  { id: 'pendente', label: 'Pendências', icon: PauseCircle, color: 'text-amber-600' },
   { id: 'a_fazer', label: 'A Fazer', icon: Circle, color: 'text-gray-500' },
   { id: 'em_andamento', label: 'Em Andamento', icon: PlayCircle, color: 'text-blue-500' },
   { id: 'finalizada', label: 'Finalizadas', icon: CheckCircle2, color: 'text-emerald-500' },
@@ -30,40 +45,49 @@ export default function CollaboratorTasksPage() {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [activeTask, setActiveTask] = useState<Task | null>(null)
+  
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
     priority: 'media' as TaskPriority,
-    due_date: ''
+    due_date: '',
+    status: 'a_fazer' as TaskStatus
   })
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  const getPriorityOrder = (priority: TaskPriority): number => {
+    switch (priority) {
+      case 'urgente': return 0
+      case 'alta': return 1
+      case 'media': return 2
+      case 'baixa': return 3
+      default: return 4
+    }
+  }
+
+  const sortedTasks = useMemo(() => {
+    return [...tasks].sort((a, b) => getPriorityOrder(a.priority) - getPriorityOrder(b.priority))
+  }, [tasks])
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
       await createTask({ ...newTask, assigned_to: user?.id })
       setIsModalOpen(false)
-      setNewTask({ title: '', description: '', priority: 'media', due_date: '' })
+      setNewTask({ title: '', description: '', priority: 'media', due_date: '', status: 'a_fazer' })
     } catch (err) {
       alert('Erro ao criar tarefa')
-    }
-  }
-
-  const handleMoveTask = async (id: string, newStatus: TaskStatus) => {
-    await updateTask(id, { status: newStatus })
-  }
-
-  const handleDuplicateTask = async (task: Task) => {
-    try {
-      await createTask({
-        title: `${task.title} (Cópia)`,
-        description: task.description,
-        assigned_to: user?.id,
-        priority: task.priority,
-        status: 'a_fazer',
-        due_date: task.due_date
-      })
-    } catch (err) {
-      alert('Erro ao duplicar tarefa')
     }
   }
 
@@ -76,12 +100,54 @@ export default function CollaboratorTasksPage() {
         title: editingTask.title,
         description: editingTask.description,
         priority: editingTask.priority,
-        due_date: editingTask.due_date
+        due_date: editingTask.due_date,
+        status: editingTask.status
       })
       setIsEditModalOpen(false)
       setEditingTask(null)
     } catch (err) {
       alert('Erro ao atualizar tarefa')
+    }
+  }
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event
+    const task = tasks.find((t) => t.id === active.id)
+    if (task) setActiveTask(task)
+  }
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event
+    if (!over) return
+
+    const activeId = active.id
+    const overId = over.id
+
+    if (activeId === overId) return
+
+    const isOverAColumn = COLUMNS.some((col) => col.id === overId)
+    if (isOverAColumn) {
+      const task = tasks.find((t) => t.id === activeId)
+      if (task && task.status !== overId) {
+        updateTask(task.id, { status: overId as TaskStatus })
+      }
+    }
+  }
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    setActiveTask(null)
+
+    if (!over) return
+
+    const activeId = active.id
+    const overId = over.id
+
+    const overTask = tasks.find((t) => t.id === overId)
+    const activeTask = tasks.find((t) => t.id === activeId)
+
+    if (activeTask && overTask && activeTask.status !== overTask.status) {
+      updateTask(activeTask.id, { status: overTask.status })
     }
   }
 
@@ -110,7 +176,7 @@ export default function CollaboratorTasksPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-white">Minhas Tarefas</h1>
-          <p className="text-gray-400 text-sm mt-1">Gerencie suas atividades e progresso.</p>
+          <p className="text-gray-400 text-sm mt-1">Arraste as tarefas para gerenciar seu progresso.</p>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
@@ -121,91 +187,61 @@ export default function CollaboratorTasksPage() {
         </button>
       </div>
 
-      <div className="flex-1 flex gap-6 overflow-x-auto pb-4 custom-scrollbar">
-        {COLUMNS.map((column) => (
-          <div key={column.id} className="flex-1 min-w-[300px] bg-[#111]/50 border border-[#1a3a24] rounded-2xl flex flex-col overflow-hidden">
-            <div className="p-4 border-b border-[#1a3a24] flex items-center justify-between bg-[#111]">
-              <div className="flex items-center gap-2">
-                <column.icon size={18} className={column.color} />
-                <h2 className="text-white font-bold text-xs uppercase tracking-widest">{column.label}</h2>
-              </div>
-              <span className="bg-[#1a3a24] text-gray-500 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                {tasks.filter(t => t.status === column.id).length}
-              </span>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="flex-1 flex gap-6 overflow-x-auto pb-4 custom-scrollbar">
+          {COLUMNS.map((column) => (
+            <KanbanColumn
+              key={column.id}
+              {...column}
+              userRole="collaborator"
+              currentUserId={user?.id}
+              tasks={sortedTasks.filter(t => t.status === column.id)}
+              onDuplicate={(task) => createTask({ ...task, title: `${task.title} (Cópia)`, status: 'a_fazer', assigned_to: user?.id })}
+              onEdit={(task) => { setEditingTask(task); setIsEditModalOpen(true); }}
+              onDelete={deleteTask}
+              onMove={(id, status) => updateTask(id, { status })}
+              onClick={(task) => { setSelectedTask(task); setIsDetailModalOpen(true); }}
+            />
+          ))}
+        </div>
+
+        <DragOverlay dropAnimation={{
+          sideEffects: defaultDropAnimationSideEffects({
+            styles: {
+              active: {
+                opacity: '0.5',
+              },
+            },
+          }),
+        }}>
+          {activeTask ? (
+            <div className="w-[320px]">
+              <TaskCard 
+                task={activeTask} 
+                userRole="collaborator"
+                currentUserId={user?.id}
+                onDuplicate={() => {}}
+                onEdit={() => {}}
+                onDelete={() => {}}
+                onMove={() => {}}
+                onClick={() => {}}
+              />
             </div>
-
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-              {tasks.filter(t => t.status === column.id).map((task) => (
-                <div key={task.id} className="bg-[#0a0f0c] border border-[#1a3a24] rounded-xl p-4 hover:border-[#00ff88]/30 transition-all group shadow-md cursor-pointer" onClick={() => { setSelectedTask(task); setIsDetailModalOpen(true); }}>
-                  <div className="flex justify-between items-start mb-2">
-                    <span className={`text-[9px] font-black uppercase tracking-widest ${getPriorityColor(task.priority)}`}>
-                      {getPriorityLabel(task.priority)}
-                    </span>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                      <button onClick={() => handleDuplicateTask(task)} title="Duplicar" className="p-1 text-gray-700 hover:text-blue-400">
-                        <Copy size={14} />
-                      </button>
-                      <button 
-                        onClick={() => { 
-                          if (task.created_by === user?.id) {
-                            setEditingTask(task); 
-                            setIsEditModalOpen(true); 
-                          } else {
-                            alert('Apenas o criador pode editar esta tarefa.');
-                          }
-                        }} 
-                        title="Editar" 
-                        className="p-1 text-gray-700 hover:text-amber-400"
-                      >
-                        <Edit size={14} />
-                      </button>
-                      <button onClick={() => deleteTask(task.id)} title="Excluir" className="p-1 text-gray-700 hover:text-red-500">
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-
-                  <h3 className="text-white font-bold text-sm mb-1 line-clamp-2">{task.title}</h3>
-                  {task.description && (
-                    <div className="text-gray-500 text-[11px] mb-3 whitespace-pre-wrap line-clamp-4">{task.description}</div>
-                  )}
-
-                  <div className="pt-3 border-t border-[#1a3a24] flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-[10px] text-gray-500">
-                      <Calendar size={12} />
-                      <span>{task.due_date ? new Date(task.due_date).toLocaleDateString('pt-BR') : 'Sem prazo'}</span>
-                    </div>
-
-                    <div className="flex gap-1">
-                      {column.id !== 'a_fazer' && (
-                        <button onClick={(e) => { e.stopPropagation(); handleMoveTask(task.id, 'a_fazer'); }} title="Mover para A Fazer" className="p-1 text-gray-600 hover:text-white transition-colors">
-                          <Circle size={14} />
-                        </button>
-                      )}
-                      {column.id !== 'em_andamento' && (
-                        <button onClick={(e) => { e.stopPropagation(); handleMoveTask(task.id, 'em_andamento'); }} title="Mover para Em Andamento" className="p-1 text-gray-600 hover:text-blue-400 transition-colors">
-                          <PlayCircle size={14} />
-                        </button>
-                      )}
-                      {column.id !== 'finalizada' && (
-                        <button onClick={(e) => { e.stopPropagation(); handleMoveTask(task.id, 'finalizada'); }} title="Mover para Finalizada" className="p-1 text-gray-600 hover:text-emerald-400 transition-colors">
-                          <CheckCircle2 size={14} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
 
       {/* Modal de Edição de Tarefa */}
       {isEditModalOpen && editingTask && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl w-full max-w-lg overflow-hidden">
-            <div className="px-6 py-4 border-b border-[#1a3a24] flex justify-between items-center">
+          <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+            <div className="px-6 py-4 border-b border-[#1a3a24] flex justify-between items-center bg-[#0f1a14]">
               <h2 className="text-white font-bold">Editar Minha Tarefa</h2>
               <button onClick={() => setIsEditModalOpen(false)} className="text-gray-500 hover:text-white text-2xl">&times;</button>
             </div>
@@ -233,6 +269,18 @@ export default function CollaboratorTasksPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Status</label>
+                  <select 
+                    value={editingTask.status}
+                    onChange={e => setEditingTask({...editingTask, status: e.target.value as TaskStatus})}
+                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  >
+                    {COLUMNS.map(col => (
+                      <option key={col.id} value={col.id}>{col.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Prioridade</label>
                   <select 
                     value={editingTask.priority}
@@ -245,15 +293,16 @@ export default function CollaboratorTasksPage() {
                     <option value="urgente">Urgente</option>
                   </select>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Data de Entrega</label>
-                  <input 
-                    type="date" 
-                    value={editingTask.due_date ? editingTask.due_date.split('T')[0] : ''}
-                    onChange={e => setEditingTask({...editingTask, due_date: e.target.value})}
-                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
-                  />
-                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Data de Entrega</label>
+                <input 
+                  type="date" 
+                  value={editingTask.due_date ? editingTask.due_date.split('T')[0] : ''}
+                  onChange={e => setEditingTask({...editingTask, due_date: e.target.value})}
+                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                />
               </div>
 
               <button 
@@ -270,30 +319,22 @@ export default function CollaboratorTasksPage() {
       {/* Modal de Detalhes da Tarefa */}
       {isDetailModalOpen && selectedTask && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl w-full max-w-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
-            {/* Header */}
-            <div className="px-6 py-4 border-b border-[#1a3a24] flex justify-between items-center sticky top-0 bg-[#0a0f0c]">
+          <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl w-full max-w-2xl overflow-hidden max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="px-6 py-4 border-b border-[#1a3a24] flex justify-between items-center sticky top-0 bg-[#0a0f0c] z-10">
               <h2 className="text-white font-bold text-lg">Detalhes da Tarefa</h2>
-              <button onClick={() => setIsDetailModalOpen(false)} className="text-gray-500 hover:text-white text-2xl">
+              <button onClick={() => setIsDetailModalOpen(false)} className="text-gray-500 hover:text-white">
                 <X size={24} />
               </button>
             </div>
 
-            {/* Conteúdo */}
             <div className="p-6 space-y-6">
-              {/* Título e Prioridade */}
               <div>
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <h1 className="text-2xl font-bold text-white mb-2">{selectedTask.title}</h1>
-                    <span className={`inline-block text-xs font-black uppercase tracking-tighter px-3 py-1 rounded-lg ${getPriorityColor(selectedTask.priority)} bg-[#1a3a24]/50`}>
-                      {getPriorityLabel(selectedTask.priority)}
-                    </span>
-                  </div>
-                </div>
+                <h1 className="text-2xl font-bold text-white mb-2">{selectedTask.title}</h1>
+                <span className={`inline-block text-xs font-black uppercase tracking-tighter px-3 py-1 rounded-lg ${getPriorityColor(selectedTask.priority)} bg-[#1a3a24]/50`}>
+                  {getPriorityLabel(selectedTask.priority)}
+                </span>
               </div>
 
-              {/* Descrição */}
               {selectedTask.description && (
                 <div>
                   <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">Descrição</h3>
@@ -303,19 +344,16 @@ export default function CollaboratorTasksPage() {
                 </div>
               )}
 
-              {/* Grid de Informações */}
               <div className="grid grid-cols-2 gap-4">
-                {/* Status */}
                 <div>
                   <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Status</h3>
                   <div className="bg-[#1a3a24]/30 p-3 rounded-xl border border-[#1a3a24]">
                     <p className="text-sm text-white font-medium capitalize">
-                      {selectedTask.status === 'a_fazer' ? 'A Fazer' : selectedTask.status === 'em_andamento' ? 'Em Andamento' : 'Finalizada'}
+                      {COLUMNS.find(c => c.id === selectedTask.status)?.label}
                     </p>
                   </div>
                 </div>
 
-                {/* Data de Entrega */}
                 <div>
                   <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Data de Entrega</h3>
                   <div className="flex items-center gap-2 bg-[#1a3a24]/30 p-3 rounded-xl border border-[#1a3a24]">
@@ -326,7 +364,6 @@ export default function CollaboratorTasksPage() {
                   </div>
                 </div>
 
-                {/* Criado em */}
                 <div>
                   <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Criado em</h3>
                   <div className="flex items-center gap-2 bg-[#1a3a24]/30 p-3 rounded-xl border border-[#1a3a24]">
@@ -337,37 +374,6 @@ export default function CollaboratorTasksPage() {
                   </div>
                 </div>
               </div>
-
-              {/* Botões de Ação */}
-              <div className="flex gap-3 pt-4 border-t border-[#1a3a24]">
-                <button
-                  onClick={() => {
-                    handleMoveTask(selectedTask.id, 'a_fazer')
-                    setIsDetailModalOpen(false)
-                  }}
-                  className="flex-1 py-2 px-4 bg-[#1a3a24] hover:bg-[#2a4a34] text-white text-sm font-bold rounded-xl transition-colors"
-                >
-                  Mover para A Fazer
-                </button>
-                <button
-                  onClick={() => {
-                    handleMoveTask(selectedTask.id, 'em_andamento')
-                    setIsDetailModalOpen(false)
-                  }}
-                  className="flex-1 py-2 px-4 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 text-sm font-bold rounded-xl transition-colors"
-                >
-                  Mover para Em Andamento
-                </button>
-                <button
-                  onClick={() => {
-                    handleMoveTask(selectedTask.id, 'finalizada')
-                    setIsDetailModalOpen(false)
-                  }}
-                  className="flex-1 py-2 px-4 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-sm font-bold rounded-xl transition-colors"
-                >
-                  Mover para Finalizada
-                </button>
-              </div>
             </div>
           </div>
         </div>
@@ -376,8 +382,8 @@ export default function CollaboratorTasksPage() {
       {/* Modal de Nova Tarefa */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
-          <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl w-full max-w-lg overflow-hidden">
-            <div className="px-6 py-4 border-b border-[#1a3a24] flex justify-between items-center">
+          <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+            <div className="px-6 py-4 border-b border-[#1a3a24] flex justify-between items-center bg-[#0f1a14]">
               <h2 className="text-white font-bold">Criar Minha Tarefa</h2>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-500 hover:text-white text-2xl">&times;</button>
             </div>
@@ -407,6 +413,18 @@ export default function CollaboratorTasksPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Status Inicial</label>
+                  <select 
+                    value={newTask.status}
+                    onChange={e => setNewTask({...newTask, status: e.target.value as TaskStatus})}
+                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  >
+                    {COLUMNS.map(col => (
+                      <option key={col.id} value={col.id}>{col.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Prioridade</label>
                   <select 
                     value={newTask.priority}
@@ -419,15 +437,16 @@ export default function CollaboratorTasksPage() {
                     <option value="urgente">Urgente</option>
                   </select>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Data de Entrega</label>
-                  <input 
-                    type="date" 
-                    value={newTask.due_date}
-                    onChange={e => setNewTask({...newTask, due_date: e.target.value})}
-                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
-                  />
-                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Data de Entrega</label>
+                <input 
+                  type="date" 
+                  value={newTask.due_date}
+                  onChange={e => setNewTask({...newTask, due_date: e.target.value})}
+                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                />
               </div>
 
               <button 

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useAuth } from './useAuth'
 
-export type TaskStatus = 'a_fazer' | 'em_andamento' | 'finalizada'
+export type TaskStatus = 'pendente' | 'a_fazer' | 'em_andamento' | 'finalizada'
 export type TaskPriority = 'baixa' | 'media' | 'alta' | 'urgente'
 
 export interface Task {
