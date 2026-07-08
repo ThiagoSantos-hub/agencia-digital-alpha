@@ -37,7 +37,11 @@ export function useChecklists() {
     setLoading(true)
     try {
       // Chamar a função de reset por dia da semana
-      await supabase.rpc('reset_recurring_checklists_by_day')
+      try {
+        await supabase.rpc('reset_recurring_checklists_by_day')
+      } catch (rpcErr) {
+        console.warn('Função RPC de reset ainda não existe ou falhou:', rpcErr)
+      }
 
       const { data, error } = await supabase
         .from('checklists')
