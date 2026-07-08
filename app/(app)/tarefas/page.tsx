@@ -1,4 +1,5 @@
 'use client'
+// v1.0.0 - Modal de Detalhes e Ordenação por Prioridade
 
 import { useState, useEffect, useMemo } from 'react'
 import { useTasks, Task, TaskStatus, TaskPriority } from '@/hooks/useTasks'
