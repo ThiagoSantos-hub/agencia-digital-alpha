@@ -3,14 +3,20 @@
 import { useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
 
-export type TaskStatus = 'a_fazer' | 'em_andamento' | 'finalizada'
+export type TaskStatus = 'a_fazer' | 'em_andamento' | 'finalizada' | 'pendente' | 'concluida' | 'cancelada'
+export type TaskPriority = 'baixa' | 'media' | 'alta' | 'urgente'
 
 export interface Task {
   id: string
   title: string
   description: string | null
   status: TaskStatus
+  priority: TaskPriority
+  due_date: string | null
   collaborator_id: string | null
+  assignee_id: string | null
+  client_id: string | null
+  campaign_id: string | null
   created_by: string | null
   created_at: string
   updated_at: string
@@ -20,6 +26,9 @@ export interface CreateTaskInput {
   title: string
   description?: string
   collaborator_id?: string
+  priority?: TaskPriority
+  due_date?: string
+  status?: TaskStatus
 }
 
 export function useTasks() {
@@ -28,7 +37,7 @@ export function useTasks() {
   const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
 
-  const listTasks = useCallback(async (collaboratorId?: string) => {
+  const listTasks = useCallback(async (filters?: { collaboratorId?: string; status?: TaskStatus }) => {
     setLoading(true)
     setError(null)
     try {
@@ -37,8 +46,11 @@ export function useTasks() {
         .select('*')
         .order('created_at', { ascending: false })
 
-      if (collaboratorId) {
-        query = query.eq('collaborator_id', collaboratorId)
+      if (filters?.collaboratorId) {
+        query = query.eq('collaborator_id', filters.collaboratorId)
+      }
+      if (filters?.status) {
+        query = query.eq('status', filters.status)
       }
 
       const { data, error } = await query
@@ -46,6 +58,7 @@ export function useTasks() {
       setTasks(data || [])
       return data || []
     } catch (err: any) {
+      console.error('Erro ao listar tarefas:', err)
       setError(err.message)
       return []
     } finally {
@@ -59,24 +72,15 @@ export function useTasks() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       
-      // Monta o objeto de dados de forma segura
       const taskData: any = {
         title: input.title,
-        status: 'a_fazer'
-      }
-
-      // Só adiciona campos se eles tiverem valor real (não string vazia)
-      if (input.description && input.description.trim() !== '') {
-        taskData.description = input.description
-      }
-      
-      if (input.collaborator_id && input.collaborator_id.trim() !== '') {
-        taskData.collaborator_id = input.collaborator_id
-      }
-
-      if (user?.id) {
-        taskData.created_by = user.id
-        taskData.assignee_id = user.id
+        status: input.status || 'a_fazer',
+        priority: input.priority || 'media',
+        description: input.description?.trim() || null,
+        collaborator_id: input.collaborator_id || null,
+        due_date: input.due_date || null,
+        created_by: user?.id || null,
+        assignee_id: user?.id || null
       }
 
       const { data, error } = await supabase
@@ -85,29 +89,34 @@ export function useTasks() {
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('Erro Supabase (Insert):', error)
+        throw error
+      }
+      
+      await listTasks()
       return data
     } catch (err: any) {
-      const msg = err.message || 'Erro desconhecido ao criar tarefa'
-      setError(msg)
+      setError(err.message || 'Erro ao criar tarefa')
       throw err
     } finally {
       setLoading(false)
     }
   }
 
-  const updateTaskStatus = async (id: string, status: TaskStatus) => {
+  const updateTask = async (id: string, updates: Partial<Task>) => {
     setLoading(true)
     setError(null)
     try {
       const { data, error } = await supabase
         .from('tasks')
-        .update({ status, updated_at: new Date().toISOString() })
+        .update({ ...updates, updated_at: new Date().toISOString() })
         .eq('id', id)
         .select()
         .single()
 
       if (error) throw error
+      await listTasks()
       return data
     } catch (err: any) {
       setError(err.message)
@@ -127,6 +136,7 @@ export function useTasks() {
         .eq('id', id)
 
       if (error) throw error
+      await listTasks()
     } catch (err: any) {
       setError(err.message)
       throw err
@@ -141,7 +151,7 @@ export function useTasks() {
     error,
     listTasks,
     createTask,
-    updateTaskStatus,
+    updateTask,
     deleteTask
   }
 }
