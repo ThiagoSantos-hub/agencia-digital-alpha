@@ -187,18 +187,19 @@ function ModalNovoCliente({ onClose }: { onClose: () => void }) {
 function ModalEditarCliente({ client, onClose }: { client: Client; onClose: () => void }) {
   const { updateCliente } = useClientes()
 
-  const [form, setForm] = useState<ClienteForm>({
+  // Inicialização segura do formulário
+  const [form, setForm] = useState<ClienteForm>(() => ({
     name:        client?.name || '',
-    company:     client?.company ?? '',
-    email:       client?.email ?? '',
-    phone:       client?.phone ?? '',
-    status:      client?.status || 'ativo',
+    company:     client?.company || '',
+    email:       client?.email || '',
+    phone:       client?.phone || '',
+    status:      (client?.status as any) || 'ativo',
     monthly_fee: client?.monthly_fee != null ? String(client.monthly_fee) : '',
-    start_date:  client?.start_date ?? '',
+    start_date:  client?.start_date || '',
     payment_day: client?.payment_day != null ? String(client.payment_day) : '',
-    meta_ad_account_id: client?.meta_ad_account_id ?? '',
+    meta_ad_account_id: client?.meta_ad_account_id || '',
     show_campaigns: client?.show_campaigns ?? true
-  })
+  }))
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
