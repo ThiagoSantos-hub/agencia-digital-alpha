@@ -16,6 +16,7 @@ export interface Task {
   created_by: string
   assigned_to: string
   due_date: string | null
+  drive_link: string | null
   created_at: string
   updated_at: string
   // Joins
@@ -98,7 +99,8 @@ export function useTasks() {
         priority: task.priority || 'media',
         created_by: user.id,
         assigned_to: task.assigned_to || user.id,
-        due_date: task.due_date || null
+        due_date: task.due_date || null,
+        drive_link: task.drive_link || null
       }
 
       console.log('Enviando tarefa para o Supabase:', taskData)

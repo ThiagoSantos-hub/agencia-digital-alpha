@@ -54,6 +54,7 @@ export default function CollaboratorTasksPage() {
     description: '',
     priority: 'media' as TaskPriority,
     due_date: '',
+    drive_link: '',
     status: 'a_fazer' as TaskStatus,
     assigned_to: ''
   })
@@ -113,7 +114,7 @@ export default function CollaboratorTasksPage() {
         assigned_to: newTask.assigned_to 
       })
       setIsModalOpen(false)
-      setNewTask({ title: '', description: '', priority: 'media', due_date: '', status: 'a_fazer', assigned_to: '' })
+      setNewTask({ title: '', description: '', priority: 'media', due_date: '', drive_link: '', status: 'a_fazer', assigned_to: '' })
     } catch (err: any) {
       console.error('Erro ao criar tarefa:', err)
       const errorMsg = err.message || 'Erro desconhecido'
@@ -518,6 +519,17 @@ export default function CollaboratorTasksPage() {
                     className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest text-emerald-500">Link do Google Drive (Opcional)</label>
+                <input 
+                  type="url" 
+                  value={newTask.drive_link}
+                  onChange={e => setNewTask({...newTask, drive_link: e.target.value})}
+                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  placeholder="https://drive.google.com/..."
+                />
               </div>
 
               <button 

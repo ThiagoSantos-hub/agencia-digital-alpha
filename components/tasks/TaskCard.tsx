@@ -10,7 +10,8 @@ import {
   Trash2, 
   Circle, 
   PlayCircle, 
-  CheckCircle2
+  CheckCircle2,
+  ExternalLink
 } from 'lucide-react'
 
 interface TaskCardProps {
@@ -118,6 +119,18 @@ export function TaskCard({
             <Calendar size={10} />
             <span className="truncate max-w-[60px]">{task.due_date ? new Date(task.due_date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : 'S/P'}</span>
           </div>
+          {task.drive_link && (
+            <a 
+              href={task.drive_link} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-[9px] text-emerald-500 hover:text-emerald-400 font-bold transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ExternalLink size={10} />
+              Drive
+            </a>
+          )}
         </div>
 
         <div className="flex flex-col items-end gap-0.5">
