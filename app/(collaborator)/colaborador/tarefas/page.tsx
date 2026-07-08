@@ -114,8 +114,10 @@ export default function CollaboratorTasksPage() {
       })
       setIsModalOpen(false)
       setNewTask({ title: '', description: '', priority: 'media', due_date: '', status: 'a_fazer', assigned_to: '' })
-    } catch (err) {
-      alert('Erro ao criar tarefa')
+    } catch (err: any) {
+      console.error('Erro ao criar tarefa:', err)
+      const errorMsg = err.message || 'Erro desconhecido'
+      alert(`Erro ao criar tarefa: ${errorMsg}\n\nVerifique se rodou o script SQL no Supabase.`)
     }
   }
 

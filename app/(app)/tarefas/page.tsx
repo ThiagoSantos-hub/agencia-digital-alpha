@@ -113,9 +113,10 @@ export default function AdminTasksPage() {
       })
       setIsModalOpen(false)
       setNewTask({ title: '', description: '', assigned_to: '', priority: 'media', due_date: '', status: 'a_fazer' })
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao criar tarefa:', err)
-      alert('Erro ao criar tarefa. Verifique se todos os campos estão corretos.')
+      const errorMsg = err.message || 'Erro desconhecido'
+      alert(`Erro ao criar tarefa: ${errorMsg}\n\nVerifique se rodou o script SQL no Supabase.`)
     }
   }
 
@@ -205,7 +206,7 @@ export default function AdminTasksPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-white">Quadro Kanban</h1>
-          <p className="text-gray-400 text-sm">Arraste as tarefas para mudar o status.</p>
+          <p className="text-gray-400 text-sm">Gerencie suas tarefas arrastando-as entre as colunas.</p>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
