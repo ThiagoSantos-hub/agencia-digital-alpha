@@ -259,9 +259,9 @@ export default function ColaboradorChecklistsPage() {
               items={pendingLists.map(l => l.id)}
               strategy={horizontalListSortingStrategy}
             >
-              <div className="flex gap-6 overflow-x-auto pb-6 custom-scrollbar min-h-[500px]">
+              <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar min-h-[400px]">
                 {pendingLists.map(list => (
-                  <div key={list.id} className="w-[300px] shrink-0">
+                  <div key={list.id} className="w-[260px] shrink-0">
                     <SortableChecklistCard 
                       list={list} 
                       updateChecklist={updateChecklist}
@@ -318,9 +318,9 @@ export default function ColaboradorChecklistsPage() {
             <span className="text-[10px] font-bold text-[#00ff88]/30 uppercase tracking-widest">{completedLists.length} Feitas</span>
           </div>
           
-          <div className="flex gap-6 overflow-x-auto pb-6 custom-scrollbar">
+          <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
             {completedLists.map(list => (
-              <div key={list.id} className="w-[300px] shrink-0">
+              <div key={list.id} className="w-[260px] shrink-0">
                 <SortableChecklistCard 
                   list={list} 
                   updateChecklist={updateChecklist}

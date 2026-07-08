@@ -90,13 +90,17 @@ export function SortableChecklistCard({
 
   const handleDragEnd = async (event: any) => {
     const { active, over } = event
+    if (!over) return
+    
     if (active.id !== over.id) {
       const oldIndex = items.findIndex(i => i.id === active.id)
       const newIndex = items.findIndex(i => i.id === over.id)
-      const newItems = arrayMove(items, oldIndex, newIndex)
       
-      const positions = newItems.map((item, index) => ({ id: item.id, position: index }))
-      await updatePositions('item', positions)
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newItems = arrayMove(items, oldIndex, newIndex)
+        const positions = newItems.map((item, index) => ({ id: item.id, position: index }))
+        await updatePositions('item', positions)
+      }
     }
   }
 
@@ -117,14 +121,14 @@ export function SortableChecklistCard({
         />
       </div>
 
-      <div className="p-4 flex-1 flex flex-col min-h-[350px]">
-        <div className="flex justify-between items-start mb-3">
+      <div className="p-3 flex-1 flex flex-col min-h-[300px]">
+        <div className="flex justify-between items-start mb-2">
           <button
             {...attributes}
             {...listeners}
-            className="p-1 text-gray-700 hover:text-gray-500 cursor-grab active:cursor-grabbing"
+            className="p-1 text-gray-700 hover:text-gray-500 cursor-grab active:cursor-grabbing touch-none"
           >
-            <GripHorizontal size={16} />
+            <GripHorizontal size={14} />
           </button>
           
           <div className="flex gap-0.5">
