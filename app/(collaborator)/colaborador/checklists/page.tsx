@@ -156,33 +156,33 @@ export default function ColaboradorChecklistsPage() {
 
       {/* ÁREA DE CRIAÇÃO - MINIMALISTA */}
       {isCreating && (
-        <div className="mb-10 bg-[#111] border border-[#2a2a2a] rounded-2xl p-6 animate-in fade-in duration-300">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider">Novo Checklist</h2>
-            <button onClick={resetCreateForm} className="text-gray-500 hover:text-white transition-all"><X size={20} /></button>
+        <div className="mb-6 bg-[#111] border border-[#2a2a2a] rounded-2xl p-4 animate-in fade-in duration-300">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xs font-bold text-white uppercase tracking-wider">Novo Checklist</h2>
+            <button onClick={resetCreateForm} className="text-gray-500 hover:text-white transition-all"><X size={16} /></button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <div className="space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-4">
               <div className="group">
-                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-3 group-focus-within:text-[#00ff88] transition-colors">Nome da Lista</label>
+                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2 group-focus-within:text-[#00ff88] transition-colors">Nome da Lista</label>
                 <input
                   type="text"
                   value={newListTitle}
                   onChange={(e) => setNewListTitle(e.target.value)}
                   placeholder="Ex: Tarefas Diárias, Organização..."
-                  className="w-full px-6 py-4 bg-[#0a0f0c] border border-[#2a2a2a] rounded-2xl text-sm focus:outline-none focus:border-[#00ff88] focus:ring-4 focus:ring-[#00ff88]/5 transition-all"
+                  className="w-full px-4 py-2.5 bg-[#0a0f0c] border border-[#2a2a2a] rounded-xl text-xs focus:outline-none focus:border-[#00ff88] focus:ring-2 focus:ring-[#00ff88]/10 transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4">Dias de Repetição</label>
-                <div className="flex justify-between gap-2">
+                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Dias de Repetição</label>
+                <div className="flex justify-between gap-1">
                   {DIAS_SEMANA.map(day => (
                     <button
                       key={day.id}
                       onClick={() => toggleDay(day.id, newListDays, setNewListDays)}
-                      className={`flex-1 aspect-square rounded-xl text-xs font-black transition-all duration-300 border flex items-center justify-center ${
+                      className={`flex-1 rounded-lg text-[10px] font-black transition-all duration-300 border flex items-center justify-center h-8 ${
                         newListDays.includes(day.id)
                           ? 'bg-[#00ff88] text-[#0a0f0c] border-[#00ff88] shadow-[0_0_20px_rgba(0,255,136,0.3)]'
                           : 'bg-[#0a0f0c] text-gray-500 border-[#2a2a2a] hover:border-gray-600'
@@ -195,7 +195,7 @@ export default function ColaboradorChecklistsPage() {
               </div>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4">
               <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Itens do Checklist</label>
               <div className="relative group">
                 <input
@@ -204,17 +204,17 @@ export default function ColaboradorChecklistsPage() {
                   onChange={(e) => setCurrentNewItem(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addLocalItem()}
                   placeholder="O que precisa ser feito?"
-                  className="w-full px-6 py-4 bg-[#0a0f0c] border border-[#2a2a2a] rounded-2xl text-sm focus:outline-none focus:border-[#00ff88] pr-16"
+                  className="w-full px-4 py-2.5 bg-[#0a0f0c] border border-[#2a2a2a] rounded-xl text-xs focus:outline-none focus:border-[#00ff88] pr-12"
                 />
-                <button onClick={addLocalItem} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-[#00ff88]/10 text-[#00ff88] rounded-xl hover:bg-[#00ff88] hover:text-[#0a0f0c] transition-all">
-                  <Plus size={20} />
+                <button onClick={addLocalItem} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-[#00ff88]/10 text-[#00ff88] rounded-lg hover:bg-[#00ff88] hover:text-[#0a0f0c] transition-all">
+                  <Plus size={16} />
                 </button>
               </div>
 
-              <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-2">
+              <div className="space-y-1.5 max-h-36 overflow-y-auto custom-scrollbar pr-2">
                 {newListItems.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 bg-[#0a0f0c]/50 border border-[#2a2a2a] rounded-2xl group hover:border-gray-700 transition-all">
-                    <span className="text-sm text-gray-400 font-medium">{item}</span>
+                  <div key={index} className="flex items-center justify-between p-2.5 bg-[#0a0f0c]/50 border border-[#2a2a2a] rounded-lg group hover:border-gray-700 transition-all">
+                    <span className="text-xs text-gray-400 font-medium">{item}</span>
                     <button onClick={() => setNewListItems(newListItems.filter((_, i) => i !== index))} className="text-gray-700 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
                       <Trash2 size={16} />
                     </button>
@@ -224,12 +224,12 @@ export default function ColaboradorChecklistsPage() {
             </div>
           </div>
 
-          <div className="mt-8 flex justify-end gap-4 pt-6 border-t border-[#2a2a2a]">
-            <button onClick={resetCreateForm} className="text-[10px] font-bold text-gray-500 hover:text-white uppercase tracking-wider transition-colors">Cancelar</button>
+          <div className="mt-4 flex justify-end gap-3 pt-4 border-t border-[#2a2a2a]">
+            <button onClick={resetCreateForm} className="text-[9px] font-bold text-gray-500 hover:text-white uppercase tracking-wider transition-colors">Cancelar</button>
             <button 
               onClick={handleCreateList}
               disabled={!newListTitle.trim() || newListItems.length === 0}
-              className="px-6 py-2 bg-[#00ff88] hover:bg-[#00dd77] disabled:opacity-50 text-[#0a0f0c] rounded-xl font-bold uppercase text-[10px] tracking-wider transition-all"
+              className="px-5 py-1.5 bg-[#00ff88] hover:bg-[#00dd77] disabled:opacity-50 text-[#0a0f0c] rounded-lg font-bold uppercase text-[9px] tracking-wider transition-all"
             >
               Salvar Lista
             </button>
