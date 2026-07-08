@@ -157,8 +157,28 @@ export function useClientes() {
 
       if (data.monthly_fee && data.payment_day) {
         const hoje = new Date()
-        const dataVencimento = new Date(hoje.getFullYear(), hoje.getMonth(), data.payment_day).toISOString().split('T')[0]
+        const dataHoje = hoje.toISOString().split('T')[0]
         
+        // 1. Registrar o pagamento de entrada (Hoje) como PAGO
+        await supabase.from('finances').insert({
+          user_id: data.manager_id,
+          client_id: data.id,
+          escopo: 'agencia',
+          tipo: 'receita',
+          categoria: 'Mensalidade de cliente',
+          descricao: `Mensalidade (Entrada) - ${data.name}`,
+          valor: data.monthly_fee,
+          dia_vencimento: hoje.getDate(), // dia de hoje pois pagou agora
+          data_vencimento: dataHoje,
+          data_pagamento: dataHoje,
+          status: 'pago',
+          recorrente: false // entrada não é a recorrência em si
+        })
+
+        // 2. Agendar o próximo vencimento para o mês seguinte no dia escolhido
+        const proximoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, data.payment_day)
+        const dataProximoVencimento = proximoMes.toISOString().split('T')[0]
+
         await supabase.from('finances').insert({
           user_id: data.manager_id,
           client_id: data.id,
@@ -168,7 +188,7 @@ export function useClientes() {
           descricao: `Mensalidade - ${data.name}`,
           valor: data.monthly_fee,
           dia_vencimento: data.payment_day,
-          data_vencimento: dataVencimento,
+          data_vencimento: dataProximoVencimento,
           status: 'pendente',
           recorrente: true,
           recorrencia: 'mensal'
