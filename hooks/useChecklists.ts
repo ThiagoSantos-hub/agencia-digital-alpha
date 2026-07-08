@@ -17,6 +17,9 @@ export interface Checklist {
   id: string
   user_id: string
   title: string
+  recurrence: 'once' | 'daily' | 'weekly'
+  status: 'pending' | 'completed'
+  last_reset_at: string
   created_at: string
   updated_at: string
   checklist_items?: ChecklistItem[]
@@ -32,13 +35,25 @@ export function useChecklists() {
     if (!user) return
     setLoading(true)
     try {
+      // Chamar a função de reset antes de buscar (para garantir que os diários/semanais estejam atualizados)
+      await supabase.rpc('reset_recurring_checklists')
+
       const { data, error } = await supabase
         .from('checklists')
         .select('*, checklist_items(*)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
       if (error) throw error
-      setChecklists(data || [])
+      
+      // Ordenar itens por data de criação dentro de cada checklist
+      const dataWithSortedItems = data?.map(list => ({
+        ...list,
+        checklist_items: list.checklist_items?.sort((a: any, b: any) => 
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        )
+      }))
+
+      setChecklists(dataWithSortedItems || [])
     } catch (err) {
       console.error('Erro ao buscar checklists:', err)
     } finally {
@@ -50,22 +65,20 @@ export function useChecklists() {
     fetchChecklists()
   }, [fetchChecklists])
 
-  const createChecklist = async (title: string) => {
+  const createChecklist = async (title: string, recurrence: string = 'once') => {
     if (!user) return
-    try {
-      const { error } = await supabase
-        .from('checklists')
-        .insert({ title, user_id: user.id })
-      
-      if (error) {
-        console.error('Erro ao criar checklist no Supabase:', error)
-        throw error
-      }
-      
-      await fetchChecklists()
-    } catch (err) {
-      console.error('Erro na função createChecklist:', err)
-    }
+    const { error } = await supabase
+      .from('checklists')
+      .insert({ title, user_id: user.id, recurrence })
+    if (!error) await fetchChecklists()
+  }
+
+  const updateChecklist = async (id: string, updates: Partial<Checklist>) => {
+    const { error } = await supabase
+      .from('checklists')
+      .update(updates)
+      .eq('id', id)
+    if (!error) await fetchChecklists()
   }
 
   const deleteChecklist = async (id: string) => {
@@ -81,6 +94,14 @@ export function useChecklists() {
     const { error } = await supabase
       .from('checklist_items')
       .insert({ checklist_id, text, user_id: user.id, completed: false })
+    if (!error) await fetchChecklists()
+  }
+
+  const updateItem = async (item_id: string, text: string) => {
+    const { error } = await supabase
+      .from('checklist_items')
+      .update({ text })
+      .eq('id', item_id)
     if (!error) await fetchChecklists()
   }
 
@@ -113,8 +134,10 @@ export function useChecklists() {
     loading,
     fetchChecklists,
     createChecklist,
+    updateChecklist,
     deleteChecklist,
     addItem,
+    updateItem,
     toggleItem,
     deleteItem,
     uncheckAll,
