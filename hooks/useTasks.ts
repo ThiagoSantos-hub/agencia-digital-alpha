@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase'
 import { useAuth } from './useAuth'
 
 export type TaskStatus = 'a_fazer' | 'em_andamento' | 'finalizada'
-export type TaskPriority = 'baixa' | 'media' | 'alta'
+export type TaskPriority = 'baixa' | 'media' | 'alta' | 'urgente'
 
 export interface Task {
   id: string

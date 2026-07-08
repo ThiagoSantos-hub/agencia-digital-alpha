@@ -118,7 +118,7 @@ export default function AdminTasksPage() {
       case 'alta': return 'ALTA'
       case 'media': return 'MÉDIA'
       case 'baixa': return 'BAIXA'
-      default: return priority.toUpperCase()
+      default: return 'DESCONHECIDA'
     }
   }
 
