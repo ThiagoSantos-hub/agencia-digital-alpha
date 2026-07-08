@@ -142,15 +142,15 @@ export function SortableChecklistCard({
         </div>
 
         {isEditing ? (
-          <div className="space-y-3 mb-4 bg-[#0a0f0c] p-3 rounded-xl border border-[#00ff88]/20">
+          <div className="space-y-2 mb-3 bg-[#0a0f0c] p-2 rounded-xl border border-[#00ff88]/20 overflow-hidden">
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full bg-[#111] border border-[#2a2a2a] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#00ff88]"
+              className="w-full bg-[#111] border border-[#2a2a2a] rounded-lg px-2 py-1 text-[10px] text-white focus:outline-none focus:border-[#00ff88] truncate"
               autoFocus
             />
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-0.5">
               {DIAS_SEMANA.map(day => (
                 <button
                   key={day.id}
@@ -158,7 +158,7 @@ export function SortableChecklistCard({
                     if (days.includes(day.id)) setDays(days.filter(d => d !== day.id))
                     else setDays([...days, day.id].sort())
                   }}
-                  className={`w-6 h-6 rounded-lg text-[9px] font-black border transition-all ${
+                  className={`w-5 h-5 rounded-lg text-[8px] font-black border transition-all ${
                     days.includes(day.id) ? 'bg-[#00ff88] text-[#0a0f0c] border-[#00ff88]' : 'bg-[#111] text-gray-600 border-[#2a2a2a]'
                   }`}
                 >
@@ -166,17 +166,17 @@ export function SortableChecklistCard({
                 </button>
               ))}
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-1">
               <button 
                 onClick={async () => {
                   await updateChecklist(list.id, { title, recurrence_days: days, recurrence: days.length > 0 ? 'daily' : 'once' });
                   setIsEditing(false);
                 }} 
-                className="flex-1 py-1.5 bg-[#00ff88] text-[#0a0f0c] text-[9px] font-black uppercase rounded-lg"
+                className="flex-1 py-1 bg-[#00ff88] text-[#0a0f0c] text-[8px] font-black uppercase rounded-lg"
               >
                 Salvar
               </button>
-              <button onClick={() => setIsEditing(false)} className="flex-1 py-1.5 bg-white/5 text-gray-400 text-[9px] font-black uppercase rounded-lg">Sair</button>
+              <button onClick={() => setIsEditing(false)} className="flex-1 py-1 bg-white/5 text-gray-400 text-[8px] font-black uppercase rounded-lg">Sair</button>
             </div>
           </div>
         ) : (
