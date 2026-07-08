@@ -270,12 +270,12 @@ export default function AdminTasksPage() {
       {/* Modal de Nova Tarefa */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
-            <div className="px-6 py-4 border-b border-[#1a3a24] flex justify-between items-center bg-[#0f1a14]">
+          <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[95vh]">
+            <div className="px-6 py-4 border-b border-[#1a3a24] flex justify-between items-center bg-[#0f1a14] shrink-0 rounded-t-2xl">
               <h2 className="text-white font-bold">Criar Nova Tarefa</h2>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-500 hover:text-white text-2xl">&times;</button>
             </div>
-            <form onSubmit={handleCreateTask} className="p-6 space-y-4">
+            <form onSubmit={handleCreateTask} className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Título</label>
                 <input 
