@@ -24,13 +24,6 @@ export function usePermissions() {
       editCampaign: isAdmin || isManager,
       deleteCampaign: isAdmin,
 
-      // Tarefas
-      viewAllTasks: isAdmin,
-      viewOwnTasks: isAdmin || isManager,
-      createTask: isAdmin || isManager,
-      editTask: isAdmin || isManager,
-      deleteTask: isAdmin,
-
       // Usuários e configurações
       manageUsers: isAdmin,
       viewSettings: isAdmin,

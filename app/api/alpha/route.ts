@@ -87,46 +87,6 @@ async function getClientes() {
   }
 }
 
-async function getTarefas() {
-  const { data, error } = await supabase
-    .from('tasks')
-    .select(`
-      id, title, status, priority, due_date,
-      clients(name),
-      profiles(name)
-    `)
-    .order('due_date', { ascending: true, nullsFirst: false })
-
-  if (error) return { erro: error.message }
-
-  const pendentes    = data.filter(t => t.status === 'pendente')
-  const em_andamento = data.filter(t => t.status === 'em_andamento')
-  const concluidas   = data.filter(t => t.status === 'concluida')
-  const atrasadas    = pendentes.filter(t => t.due_date && t.due_date < hoje())
-
-  return {
-    total: data.length,
-    pendentes: pendentes.length,
-    em_andamento: em_andamento.length,
-    concluidas: concluidas.length,
-    atrasadas: atrasadas.length,
-    lista_pendentes: pendentes.slice(0, 10).map(t => ({
-      titulo: t.title,
-      prioridade: t.priority,
-      prazo: t.due_date,
-      cliente: (t.clients as any)?.name ?? null,
-      responsavel: (t.profiles as any)?.name ?? null,
-      atrasada: t.due_date ? t.due_date < hoje() : false,
-    })),
-    lista_em_andamento: em_andamento.slice(0, 5).map(t => ({
-      titulo: t.title,
-      prioridade: t.priority,
-      cliente: (t.clients as any)?.name ?? null,
-      responsavel: (t.profiles as any)?.name ?? null,
-    })),
-  }
-}
-
 async function getFinanceiro() {
   const { data: mesAtual } = await supabase
     .from('finances')
@@ -282,9 +242,8 @@ async function getIntegracoes() {
 }
 
 async function getResumoGeral() {
-  const [clientes, tarefas, financeiro, campanhas, integracoes] = await Promise.all([
+  const [clientes, financeiro, campanhas, integracoes] = await Promise.all([
     getClientes(),
-    getTarefas(),
     getFinanceiro(),
     getCampanhas(),
     getIntegracoes(),
@@ -295,11 +254,6 @@ async function getResumoGeral() {
       ativos: (clientes as any).ativos,
       atrasados: (clientes as any).atrasados,
       receita_mensal: (clientes as any).receita_mensal_prevista,
-    },
-    tarefas: {
-      pendentes: (tarefas as any).pendentes,
-      atrasadas: (tarefas as any).atrasadas,
-      em_andamento: (tarefas as any).em_andamento,
     },
     financeiro: {
       receita_mes: (financeiro as any).mes_atual?.receita_total,
@@ -344,9 +298,6 @@ export async function POST(req: NextRequest) {
     switch (acao) {
       case 'get_clientes':
         resultado = await getClientes()
-        break
-      case 'get_tarefas':
-        resultado = await getTarefas()
         break
       case 'get_financeiro':
         resultado = await getFinanceiro()

@@ -10,8 +10,6 @@ export default function CollaboratorDashboard() {
   const [stats, setStats] = useState({
     activeClients: 0,
     activeCampaigns: 0,
-    pendingTasks: 0,
-    completedTasks: 0
   })
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
@@ -45,25 +43,9 @@ export default function CollaboratorDashboard() {
           .eq('status', 'ativa')
           // .eq('collaborator_id', collaborator.id) // Ajustar se a coluna existir
 
-        // 4. Buscar Tarefas Pendentes do Colaborador
-        const { count: tasksCount } = await supabase
-          .from('tasks')
-          .select('*', { count: 'exact', head: true })
-          .eq('assignee_id', user.id)
-          .eq('status', 'pendente')
-
-        // 5. Buscar Tarefas Concluídas (para desempenho)
-        const { count: completedCount } = await supabase
-          .from('tasks')
-          .select('*', { count: 'exact', head: true })
-          .eq('assignee_id', user.id)
-          .eq('status', 'concluida')
-
         setStats({
           activeClients: clientsCount || 0,
-          activeCampaigns: campaignsCount || 0,
-          pendingTasks: tasksCount || 0,
-          completedTasks: completedCount || 0
+          activeCampaigns: campaignsCount || 0
         })
       } catch (error) {
         console.error('Erro ao buscar estatísticas:', error)
@@ -90,20 +72,6 @@ export default function CollaboratorDashboard() {
       color: 'text-emerald-400',
       bg: 'bg-emerald-400/10'
     },
-    {
-      label: 'Tarefas Pendentes',
-      value: stats.pendingTasks,
-      icon: CheckSquare,
-      color: 'text-amber-400',
-      bg: 'bg-amber-400/10'
-    },
-    {
-      label: 'Tarefas Concluídas',
-      value: stats.completedTasks,
-      icon: TrendingUp,
-      color: 'text-purple-400',
-      bg: 'bg-purple-400/10'
-    }
   ]
 
   return (
@@ -162,13 +130,6 @@ export default function CollaboratorDashboard() {
               <div>
                 <p className="text-sm text-gray-300">O sistema está operando normalmente.</p>
                 <p className="text-xs text-gray-500 mt-1">Atualizado agora mesmo</p>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <div className="h-2 w-2 rounded-full bg-blue-500 mt-1.5 shrink-0"></div>
-              <div>
-                <p className="text-sm text-gray-300">Suas tarefas foram sincronizadas com sucesso.</p>
-                <p className="text-xs text-gray-500 mt-1">Há 5 minutos</p>
               </div>
             </div>
           </div>

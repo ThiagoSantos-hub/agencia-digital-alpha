@@ -27,13 +27,6 @@ export class CRMToolsService {
     return JSON.stringify(data)
   }
 
-  async getTarefas(supabase: SupabaseClient, status?: string): Promise<string> {
-    let q = supabase.from('tasks').select('id, title, status, priority, due_date, assignee:profiles(name), client:clients(name)')
-    if (status) q = q.eq('status', status)
-    const { data } = await q
-    return JSON.stringify(data ?? [])
-  }
-
   async getFinanceiro(supabase: SupabaseClient, escopo: 'agencia' | 'pessoal' = 'agencia'): Promise<string> {
     const hoje   = new Date()
     const inicio = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-01`
@@ -68,9 +61,8 @@ export class CRMToolsService {
   }
 
   async getResumoGeral(supabase: SupabaseClient): Promise<string> {
-    const [clientes, tarefas, campanhas] = await Promise.all([
+    const [clientes, campanhas] = await Promise.all([
       this.query(supabase, 'clients', 'status'),
-      this.query(supabase, 'tasks', 'status'),
       this.query(supabase, 'campaigns', 'status'),
     ])
     const resumo = {
@@ -79,12 +71,6 @@ export class CRMToolsService {
         ativos:    clientes.filter((c: any) => c.status === 'ativo').length,
         atrasados: clientes.filter((c: any) => c.status === 'atrasado').length,
         inativos:  clientes.filter((c: any) => c.status === 'inativo').length,
-      },
-      tarefas: {
-        total:        tarefas.length,
-        pendentes:    tarefas.filter((t: any) => t.status === 'pendente').length,
-        em_andamento: tarefas.filter((t: any) => t.status === 'em_andamento').length,
-        concluidas:   tarefas.filter((t: any) => t.status === 'concluida').length,
       },
       campanhas: {
         total:       campanhas.length,
@@ -289,7 +275,7 @@ export class CRMToolsService {
     return [
       {
         name:        'getResumoGeral',
-        description: 'Retorna um resumo geral da agência: total de clientes, tarefas e campanhas com seus status.',
+        description: 'Retorna um resumo geral da agência: total de clientes e campanhas com seus status.',
         parameters:  {},
         required:    [],
         execute:     () => this.getResumoGeral(supabase),
@@ -300,19 +286,6 @@ export class CRMToolsService {
         parameters:  {},
         required:    [],
         execute:     () => this.getClientes(supabase),
-      },
-      {
-        name:        'getTarefas',
-        description: 'Retorna lista de tarefas. Pode filtrar por status: pendente, em_andamento, concluida, cancelada.',
-        parameters: {
-          status: {
-            type:        'string',
-            description: 'Filtrar por status da tarefa',
-            enum:        ['pendente', 'em_andamento', 'concluida', 'cancelada'],
-          },
-        },
-        required: [],
-        execute:  (args) => this.getTarefas(supabase, args.status),
       },
       {
         name:        'getFinanceiro',
@@ -367,48 +340,33 @@ export class CRMToolsService {
           nome:         { type: 'string', description: 'Nome completo do cliente' },
           empresa:      { type: 'string', description: 'Nome da empresa do cliente' },
           telefone:     { type: 'string', description: 'Telefone com DDD, apenas números' },
-          mensalidade:  { type: 'number', description: 'Valor da mensalidade em reais' },
-          diaPagamento: { type: 'number', description: 'Dia do mês para vencimento (1-31)' },
-          email:        { type: 'string', description: 'Email do cliente (opcional)' },
-          dataEntrada:  { type: 'string', description: 'Data de entrada no formato YYYY-MM-DD. Se não informada, usa a data de hoje.' },
+          mensalidade:  { type: 'number', description: 'Valor da mensalidade em Reais (ex: 1500.00)' },
+          diaPagamento: { type: 'number', description: 'Dia do vencimento (1 a 31)' },
+          email:        { type: 'string', description: 'E-mail do cliente (opcional)' },
+          dataEntrada:  { type: 'string', description: 'Data de início (YYYY-MM-DD)' },
         },
         required: ['nome', 'empresa', 'telefone', 'mensalidade', 'diaPagamento'],
-        execute:  (args) => this.cadastrarCliente(
-          supabase,
-          args.nome,
-          args.empresa,
-          args.telefone,
-          args.mensalidade,
-          args.diaPagamento,
-          args.email,
-          args.dataEntrada
-        ),
+        execute:  (args) => this.cadastrarCliente(supabase, args.nome, args.empresa, args.telefone, args.mensalidade, args.diaPagamento, args.email, args.dataEntrada),
       },
       // ── Cadastrar Colaborador ──────────────────────────────────────────────
       {
         name:        'cadastrarColaborador',
-        description: 'Cadastra um novo colaborador ou funcionário da agência.',
+        description: 'Cadastra um novo colaborador/membro na agência.',
         parameters: {
-          nome:     { type: 'string', description: 'Nome completo do colaborador' },
-          email:    { type: 'string', description: 'Email do colaborador' },
-          cargo:    { type: 'string', description: 'Cargo ou função do colaborador' },
-          telefone: { type: 'string', description: 'Telefone com DDD (opcional)' },
+          nome:     { type: 'string', description: 'Nome completo' },
+          email:    { type: 'string', description: 'E-mail institucional' },
+          cargo:    { type: 'string', description: 'Cargo ou função' },
+          telefone: { type: 'string', description: 'Telefone de contato' },
         },
         required: ['nome', 'email', 'cargo'],
-        execute:  (args) => this.cadastrarColaborador(
-          supabase,
-          args.nome,
-          args.email,
-          args.cargo,
-          args.telefone
-        ),
+        execute:  (args) => this.cadastrarColaborador(supabase, args.nome, args.email, args.cargo, args.telefone),
       },
       // ── Ativar Cliente ─────────────────────────────────────────────────────
       {
         name:        'ativarCliente',
-        description: 'Ativa um cliente pelo nome (parcial) ou ID. Muda o status para "ativo".',
+        description: 'Ativa um cliente inativo ou atrasado.',
         parameters: {
-          nomeOuId: { type: 'string', description: 'Nome (parcial) ou ID do cliente a ativar' },
+          nomeOuId: { type: 'string', description: 'Nome ou ID do cliente' },
         },
         required: ['nomeOuId'],
         execute:  (args) => this.ativarCliente(supabase, args.nomeOuId),
@@ -416,9 +374,9 @@ export class CRMToolsService {
       // ── Inativar Cliente ───────────────────────────────────────────────────
       {
         name:        'inativarCliente',
-        description: 'Inativa um cliente pelo nome (parcial) ou ID. Muda o status para "inativo".',
+        description: 'Inativa um cliente (ex: cancelamento).',
         parameters: {
-          nomeOuId: { type: 'string', description: 'Nome (parcial) ou ID do cliente a inativar' },
+          nomeOuId: { type: 'string', description: 'Nome ou ID do cliente' },
         },
         required: ['nomeOuId'],
         execute:  (args) => this.inativarCliente(supabase, args.nomeOuId),
@@ -426,5 +384,3 @@ export class CRMToolsService {
     ]
   }
 }
-
-export const crmTools = new CRMToolsService()

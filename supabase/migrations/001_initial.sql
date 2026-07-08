@@ -75,20 +75,6 @@ CREATE TABLE IF NOT EXISTS campaigns (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS tasks (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  title TEXT NOT NULL,
-  description TEXT,
-  status TEXT CHECK (status IN ('pendente', 'em_andamento', 'concluida')) DEFAULT 'pendente',
-  priority TEXT CHECK (priority IN ('baixa', 'media', 'alta')) DEFAULT 'media',
-  due_date DATE,
-  assignee_id UUID REFERENCES profiles(id),
-  client_id UUID REFERENCES clients(id),
-  campaign_id UUID REFERENCES campaigns(id),
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
 -- Ativar RLS nas tabelas futuras
 ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE campaigns ENABLE ROW LEVEL SECURITY;
-ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;

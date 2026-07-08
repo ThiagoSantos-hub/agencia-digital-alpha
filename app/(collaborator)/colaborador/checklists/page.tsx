@@ -45,7 +45,7 @@ export default function ColaboradorChecklistsPage() {
       <div className="flex flex-col gap-8 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-white">Checklists</h1>
-          <p className="text-gray-400 text-sm">Suas listas pessoais de tarefas.</p>
+          <p className="text-gray-400 text-sm">Suas listas de itens e verificações.</p>
         </div>
         
         <div className="flex items-center gap-2 max-w-md">

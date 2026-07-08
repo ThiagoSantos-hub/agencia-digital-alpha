@@ -8,12 +8,11 @@ import { Users, Megaphone, CheckSquare, TrendingUp } from 'lucide-react'
 interface DashStats {
   totalClientes: number
   campanhasAtivas: number
-  tarefasPendentes: number
 }
 
 export default function DashboardPage() {
   const { profile, role } = useAuth()
-  const [stats, setStats] = useState<DashStats>({ totalClientes: 0, campanhasAtivas: 0, tarefasPendentes: 0 })
+  const [stats, setStats] = useState<DashStats>({ totalClientes: 0, campanhasAtivas: 0 })
   const [loading, setLoading] = useState(true)
   const roleLabel = role === 'admin' ? 'Administrador' : 'Gestor'
   const nome = profile?.name ?? profile?.email ?? 'Usuário'
@@ -21,15 +20,13 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchStats = async () => {
       const supabase = createClient()
-      const [clientesRes, campanhasRes, tarefasRes] = await Promise.all([
+      const [clientesRes, campanhasRes] = await Promise.all([
         supabase.from('clients').select('id', { count: 'exact', head: true }),
         supabase.from('campaigns').select('id', { count: 'exact', head: true }).eq('status', 'ativa'),
-        supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('status', 'pendente'),
       ])
       setStats({
         totalClientes: clientesRes.count ?? 0,
         campanhasAtivas: campanhasRes.count ?? 0,
-        tarefasPendentes: tarefasRes.count ?? 0,
       })
       setLoading(false)
     }
@@ -39,7 +36,6 @@ export default function DashboardPage() {
   const cards = [
     { label: 'Total de Clientes', valor: loading ? '...' : stats.totalClientes, icon: Users },
     { label: 'Campanhas Ativas', valor: loading ? '...' : stats.campanhasAtivas, icon: Megaphone },
-    { label: 'Tarefas Pendentes', valor: loading ? '...' : stats.tarefasPendentes, icon: CheckSquare },
     { label: 'Desempenho Geral', valor: '—', icon: TrendingUp },
   ]
 
@@ -76,7 +72,7 @@ export default function DashboardPage() {
 
       <div className="bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-6">
         <h3 className="text-white font-semibold mb-2">🚀 Módulos ativos</h3>
-        <p className="text-gray-400 text-sm">Clientes, Campanhas, Integrações e Tarefas funcionando em produção.</p>
+        <p className="text-gray-400 text-sm">Clientes, Campanhas e Integrações funcionando em produção.</p>
       </div>
     </div>
   )

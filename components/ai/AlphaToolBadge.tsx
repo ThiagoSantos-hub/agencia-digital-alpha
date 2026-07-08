@@ -8,7 +8,6 @@ interface AlphaToolBadgeProps {
 const TOOL_LABELS: Record<string, string> = {
   getResumoGeral:  '📊 Resumo Geral',
   getClientes:     '👥 Clientes',
-  getTarefas:      '✅ Tarefas',
   getFinanceiro:   '💰 Financeiro',
   getCampanhas:    '📣 Campanhas',
   getIntegracoes:  '🔌 Integrações',

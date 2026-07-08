@@ -213,7 +213,7 @@ CREATE OR REPLACE TRIGGER campaign_metrics_updated_at
   BEFORE UPDATE ON campaign_metrics
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
--- ─── RLS nas tabelas existentes (clients, campaigns, tasks) ───────────────────
+-- ─── RLS nas tabelas existentes (clients, campaigns) ───────────────────
 
 CREATE POLICY "clients_select_authenticated"
   ON clients FOR SELECT
@@ -255,23 +255,3 @@ CREATE POLICY "campaigns_delete_admin"
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
   );
 
-CREATE POLICY "tasks_select_authenticated"
-  ON tasks FOR SELECT
-  USING (auth.role() = 'authenticated');
-
-CREATE POLICY "tasks_insert_authenticated"
-  ON tasks FOR INSERT
-  WITH CHECK (auth.role() = 'authenticated');
-
-CREATE POLICY "tasks_update_own_or_admin"
-  ON tasks FOR UPDATE
-  USING (
-    auth.uid() = assignee_id
-    OR EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-  );
-
-CREATE POLICY "tasks_delete_admin"
-  ON tasks FOR DELETE
-  USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-  );
