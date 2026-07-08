@@ -6,6 +6,7 @@ const menuItems = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, ativo: true },
   { label: 'Clientes', href: '/clientes', icon: Users, ativo: true },
   { label: 'Campanhas', href: '/campanhas', icon: Megaphone, ativo: true },
+  { label: 'Tarefas', href: '/tarefas', icon: CheckSquare, ativo: true },
   { label: 'Checklists', href: '/checklists', icon: CheckSquare, ativo: true },
   { label: 'Financeiro', href: '/financeiro', icon: Wallet, ativo: true },
   { label: 'Colaboradores', href: '/colaboradores', icon: Users, ativo: true },

@@ -45,10 +45,10 @@ export function AlphaChatPanel() {
             </div>
             <p className="text-white font-semibold mb-1">Olá! Sou a Alpha</p>
             <p className="text-gray-500 text-sm max-w-xs">
-              Sua assistente de IA. Posso consultar clientes, campanhas e o financeiro da agência em tempo real.
+              Sua assistente de IA. Posso consultar clientes, tarefas, campanhas e o financeiro da agência em tempo real.
             </p>
             <div className="mt-6 flex flex-wrap gap-2 justify-center">
-              {['Como estão os clientes?',  'Resumo financeiro do mês', 'Campanhas ativas'].map(s => (
+              {['Como estão os clientes?', 'Minhas tarefas', 'Resumo financeiro do mês', 'Campanhas ativas'].map(s => (
                 <button key={s} onClick={() => sendMessage(s)}
                   className="px-3 py-1.5 rounded-xl text-xs text-gray-400 border border-[#1a3a24] hover:border-[#00ff88]/40 hover:text-[#00ff88] transition-colors">
                   {s}

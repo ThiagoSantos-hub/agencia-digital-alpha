@@ -60,6 +60,27 @@ export class CRMToolsService {
     return JSON.stringify(data)
   }
 
+  async getTarefas(supabase: SupabaseClient): Promise<string> {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return JSON.stringify({ erro: 'Não autenticado' })
+
+    const { data } = await supabase
+      .from('tasks')
+      .select(`
+        title, 
+        description, 
+        status, 
+        priority, 
+        due_date,
+        assignee:profiles!tasks_assigned_to_fkey(name)
+      `)
+      .or(`assigned_to.eq.${user.id},created_by.eq.${user.id}`)
+      .order('created_at', { ascending: false })
+      .limit(10)
+
+    return JSON.stringify(data ?? [])
+  }
+
   async getResumoGeral(supabase: SupabaseClient): Promise<string> {
     const [clientes, campanhas] = await Promise.all([
       this.query(supabase, 'clients', 'status'),
@@ -319,6 +340,13 @@ export class CRMToolsService {
         parameters:  {},
         required:    [],
         execute:     () => this.getIntegracoes(supabase),
+      },
+      {
+        name:        'getTarefas',
+        description: 'Retorna as tarefas pendentes ou recentes do usuário.',
+        parameters:  {},
+        required:    [],
+        execute:     () => this.getTarefas(supabase),
       },
       {
         name:        'getMetricasCampanha',
