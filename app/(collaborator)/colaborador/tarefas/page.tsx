@@ -12,7 +12,8 @@ import {
   Circle,
   PlayCircle,
   CheckCircle2,
-  PauseCircle
+  PauseCircle,
+  ExternalLink
 } from 'lucide-react'
 import { 
   DndContext, 
@@ -353,6 +354,17 @@ export default function CollaboratorTasksPage() {
                 </div>
               </div>
 
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest text-emerald-500">Link do Google Drive (Opcional)</label>
+                <input 
+                  type="url" 
+                  value={editingTask.drive_link || ''}
+                  onChange={e => setEditingTask({...editingTask, drive_link: e.target.value})}
+                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  placeholder="https://drive.google.com/..."
+                />
+              </div>
+
               <button 
                 type="submit"
                 className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-[#0a0f0c] font-bold rounded-xl transition-all mt-4"
@@ -389,6 +401,21 @@ export default function CollaboratorTasksPage() {
                   <div className="text-gray-300 text-sm leading-relaxed bg-[#1a3a24]/30 p-4 rounded-xl border border-[#1a3a24] whitespace-pre-wrap">
                     {selectedTask.description}
                   </div>
+                </div>
+              )}
+
+              {selectedTask.drive_link && (
+                <div className="mb-4">
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Material no Google Drive</h3>
+                  <a 
+                    href={selectedTask.drive_link} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full py-3 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 rounded-xl font-bold transition-all"
+                  >
+                    <ExternalLink size={20} />
+                    Abrir Google Drive
+                  </a>
                 </div>
               )}
 
