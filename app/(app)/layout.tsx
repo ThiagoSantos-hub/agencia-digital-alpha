@@ -1,5 +1,5 @@
 'use client'
-import { useEffect } from 'react'
+import { useEffect, useCallback, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { Sidebar } from '@/components/layout/Sidebar'
@@ -11,15 +11,32 @@ import { AlphaVoiceButton } from '@/components/AlphaVoiceButton'
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, profile, loading } = useAuth()
   const router = useRouter()
-  useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.push('/login')
-      } else if (profile?.role === 'collaborator') {
-        router.push('/colaborador/dashboard')
-      }
+  const redirectDoneRef = useRef(false)
+
+  const handleRedirect = useCallback((path: string) => {
+    if (!redirectDoneRef.current) {
+      redirectDoneRef.current = true
+      router.replace(path)
     }
-  }, [user, profile, loading, router])
+  }, [router])
+
+  // Estado local para forçar re-render após redirect detection
+  const [isRedirecting, setIsRedirecting] = useState(false)
+
+  // Detectar redirect no render síncrono — ANTES de qualquer children renderizar
+  if (isRedirecting || (!loading && profile?.role === 'collaborator')) {
+    if (!loading && profile?.role === 'collaborator' && !isRedirecting) {
+      setIsRedirecting(true)
+      handleRedirect('/colaborador/dashboard')
+    }
+    return (
+      <div className="min-h-screen bg-[#0a0f0c] flex items-center justify-center">
+        <div className="text-gray-400 text-sm animate-pulse">Redirecionando...</div>
+      </div>
+    )
+  }
+
+  // Loading: aguardar profile antes de renderizar qualquer layout
   if (loading || !user || !profile) {
     return (
       <div className="min-h-screen bg-[#0a0f0c] flex items-center justify-center">
@@ -28,14 +45,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // Se é collaborator, não renderiza nada — o useEffect já redireciona
-  if (profile?.role === 'collaborator') {
-    return (
-      <div className="min-h-screen bg-[#0a0f0c] flex items-center justify-center">
-        <div className="text-gray-400 text-sm animate-pulse">Redirecionando...</div>
-      </div>
-    )
-  }
+  // Fallback com useEffect (para casos de profile update)
+  useEffect(() => {
+    if (!loading && !user) {
+      handleRedirect('/login')
+    }
+  }, [user, profile, loading, handleRedirect])
 
   return (
     <div className="min-h-screen bg-[#0a0f0c] flex">
