@@ -442,15 +442,12 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
         </div>
       </div>
 
-      <div className="px-6 py-4 bg-[#0a0f0c]/40 border-t border-white/5 flex justify-between items-center">
+      <div className="px-6 py-3 bg-[#0a0f0c]/40 border-t border-white/5 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Clock size={10} className="text-gray-700" />
-          <span className="text-[9px] font-black text-gray-700 uppercase tracking-widest">
+          <span className="text-[8px] font-bold text-gray-700 uppercase tracking-widest">
             {list.status === 'completed' ? 'Finalizado' : 'Em Progresso'}
           </span>
-        </div>
-        <div className="text-[10px] font-black text-white/20 uppercase tracking-widest">
-          Alpha OS v2.0
         </div>
       </div>
     </div>

@@ -92,8 +92,8 @@ export default function ChecklistsPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
         <div className="relative">
           <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-1 h-12 bg-gradient-to-b from-[#00ff88] to-transparent rounded-full shadow-[0_0_15px_rgba(0,255,136,0.5)]" />
-          <h1 className="text-4xl font-black text-white tracking-tighter uppercase leading-none">
-            Checklists <span className="text-[#00ff88] block text-xs tracking-[0.4em] mt-2 opacity-70">Agência Digital Alpha</span>
+          <h1 className="text-2xl font-black text-white tracking-tight uppercase leading-none">
+            Checklists <span className="text-[#00ff88] block text-[10px] tracking-[0.2em] mt-1.5 opacity-60">Agência Digital Alpha</span>
           </h1>
         </div>
         
@@ -117,7 +117,7 @@ export default function ChecklistsPage() {
               <div className="w-10 h-10 rounded-xl bg-[#00ff88]/10 flex items-center justify-center border border-[#00ff88]/20">
                 <Sparkles size={20} className="text-[#00ff88]" />
               </div>
-              <h2 className="text-xl font-black text-white uppercase tracking-tight">Configurar Nova Rotina</h2>
+              <h2 className="text-base font-black text-white uppercase tracking-tight">Configurar Nova Rotina</h2>
             </div>
             <button onClick={resetCreateForm} className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-full transition-all"><X size={24} /></button>
           </div>
@@ -205,7 +205,7 @@ export default function ChecklistsPage() {
           <div className="flex items-center justify-between mb-8 px-2">
             <div className="flex items-center gap-4">
               <div className="w-3 h-3 rounded-full bg-amber-500 animate-pulse shadow-[0_0_10px_rgba(245,158,11,0.5)]" />
-              <h2 className="text-2xl font-black text-white uppercase tracking-tighter italic">Rotinas Pendentes</h2>
+              <h2 className="text-lg font-black text-white uppercase tracking-tight italic">Rotinas Pendentes</h2>
             </div>
             <span className="text-[10px] font-black text-amber-500/50 uppercase tracking-[0.2em]">{pendingLists.length} Ativas</span>
           </div>
@@ -237,7 +237,7 @@ export default function ChecklistsPage() {
           <div className="flex items-center justify-between mb-8 px-2">
             <div className="flex items-center gap-4">
               <div className="w-3 h-3 rounded-full bg-[#00ff88] shadow-[0_0_10px_rgba(0,255,136,0.5)]" />
-              <h2 className="text-2xl font-black text-white uppercase tracking-tighter italic">Concluídas</h2>
+              <h2 className="text-lg font-black text-white uppercase tracking-tight italic">Concluídas</h2>
             </div>
             <span className="text-[10px] font-black text-[#00ff88]/30 uppercase tracking-[0.2em]">{completedLists.length} Feitas</span>
           </div>
@@ -340,7 +340,7 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
             ) : (
               <div className="space-y-2">
                 <div className="flex items-center gap-2 group/title">
-                  <h3 className="font-black text-white text-base tracking-tight truncate uppercase">{list.title}</h3>
+                  <h3 className="font-bold text-white text-sm tracking-tight truncate uppercase">{list.title}</h3>
                   <button onClick={() => setIsEditing(true)} className="opacity-0 group-hover/title:opacity-100 text-gray-600 hover:text-[#00ff88] transition-all">
                     <Edit2 size={12} />
                   </button>
@@ -406,7 +406,7 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
                 <div className="flex-1 flex items-center justify-between min-w-0">
                   <span 
                     onClick={() => { setEditingItemId(item.id); setEditingItemText(item.text); }}
-                    className={`text-xs font-bold cursor-pointer transition-all truncate pr-2 ${
+                    className={`text-[11px] font-medium cursor-pointer transition-all truncate pr-2 ${
                       item.completed ? 'text-gray-700 line-through' : 'text-gray-400 hover:text-white'
                     }`}
                   >
@@ -443,15 +443,12 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
       </div>
 
       {/* FOOTER DO CARD */}
-      <div className="px-6 py-4 bg-[#0a0f0c]/40 border-t border-white/5 flex justify-between items-center">
+      <div className="px-6 py-3 bg-[#0a0f0c]/40 border-t border-white/5 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Clock size={10} className="text-gray-700" />
-          <span className="text-[9px] font-black text-gray-700 uppercase tracking-widest">
+          <span className="text-[8px] font-bold text-gray-700 uppercase tracking-widest">
             {list.status === 'completed' ? 'Finalizado' : 'Em Progresso'}
           </span>
-        </div>
-        <div className="text-[10px] font-black text-white/20 uppercase tracking-widest">
-          Alpha OS v2.0
         </div>
       </div>
     </div>
