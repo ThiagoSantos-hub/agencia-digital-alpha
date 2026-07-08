@@ -17,8 +17,6 @@ export interface Task {
   assignee_id: string | null
   client_id: string | null
   campaign_id: string | null
-  created_by: string | null
-  owner_id: string | null
   created_at: string
   updated_at: string
 }
@@ -71,23 +69,13 @@ export function useTasks() {
     setLoading(true)
     setError(null)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      // Objeto limpo apenas com o que o banco realmente precisa
+      // ENVIANDO APENAS O ESSENCIAL PARA EVITAR ERRO DE SCHEMA CACHE
       const taskData: any = {
         title: input.title,
         status: input.status || 'a_fazer',
         priority: input.priority || 'media',
         description: input.description?.trim() || null,
-        collaborator_id: input.collaborator_id || null,
-        due_date: input.due_date || null
-      }
-
-      // Adiciona IDs de autoria se o usuário estiver logado
-      if (user?.id) {
-        taskData.created_by = user.id
-        taskData.owner_id = user.id
-        taskData.assignee_id = user.id
+        collaborator_id: input.collaborator_id || null
       }
 
       const { data, error } = await supabase
@@ -104,7 +92,7 @@ export function useTasks() {
       await listTasks()
       return data
     } catch (err: any) {
-      console.error('Erro detalhado ao criar tarefa:', err)
+      console.error('Erro ao criar tarefa:', err)
       setError(err.message || 'Erro ao criar tarefa')
       throw err
     } finally {
