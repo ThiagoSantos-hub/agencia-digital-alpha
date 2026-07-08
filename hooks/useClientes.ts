@@ -230,12 +230,12 @@ export function useClientes() {
         const mesAtual = hoje.getMonth() + 1
         const anoAtual = hoje.getFullYear()
         
-        // Buscar lançamento pendente ou atrasado deste mês para este cliente
+        // Buscar lançamento pendente ou atrasado para este cliente
         const { data: financeiro } = await supabase
           .from('finances')
           .select('id, data_vencimento')
           .eq('client_id', id)
-          .eq('status', 'pendente')
+          .in('status', ['pendente', 'atrasado']) // CORREÇÃO: Buscar também os atrasados
           .order('data_vencimento', { ascending: true })
           .limit(1)
           .maybeSingle()
