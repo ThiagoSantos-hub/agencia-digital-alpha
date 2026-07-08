@@ -88,42 +88,27 @@ export default function ColaboradorChecklistsPage() {
 
   return (
     <div className="p-8 min-h-screen bg-[#0a0f0c] text-gray-100 selection:bg-[#00ff88]/30">
-      {/* HEADER PREMIUM COLABORADOR */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
-        <div className="relative">
-          <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-1 h-12 bg-gradient-to-b from-[#00ff88] to-transparent rounded-full shadow-[0_0_15px_rgba(0,255,136,0.5)]" />
-          <div className="flex items-center gap-3 mb-2">
-            <User size={14} className="text-[#00ff88]" />
-            <span className="text-[10px] font-black text-[#00ff88] uppercase tracking-[0.3em] opacity-70">Painel do Colaborador</span>
-          </div>
-          <h1 className="text-4xl font-black text-white tracking-tighter uppercase leading-none">
-            Meus Checklists
-          </h1>
-        </div>
+      {/* HEADER MINIMALISTA */}
+      <div className="flex justify-between items-center mb-10">
+        <h1 className="text-xl font-bold text-white uppercase tracking-wider">Meus Checklists</h1>
         
         {!isCreating && (
           <button 
             onClick={() => setIsCreating(true)}
-            className="group relative flex items-center gap-3 px-8 py-4 bg-[#00ff88] hover:bg-[#00dd77] text-[#0a0f0c] rounded-2xl transition-all duration-300 font-black uppercase tracking-widest overflow-hidden shadow-[0_10px_30px_rgba(0,255,136,0.15)] active:scale-95"
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#00ff88] hover:bg-[#00dd77] text-[#0a0f0c] rounded-xl transition-all font-bold uppercase text-[11px] tracking-wider"
           >
-            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-            <Plus size={20} className="relative z-10" />
-            <span className="relative z-10">Novo Checklist</span>
+            <Plus size={16} />
+            Novo Checklist
           </button>
         )}
       </div>
 
-      {/* ÁREA DE CRIAÇÃO GLASSMORPHISM */}
+      {/* ÁREA DE CRIAÇÃO - MINIMALISTA */}
       {isCreating && (
-        <div className="mb-16 bg-[#111]/80 backdrop-blur-xl border border-[#00ff88]/20 rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in-95 duration-500">
-          <div className="flex justify-between items-center mb-10">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#00ff88]/10 flex items-center justify-center border border-[#00ff88]/20">
-                <Sparkles size={20} className="text-[#00ff88]" />
-              </div>
-              <h2 className="text-xl font-black text-white uppercase tracking-tight">Personalizar Rotina</h2>
-            </div>
-            <button onClick={resetCreateForm} className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-full transition-all"><X size={24} /></button>
+        <div className="mb-10 bg-[#111] border border-[#2a2a2a] rounded-2xl p-6 animate-in fade-in duration-300">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider">Novo Checklist</h2>
+            <button onClick={resetCreateForm} className="text-gray-500 hover:text-white transition-all"><X size={20} /></button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -188,14 +173,14 @@ export default function ColaboradorChecklistsPage() {
             </div>
           </div>
 
-          <div className="mt-12 flex justify-end gap-6 pt-8 border-t border-white/5">
-            <button onClick={resetCreateForm} className="text-xs font-black text-gray-600 hover:text-white uppercase tracking-widest transition-colors">Cancelar</button>
+          <div className="mt-8 flex justify-end gap-4 pt-6 border-t border-[#2a2a2a]">
+            <button onClick={resetCreateForm} className="text-[10px] font-bold text-gray-500 hover:text-white uppercase tracking-wider transition-colors">Cancelar</button>
             <button 
               onClick={handleCreateList}
               disabled={!newListTitle.trim() || newListItems.length === 0}
-              className="px-10 py-4 bg-[#00ff88] hover:bg-[#00dd77] disabled:opacity-30 disabled:grayscale text-[#0a0f0c] rounded-2xl font-black uppercase tracking-[0.2em] transition-all shadow-[0_10px_20px_rgba(0,255,136,0.1)]"
+              className="px-6 py-2 bg-[#00ff88] hover:bg-[#00dd77] disabled:opacity-50 text-[#0a0f0c] rounded-xl font-bold uppercase text-[10px] tracking-wider transition-all"
             >
-              Criar Agora
+              Salvar Lista
             </button>
           </div>
         </div>
@@ -286,20 +271,21 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
   const progress = items.length > 0 ? (completedCount / items.length) * 100 : 0
 
   return (
-    <div className={`group relative bg-[#111] border rounded-[2rem] overflow-hidden transition-all duration-500 flex flex-col ${
+    <div className={`bg-[#111] border rounded-2xl overflow-hidden transition-all duration-300 flex flex-col ${
       list.status === 'completed' 
-        ? 'border-[#00ff88]/10 grayscale-[0.8] opacity-60 hover:grayscale-0 hover:opacity-100' 
-        : 'border-[#1a3a24] hover:border-[#00ff88]/30 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]'
+        ? 'border-[#00ff88]/10 opacity-50' 
+        : 'border-[#1a3a24] hover:border-[#2a4a34]'
     }`}>
-      <div className="absolute top-0 left-0 h-1 bg-[#00ff88]/10 w-full">
+      {/* BARRA DE PROGRESSO SIMPLES */}
+      <div className="h-0.5 bg-[#1a3a24] w-full">
         <div 
-          className="h-full bg-[#00ff88] transition-all duration-1000 shadow-[0_0_10px_#00ff88]" 
+          className="h-full bg-[#00ff88] transition-all duration-500" 
           style={{ width: `${progress}%` }} 
         />
       </div>
 
-      <div className="p-6 flex-1">
-        <div className="flex justify-between items-start mb-6">
+      <div className="p-5 flex-1">
+        <div className="flex justify-between items-start mb-4">
           <div className="flex-1 min-w-0">
             {isEditing ? (
               <div className="space-y-4 pr-4">
