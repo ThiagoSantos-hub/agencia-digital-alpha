@@ -138,17 +138,24 @@ export function useTasks() {
   }
 
   const deleteTask = async (id: string) => {
+    if (!window.confirm('Tem certeza que deseja excluir esta tarefa?')) return
+
     try {
       const { error: deleteError } = await supabase
         .from('tasks')
         .delete()
         .eq('id', id)
 
-      if (deleteError) throw deleteError
+      if (deleteError) {
+        console.error('Erro retornado pelo Supabase na exclusão:', deleteError)
+        alert(`Erro ao excluir: ${deleteError.message}`)
+        throw deleteError
+      }
+      
       await fetchTasks()
     } catch (err: any) {
       console.error('Erro ao excluir tarefa:', err)
-      throw err
+      alert('Não foi possível excluir a tarefa. Verifique as permissões no Supabase.')
     }
   }
 
