@@ -296,35 +296,35 @@ export default function MeusClientesPage() {
       </div>
       <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left border-collapse">
+          <table className="min-w-[900px] text-sm text-left border-collapse">
             <thead>
               <tr className="border-b border-[#2a2a2a] bg-[#1f1f1f]/50">
-                <th className="px-3 py-2 text-gray-500 font-medium text-xs">CLIENTE</th>
-                <th className="px-3 py-2 text-gray-500 font-medium text-xs">CONTATO</th>
-                <th className="px-3 py-2 text-gray-500 font-medium text-xs">FINANCEIRO</th>
-                <th className="px-3 py-2 text-gray-500 font-medium text-xs">STATUS</th>
-                <th className="px-3 py-2 text-gray-500 font-medium text-xs text-right">AÇÕES</th>
+                <th className="px-4 py-2 text-gray-500 font-medium text-xs whitespace-nowrap" style={{width: '220px'}}>CLIENTE / EMPRESA</th>
+                <th className="px-4 py-2 text-gray-500 font-medium text-xs whitespace-nowrap" style={{width: '200px'}}>CONTATO</th>
+                <th className="px-4 py-2 text-gray-500 font-medium text-xs whitespace-nowrap" style={{width: '150px'}}>FINANCEIRO</th>
+                <th className="px-4 py-2 text-gray-500 font-medium text-xs whitespace-nowrap" style={{width: '140px'}}>STATUS</th>
+                <th className="px-4 py-2 text-gray-500 font-medium text-xs text-right whitespace-nowrap" style={{width: '130px'}}>AÇÕES</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#2a2a2a]/50">
               {list.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-3 py-6 text-center text-gray-600 text-sm">
+                  <td colSpan={5} className="px-4 py-6 text-center text-gray-600 text-sm">
                     Nenhum cliente cadastrado por você.
                   </td>
                 </tr>
               ) : (
                 list.map((c) => (
                   <tr key={c.id} className="hover:bg-white/[0.02] transition-colors group">
-                    <td className="px-3 py-2.5 whitespace-nowrap">
+                    <td className="px-4 py-2.5 whitespace-nowrap">
                       <span className="text-white font-bold text-sm">{c.name}</span>
                       <span className="text-gray-500 text-xs ml-2">{c.company || '—'}</span>
                     </td>
-                    <td className="px-3 py-2.5 whitespace-nowrap">
+                    <td className="px-4 py-2.5 whitespace-nowrap">
                       <span className="text-gray-400 text-xs">{c.phone || '—'}</span>
                       <span className="text-gray-600 text-[10px] ml-2">{c.email || '—'}</span>
                     </td>
-                    <td className="px-3 py-2.5 whitespace-nowrap">
+                    <td className="px-4 py-2.5 whitespace-nowrap">
                       <span className="text-white font-medium text-sm">
                         {c.monthly_fee
                           ? c.monthly_fee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -334,21 +334,21 @@ export default function MeusClientesPage() {
                         {c.payment_day ? `Dia ${c.payment_day}` : '—'}
                       </span>
                     </td>
-                    <td className="px-3 py-2.5 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
+                    <td className="px-4 py-2.5 whitespace-nowrap">
+                      <div className="inline-flex items-center gap-2">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusConfig[c.status].className}`}>
                           {statusConfig[c.status].label}
                         </span>
                         {(c.status === 'atrasado') && ((c.dias_atraso ?? 0) > 0) && (
-                          <span className="text-amber-500 text-[10px] font-bold flex items-center gap-1">
+                          <span className="text-amber-500 text-[10px] font-bold inline-flex items-center gap-1">
                             <Clock size={10} /> {c.dias_atraso} dias
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="px-3 py-2.5">
-                      <div className="flex items-center justify-end gap-1">
-                        <div className="flex items-center bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg p-0.5">
+                    <td className="px-4 py-2.5 whitespace-nowrap">
+                      <div className="inline-flex items-center gap-1">
+                        <div className="inline-flex items-center bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg p-0.5">
                           <button onClick={() => handleQuickStatus(c.id, 'ativo')} title="Marcar como Ativo"
                             className={`p-1 rounded-md transition-all ${c.status === 'ativo' ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-600 hover:text-emerald-400'}`}>
                             <CheckCircle2 size={13} />
