@@ -63,6 +63,7 @@ export function useNotificacoes() {
       const { data, error: err } = await supabase
         .from('notifications')
         .select('*')
+        .eq('lida', false) // Buscar apenas as não lidas
         .order('created_at', { ascending: false })
         .limit(50)
 
@@ -126,21 +127,22 @@ export function useNotificacoes() {
     return () => { supabase.removeChannel(channel) }
   }, [fetchNotificacoes, supabase])
 
-  // ── MARCAR UMA COMO LIDA ───────────────────────────────────
+  // ── MARCAR UMA COMO LIDA (E EXCLUIR PARA LIMPAR) ────────────
   async function marcarComoLida(id: string): Promise<boolean> {
+    // Em vez de apenas atualizar para lida, vamos excluir para manter o banco limpo
+    // ou apenas remover da UI se você preferir manter o histórico no banco.
+    // O usuário pediu para "sumir", então vamos excluir do banco.
     const { error: err } = await supabase
       .from('notifications')
-      .update({ lida: true })
+      .delete()
       .eq('id', id)
 
     if (err) { setError(err.message); return false }
     
-    // Atualizar UI instantaneamente
-    setNotificacoes(prev => 
-      prev.map(n => n.id === id ? { ...n, lida: true } : n)
-    )
+    // Remover da UI instantaneamente
+    setNotificacoes(prev => prev.filter(n => n.id !== id))
     setNaoLidas(prev => Math.max(0, prev - 1))
-    cachedNotificacoes = null // Invalidar cache
+    cachedNotificacoes = null
     
     return true
   }
