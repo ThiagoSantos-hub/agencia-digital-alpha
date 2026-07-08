@@ -108,7 +108,7 @@ export function SortableChecklistCard({
     <div 
       ref={setNodeRef}
       style={style}
-      className={`bg-[#111] border rounded-2xl overflow-hidden transition-all duration-300 flex flex-col ${
+      className={`bg-[#111] border rounded-2xl overflow-hidden transition-transform duration-300 flex flex-col w-full max-w-[260px] ${
         list.status === 'completed' 
           ? 'border-[#00ff88]/10 opacity-50' 
           : 'border-[#2a2a2a] hover:border-[#3a3a3a]'
@@ -121,7 +121,7 @@ export function SortableChecklistCard({
         />
       </div>
 
-      <div className="p-3 flex-1 flex flex-col min-h-[300px]">
+      <div className="p-3 flex-1 flex flex-col min-h-[300px] min-w-0 overflow-hidden">
         <div className="flex justify-between items-start mb-2">
           <button
             {...attributes}
@@ -142,7 +142,7 @@ export function SortableChecklistCard({
         </div>
 
         {isEditing ? (
-          <div className="space-y-2 mb-3 bg-[#0a0f0c] p-2 rounded-xl border border-[#00ff88]/20 overflow-hidden">
+          <div className="space-y-2 mb-3 bg-[#0a0f0c] p-2 rounded-xl border border-[#00ff88]/20 overflow-hidden max-w-[220px]">
             <input
               type="text"
               value={title}

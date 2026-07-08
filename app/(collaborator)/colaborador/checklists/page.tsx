@@ -261,7 +261,7 @@ export default function ColaboradorChecklistsPage() {
             >
               <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar min-h-[400px]">
                 {pendingLists.map(list => (
-                  <div key={list.id} className="w-[260px] shrink-0">
+                  <div key={list.id} className="w-[260px] shrink-0 overflow-hidden">
                     <SortableChecklistCard 
                       list={list} 
                       updateChecklist={updateChecklist}
@@ -320,7 +320,7 @@ export default function ColaboradorChecklistsPage() {
           
           <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
             {completedLists.map(list => (
-              <div key={list.id} className="w-[260px] shrink-0">
+              <div key={list.id} className="w-[260px] shrink-0 overflow-hidden">
                 <SortableChecklistCard 
                   list={list} 
                   updateChecklist={updateChecklist}
