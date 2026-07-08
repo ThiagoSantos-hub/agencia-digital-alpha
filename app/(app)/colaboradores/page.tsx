@@ -129,8 +129,9 @@ export default function ColaboradoresPage() {
         
         setToast({ message: 'Colaborador atualizado com sucesso!', type: 'success' })
       } else {
-        // 1. Criar no banco (tabela collaborators)
-        await createColaborador(form)
+        // 1. Criar no banco (tabela collaborators) — sem a senha
+        const { password, ...dbData } = form
+        await createColaborador(dbData as ColaboradorInput)
         
         // 2. Chamar API de convite (Auth + Email)
         const inviteRes = await fetch('/api/collaborators/invite', {
