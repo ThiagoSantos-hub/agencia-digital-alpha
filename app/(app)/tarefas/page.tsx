@@ -140,6 +140,7 @@ export default function AdminTasksPage() {
         assigned_to: editingTask.assigned_to,
         priority: editingTask.priority,
         due_date: editingTask.due_date,
+        drive_link: editingTask.drive_link,
         status: editingTask.status
       })
       setIsEditModalOpen(false)
