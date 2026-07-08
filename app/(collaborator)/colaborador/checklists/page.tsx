@@ -265,7 +265,15 @@ export default function ColaboradorChecklistsPage() {
   )
 }
 
-function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, updateItem, toggleItem, deleteItem }: any) {
+function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, updateItem, toggleItem, deleteItem }: {
+  list: Checklist,
+  updateChecklist: any,
+  deleteChecklist: any,
+  addItem: any,
+  updateItem: any,
+  toggleItem: any,
+  deleteItem: any
+}) {
   const [isEditing, setIsEditing] = useState(false)
   const [title, setTitle] = useState(list.title)
   const [days, setDays] = useState<number[]>(list.recurrence_days || [])
@@ -342,7 +350,7 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
                 <div className="flex items-center gap-2">
                   {list.recurrence_days?.length > 0 ? (
                     <div className="flex gap-1">
-                      {list.recurrence_days.map(d => (
+                      {list.recurrence_days.map((d: number) => (
                         <span key={d} className="text-[8px] font-black text-[#00ff88] uppercase bg-[#00ff88]/10 px-1.5 py-0.5 rounded-md border border-[#00ff88]/10">
                           {DIAS_SEMANA.find(day => day.id === d)?.label}
                         </span>
