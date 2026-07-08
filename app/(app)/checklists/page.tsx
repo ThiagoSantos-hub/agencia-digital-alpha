@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useChecklists, Checklist } from '@/hooks/useChecklists'
 import { 
   Trash2, X, Plus, CheckSquare, Loader2, 
