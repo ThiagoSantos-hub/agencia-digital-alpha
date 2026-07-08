@@ -109,53 +109,59 @@ export function TaskCard({
         <div className="text-gray-500 text-[10px] mb-2 whitespace-pre-wrap line-clamp-2 leading-tight">{task.description}</div>
       )}
 
-      <div className="pt-2 border-t border-[#1a3a24] flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          {userRole === 'admin' && (
-            <div className="w-5 h-5 rounded-full bg-[#00ff88]/10 border border-[#00ff88]/20 flex items-center justify-center text-[8px] text-[#00ff88] font-bold uppercase">
-              {task.assignee?.name?.[0] || task.assignee?.email?.[0] || '?'}
+      <div className="pt-2 border-t border-[#1a3a24] space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 overflow-hidden">
+            <div className="flex items-center gap-1 text-[9px] text-gray-500 shrink-0">
+              <Calendar size={10} />
+              <span>{task.due_date ? new Date(task.due_date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : 'S/P'}</span>
             </div>
-          )}
-          <div className="flex items-center gap-1 text-[9px] text-gray-500">
-            <Calendar size={10} />
-            <span className="truncate max-w-[60px]">{task.due_date ? new Date(task.due_date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : 'S/P'}</span>
+            {task.drive_link && (
+              <a 
+                href={task.drive_link} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-[9px] text-emerald-500 hover:text-emerald-400 font-bold transition-colors shrink-0"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ExternalLink size={10} />
+                Drive
+              </a>
+            )}
           </div>
-          {task.drive_link && (
-            <a 
-              href={task.drive_link} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 text-[9px] text-emerald-500 hover:text-emerald-400 font-bold transition-colors"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <ExternalLink size={10} />
-              Drive
-            </a>
-          )}
+          <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+            {task.status !== 'a_fazer' && (
+              <button onClick={() => onMove(task.id, 'a_fazer')} title="Mover para A Fazer" className="p-0.5 text-gray-700 hover:text-white transition-colors">
+                <Circle size={12} />
+              </button>
+            )}
+            {task.status !== 'em_andamento' && (
+              <button onClick={() => onMove(task.id, 'em_andamento')} title="Mover para Em Andamento" className="p-0.5 text-gray-700 hover:text-blue-400 transition-colors">
+                <PlayCircle size={12} />
+              </button>
+            )}
+            {task.status !== 'finalizada' && (
+              <button onClick={() => onMove(task.id, 'finalizada')} title="Mover para Finalizada" className="p-0.5 text-gray-700 hover:text-emerald-400 transition-colors">
+                <CheckCircle2 size={12} />
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="flex flex-col items-end gap-0.5">
-          <span className="text-[8px] text-gray-500 uppercase font-bold">Criado por:</span>
-          <span className="text-[9px] text-emerald-400 font-medium truncate max-w-[80px]">
-            {task.creator?.name || task.creator?.email?.split('@')[0] || 'Sistema'}
-          </span>
-        </div>
-
-        <div className="flex gap-0.5" onClick={(e) => e.stopPropagation()}>
-          {task.status !== 'a_fazer' && (
-            <button onClick={() => onMove(task.id, 'a_fazer')} title="Mover para A Fazer" className="p-0.5 text-gray-700 hover:text-white transition-colors">
-              <Circle size={12} />
-            </button>
-          )}
-          {task.status !== 'em_andamento' && (
-            <button onClick={() => onMove(task.id, 'em_andamento')} title="Mover para Em Andamento" className="p-0.5 text-gray-700 hover:text-blue-400 transition-colors">
-              <PlayCircle size={12} />
-            </button>
-          )}
-          {task.status !== 'finalizada' && (
-            <button onClick={() => onMove(task.id, 'finalizada')} title="Mover para Finalizada" className="p-0.5 text-gray-700 hover:text-emerald-400 transition-colors">
-              <CheckCircle2 size={12} />
-            </button>
+        <div className="flex items-center justify-between border-t border-[#1a3a24]/50 pt-1.5">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[8px] text-gray-500 uppercase font-bold shrink-0">Criado por:</span>
+            <span className="text-[9px] text-emerald-400 font-medium truncate max-w-[100px]">
+              {task.creator?.name || task.creator?.email?.split('@')[0] || 'Sistema'}
+            </span>
+          </div>
+          {userRole === 'admin' && (
+            <div className="flex items-center gap-1">
+              <span className="text-[8px] text-gray-500 uppercase font-bold shrink-0">Para:</span>
+              <div className="w-4 h-4 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-[8px] text-blue-400 font-bold uppercase">
+                {task.assignee?.name?.[0] || task.assignee?.email?.[0] || '?'}
+              </div>
+            </div>
           )}
         </div>
       </div>
