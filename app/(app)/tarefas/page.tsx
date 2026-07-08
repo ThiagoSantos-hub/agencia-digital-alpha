@@ -115,119 +115,119 @@ export default function AdminTarefasPage() {
   }
 
   return (
-    <div className="p-8 h-[calc(100vh-64px)] flex flex-col space-y-8 overflow-hidden bg-[#0a0f0c]">
+    <div className="p-6 h-[calc(100vh-64px)] flex flex-col space-y-6 overflow-hidden bg-[#0a0f0c]">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight">Fluxo de Tarefas</h1>
-          <p className="text-gray-500 text-sm mt-1">Gerencie as entregas e o progresso do seu time.</p>
+          <h1 className="text-2xl font-black text-white tracking-tight">Fluxo de Tarefas</h1>
+          <p className="text-gray-500 text-[10px] uppercase font-bold tracking-widest mt-0.5">Gestão Operacional</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" size={16} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" size={14} />
             <input 
               type="text" 
               placeholder="Buscar..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="bg-[#0d1410] border border-[#1a3a24] rounded-xl pl-10 pr-4 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/50 transition-all w-48"
+              className="bg-[#0d1410] border border-[#1a3a24] rounded-lg pl-9 pr-3 py-1.5 text-[11px] text-white focus:outline-none focus:border-emerald-500/50 transition-all w-40"
             />
           </div>
           <button 
             onClick={() => setModalOpen(true)}
-            className="bg-[#00ff88] hover:bg-[#00ff88]/90 text-black font-black px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all text-xs shadow-lg shadow-emerald-500/10"
+            className="bg-[#00ff88] hover:bg-[#00ff88]/90 text-black font-black px-4 py-2 rounded-lg flex items-center gap-2 transition-all text-[11px] shadow-lg shadow-emerald-500/10"
           >
-            <Plus size={16} />
+            <Plus size={14} />
             NOVA TAREFA
           </button>
         </div>
       </div>
 
       {/* Kanban Board */}
-      <div className="flex-1 flex gap-6 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-emerald-500/10">
+      <div className="flex-1 flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-emerald-500/10">
         {columns.map((col) => (
-          <div key={col.status} className="flex flex-col min-w-[320px] w-1/3 bg-[#0d1410]/50 border border-[#1a3a24]/50 rounded-3xl overflow-hidden">
-            <div className="p-5 border-b border-[#1a3a24] flex items-center justify-between bg-[#0d1410]">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${col.bgColor}`}>
-                  <col.icon size={18} className={col.color} />
+          <div key={col.status} className="flex flex-col min-w-[280px] w-1/3 bg-[#0d1410]/30 border border-[#1a3a24]/30 rounded-2xl overflow-hidden">
+            <div className="p-4 border-b border-[#1a3a24] flex items-center justify-between bg-[#0d1410]">
+              <div className="flex items-center gap-2.5">
+                <div className={`p-1.5 rounded-md ${col.bgColor}`}>
+                  <col.icon size={14} className={col.color} />
                 </div>
-                <h3 className="font-black text-xs text-white uppercase tracking-widest">{col.label}</h3>
+                <h3 className="font-black text-[10px] text-white uppercase tracking-widest">{col.label}</h3>
               </div>
-              <span className="bg-[#1a3a24] text-emerald-400 text-[10px] font-black px-2.5 py-1 rounded-full border border-emerald-500/20">
+              <span className="bg-[#1a3a24] text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-full border border-emerald-500/20">
                 {tasksByStatus[col.status]?.length || 0}
               </span>
             </div>
 
-            <div className="flex-1 p-4 space-y-4 overflow-y-auto scrollbar-none">
+            <div className="flex-1 p-3 space-y-3 overflow-y-auto scrollbar-none">
               {tasksLoading && tasks.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 opacity-20">
-                  <Loader2 size={24} className="animate-spin mb-2" />
-                  <span className="text-[10px] uppercase font-bold tracking-widest">Sincronizando...</span>
+                <div className="flex flex-col items-center justify-center py-10 opacity-20">
+                  <Loader2 size={20} className="animate-spin mb-2" />
+                  <span className="text-[8px] uppercase font-bold tracking-widest">Sincronizando...</span>
                 </div>
               ) : (tasksByStatus[col.status]?.length || 0) === 0 ? (
-                <div className="py-20 text-center border-2 border-dashed border-[#1a3a24]/30 rounded-3xl">
-                  <p className="text-gray-700 text-[10px] font-black uppercase tracking-widest">Vazio</p>
+                <div className="py-10 text-center border border-dashed border-[#1a3a24]/20 rounded-2xl">
+                  <p className="text-gray-800 text-[9px] font-black uppercase tracking-widest">Vazio</p>
                 </div>
               ) : (
-                tasksByStatus[col.status].map((task) => {
+                (tasksByStatus[col.status] as Task[]).map((task) => {
                   const collaborator = colaboradores.find(c => c.id === task.collaborator_id)
                   return (
-                    <div key={task.id} className="bg-[#121a15] border border-[#1a3a24] p-5 rounded-2xl group hover:border-emerald-500/40 transition-all shadow-xl shadow-black/20">
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <h4 className="text-sm font-bold text-gray-100 leading-snug">{task.title}</h4>
+                    <div key={task.id} className="bg-[#121a15] border border-[#1a3a24] p-4 rounded-xl group hover:border-emerald-500/30 transition-all shadow-lg shadow-black/10">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <h4 className="text-[12px] font-bold text-gray-100 leading-tight">{task.title}</h4>
                         <button 
                           onClick={() => handleDelete(task.id)}
-                          className="text-gray-700 hover:text-red-500 transition-colors shrink-0"
+                          className="text-gray-800 hover:text-red-500 transition-colors shrink-0"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={12} />
                         </button>
                       </div>
                       
                       {task.description && (
-                        <p className="text-[11px] text-gray-500 line-clamp-2 mb-4 leading-relaxed">
+                        <p className="text-[10px] text-gray-600 line-clamp-2 mb-3 leading-snug">
                           {task.description}
                         </p>
                       )}
 
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        <div className="flex items-center gap-1.5 bg-[#0a0f0c] border border-[#1a3a24] px-2 py-1 rounded-md">
-                          <Flag size={10} className={task.priority === 'urgente' ? 'text-red-500' : task.priority === 'alta' ? 'text-orange-500' : 'text-emerald-500'} />
-                          <span className="text-[9px] font-black uppercase tracking-tighter text-gray-400">{task.priority}</span>
+                      <div className="flex flex-wrap gap-1.5 mb-3">
+                        <div className="flex items-center gap-1 bg-[#0a0f0c] border border-[#1a3a24] px-1.5 py-0.5 rounded-md">
+                          <Flag size={8} className={task.priority === 'urgente' ? 'text-red-500' : task.priority === 'alta' ? 'text-orange-500' : 'text-emerald-500'} />
+                          <span className="text-[8px] font-black uppercase tracking-tighter text-gray-500">{task.priority}</span>
                         </div>
                         {task.due_date && (
-                          <div className="flex items-center gap-1.5 bg-[#0a0f0c] border border-[#1a3a24] px-2 py-1 rounded-md">
-                            <Calendar size={10} className="text-gray-500" />
-                            <span className="text-[9px] font-black uppercase tracking-tighter text-gray-400">
+                          <div className="flex items-center gap-1 bg-[#0a0f0c] border border-[#1a3a24] px-1.5 py-0.5 rounded-md">
+                            <Calendar size={8} className="text-gray-600" />
+                            <span className="text-[8px] font-black uppercase tracking-tighter text-gray-500">
                               {new Date(task.due_date).toLocaleDateString('pt-BR')}
                             </span>
                           </div>
                         )}
                       </div>
                       
-                      <div className="flex items-center justify-between pt-4 border-t border-[#1a3a24]/50">
-                        <div className="flex items-center gap-2">
-                          <div className="h-6 w-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-[9px] font-black text-emerald-400 uppercase">
+                      <div className="flex items-center justify-between pt-3 border-t border-[#1a3a24]/30">
+                        <div className="flex items-center gap-1.5">
+                          <div className="h-5 w-5 rounded-md bg-emerald-500/5 border border-emerald-500/10 flex items-center justify-center text-[8px] font-black text-emerald-500/50 uppercase">
                             {collaborator?.name?.[0] || '?'}
                           </div>
-                          <span className="text-[10px] text-gray-500 font-bold truncate max-w-[100px]">
-                            {collaborator?.name || 'Sem responsável'}
+                          <span className="text-[9px] text-gray-600 font-bold truncate max-w-[80px]">
+                            {collaborator?.name || '---'}
                           </span>
                         </div>
-                        <div className="flex gap-1">
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           {col.status !== 'a_fazer' && (
-                            <button onClick={() => handleMoveTask(task.id, 'a_fazer')} className="p-1.5 bg-[#0a0f0c] rounded-md text-gray-600 hover:text-white transition-all">
-                              <Clock size={12} />
+                            <button onClick={() => handleMoveTask(task.id, 'a_fazer')} className="p-1 bg-[#0a0f0c] rounded text-gray-600 hover:text-white transition-all">
+                              <Clock size={10} />
                             </button>
                           )}
                           {col.status !== 'em_andamento' && (
-                            <button onClick={() => handleMoveTask(task.id, 'em_andamento')} className="p-1.5 bg-[#0a0f0c] rounded-md text-gray-600 hover:text-emerald-400 transition-all">
-                              <Play size={12} />
+                            <button onClick={() => handleMoveTask(task.id, 'em_andamento')} className="p-1 bg-[#0a0f0c] rounded text-gray-600 hover:text-emerald-400 transition-all">
+                              <Play size={10} />
                             </button>
                           )}
                           {col.status !== 'finalizada' && (
-                            <button onClick={() => handleMoveTask(task.id, 'finalizada')} className="p-1.5 bg-[#0a0f0c] rounded-md text-gray-600 hover:text-blue-400 transition-all">
-                              <CheckCircle2 size={12} />
+                            <button onClick={() => handleMoveTask(task.id, 'finalizada')} className="p-1 bg-[#0a0f0c] rounded text-gray-600 hover:text-blue-400 transition-all">
+                              <CheckCircle2 size={10} />
                             </button>
                           )}
                         </div>
