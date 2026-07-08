@@ -48,7 +48,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Rota do colaborador — permite acesso apenas para collaborator
-  if (isCollaboratorRoute) {
+  if (isCollaboratorRoute && user) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
