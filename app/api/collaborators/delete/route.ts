@@ -1,37 +1,70 @@
-import { createClient } from '@supabase/supabase-js'
-import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/ssr'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { NextResponse, type NextRequest } from 'next/server'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
+    // 1. Verificar autenticação — só admin pode deletar
+    const supabaseClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() { return request.cookies.getAll() },
+          setAll() {},
+        },
+      }
+    )
+
+    const { data: { user } } = await supabaseClient.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 })
+    }
+
+    // Verificar se é admin
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.role !== 'admin') {
+      return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
+    }
+
+    // 2. Buscar dados do colaborador ANTES de deletar
     const { id, email } = await request.json()
 
-    // 1. Buscar o user_id vinculado ao colaborador
-    const { data: collabData } = await supabaseAdmin
+    const supabaseAdmin = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    const { data: collabData, error: fetchError } = await supabaseAdmin
       .from('collaborators')
       .select('user_id, email')
       .eq('id', id)
       .single()
 
-    const userId = collabData?.user_id
-    const collabEmail = collabData?.email || email
+    if (fetchError || !collabData) {
+      return NextResponse.json({ error: 'Colaborador não encontrado.' }, { status: 404 })
+    }
 
-    // 2. Remover do Supabase Auth (se tiver user_id)
+    const userId = collabData.user_id
+    const collabEmail = collabData.email || email
+
+    // 3. Remover do Supabase Auth (se tiver user_id)
     if (userId) {
       const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId)
       if (authError) {
         console.error('⚠️ Erro ao deletar usuário do Auth:', authError.message)
-        // Não bloqueia — continua tentando limpar o resto
       } else {
         console.log('✅ Usuário removido do Auth:', userId)
       }
     }
 
-    // 3. Remover da tabela profiles (se tiver email)
+    // 4. Remover da tabela profiles (se tiver email)
     if (collabEmail) {
       const { error: profileError } = await supabaseAdmin
         .from('profiles')
@@ -44,7 +77,7 @@ export async function DELETE(request: Request) {
       }
     }
 
-    // 4. Remover da tabela collaborators
+    // 5. Remover da tabela collaborators (por último)
     const { error: collabError } = await supabaseAdmin
       .from('collaborators')
       .delete()
