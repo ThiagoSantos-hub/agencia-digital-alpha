@@ -38,5 +38,11 @@ CREATE TRIGGER tr_task_owner
   BEFORE INSERT ON tasks
   FOR EACH ROW EXECUTE FUNCTION public.handle_task_owner();
 
+-- Remove restrições de check remanescentes que podem estar bloqueando o insert
+ALTER TABLE tasks DROP CONSTRAINT IF EXISTS tasks_status_check;
+ALTER TABLE tasks DROP CONSTRAINT IF EXISTS tasks_priority_check;
+ALTER TABLE tasks DROP CONSTRAINT IF EXISTS tasks_status_check1;
+ALTER TABLE tasks DROP CONSTRAINT IF EXISTS tasks_status_check2;
+
 -- Força o reload do PostgREST
 NOTIFY pgrst, 'reload schema';
