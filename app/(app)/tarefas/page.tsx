@@ -28,8 +28,15 @@ import {
   defaultDropAnimationSideEffects
 } from '@dnd-kit/core'
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
-import { KanbanColumn } from '@/components/tasks/KanbanColumn'
-import { TaskCard } from '@/components/tasks/TaskCard'
+import dynamic from 'next/dynamic'
+
+const KanbanColumn = dynamic(() => import('@/components/tasks/KanbanColumn').then(mod => mod.KanbanColumn), {
+  loading: () => <div className="w-80 h-full bg-[#1a3a24]/10 rounded-2xl animate-pulse" />
+})
+
+const TaskCard = dynamic(() => import('@/components/tasks/TaskCard').then(mod => mod.TaskCard), {
+  loading: () => <div className="h-32 bg-[#1a3a24]/5 rounded-xl animate-pulse" />
+})
 
 const COLUMNS: { id: TaskStatus; label: string; icon: any; color: string }[] = [
   { id: 'pendente', label: 'Pendências', icon: PauseCircle, color: 'text-amber-600' },
