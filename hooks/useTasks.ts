@@ -57,17 +57,26 @@ export function useTasks() {
     setLoading(true)
     setError(null)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const user = session?.user
+      const { data: { user } } = await supabase.auth.getUser()
       
-      // Remove campos nulos ou vazios para evitar erros de constraint no Postgres
-      const taskData = {
+      // Monta o objeto de dados de forma segura
+      const taskData: any = {
         title: input.title,
-        description: input.description || null,
-        collaborator_id: input.collaborator_id || null,
-        status: 'a_fazer',
-        created_by: user?.id,
-        assignee_id: user?.id
+        status: 'a_fazer'
+      }
+
+      // Só adiciona campos se eles tiverem valor real (não string vazia)
+      if (input.description && input.description.trim() !== '') {
+        taskData.description = input.description
+      }
+      
+      if (input.collaborator_id && input.collaborator_id.trim() !== '') {
+        taskData.collaborator_id = input.collaborator_id
+      }
+
+      if (user?.id) {
+        taskData.created_by = user.id
+        taskData.assignee_id = user.id
       }
 
       const { data, error } = await supabase
@@ -79,7 +88,8 @@ export function useTasks() {
       if (error) throw error
       return data
     } catch (err: any) {
-      setError(err.message)
+      const msg = err.message || 'Erro desconhecido ao criar tarefa'
+      setError(msg)
       throw err
     } finally {
       setLoading(false)
