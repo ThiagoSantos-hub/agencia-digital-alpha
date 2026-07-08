@@ -384,3 +384,5 @@ export class CRMToolsService {
     ]
   }
 }
+
+export const crmTools = new CRMToolsService()
