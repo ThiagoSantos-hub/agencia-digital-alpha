@@ -48,7 +48,7 @@ export function SortableChecklistItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group flex items-center gap-3 p-3 rounded-xl border transition-all ${
+      className={`group flex items-center gap-3 p-3 rounded-xl border overflow-hidden min-w-0 transition-all ${
         item.completed 
           ? 'bg-[#0a0f0c]/30 border-[#00ff88]/5 opacity-60' 
           : 'bg-[#0a0f0c] border-[#2a2a2a] hover:border-gray-700'
@@ -74,13 +74,13 @@ export function SortableChecklistItem({
       </button>
 
       {isEditing ? (
-        <div className="flex-1 flex gap-2" onClick={(e) => e.stopPropagation()}>
+        <div className="flex-1 flex gap-2 min-w-0" onClick={(e) => e.stopPropagation()}>
           <input
             type="text"
             value={editingText}
             onChange={(e) => setEditingText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && onSaveEdit(item.id)}
-            className="flex-1 bg-[#111] border border-[#00ff88]/40 rounded-lg px-3 py-1 text-sm text-white focus:outline-none"
+            className="flex-1 min-w-0 bg-[#111] border border-[#00ff88]/40 rounded-lg px-3 py-1 text-[10px] text-white focus:outline-none truncate"
             autoFocus
           />
         </div>
