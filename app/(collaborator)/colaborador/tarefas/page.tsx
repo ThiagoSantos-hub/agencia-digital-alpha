@@ -172,7 +172,7 @@ export default function CollaboratorTasksPage() {
   }
 
   return (
-    <div className="p-8 space-y-8 h-[calc(100vh-64px)] flex flex-col">
+    <div className="p-4 space-y-4 h-[calc(100vh-64px)] flex flex-col">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-white">Minhas Tarefas</h1>
@@ -194,7 +194,7 @@ export default function CollaboratorTasksPage() {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex-1 flex gap-6 overflow-x-auto pb-4 custom-scrollbar">
+        <div className="flex-1 flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
           {COLUMNS.map((column) => (
             <KanbanColumn
               key={column.id}

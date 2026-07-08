@@ -10,9 +10,7 @@ import {
   Trash2, 
   Circle, 
   PlayCircle, 
-  CheckCircle2,
-  Clock,
-  AlertCircle
+  CheckCircle2
 } from 'lucide-react'
 
 interface TaskCardProps {
@@ -79,67 +77,60 @@ export function TaskCard({
       style={style}
       {...attributes}
       {...listeners}
-      className="bg-[#0a0f0c] border border-[#1a3a24] rounded-xl p-4 hover:border-[#00ff88]/30 transition-all group shadow-lg cursor-grab active:cursor-grabbing"
+      className="bg-[#0a0f0c] border border-[#1a3a24] rounded-lg p-3 hover:border-[#00ff88]/30 transition-all group shadow-md cursor-grab active:cursor-grabbing"
       onClick={() => onClick(task)}
     >
-      <div className="flex justify-between items-start mb-3">
-        <span className={`text-[10px] font-black uppercase tracking-tighter ${getPriorityColor(task.priority)}`}>
+      <div className="flex justify-between items-start mb-2">
+        <span className={`text-[8px] font-black uppercase tracking-widest ${getPriorityColor(task.priority)}`}>
           {getPriorityLabel(task.priority)}
         </span>
         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-          <button onClick={() => onDuplicate(task)} title="Duplicar" className="p-1 text-gray-600 hover:text-blue-400">
-            <Copy size={14} />
+          <button onClick={() => onDuplicate(task)} title="Duplicar" className="p-1 text-gray-700 hover:text-blue-400">
+            <Copy size={12} />
           </button>
           {canEdit && (
-            <button onClick={() => onEdit(task)} title="Editar" className="p-1 text-gray-600 hover:text-amber-400">
-              <Edit size={14} />
+            <button onClick={() => onEdit(task)} title="Editar" className="p-1 text-gray-700 hover:text-amber-400">
+              <Edit size={12} />
             </button>
           )}
-          <button onClick={() => onDelete(task.id)} title="Excluir" className="p-1 text-gray-600 hover:text-red-500">
-            <Trash2 size={14} />
+          <button onClick={() => onDelete(task.id)} title="Excluir" className="p-1 text-gray-700 hover:text-red-500">
+            <Trash2 size={12} />
           </button>
         </div>
       </div>
 
-      <h3 className="text-white font-bold text-sm mb-2 line-clamp-2 group-hover:text-[#00ff88] transition-colors">{task.title}</h3>
+      <h3 className="text-white font-bold text-xs mb-1 line-clamp-2 group-hover:text-[#00ff88] transition-colors leading-tight">{task.title}</h3>
       {task.description && (
-        <div className="text-gray-500 text-xs mb-4 whitespace-pre-wrap line-clamp-4">{task.description}</div>
+        <div className="text-gray-500 text-[10px] mb-2 whitespace-pre-wrap line-clamp-2 leading-tight">{task.description}</div>
       )}
 
-      <div className="pt-4 border-t border-[#1a3a24] flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="pt-2 border-t border-[#1a3a24] flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
           {userRole === 'admin' && (
-            <>
-              <div className="w-6 h-6 rounded-full bg-[#00ff88]/10 border border-[#00ff88]/20 flex items-center justify-center text-[10px] text-[#00ff88] font-bold uppercase">
-                {task.assignee?.name?.[0] || task.assignee?.email?.[0] || '?'}
-              </div>
-              <span className="text-[10px] text-gray-400 font-medium truncate max-w-[80px]">
-                {task.assignee?.name || task.assignee?.email}
-              </span>
-            </>
-          )}
-          {userRole === 'collaborator' && (
-            <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
-              <Calendar size={12} />
-              <span>{task.due_date ? new Date(task.due_date).toLocaleDateString('pt-BR') : 'Sem prazo'}</span>
+            <div className="w-5 h-5 rounded-full bg-[#00ff88]/10 border border-[#00ff88]/20 flex items-center justify-center text-[8px] text-[#00ff88] font-bold uppercase">
+              {task.assignee?.name?.[0] || task.assignee?.email?.[0] || '?'}
             </div>
           )}
+          <div className="flex items-center gap-1 text-[9px] text-gray-500">
+            <Calendar size={10} />
+            <span className="truncate max-w-[60px]">{task.due_date ? new Date(task.due_date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : 'S/P'}</span>
+          </div>
         </div>
 
-        <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+        <div className="flex gap-0.5" onClick={(e) => e.stopPropagation()}>
           {task.status !== 'a_fazer' && (
-            <button onClick={() => onMove(task.id, 'a_fazer')} title="Mover para A Fazer" className="p-1 text-gray-600 hover:text-white transition-colors">
-              <Circle size={14} />
+            <button onClick={() => onMove(task.id, 'a_fazer')} title="Mover para A Fazer" className="p-0.5 text-gray-700 hover:text-white transition-colors">
+              <Circle size={12} />
             </button>
           )}
           {task.status !== 'em_andamento' && (
-            <button onClick={() => onMove(task.id, 'em_andamento')} title="Mover para Em Andamento" className="p-1 text-gray-600 hover:text-blue-400 transition-colors">
-              <PlayCircle size={14} />
+            <button onClick={() => onMove(task.id, 'em_andamento')} title="Mover para Em Andamento" className="p-0.5 text-gray-700 hover:text-blue-400 transition-colors">
+              <PlayCircle size={12} />
             </button>
           )}
           {task.status !== 'finalizada' && (
-            <button onClick={() => onMove(task.id, 'finalizada')} title="Mover para Finalizada" className="p-1 text-gray-600 hover:text-emerald-400 transition-colors">
-              <CheckCircle2 size={14} />
+            <button onClick={() => onMove(task.id, 'finalizada')} title="Mover para Finalizada" className="p-0.5 text-gray-700 hover:text-emerald-400 transition-colors">
+              <CheckCircle2 size={12} />
             </button>
           )}
         </div>

@@ -195,7 +195,7 @@ export default function AdminTasksPage() {
   }
 
   return (
-    <div className="space-y-6 h-[calc(100vh-120px)] flex flex-col">
+    <div className="space-y-4 h-[calc(100vh-100px)] flex flex-col px-2">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-white">Quadro Kanban</h1>
@@ -217,7 +217,7 @@ export default function AdminTasksPage() {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex-1 flex gap-6 overflow-x-auto pb-4 custom-scrollbar">
+        <div className="flex-1 flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
           {COLUMNS.map((column) => (
             <KanbanColumn
               key={column.id}
