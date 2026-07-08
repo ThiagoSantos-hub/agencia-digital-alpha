@@ -27,27 +27,29 @@ export function NotificationSound() {
   }, [])
 
   const playPersistentSound = () => {
-    // Tentativa mais agressiva de tocar o som
+    if (typeof window === 'undefined') return
+    
     try {
       const audio = new Audio('/sounds/notification.mp3')
       audio.volume = 1.0
-      audio.loop = true // Ativar loop para garantir que o som continue
+      audio.loop = true
       
       const playPromise = audio.play()
       
       if (playPromise !== undefined) {
         playPromise.then(() => {
-          // Parar após exatamente 3 segundos
           setTimeout(() => {
-            audio.pause()
-            audio.currentTime = 0
+            if (audio) {
+              audio.pause()
+              audio.currentTime = 0
+            }
           }, 3000)
         }).catch(e => {
           console.warn('Navegador bloqueou o som. Aguardando interação.', e)
         })
       }
     } catch (e) {
-      console.error('Erro ao tocar som:', e)
+      console.warn('Erro ao tocar som:', e)
     }
   }
 
