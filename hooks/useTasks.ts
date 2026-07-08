@@ -69,31 +69,31 @@ export function useTasks() {
     setLoading(true)
     setError(null)
     try {
-      // TESTE ULTRA SIMPLIFICADO
-      const taskData = {
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      const taskData: any = {
         title: input.title,
-        status: 'a_fazer'
+        status: input.status || 'a_fazer',
+        priority: input.priority || 'media',
+        description: input.description?.trim() || null,
+        collaborator_id: input.collaborator_id || null,
+        owner_id: session?.user?.id || null,
+        created_by: session?.user?.id || null
       }
 
-      console.log('DEBUG: Tentando inserir tarefa ultra simples:', taskData)
-      
       const { data, error } = await supabase
         .from('tasks')
         .insert([taskData])
         .select()
 
       if (error) {
-        console.error('DEBUG: Erro fatal no Supabase:', error)
-        alert('Erro ao criar: ' + error.message)
+        console.error('Erro ao criar tarefa:', error)
         throw error
       }
       
-      console.log('DEBUG: Sucesso total:', data)
-      alert('Tarefa criada com sucesso!')
       await listTasks()
       return data
     } catch (err: any) {
-      console.error('DEBUG: Erro capturado no catch:', err)
       setError(err.message)
       throw err
     } finally {
