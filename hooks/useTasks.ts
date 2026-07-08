@@ -60,21 +60,40 @@ export function useTasks() {
   }, [fetchTasks])
 
   const createTask = async (task: Partial<Task>) => {
-    if (!user) return
+    if (!user) {
+      console.error('createTask: Usuário não autenticado')
+      return
+    }
+    
+    // Garantir que campos obrigatórios não sejam nulos/vazios
+    if (!task.title) {
+      throw new Error('O título da tarefa é obrigatório')
+    }
+
     try {
+      const taskData = {
+        title: task.title,
+        description: task.description || null,
+        status: task.status || 'a_fazer',
+        priority: task.priority || 'media',
+        created_by: user.id,
+        assigned_to: task.assigned_to || user.id,
+        due_date: task.due_date || null
+      }
+
+      console.log('Enviando tarefa para o Supabase:', taskData)
+
       const { data, error: insertError } = await supabase
         .from('tasks')
-        .insert([{
-          ...task,
-          created_by: user.id,
-          assigned_to: task.assigned_to || user.id, // Se não informar, atribui a si mesmo
-          status: task.status || 'a_fazer',
-          priority: task.priority || 'media'
-        }])
+        .insert([taskData])
         .select()
         .single()
 
-      if (insertError) throw insertError
+      if (insertError) {
+        console.error('Erro retornado pelo Supabase:', insertError)
+        throw insertError
+      }
+      
       await fetchTasks()
       return data
     } catch (err: any) {

@@ -47,15 +47,33 @@ export default function AdminTasksPage() {
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!newTask.title.trim()) {
+      alert('O título é obrigatório')
+      return
+    }
+
+    if (!newTask.assigned_to) {
+      alert('Selecione um colaborador')
+      return
+    }
+
     try {
-      await createTask({
-        ...newTask,
-        status: 'a_fazer'
-      })
+      const taskToCreate = {
+        title: newTask.title.trim(),
+        description: newTask.description.trim() || null,
+        assigned_to: newTask.assigned_to,
+        priority: newTask.priority,
+        status: 'a_fazer' as TaskStatus,
+        due_date: newTask.due_date || null
+      }
+
+      await createTask(taskToCreate)
       setIsModalOpen(false)
       setNewTask({ title: '', description: '', assigned_to: '', priority: 'media', due_date: '' })
-    } catch (err) {
-      alert('Erro ao criar tarefa. Verifique se todos os campos estão corretos.')
+    } catch (err: any) {
+      console.error('Erro no componente ao criar tarefa:', err)
+      alert(`Erro ao criar tarefa: ${err.message || 'Verifique sua conexão'}`)
     }
   }
 
