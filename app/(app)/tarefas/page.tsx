@@ -318,9 +318,9 @@ export default function AdminTasksPage() {
               {selectedTask.description && (
                 <div>
                   <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">Descrição</h3>
-                  <p className="text-gray-300 text-sm leading-relaxed bg-[#1a3a24]/30 p-4 rounded-xl border border-[#1a3a24]">
+                  <div className="text-gray-300 text-sm leading-relaxed bg-[#1a3a24]/30 p-4 rounded-xl border border-[#1a3a24] whitespace-pre-wrap">
                     {selectedTask.description}
-                  </p>
+                  </div>
                 </div>
               )}
 
