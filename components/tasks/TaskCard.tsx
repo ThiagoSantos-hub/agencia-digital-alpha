@@ -70,8 +70,9 @@ export function TaskCard({
     }
   }
 
-  const canEdit = userRole === 'admin' || task.created_by === currentUserId
-  const canDelete = userRole === 'admin' || task.created_by === currentUserId
+  // DEBUG: console.log('Task:', task.title, 'CreatedBy:', task.created_by, 'CurrentUserID:', currentUserId, 'Role:', userRole)
+  const canEdit = userRole === 'admin' || String(task.created_by) === String(currentUserId)
+  const canDelete = userRole === 'admin' || String(task.created_by) === String(currentUserId)
 
   return (
     <div 
