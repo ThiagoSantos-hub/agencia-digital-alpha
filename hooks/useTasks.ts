@@ -69,42 +69,32 @@ export function useTasks() {
     setLoading(true)
     setError(null)
     try {
-      // ENVIANDO APENAS O ESSENCIAL PARA EVITAR ERRO DE SCHEMA CACHE
-      // Captura o user_id da sessão atual do Supabase
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      const taskData: any = {
+      // TESTE ULTRA SIMPLIFICADO
+      const taskData = {
         title: input.title,
-        status: input.status || 'a_fazer',
-        priority: input.priority || 'media',
-        description: input.description?.trim() || null,
-        collaborator_id: input.collaborator_id || null,
-        owner_id: session?.user?.id || null,
-        created_by: session?.user?.id || null
+        status: 'a_fazer'
       }
 
-      console.log('Enviando dados da tarefa:', taskData)
+      console.log('DEBUG: Tentando inserir tarefa ultra simples:', taskData)
+      
       const { data, error } = await supabase
         .from('tasks')
         .insert([taskData])
         .select()
 
       if (error) {
-        console.error('Erro Supabase (Insert):', {
-          code: error.code,
-          message: error.message,
-          details: error.details,
-          hint: error.hint
-        })
+        console.error('DEBUG: Erro fatal no Supabase:', error)
+        alert('Erro ao criar: ' + error.message)
         throw error
       }
-      console.log('Tarefa criada com sucesso:', data)
       
+      console.log('DEBUG: Sucesso total:', data)
+      alert('Tarefa criada com sucesso!')
       await listTasks()
       return data
     } catch (err: any) {
-      console.error('Erro ao criar tarefa:', err)
-      setError(err.message || 'Erro ao criar tarefa')
+      console.error('DEBUG: Erro capturado no catch:', err)
+      setError(err.message)
       throw err
     } finally {
       setLoading(false)
