@@ -117,23 +117,23 @@ export default function AdminTarefasPage() {
               {(tasksByStatus[col.status] as Task[]).map((task) => {
                 const collaborator = colaboradores.find(c => c.id === task.collaborator_id)
                 return (
-                  <div key={task.id} className="bg-[#121a15]/80 border border-[#1a3a24] p-3 rounded-xl group hover:border-emerald-500/30 transition-all">
+                  <div key={task.id} className="bg-[#121a15] border border-[#1a3a24] p-3 rounded-xl group hover:border-emerald-500/50 transition-all shadow-lg shadow-black/20">
                     <div className="flex items-start justify-between gap-2 mb-1.5">
-                      <h4 className="text-[11px] font-bold text-gray-200 leading-tight">{task.title}</h4>
-                      <button onClick={() => handleDelete(task.id)} className="text-gray-800 hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover:opacity-100"><Trash2 size={10} /></button>
+                      <h4 className="text-[11px] font-bold text-gray-100 leading-tight">{task.title}</h4>
+                      <button onClick={() => handleDelete(task.id)} className="text-gray-700 hover:text-red-500 transition-colors shrink-0 opacity-0 group-hover:opacity-100"><Trash2 size={10} /></button>
                     </div>
                     
-                    {task.description && <p className="text-[9px] text-gray-600 line-clamp-1 mb-2 leading-snug">{task.description}</p>}
+                    {task.description && <p className="text-[9px] text-gray-500 line-clamp-2 mb-2 leading-snug">{task.description}</p>}
 
                     <div className="flex items-center justify-between pt-2 border-t border-[#1a3a24]/30">
                       <div className="flex items-center gap-1.5">
-                        <div className="h-4 w-4 rounded-md bg-emerald-500/5 border border-emerald-500/10 flex items-center justify-center text-[7px] font-black text-emerald-500/40 uppercase">{collaborator?.name?.[0] || '?'}</div>
-                        <span className="text-[8px] text-gray-600 font-bold truncate max-w-[60px]">{collaborator?.name || '---'}</span>
+                        <div className="h-4 w-4 rounded-md bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-[7px] font-black text-emerald-400 uppercase">{collaborator?.name?.[0] || '?'}</div>
+                        <span className="text-[8px] text-gray-500 font-bold truncate max-w-[80px]">{collaborator?.name || 'Sem resp.'}</span>
                       </div>
                       <div className="flex gap-1">
-                        {col.status !== 'a_fazer' && <button onClick={() => handleMoveTask(task.id, 'a_fazer')} className="p-0.5 text-gray-700 hover:text-white"><Clock size={10} /></button>}
-                        {col.status !== 'em_andamento' && <button onClick={() => handleMoveTask(task.id, 'em_andamento')} className="p-0.5 text-gray-700 hover:text-emerald-400"><Play size={10} /></button>}
-                        {col.status !== 'finalizada' && <button onClick={() => handleMoveTask(task.id, 'finalizada')} className="p-0.5 text-gray-700 hover:text-blue-400"><CheckCircle2 size={10} /></button>}
+                        {col.status !== 'a_fazer' && <button title="Mover para A Fazer" onClick={() => handleMoveTask(task.id, 'a_fazer')} className="p-0.5 text-gray-600 hover:text-white transition-colors"><Clock size={10} /></button>}
+                        {col.status !== 'em_andamento' && <button title="Mover para Em Andamento" onClick={() => handleMoveTask(task.id, 'em_andamento')} className="p-0.5 text-gray-600 hover:text-emerald-400 transition-colors"><Play size={10} /></button>}
+                        {col.status !== 'finalizada' && <button title="Finalizar" onClick={() => handleMoveTask(task.id, 'finalizada')} className="p-0.5 text-gray-600 hover:text-blue-400 transition-colors"><CheckCircle2 size={10} /></button>}
                       </div>
                     </div>
                   </div>

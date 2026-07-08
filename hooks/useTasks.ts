@@ -70,12 +70,17 @@ export function useTasks() {
     setError(null)
     try {
       // ENVIANDO APENAS O ESSENCIAL PARA EVITAR ERRO DE SCHEMA CACHE
+      // Captura o user_id da sessão atual do Supabase
+      const { data: { session } } = await supabase.auth.getSession()
+      
       const taskData: any = {
         title: input.title,
         status: input.status || 'a_fazer',
         priority: input.priority || 'media',
         description: input.description?.trim() || null,
-        collaborator_id: input.collaborator_id || null
+        collaborator_id: input.collaborator_id || null,
+        owner_id: session?.user?.id || null,
+        created_by: session?.user?.id || null
       }
 
       const { data, error } = await supabase
