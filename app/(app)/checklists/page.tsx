@@ -187,19 +187,19 @@ export default function ChecklistsPage() {
         </div>
       )}
 
-      {/* GRID DE COLUNAS - DESIGN MINIMALISTA E FORTE */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-16">
+      {/* LAYOUT VERTICAL - PENDENTES EM CIMA, FINALIZADOS EMBAIXO */}
+      <div className="flex flex-col gap-16">
         {/* PENDENTES */}
         <section>
-          <div className="flex items-center justify-between mb-8 px-2">
+          <div className="flex items-center justify-between mb-6 px-2">
             <div className="flex items-center gap-4">
-              <div className="w-3 h-3 rounded-full bg-amber-500 animate-pulse shadow-[0_0_10px_rgba(245,158,11,0.5)]" />
-              <h2 className="text-lg font-black text-white uppercase tracking-tight italic">Rotinas Pendentes</h2>
+              <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]" />
+              <h2 className="text-base font-bold text-white uppercase tracking-wider">Rotinas Pendentes</h2>
             </div>
-            <span className="text-[10px] font-black text-amber-500/50 uppercase tracking-[0.2em]">{pendingLists.length} Ativas</span>
+            <span className="text-[10px] font-bold text-amber-500/40 uppercase tracking-widest">{pendingLists.length} Ativas</span>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {pendingLists.map(list => (
               <ChecklistCard 
                 key={list.id} 
@@ -213,25 +213,25 @@ export default function ChecklistsPage() {
               />
             ))}
             {pendingLists.length === 0 && (
-              <div className="col-span-full py-20 border-2 border-dashed border-[#1a1a1a] rounded-[2.5rem] flex flex-col items-center justify-center text-gray-700">
-                <ListChecks size={40} className="mb-4 opacity-10" />
-                <p className="text-xs font-black uppercase tracking-widest">Tudo em ordem por aqui</p>
+              <div className="col-span-full py-16 border border-dashed border-[#2a2a2a] rounded-2xl flex flex-col items-center justify-center text-gray-700">
+                <ListChecks size={32} className="mb-3 opacity-20" />
+                <p className="text-[10px] font-bold uppercase tracking-widest">Tudo em ordem por aqui</p>
               </div>
             )}
           </div>
         </section>
 
         {/* REALIZADOS */}
-        <section>
-          <div className="flex items-center justify-between mb-8 px-2">
+        <section className="pt-8 border-t border-[#1a1a1a]">
+          <div className="flex items-center justify-between mb-6 px-2">
             <div className="flex items-center gap-4">
-              <div className="w-3 h-3 rounded-full bg-[#00ff88] shadow-[0_0_10px_rgba(0,255,136,0.5)]" />
-              <h2 className="text-lg font-black text-white uppercase tracking-tight italic">Concluídas</h2>
+              <div className="w-2 h-2 rounded-full bg-[#00ff88] shadow-[0_0_8px_rgba(0,255,136,0.4)]" />
+              <h2 className="text-base font-bold text-white uppercase tracking-wider">Concluídas</h2>
             </div>
-            <span className="text-[10px] font-black text-[#00ff88]/30 uppercase tracking-[0.2em]">{completedLists.length} Feitas</span>
+            <span className="text-[10px] font-bold text-[#00ff88]/30 uppercase tracking-widest">{completedLists.length} Feitas</span>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {completedLists.map(list => (
               <ChecklistCard 
                 key={list.id} 
@@ -244,6 +244,11 @@ export default function ChecklistsPage() {
                 deleteItem={deleteItem}
               />
             ))}
+            {completedLists.length === 0 && (
+              <div className="col-span-full py-10 flex flex-col items-center justify-center text-gray-800">
+                <p className="text-[10px] font-bold uppercase tracking-widest italic">Nenhuma lista finalizada ainda</p>
+              </div>
+            )}
           </div>
         </section>
       </div>
