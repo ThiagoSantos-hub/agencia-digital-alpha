@@ -35,7 +35,7 @@ export default function ChecklistsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#111]">
-        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
       </div>
     )
   }
@@ -55,12 +55,12 @@ export default function ChecklistsPage() {
             onChange={(e) => setNewListTitle(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleCreateList()}
             placeholder="Nome da lista (ex: Segunda-feira, Empresa X)..."
-            className="flex-1 px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+            className="flex-1 px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-sm focus:outline-none focus:border-emerald-500 transition-colors"
           />
           <button 
             onClick={handleCreateList}
             disabled={!newListTitle.trim()}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors text-sm font-medium whitespace-nowrap"
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-[#0a0f0c] rounded-lg transition-colors text-sm font-bold whitespace-nowrap"
           >
             <Plus size={18} />
             Criar Lista
@@ -109,7 +109,7 @@ export default function ChecklistsPage() {
                       type="checkbox"
                       checked={item.completed}
                       onChange={() => toggleItem(item.id, item.completed)}
-                      className="w-4 h-4 rounded border-[#2a2a2a] bg-transparent text-indigo-500 focus:ring-offset-0 focus:ring-0"
+                      className="w-4 h-4 rounded border-[#2a2a2a] bg-transparent text-emerald-500 focus:ring-offset-0 focus:ring-0"
                     />
                     <span className={`text-sm flex-1 ${item.completed ? 'line-through text-gray-600' : 'text-gray-300'}`}>
                       {item.text}
@@ -131,7 +131,7 @@ export default function ChecklistsPage() {
                   value={newItemTexts[list.id] || ''}
                   onChange={(e) => setNewItemTexts(prev => ({ ...prev, [list.id]: e.target.value }))}
                   onKeyDown={(e) => e.key === 'Enter' && handleAddItem(list.id)}
-                  className="flex-1 px-3 py-1.5 bg-[#111] border border-[#2a2a2a] rounded-lg text-xs focus:outline-none focus:border-indigo-500 transition-colors"
+                  className="flex-1 px-3 py-1.5 bg-[#111] border border-[#2a2a2a] rounded-lg text-xs focus:outline-none focus:border-emerald-500 transition-colors"
                 />
                 <button 
                   onClick={() => handleAddItem(list.id)}

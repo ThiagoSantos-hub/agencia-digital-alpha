@@ -62,9 +62,9 @@ const MetricSelectorModal = React.memo(function MetricSelectorModal({ campaign, 
               const ativo = selected.includes(opt.key)
               return (
                 <button key={opt.key} onClick={() => toggle(opt.key)}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-xl border text-left text-xs font-medium transition-all ${ativo ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-300' : 'bg-[#1a1a1a] border-[#2a2a2a] text-gray-400 hover:text-white hover:border-[#3a3a3a]'}`}>
+                  className={`flex items-center justify-between px-3 py-2.5 rounded-xl border text-left text-xs font-medium transition-all ${ativo ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300' : 'bg-[#1a1a1a] border-[#2a2a2a] text-gray-400 hover:text-white hover:border-[#3a3a3a]'}`}>
                   <span>{opt.label}</span>
-                  {ativo && <Check size={12} className="text-indigo-400 shrink-0 ml-2" />}
+                  {ativo && <Check size={12} className="text-emerald-400 shrink-0 ml-2" />}
                 </button>
               )
             })}
@@ -73,7 +73,7 @@ const MetricSelectorModal = React.memo(function MetricSelectorModal({ campaign, 
         <div className="px-6 py-4 border-t border-[#2a2a2a] flex gap-3">
           <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-[#2a2a2a] text-gray-400 text-sm hover:text-white transition-colors">Cancelar</button>
           <button onClick={handleSave} disabled={saving || selected.length === 0}
-            className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+            className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 disabled:opacity-50 transition-colors">
             {saving ? 'Salvando...' : `Salvar (${selected.length})`}
           </button>
         </div>
@@ -142,10 +142,10 @@ const CampaignCard = React.memo(function CampaignCard({ campaign, fetchMetrics, 
 
   return (
     <>
-      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl overflow-hidden hover:border-indigo-500/30 transition-all shadow-xl">
+      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl overflow-hidden hover:border-emerald-500/30 transition-all shadow-xl">
         <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center shadow-inner">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shadow-inner">
               <Megaphone size={22} />
             </div>
             <div>
@@ -161,10 +161,10 @@ const CampaignCard = React.memo(function CampaignCard({ campaign, fetchMetrics, 
               <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider">Orçamento Diário</p>
               <p className="text-white font-semibold text-sm">{campaign.budget ? `R$ ${campaign.budget.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'}</p>
             </div>
-            <button onClick={abrirConfig} className="w-8 h-8 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] flex items-center justify-center text-gray-500 hover:text-indigo-400 hover:border-indigo-500/30 transition-all" title="Configurar métricas">
+            <button onClick={abrirConfig} className="w-8 h-8 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] flex items-center justify-center text-gray-500 hover:text-emerald-400 hover:border-emerald-500/30 transition-all" title="Configurar métricas">
               <Settings2 size={14} />
             </button>
-            <button onClick={loadMetrics} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${expandido ? 'bg-indigo-600 text-white' : 'bg-[#0f0f0f] border border-[#2a2a2a] text-gray-400 hover:text-white'}`}>
+            <button onClick={loadMetrics} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${expandido ? 'bg-emerald-600 text-white' : 'bg-[#0f0f0f] border border-[#2a2a2a] text-gray-400 hover:text-white'}`}>
               <BarChart2 size={14} />
               {expandido ? 'Ocultar Métricas' : 'Ver Métricas'}
             </button>
@@ -175,7 +175,7 @@ const CampaignCard = React.memo(function CampaignCard({ campaign, fetchMetrics, 
           <div className="px-5 pb-5 pt-2 border-t border-[#2a2a2a] bg-[#0f0f0f]/50">
             {loadingMetrics ? (
               <div className="flex items-center justify-center py-8 gap-2 text-gray-500 text-xs">
-                <RefreshCw size={16} className="animate-spin text-indigo-500" /> Buscando dados reais do Meta Ads...
+                <RefreshCw size={16} className="animate-spin text-emerald-500" /> Buscando dados reais do Meta Ads...
               </div>
             ) : metrics.length === 0 ? (
               <div className="text-center py-8 text-gray-600 text-xs italic">
@@ -247,8 +247,8 @@ const ClienteAccordion = React.memo(function ClienteAccordion({ clienteId, clien
     <div className="bg-[#111] border border-[#2a2a2a] rounded-2xl overflow-hidden">
       <button onClick={() => setAberto(!aberto)} className="w-full flex items-center justify-between px-6 py-4 hover:bg-[#1a1a1a] transition-colors">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center">
-            <User size={16} className="text-indigo-400" />
+          <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+            <User size={16} className="text-emerald-400" />
           </div>
           <div className="text-left">
             <div className="flex items-center gap-2">
@@ -279,9 +279,9 @@ const ClienteAccordion = React.memo(function ClienteAccordion({ clienteId, clien
                 </div>
               )}
               {metaInfo.saldo && (
-                <div className="flex items-center gap-1.5 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-full">
-                  <Wallet size={11} className="text-indigo-400" />
-                  <span className="text-indigo-400 text-[10px] font-bold">Saldo: {metaInfo.saldo}</span>
+                <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
+                  <Wallet size={11} className="text-emerald-400" />
+                  <span className="text-emerald-400 text-[10px] font-bold">Saldo: {metaInfo.saldo}</span>
                 </div>
               )}
             </>
@@ -289,7 +289,7 @@ const ClienteAccordion = React.memo(function ClienteAccordion({ clienteId, clien
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="text-indigo-400 text-xs font-bold bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-full">{campanhasFiltradas.length}</span>
+          <span className="text-emerald-400 text-xs font-bold bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">{campanhasFiltradas.length}</span>
           {aberto ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
         </div>
       </button>
@@ -307,163 +307,127 @@ const ClienteAccordion = React.memo(function ClienteAccordion({ clienteId, clien
 )
 
 export default function CampanhasPage() {
-  const { campaigns, loading, error, syncAllMetaCampaigns, fetchMetrics, fetchAllMetricOptions, saveSelectedMetrics } = useCampanhas()
+  const { campaigns, loading, error, syncCampaigns, fetchMetrics, fetchAllMetricOptions, saveSelectedMetrics } = useCampanhas()
   const { clients } = useClientes()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('todas')
-  const [dateStart, setDateStart] = useState('')
-  const [dateEnd, setDateEnd] = useState('')
-  const [localError, setLocalError] = useState<string | null>(null)
+  const [syncing, setSyncing] = useState(false)
+  const [contasBloqueadas, setContasBloqueadas] = useState<Record<string, boolean>>({})
 
-  // Estado para rastrear quais clientes estão bloqueados
-  const [blockedClientIds, setBlockedClientIds] = useState<Set<string>>(new Set())
-
-  const handleStatusDetected = useCallback((clienteId: string, bloqueada: boolean) => {
-    setBlockedClientIds(prev => {
-      const next = new Set(prev)
-      const had = next.has(clienteId)
-      if (bloqueada && !had) {
-        next.add(clienteId)
-        return next
-      } else if (!bloqueada && had) {
-        next.delete(clienteId)
-        return next
-      }
-      return prev // Retorna o estado anterior se não houver mudança real
-    })
-  }, [])
-
-  const campanhasPorCliente = useMemo(() => {
-    const grupos: Record<string, { nome: string; adAccountId: string | null; campaigns: Campaign[] }> = {}
-    campaigns.forEach(c => {
-      if (!grupos[c.client_id]) {
-        const cliente = clients.find(cl => cl.id === c.client_id)
-        grupos[c.client_id] = {
-          nome: cliente?.name ?? `Cliente ${c.client_id.slice(0, 8)}`,
-          adAccountId: cliente?.meta_ad_account_id ?? null,
-          campaigns: [],
-        }
-      }
-      grupos[c.client_id].campaigns.push(c)
-    })
-    return grupos
-  }, [campaigns, clients])
-
-  const { ativos, bloqueados } = useMemo(() => {
-    const entries = Object.entries(campanhasPorCliente)
-    return {
-      ativos: entries.filter(([id]) => !blockedClientIds.has(id)),
-      bloqueados: entries.filter(([id]) => blockedClientIds.has(id))
-    }
-  }, [campanhasPorCliente, blockedClientIds])
+  // Filtro de data
+  const [dateStart, setDateStart] = useState(() => {
+    const d = new Date()
+    d.setDate(d.getDate() - 7)
+    return d.toISOString().split('T')[0]
+  })
+  const [dateEnd, setDateEnd] = useState(() => new Date().toISOString().split('T')[0])
 
   const handleSync = async () => {
-    setLocalError(null)
-    try {
-      await syncAllMetaCampaigns()
-    } catch (err: any) {
-      setLocalError(err.message || 'Falha na sincronização')
-    }
+    setSyncing(true)
+    await syncCampaigns()
+    setSyncing(false)
   }
 
+  const clientesComCampanhas = useMemo(() => {
+    return clients
+      .filter(c => c.show_campaigns !== false)
+      .map(c => ({
+        ...c,
+        campaigns: campaigns.filter(camp => camp.client_id === c.id)
+      }))
+      .filter(c => c.campaigns.length > 0)
+  }, [clients, campaigns])
+
+  const totalBloqueadas = Object.values(contasBloqueadas).filter(Boolean).length
+
   return (
-    <div className="space-y-8 pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="p-8 space-y-8 pb-20">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-white text-3xl font-bold tracking-tight">Campanhas Ativas</h1>
-          <p className="text-gray-400 text-sm mt-1">Visualização direta de anúncios sincronizados com seu Meta Ads.</p>
+          <h1 className="text-white text-2xl font-bold">Campanhas</h1>
+          <p className="text-gray-400 text-sm mt-1">Monitore o desempenho das campanhas do Meta Ads em tempo real.</p>
         </div>
-        <button onClick={handleSync} disabled={loading}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-medium transition-all ${loading ? 'bg-indigo-500/20 text-indigo-400' : 'bg-[#1a1a1a] border border-[#2a2a2a] text-gray-300 hover:text-white'}`}>
-          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-          {loading ? 'Sincronizando...' : 'Sincronizar Meta'}
-        </button>
+        <div className="flex items-center gap-3">
+          {totalBloqueadas > 0 && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-red-500/10 border border-red-500/20 rounded-xl">
+              <AlertTriangle size={14} className="text-red-400" />
+              <span className="text-red-400 text-xs font-bold">{totalBloqueadas} conta{totalBloqueadas !== 1 ? 's' : ''} com problemas</span>
+            </div>
+          )}
+          <button onClick={handleSync} disabled={syncing}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-medium transition-all ${syncing ? 'bg-emerald-500/20 text-emerald-400' : 'bg-[#1a1a1a] border border-[#2a2a2a] text-gray-300 hover:text-white'}`}>
+            <RefreshCw size={18} className={syncing ? 'animate-spin' : ''} />
+            {syncing ? 'Sincronizando...' : 'Sincronizar Meta'}
+          </button>
+        </div>
       </div>
 
-      {(error || localError) && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex items-start gap-3 text-red-400">
-          <AlertTriangle size={20} className="shrink-0 mt-0.5" />
-          <div className="space-y-1">
-            <p className="text-sm font-bold">Erro na Sincronização</p>
-            <p className="text-xs opacity-80">{error || localError}. Verifique sua conexão com o Meta Ads nas Integrações.</p>
-          </div>
-        </div>
-      )}
-
-      <div className="flex flex-wrap items-center gap-4 bg-[#1a1a1a] p-3 rounded-2xl border border-[#2a2a2a] shadow-lg">
-        <div className="relative flex-1 min-w-[200px]">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="relative">
           <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input type="text" placeholder="Buscar campanha pelo nome..." value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full pl-12 pr-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 transition-all" />
+          <input type="text" placeholder="Buscar campanhas..." value={search} onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-12 pr-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-all" />
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl">
-          <Filter size={16} className="text-indigo-400" />
-          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="bg-transparent text-white text-sm focus:outline-none cursor-pointer">
+
+        <div className="flex items-center gap-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl px-3">
+          <Filter size={16} className="text-emerald-400" />
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
+            className="flex-1 bg-transparent py-2.5 text-white text-sm focus:outline-none appearance-none cursor-pointer">
             <option value="todas">Todos os Status</option>
             <option value="ativa">Ativas</option>
             <option value="pausada">Pausadas</option>
             <option value="finalizada">Finalizadas</option>
           </select>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl">
-          <Calendar size={16} className="text-indigo-400" />
-          <input type="date" value={dateStart} onChange={e => setDateStart(e.target.value)} className="bg-transparent text-white text-sm focus:outline-none" style={{ colorScheme: 'dark' }} />
-          <span className="text-gray-600">—</span>
-          <input type="date" value={dateEnd} onChange={e => setDateEnd(e.target.value)} className="bg-transparent text-white text-sm focus:outline-none" style={{ colorScheme: 'dark' }} />
+
+        <div className="flex items-center gap-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl px-3">
+          <Calendar size={16} className="text-emerald-400" />
+          <div className="flex items-center gap-2 flex-1">
+            <input type="date" value={dateStart} onChange={(e) => setDateStart(e.target.value)}
+              className="bg-transparent py-2.5 text-white text-xs focus:outline-none flex-1" />
+            <span className="text-gray-600">à</span>
+            <input type="date" value={dateEnd} onChange={(e) => setDateEnd(e.target.value)}
+              className="bg-transparent py-2.5 text-white text-xs focus:outline-none flex-1" />
+          </div>
         </div>
       </div>
 
-      <div className="space-y-10">
-        {loading && campaigns.length === 0 ? (
+      <div className="space-y-4">
+        {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <RefreshCw size={32} className="animate-spin text-indigo-500" />
-            <p className="text-gray-500 text-sm">Buscando campanhas no Meta Ads...</p>
+            <RefreshCw size={32} className="animate-spin text-emerald-500" />
+            <p className="text-gray-500 text-sm">Buscando campanhas e clientes...</p>
           </div>
-        ) : Object.keys(campanhasPorCliente).length === 0 ? (
-          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-3xl p-20 text-center">
-            <Megaphone size={48} className="text-gray-700 mx-auto mb-4" />
-            <h3 className="text-white font-medium text-lg">Nenhuma campanha encontrada</h3>
-            <p className="text-gray-500 text-sm mt-1">Verifique sua conexão com o Meta Ads ou tente outro filtro.</p>
+        ) : error ? (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-8 text-center">
+            <AlertTriangle size={40} className="text-red-500 mx-auto mb-4" />
+            <h3 className="text-white font-bold mb-2">Erro ao carregar dados</h3>
+            <p className="text-gray-500 text-sm mb-6">{error}</p>
+            <button onClick={() => window.location.reload()} className="px-6 py-2 bg-red-500 text-white rounded-xl text-sm font-bold hover:bg-red-600 transition-all">Tentar Novamente</button>
+          </div>
+        ) : clientesComCampanhas.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+            <Megaphone size={48} className="mb-4 opacity-10" />
+            <p>Nenhuma campanha encontrada para os filtros aplicados.</p>
           </div>
         ) : (
-          <>
-            {/* Seção Contas Ativas */}
-            {ativos.length > 0 && (
-              <div className="space-y-4">
-                <h2 className="text-emerald-400 text-xs font-black uppercase tracking-[0.2em] flex items-center gap-2">
-                  <span className="text-[8px]">●</span> Contas ativas
-                </h2>
-                <div className="grid grid-cols-1 gap-4">
-                  {ativos.map(([clienteId, { nome, adAccountId, campaigns: cams }]) => (
-                    <ClienteAccordion key={clienteId} clienteId={clienteId} clienteNome={nome} adAccountId={adAccountId} campaigns={cams}
-                      fetchMetrics={fetchMetrics} fetchAllMetricOptions={fetchAllMetricOptions} saveSelectedMetrics={saveSelectedMetrics}
-                      statusFilter={statusFilter} search={search} dateStart={dateStart} dateEnd={dateEnd}
-                      onStatusDetected={(bloqueada) => handleStatusDetected(clienteId, bloqueada)} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Divisor e Seção Contas Bloqueadas */}
-            {bloqueados.length > 0 && (
-              <>
-                {ativos.length > 0 && <div className="border-t border-[#2a2a2a] my-8" />}
-                <div className="space-y-4">
-                  <h2 className="text-red-400 text-xs font-black uppercase tracking-[0.2em] flex items-center gap-2">
-                    <span className="text-[8px]">●</span> Contas bloqueadas
-                  </h2>
-                  <div className="grid grid-cols-1 gap-4">
-                    {bloqueados.map(([clienteId, { nome, adAccountId, campaigns: cams }]) => (
-                      <ClienteAccordion key={clienteId} clienteId={clienteId} clienteNome={nome} adAccountId={adAccountId} campaigns={cams}
-                        fetchMetrics={fetchMetrics} fetchAllMetricOptions={fetchAllMetricOptions} saveSelectedMetrics={saveSelectedMetrics}
-                        statusFilter={statusFilter} search={search} dateStart={dateStart} dateEnd={dateEnd}
-                        onStatusDetected={(bloqueada) => handleStatusDetected(clienteId, bloqueada)} />
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-          </>
+          clientesComCampanhas.map(c => (
+            <ClienteAccordion 
+              key={c.id} 
+              clienteId={c.id} 
+              clienteNome={c.name} 
+              adAccountId={c.meta_ad_account_id}
+              campaigns={c.campaigns} 
+              fetchMetrics={fetchMetrics}
+              fetchAllMetricOptions={fetchAllMetricOptions}
+              saveSelectedMetrics={saveSelectedMetrics}
+              statusFilter={statusFilter}
+              search={search}
+              dateStart={dateStart}
+              dateEnd={dateEnd}
+              onStatusDetected={(bloqueada) => setContasBloqueadas(prev => ({ ...prev, [c.id]: bloqueada }))}
+            />
+          ))
         )}
       </div>
     </div>
