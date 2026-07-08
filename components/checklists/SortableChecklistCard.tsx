@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { 
-  GripHorizontal, Trash2, Edit2, Plus, 
+  GripHorizontal, Trash2, Edit2, Plus, Copy,
   CheckSquare, Calendar, Clock, ChevronDown, 
   ChevronUp, ListChecks, ExternalLink
 } from 'lucide-react'
@@ -29,6 +29,7 @@ interface SortableChecklistCardProps {
   list: Checklist
   updateChecklist: any
   deleteChecklist: any
+  duplicateChecklist?: any
   addItem: any
   updateItem: any
   toggleItem: any
@@ -49,7 +50,8 @@ const DIAS_SEMANA = [
 export function SortableChecklistCard({ 
   list, 
   updateChecklist, 
-  deleteChecklist, 
+  deleteChecklist,
+  duplicateChecklist, 
   addItem, 
   updateItem, 
   toggleItem, 
@@ -135,6 +137,11 @@ export function SortableChecklistCard({
             <button onClick={() => setIsEditing(true)} className="p-1 text-gray-700 hover:text-amber-400">
               <Edit2 size={12} />
             </button>
+            {duplicateChecklist && (
+              <button onClick={() => duplicateChecklist(list.id)} className="p-1 text-gray-700 hover:text-emerald-400" title="Duplicar checklist">
+                <Copy size={12} />
+              </button>
+            )}
             <button onClick={() => deleteChecklist(list.id)} className="p-1 text-gray-700 hover:text-red-500">
               <Trash2 size={12} />
             </button>

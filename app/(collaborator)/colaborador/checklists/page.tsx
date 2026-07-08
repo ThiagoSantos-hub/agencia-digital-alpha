@@ -43,7 +43,8 @@ export default function ColaboradorChecklistsPage() {
     loading, 
     createChecklist, 
     updateChecklist,
-    deleteChecklist, 
+    deleteChecklist,
+    duplicateChecklist,
     addItem, 
     updateItem,
     toggleItem, 
@@ -266,6 +267,7 @@ export default function ColaboradorChecklistsPage() {
                       list={list} 
                       updateChecklist={updateChecklist}
                       deleteChecklist={deleteChecklist}
+                      duplicateChecklist={duplicateChecklist}
                       addItem={addItem}
                       updateItem={updateItem}
                       toggleItem={toggleItem}
@@ -325,6 +327,7 @@ export default function ColaboradorChecklistsPage() {
                   list={list} 
                   updateChecklist={updateChecklist}
                   deleteChecklist={deleteChecklist}
+                  duplicateChecklist={duplicateChecklist}
                   addItem={addItem}
                   updateItem={updateItem}
                   toggleItem={toggleItem}

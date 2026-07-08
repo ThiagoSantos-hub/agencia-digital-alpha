@@ -155,6 +155,42 @@ export function useChecklists() {
     if (!error) await fetchChecklists()
   }
 
+  const duplicateChecklist = async (id: string) => {
+    const source = checklists.find(l => l.id === id)
+    if (!source || !user) return
+
+    const maxPos = checklists.length > 0 ? Math.max(...checklists.map(l => l.position || 0)) : -1
+
+    const { data: newList, error } = await supabase
+      .from('checklists')
+      .insert({
+        title: `${source.title} (Cópia)`,
+        user_id: user.id,
+        recurrence: source.recurrence,
+        recurrence_days: source.recurrence_days,
+        position: maxPos + 1
+      })
+      .select()
+      .single()
+
+    if (!newList) return
+
+    const items = source.checklist_items || []
+    for (let i = 0; i < items.length; i++) {
+      await supabase
+        .from('checklist_items')
+        .insert({
+          checklist_id: newList.id,
+          text: items[i].text,
+          user_id: user.id,
+          completed: false,
+          position: i
+        })
+    }
+
+    await fetchChecklists()
+  }
+
   const uncheckAll = async (checklist_id: string) => {
     const { error } = await supabase
       .from('checklist_items')
@@ -210,6 +246,7 @@ export function useChecklists() {
     createChecklist,
     updateChecklist,
     deleteChecklist,
+    duplicateChecklist,
     addItem,
     updateItem,
     toggleItem,

@@ -44,7 +44,8 @@ export default function ChecklistsPage() {
     loading, 
     createChecklist, 
     updateChecklist,
-    deleteChecklist, 
+    deleteChecklist,
+    duplicateChecklist,
     addItem, 
     updateItem,
     toggleItem, 
@@ -268,6 +269,7 @@ export default function ChecklistsPage() {
                       list={list} 
                       updateChecklist={updateChecklist}
                       deleteChecklist={deleteChecklist}
+                      duplicateChecklist={duplicateChecklist}
                       addItem={addItem}
                       updateItem={updateItem}
                       toggleItem={toggleItem}
@@ -327,6 +329,7 @@ export default function ChecklistsPage() {
                   list={list} 
                   updateChecklist={updateChecklist}
                   deleteChecklist={deleteChecklist}
+                  duplicateChecklist={duplicateChecklist}
                   addItem={addItem}
                   updateItem={updateItem}
                   toggleItem={toggleItem}
