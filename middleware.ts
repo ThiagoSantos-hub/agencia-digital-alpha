@@ -4,10 +4,6 @@ import { NextResponse, type NextRequest } from 'next/server'
 export async function middleware(request: NextRequest) {
   const isApiRoute = request.nextUrl.pathname.startsWith('/api/')
   
-  // v1.3.0: ISOLAMENTO TOTAL DE API
-  // Se for uma rota de API, o middleware NÃO faz nada.
-  // Deixamos a responsabilidade de autenticação 100% para os handlers de API.
-  // Isso evita redirecionamentos indesejados (307/302) que causam erro 401 em chamadas CORS da extensão.
   if (isApiRoute) {
     return NextResponse.next()
   }
@@ -30,23 +26,29 @@ export async function middleware(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
+
   const isAuthRoute = request.nextUrl.pathname.startsWith('/login')
-  const isAppRoute =
+
+  const isAdminRoute =
     request.nextUrl.pathname.startsWith('/dashboard') ||
     request.nextUrl.pathname.startsWith('/clientes') ||
     request.nextUrl.pathname.startsWith('/campanhas') ||
-    request.nextUrl.pathname.startsWith('/tarefas') ||
     request.nextUrl.pathname.startsWith('/integracoes') ||
     request.nextUrl.pathname.startsWith('/financeiro') ||
     request.nextUrl.pathname.startsWith('/colaboradores') ||
-    request.nextUrl.pathname.startsWith('/colaborador') ||
     request.nextUrl.pathname.startsWith('/ai') ||
-    request.nextUrl.pathname.startsWith('/perfil')
+    request.nextUrl.pathname.startsWith('/perfil') ||
+    request.nextUrl.pathname.startsWith('/checklists') ||
+    request.nextUrl.pathname.startsWith('/tarefas')
 
-  if (!user && isAppRoute) {
+  const isCollaboratorRoute = request.nextUrl.pathname.startsWith('/colaborador/')
+
+  // Usuário não autenticado tentando acessar app → redireciona para login
+  if (!user && (isAdminRoute || isCollaboratorRoute)) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
+  // Usuário autenticado tentando acessar login → redireciona para o painel correto
   if (user && isAuthRoute) {
     const { data: profile } = await supabase
       .from('profiles')
@@ -56,6 +58,32 @@ export async function middleware(request: NextRequest) {
     
     const dest = profile?.role === 'collaborator' ? '/colaborador/dashboard' : '/dashboard'
     return NextResponse.redirect(new URL(dest, request.url))
+  }
+
+  // Colaborador tentando acessar rota do admin → redireciona para painel do colaborador
+  if (user && isAdminRoute) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    
+    if (profile?.role === 'collaborator') {
+      return NextResponse.redirect(new URL('/colaborador/dashboard', request.url))
+    }
+  }
+
+  // Admin tentando acessar rota do colaborador → redireciona para painel admin
+  if (user && isCollaboratorRoute) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    
+    if (profile?.role !== 'collaborator') {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
   }
 
   return supabaseResponse
@@ -73,6 +101,7 @@ export const config = {
     '/colaborador/:path*',
     '/ai/:path*',
     '/perfil/:path*',
+    '/checklists/:path*',
     '/login',
   ],
 }
