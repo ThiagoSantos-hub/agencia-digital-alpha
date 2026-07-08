@@ -162,12 +162,16 @@ export default function CollaboratorLayout({
             <div ref={sinoRef} className="relative">
               <button
                 onClick={() => setSinoAberto(prev => !prev)}
-                className="relative w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-white hover:bg-[#1a3a24]/40 transition-colors"
+                className={`relative w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-300 ${
+                  naoLidas > 0 
+                    ? 'text-amber-400 bg-amber-400/10 border border-amber-400/30 animate-pulse shadow-[0_0_15px_rgba(251,191,36,0.2)]' 
+                    : 'text-gray-400 hover:text-white hover:bg-[#1a3a24]/40'
+                }`}
                 aria-label="Notificações"
               >
-                <Bell size={18} />
+                <Bell size={18} className={naoLidas > 0 ? 'fill-amber-400' : ''} />
                 {naoLidas > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-[#00ff88] text-[#0a0f0c] text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none border-2 border-[#0a0f0c]">
                     {naoLidas > 99 ? '99+' : naoLidas}
                   </span>
                 )}
