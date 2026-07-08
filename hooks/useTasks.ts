@@ -37,8 +37,10 @@ export function useTasks() {
     setError(null)
 
     try {
-      // Disparar o escalonamento automático de prioridade antes de buscar
-      await supabase.rpc('auto_escalate_task_priority')
+      // Disparar o escalonamento automático em background (não bloqueia a busca)
+      supabase.rpc('auto_escalate_task_priority').catch(() => {
+        console.warn('RPC auto_escalate_task_priority falhou')
+      })
 
       const { data, error: fetchError } = await supabase
         .from('tasks')
