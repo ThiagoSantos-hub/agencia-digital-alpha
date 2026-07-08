@@ -9,7 +9,9 @@ import {
   MoreVertical, 
   Calendar, 
   Clock, 
-  Trash2,
+  Trash2, 
+  Copy, 
+  Edit,
   User as UserIcon,
   CheckCircle2,
   Circle,
@@ -27,6 +29,7 @@ const COLUMNS: { id: TaskStatus; label: string; icon: any; color: string }[] = [
 export default function AdminTasksPage() {
   const { tasks, loading, createTask, updateTask, deleteTask } = useTasks()
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [colaboradores, setColaboradores] = useState<{id: string, name: string, email: string}[]>([])
@@ -37,6 +40,7 @@ export default function AdminTasksPage() {
     priority: 'media' as TaskPriority,
     due_date: ''
   })
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
 
   // Função para ordenar tarefas por prioridade
   const getPriorityOrder = (priority: TaskPriority): number => {
@@ -102,6 +106,40 @@ export default function AdminTasksPage() {
     await updateTask(id, { status: newStatus })
   }
 
+  const handleDuplicateTask = async (task: Task) => {
+    try {
+      await createTask({
+        title: `${task.title} (Cópia)`,
+        description: task.description,
+        assigned_to: task.assigned_to,
+        priority: task.priority,
+        status: 'a_fazer',
+        due_date: task.due_date
+      })
+    } catch (err) {
+      alert('Erro ao duplicar tarefa')
+    }
+  }
+
+  const handleUpdateTask = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingTask) return
+
+    try {
+      await updateTask(editingTask.id, {
+        title: editingTask.title,
+        description: editingTask.description,
+        assigned_to: editingTask.assigned_to,
+        priority: editingTask.priority,
+        due_date: editingTask.due_date
+      })
+      setIsEditModalOpen(false)
+      setEditingTask(null)
+    } catch (err) {
+      alert('Erro ao atualizar tarefa')
+    }
+  }
+
   const getPriorityColor = (priority: TaskPriority) => {
     switch (priority) {
       case 'urgente': return 'text-red-600'
@@ -159,7 +197,13 @@ export default function AdminTasksPage() {
                       {getPriorityLabel(task.priority)}
                     </span>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                      <button onClick={() => deleteTask(task.id)} className="p-1 text-gray-600 hover:text-red-500">
+                      <button onClick={() => handleDuplicateTask(task)} title="Duplicar" className="p-1 text-gray-600 hover:text-blue-400">
+                        <Copy size={14} />
+                      </button>
+                      <button onClick={() => { setEditingTask(task); setIsEditModalOpen(true); }} title="Editar" className="p-1 text-gray-600 hover:text-amber-400">
+                        <Edit size={14} />
+                      </button>
+                      <button onClick={() => deleteTask(task.id)} title="Excluir" className="p-1 text-gray-600 hover:text-red-500">
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -282,6 +326,86 @@ export default function AdminTasksPage() {
                 className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-[#0a0f0c] font-bold rounded-xl transition-all mt-4 shadow-lg shadow-emerald-500/20"
               >
                 Criar Tarefa
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Edição de Tarefa */}
+      {isEditModalOpen && editingTask && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl w-full max-w-lg overflow-hidden">
+            <div className="px-6 py-4 border-b border-[#1a3a24] flex justify-between items-center">
+              <h2 className="text-white font-bold">Editar Tarefa</h2>
+              <button onClick={() => setIsEditModalOpen(false)} className="text-gray-500 hover:text-white text-2xl">&times;</button>
+            </div>
+            <form onSubmit={handleUpdateTask} className="p-6 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Título</label>
+                <input 
+                  required
+                  type="text" 
+                  value={editingTask.title}
+                  onChange={e => setEditingTask({...editingTask, title: e.target.value})}
+                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Descrição</label>
+                <textarea 
+                  rows={4}
+                  value={editingTask.description || ''}
+                  onChange={e => setEditingTask({...editingTask, description: e.target.value})}
+                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50 resize-none whitespace-pre-wrap"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Atribuir a</label>
+                  <select 
+                    required
+                    value={editingTask.assigned_to}
+                    onChange={e => setEditingTask({...editingTask, assigned_to: e.target.value})}
+                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  >
+                    {colaboradores.map(c => (
+                      <option key={c.id} value={c.id}>{c.name || c.email}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Prioridade</label>
+                  <select 
+                    value={editingTask.priority}
+                    onChange={e => setEditingTask({...editingTask, priority: e.target.value as TaskPriority})}
+                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  >
+                    <option value="baixa">Baixa</option>
+                    <option value="media">Média</option>
+                    <option value="alta">Alta</option>
+                    <option value="urgente">Urgente</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Data de Entrega</label>
+                <input 
+                  type="date" 
+                  value={editingTask.due_date ? editingTask.due_date.split('T')[0] : ''}
+                  onChange={e => setEditingTask({...editingTask, due_date: e.target.value})}
+                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                />
+              </div>
+
+              <button 
+                type="submit"
+                className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-[#0a0f0c] font-bold rounded-xl transition-all mt-4"
+              >
+                Salvar Alterações
               </button>
             </form>
           </div>
