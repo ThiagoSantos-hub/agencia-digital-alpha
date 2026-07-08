@@ -165,7 +165,16 @@ export default function ColaboradoresPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      await deleteColaborador(id)
+      // Chamar a API server-side que remove Auth, profiles e collaborators
+      const resp = await fetch('/api/collaborators/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      const data = await resp.json()
+      if (!resp.ok) {
+        throw new Error(data.error || 'Erro ao excluir colaborador.')
+      }
       setDeleteConfirmId(null)
       setToast({ message: 'Colaborador excluído com sucesso!', type: 'success' })
     } catch (err: unknown) {
