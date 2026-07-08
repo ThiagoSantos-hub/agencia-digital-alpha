@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { useNotificacoes } from '@/hooks/useNotificacoes'
+import { NotificationSound } from '@/components/layout/NotificationSound'
 import { useState, useRef } from 'react'
 
 // ── Ícone por tipo de notificação ─────────────────────────────
@@ -231,6 +232,7 @@ export default function CollaboratorLayout({
           {children}
         </main>
       </div>
+      <NotificationSound />
     </div>
   )
 }

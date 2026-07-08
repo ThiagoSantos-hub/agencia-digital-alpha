@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { Header } from '@/components/layout/Header'
+import { NotificationSound } from '@/components/layout/NotificationSound'
 import { AlphaWidget } from '@/components/AlphaWidget'
 import { AlphaVoiceButton } from '@/components/AlphaVoiceButton'
 
@@ -38,6 +39,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+      <NotificationSound />
       <AlphaWidget />
       <AlphaVoiceButton />
     </div>

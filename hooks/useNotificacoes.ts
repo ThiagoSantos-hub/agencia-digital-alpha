@@ -98,13 +98,7 @@ export function useNotificacoes() {
           console.log('Nova notificação recebida em tempo real:', payload.new)
           const novaNotif = payload.new as Notificacao
           
-          // Tocar som de notificação
-          try {
-            const audio = new Audio('/sounds/notification.mp3')
-            audio.play().catch(e => console.warn('Erro ao tocar áudio (interação necessária):', e))
-          } catch (e) {
-            console.error('Erro ao inicializar áudio:', e)
-          }
+          // O som agora é gerenciado pelo componente NotificationSound
 
           setNotificacoes(prev => [novaNotif, ...prev])
           setNaoLidas(prev => prev + 1)
