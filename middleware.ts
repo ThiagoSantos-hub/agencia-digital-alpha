@@ -75,7 +75,7 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/checklists') ||
     request.nextUrl.pathname.startsWith('/tarefas')
 
-  if (isAdminRoute) {
+  if (isAdminRoute && user) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
