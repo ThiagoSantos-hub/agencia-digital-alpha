@@ -100,13 +100,32 @@ export default function ColaboradoresPage() {
   const handleSave = async () => {
     if (!form.name.trim()) { setFormError('Nome é obrigatório.'); return }
     if (!form.role.trim()) { setFormError('Cargo é obrigatório.'); return }
-    if (!form.password?.trim()) { setFormError('Senha é obrigatória.'); return }
+    if (!editingId && !form.password?.trim()) { setFormError('Senha é obrigatória para novos colaboradores.'); return }
     
     setSaving(true)
     setFormError(null)
     try {
       if (editingId) {
-        await updateColaborador(editingId, form)
+        // Separar senha dos dados do colaborador
+        const { password, ...updateData } = form
+        await updateColaborador(editingId, updateData)
+        
+        // Atualizar senha se preenchida
+        if (password?.trim()) {
+          const resp = await fetch('/api/collaborators/update-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: form.email,
+              password: password
+            })
+          })
+          if (!resp.ok) {
+            const data = await resp.json()
+            throw new Error(data.error || 'Erro ao atualizar senha.')
+          }
+        }
+        
         setToast({ message: 'Colaborador atualizado com sucesso!', type: 'success' })
       } else {
         // 1. Criar no banco (tabela collaborators)
