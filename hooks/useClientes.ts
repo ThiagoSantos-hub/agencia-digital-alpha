@@ -290,15 +290,39 @@ export function useClientes() {
       }
 
       if (input.monthly_fee !== undefined || input.payment_day !== undefined) {
-        await supabase.from('finances')
-          .update({
-            valor: data.monthly_fee,
-            dia_vencimento: data.payment_day,
-            descricao: `Mensalidade - ${data.name}`
-          })
-          .eq('client_id', id)
-          .eq('status', 'pendente')
-          .eq('recorrente', true)
+        const payloadFinance: any = {
+          valor: data.monthly_fee,
+          dia_vencimento: data.payment_day,
+          descricao: `Mensalidade - ${data.name}`
+        }
+
+        // Se o dia de pagamento mudou, precisamos atualizar a data_vencimento dos lançamentos pendentes
+        if (input.payment_day !== undefined) {
+          // Para cada lançamento pendente, vamos ajustar a data_vencimento mantendo o mês/ano original
+          const { data: pendentes } = await supabase
+            .from('finances')
+            .select('id, data_vencimento')
+            .eq('client_id', id)
+            .eq('status', 'pendente')
+
+          if (pendentes) {
+            for (const p of pendentes) {
+              const [ano, mes] = p.data_vencimento.split('-')
+              const novaData = new Date(parseInt(ano), parseInt(mes) - 1, data.payment_day).toISOString().split('T')[0]
+              
+              await supabase.from('finances')
+                .update({ ...payloadFinance, data_vencimento: novaData })
+                .eq('id', p.id)
+            }
+          }
+        } else {
+          // Se só o valor mudou, update simples
+          await supabase.from('finances')
+            .update(payloadFinance)
+            .eq('client_id', id)
+            .eq('status', 'pendente')
+            .eq('recorrente', true)
+        }
       }
     }
     return { data, error }
