@@ -74,9 +74,19 @@ export function useChecklists() {
 
   const createChecklist = async (title: string, recurrence: string = 'once', recurrence_days: number[] = []) => {
     if (!user) return
+    
+    // Pegar a última posição para colocar o novo checklist no final
+    const maxPos = checklists.length > 0 ? Math.max(...checklists.map(l => l.position || 0)) : -1
+    
     const { data, error } = await supabase
       .from('checklists')
-      .insert({ title, user_id: user.id, recurrence, recurrence_days })
+      .insert({ 
+        title, 
+        user_id: user.id, 
+        recurrence, 
+        recurrence_days,
+        position: maxPos + 1 
+      })
       .select()
       .single()
     
@@ -105,9 +115,21 @@ export function useChecklists() {
 
   const addItem = async (checklist_id: string, text: string) => {
     if (!user) return
+    
+    // Pegar a última posição do item dentro desse checklist
+    const list = checklists.find(l => l.id === checklist_id)
+    const items = list?.checklist_items || []
+    const maxPos = items.length > 0 ? Math.max(...items.map(i => i.position || 0)) : -1
+
     const { error } = await supabase
       .from('checklist_items')
-      .insert({ checklist_id, text, user_id: user.id, completed: false })
+      .insert({ 
+        checklist_id, 
+        text, 
+        user_id: user.id, 
+        completed: false,
+        position: maxPos + 1
+      })
     if (!error) await fetchChecklists()
   }
 
