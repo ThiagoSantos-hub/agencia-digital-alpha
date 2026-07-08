@@ -36,6 +36,7 @@ export default function LoginPage() {
   const [resetSent, setResetSent] = useState(false)
   const { signIn } = useAuth()
   const router = useRouter()
+  const supabase = createClient()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,7 +49,23 @@ export default function LoginPage() {
       setError('E-mail ou senha inválidos. Tente novamente.')
       setLoading(false)
     } else {
-      router.push('/dashboard')
+      // Buscar o profile para redirecionar para o papel correto
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+        
+        if (profile?.role === 'collaborator') {
+          router.push('/colaborador/dashboard')
+        } else {
+          router.push('/dashboard')
+        }
+      } else {
+        router.push('/dashboard')
+      }
     }
   }
 
