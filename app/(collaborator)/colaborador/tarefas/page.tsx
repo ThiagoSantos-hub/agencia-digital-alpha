@@ -19,7 +19,7 @@ import {
 
 export default function ColaboradorTarefasPage() {
   const { user } = useAuth()
-  const { tasks, listTasks, updateTaskStatus, createTask, deleteTask, loading } = useTasks()
+  const { tasks, listTasks, updateTask, createTask, deleteTask, loading } = useTasks()
   const [collaboratorId, setCollaboratorId] = useState<string | null>(null)
   const supabase = useMemo(() => createClient(), [])
 
@@ -38,7 +38,7 @@ export default function ColaboradorTarefasPage() {
       
       if (data) {
         setCollaboratorId(data.id)
-        listTasks(data.id)
+        listTasks({ collaboratorId: data.id })
       }
     }
     getCollaborator()
@@ -52,16 +52,15 @@ export default function ColaboradorTarefasPage() {
 
   const tasksByStatus = useMemo(() => {
     return {
-      a_fazer: tasks.filter(t => t.status === 'a_fazer'),
+      a_fazer: tasks.filter(t => t.status === 'a_fazer' || t.status === 'pendente'),
       em_andamento: tasks.filter(t => t.status === 'em_andamento'),
-      finalizada: tasks.filter(t => t.status === 'finalizada'),
+      finalizada: tasks.filter(t => t.status === 'finalizada' || t.status === 'concluida'),
     }
   }, [tasks])
 
   const handleMove = async (id: string, newStatus: TaskStatus) => {
     try {
-      await updateTaskStatus(id, newStatus)
-      if (collaboratorId) listTasks(collaboratorId)
+      await updateTask(id, { status: newStatus })
     } catch (error) {
       console.error('Erro ao mover tarefa:', error)
     }
@@ -73,14 +72,12 @@ export default function ColaboradorTarefasPage() {
     await createTask({ title: form.title, description: form.description, collaborator_id: collaboratorId })
     setModalOpen(false)
     setForm({ title: '', description: '' })
-    listTasks(collaboratorId)
     setSaving(false)
   }
 
   const handleDelete = async (id: string) => {
     if (!confirm('Deseja excluir esta tarefa?')) return
     await deleteTask(id)
-    if (collaboratorId) listTasks(collaboratorId)
   }
 
   return (
@@ -105,19 +102,19 @@ export default function ColaboradorTarefasPage() {
                 <h3 className="font-bold text-sm text-white uppercase tracking-wider">{col.label}</h3>
               </div>
               <span className="bg-[#1a3a24] text-emerald-500 text-[10px] font-black px-2 py-0.5 rounded-full">
-                {tasksByStatus[col.status].length}
+                {(tasksByStatus as any)[col.status]?.length || 0}
               </span>
             </div>
 
             <div className="flex-1 p-4 space-y-4 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500/20">
               {loading && tasks.length === 0 ? (
                 <div className="py-8 text-center text-gray-600 text-xs italic">Carregando...</div>
-              ) : tasksByStatus[col.status].length === 0 ? (
+              ) : ((tasksByStatus as any)[col.status]?.length || 0) === 0 ? (
                 <div className="py-8 text-center text-gray-600 text-xs italic border-2 border-dashed border-[#1a3a24] rounded-xl">
                   Nenhuma tarefa aqui
                 </div>
               ) : (
-                tasksByStatus[col.status].map((task) => (
+                (tasksByStatus as any)[col.status].map((task: Task) => (
                   <div key={task.id} className="bg-[#121a15] border border-[#1a3a24] p-4 rounded-xl group hover:border-emerald-500/50 transition-all shadow-sm">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <h4 className="text-sm font-bold text-gray-100 leading-tight">{task.title}</h4>
