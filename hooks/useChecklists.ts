@@ -10,6 +10,7 @@ export interface ChecklistItem {
   user_id: string
   text: string
   completed: boolean
+  position: number
   created_at: string
 }
 
@@ -20,6 +21,7 @@ export interface Checklist {
   recurrence: 'once' | 'daily' | 'weekly'
   recurrence_days: number[] // 0-6
   status: 'pending' | 'completed'
+  position: number
   last_reset_at: string
   created_at: string
   updated_at: string
@@ -47,14 +49,14 @@ export function useChecklists() {
         .from('checklists')
         .select('*, checklist_items(*)')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
+        .order('position', { ascending: true })
       if (error) throw error
       
-      // Ordenar itens por data de criação dentro de cada checklist
+      // Ordenar itens por posição dentro de cada checklist
       const dataWithSortedItems = data?.map(list => ({
         ...list,
         checklist_items: list.checklist_items?.sort((a: any, b: any) => 
-          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          (a.position || 0) - (b.position || 0)
         )
       }))
 
@@ -141,6 +143,37 @@ export function useChecklists() {
     if (!error) await fetchChecklists()
   }
 
+  const updatePositions = async (type: 'checklist' | 'item', items: { id: string, position: number }[]) => {
+    const table = type === 'checklist' ? 'checklists' : 'checklist_items'
+    
+    // Atualização otimizada em lote
+    const { error } = await supabase
+      .from(table)
+      .upsert(items.map(item => ({ id: item.id, position: item.position })), { onConflict: 'id' })
+
+    if (error) {
+      console.error(`Erro ao atualizar posições de ${type}:`, error)
+    } else {
+      // Atualizar estado local para feedback imediato sem fetch completo
+      setChecklists(prev => {
+        if (type === 'checklist') {
+          return [...prev].map(list => {
+            const found = items.find(i => i.id === list.id)
+            return found ? { ...list, position: found.position } : list
+          }).sort((a, b) => a.position - b.position)
+        } else {
+          return prev.map(list => ({
+            ...list,
+            checklist_items: list.checklist_items?.map(item => {
+              const found = items.find(i => i.id === item.id)
+              return found ? { ...item, position: found.position } : item
+            }).sort((a, b) => a.position - b.position)
+          }))
+        }
+      })
+    }
+  }
+
   return {
     checklists,
     loading,
@@ -153,5 +186,6 @@ export function useChecklists() {
     toggleItem,
     deleteItem,
     uncheckAll,
+    updatePositions,
   }
 }

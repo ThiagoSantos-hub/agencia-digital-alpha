@@ -5,8 +5,26 @@ import { useChecklists, Checklist } from '@/hooks/useChecklists'
 import { 
   Trash2, X, Plus, CheckSquare, Loader2, 
   Edit2, Check, Calendar, Clock, ChevronDown, 
-  ChevronUp, LayoutGrid, ListChecks, Sparkles
+  ChevronUp, LayoutGrid, ListChecks, Sparkles,
+  GripHorizontal
 } from 'lucide-react'
+import { 
+  DndContext, 
+  closestCorners, 
+  KeyboardSensor, 
+  PointerSensor, 
+  useSensor, 
+  useSensors,
+  DragOverlay,
+  defaultDropAnimationSideEffects
+} from '@dnd-kit/core'
+import { 
+  arrayMove, 
+  SortableContext, 
+  sortableKeyboardCoordinates, 
+  horizontalListSortingStrategy 
+} from '@dnd-kit/sortable'
+import { SortableChecklistCard } from '@/components/checklists/SortableChecklistCard'
 
 const DIAS_SEMANA = [
   { id: 0, label: 'D' },
@@ -30,10 +48,37 @@ export default function ChecklistsPage() {
     addItem, 
     updateItem,
     toggleItem, 
-    deleteItem
+    deleteItem,
+    updatePositions,
   } = useChecklists()
 
   const [isCreating, setIsCreating] = useState(false)
+  const [activeId, setActiveId] = useState<string | null>(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+
+  const handleDragStart = (event: any) => {
+    setActiveId(event.active.id)
+  }
+
+  const handleDragEnd = async (event: any) => {
+    const { active, over } = event
+    setActiveId(null)
+
+    if (active.id !== over.id) {
+      const oldIndex = pendingLists.findIndex(l => l.id === active.id)
+      const newIndex = pendingLists.findIndex(l => l.id === over.id)
+      const newLists = arrayMove(pendingLists, oldIndex, newIndex)
+      
+      const positions = newLists.map((list, index) => ({ id: list.id, position: index }))
+      await updatePositions('checklist', positions)
+    }
+  }
+
+  const activeList = activeId ? checklists.find(l => l.id === activeId) : null
   const [newListTitle, setNewListTitle] = useState('')
   const [newListDays, setNewListDays] = useState<number[]>([])
   const [newListItems, setNewListItems] = useState<string[]>([])
@@ -206,26 +251,63 @@ export default function ChecklistsPage() {
             <span className="text-[10px] font-bold text-amber-500/40 uppercase tracking-widest">{pendingLists.length} Ativas</span>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {pendingLists.map(list => (
-              <ChecklistCard 
-                key={list.id} 
-                list={list} 
-                updateChecklist={updateChecklist}
-                deleteChecklist={deleteChecklist}
-                addItem={addItem}
-                updateItem={updateItem}
-                toggleItem={toggleItem}
-                deleteItem={deleteItem}
-              />
-            ))}
-            {pendingLists.length === 0 && (
-              <div className="col-span-full py-16 border border-dashed border-[#2a2a2a] rounded-2xl flex flex-col items-center justify-center text-gray-700">
-                <ListChecks size={32} className="mb-3 opacity-20" />
-                <p className="text-[10px] font-bold uppercase tracking-widest">Tudo em ordem por aqui</p>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={pendingLists.map(l => l.id)}
+              strategy={horizontalListSortingStrategy}
+            >
+              <div className="flex gap-6 overflow-x-auto pb-6 custom-scrollbar min-h-[500px]">
+                {pendingLists.map(list => (
+                  <div key={list.id} className="w-[350px] shrink-0">
+                    <SortableChecklistCard 
+                      list={list} 
+                      updateChecklist={updateChecklist}
+                      deleteChecklist={deleteChecklist}
+                      addItem={addItem}
+                      updateItem={updateItem}
+                      toggleItem={toggleItem}
+                      deleteItem={deleteItem}
+                      updatePositions={updatePositions}
+                    />
+                  </div>
+                ))}
+                {pendingLists.length === 0 && (
+                  <div className="w-full py-16 border border-dashed border-[#2a2a2a] rounded-2xl flex flex-col items-center justify-center text-gray-700">
+                    <ListChecks size={32} className="mb-3 opacity-20" />
+                    <p className="text-[10px] font-bold uppercase tracking-widest">Tudo em ordem por aqui</p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </SortableContext>
+
+            <DragOverlay dropAnimation={{
+              sideEffects: defaultDropAnimationSideEffects({
+                styles: {
+                  active: { opacity: '0.5' },
+                },
+              }),
+            }}>
+              {activeList ? (
+                <div className="w-[350px]">
+                  <SortableChecklistCard 
+                    list={activeList} 
+                    updateChecklist={() => {}}
+                    deleteChecklist={() => {}}
+                    addItem={() => {}}
+                    updateItem={() => {}}
+                    toggleItem={() => {}}
+                    deleteItem={() => {}}
+                    updatePositions={() => {}}
+                  />
+                </div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
         </section>
 
         {/* REALIZADOS */}
@@ -238,21 +320,23 @@ export default function ChecklistsPage() {
             <span className="text-[10px] font-bold text-[#00ff88]/30 uppercase tracking-widest">{completedLists.length} Feitas</span>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="flex gap-6 overflow-x-auto pb-6 custom-scrollbar">
             {completedLists.map(list => (
-              <ChecklistCard 
-                key={list.id} 
-                list={list} 
-                updateChecklist={updateChecklist}
-                deleteChecklist={deleteChecklist}
-                addItem={addItem}
-                updateItem={updateItem}
-                toggleItem={toggleItem}
-                deleteItem={deleteItem}
-              />
+              <div key={list.id} className="w-[350px] shrink-0">
+                <SortableChecklistCard 
+                  list={list} 
+                  updateChecklist={updateChecklist}
+                  deleteChecklist={deleteChecklist}
+                  addItem={addItem}
+                  updateItem={updateItem}
+                  toggleItem={toggleItem}
+                  deleteItem={deleteItem}
+                  updatePositions={updatePositions}
+                />
+              </div>
             ))}
             {completedLists.length === 0 && (
-              <div className="col-span-full py-10 flex flex-col items-center justify-center text-gray-800">
+              <div className="w-full py-10 flex flex-col items-center justify-center text-gray-800">
                 <p className="text-[10px] font-bold uppercase tracking-widest italic">Nenhuma lista finalizada ainda</p>
               </div>
             )}
