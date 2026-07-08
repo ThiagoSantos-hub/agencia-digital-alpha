@@ -79,7 +79,6 @@ export function useTasks() {
         description: input.description?.trim() || null,
         collaborator_id: input.collaborator_id || null,
         due_date: input.due_date || null,
-        created_by: user?.id || null,
         assignee_id: user?.id || null
       }
 
