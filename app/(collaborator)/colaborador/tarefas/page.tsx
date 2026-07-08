@@ -47,7 +47,7 @@ export default function CollaboratorTasksPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [activeTask, setActiveTask] = useState<Task | null>(null)
-  const [users, setUsers] = useState<{id: string, name: string, email: string, role: string}[]>([])
+  const [allUsers, setAllUsers] = useState<{id: string, name: string, email: string, role: string}[]>([])
   
   const [newTask, setNewTask] = useState({
     title: '',
@@ -61,14 +61,19 @@ export default function CollaboratorTasksPage() {
   useEffect(() => {
     async function fetchUsers() {
       const supabase = createClient()
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('id, name, email, role')
-        .neq('id', user?.id) // Não listar o próprio usuário
-      setUsers(data || [])
+        .order('name')
+      
+      if (error) {
+        console.error('Erro ao buscar usuários:', error)
+      } else {
+        setAllUsers(data || [])
+      }
     }
-    if (user) fetchUsers()
-  }, [user])
+    fetchUsers()
+  }, [])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -97,8 +102,8 @@ export default function CollaboratorTasksPage() {
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newTask.assigned_to) {
-      alert('Por favor, selecione para quem enviar esta tarefa.')
+    if (!newTask.title.trim() || !newTask.assigned_to) {
+      alert('Por favor, preencha o título e selecione para quem enviar.')
       return
     }
 
@@ -301,7 +306,7 @@ export default function CollaboratorTasksPage() {
                     className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
                   >
                     <option value="">Selecione...</option>
-                    {users.map(u => (
+                    {allUsers.map(u => (
                       <option key={u.id} value={u.id}>{u.role === 'admin' ? 'ADM: ' : ''}{u.name || u.email}</option>
                     ))}
                   </select>
@@ -395,6 +400,15 @@ export default function CollaboratorTasksPage() {
                 </div>
 
                 <div>
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Atribuído a</h3>
+                  <div className="bg-[#1a3a24]/30 p-3 rounded-xl border border-[#1a3a24]">
+                    <p className="text-sm text-white font-medium">
+                      {selectedTask.assignee?.name || selectedTask.assignee?.email || 'Não atribuído'}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
                   <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Data de Entrega</h3>
                   <div className="flex items-center gap-2 bg-[#1a3a24]/30 p-3 rounded-xl border border-[#1a3a24]">
                     <Calendar size={16} className="text-[#00ff88]" />
@@ -461,7 +475,7 @@ export default function CollaboratorTasksPage() {
                     className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
                   >
                     <option value="">Selecione...</option>
-                    {users.map(u => (
+                    {allUsers.map(u => (
                       <option key={u.id} value={u.id}>{u.role === 'admin' ? 'ADM: ' : ''}{u.name || u.email}</option>
                     ))}
                   </select>

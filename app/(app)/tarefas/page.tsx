@@ -84,18 +84,26 @@ export default function AdminTasksPage() {
   useEffect(() => {
     async function fetchUsers() {
       const supabase = createClient()
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('id, name, email, role')
         .order('name')
-      setAllUsers(data || [])
+      
+      if (error) {
+        console.error('Erro ao buscar usuários:', error)
+      } else {
+        setAllUsers(data || [])
+      }
     }
     fetchUsers()
   }, [])
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newTask.title.trim() || !newTask.assigned_to) return
+    if (!newTask.title.trim() || !newTask.assigned_to) {
+      alert('Por favor, preencha o título e selecione um colaborador.')
+      return
+    }
 
     try {
       await createTask({
@@ -106,7 +114,8 @@ export default function AdminTasksPage() {
       setIsModalOpen(false)
       setNewTask({ title: '', description: '', assigned_to: '', priority: 'media', due_date: '', status: 'a_fazer' })
     } catch (err) {
-      alert('Erro ao criar tarefa')
+      console.error('Erro ao criar tarefa:', err)
+      alert('Erro ao criar tarefa. Verifique se todos os campos estão corretos.')
     }
   }
 
