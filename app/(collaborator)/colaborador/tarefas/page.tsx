@@ -98,7 +98,7 @@ export default function CollaboratorTasksPage() {
 
                   <h3 className="text-white font-bold text-sm mb-1 line-clamp-2">{task.title}</h3>
                   {task.description && (
-                    <p className="text-gray-500 text-[11px] line-clamp-2 mb-3">{task.description}</p>
+                    <div className="text-gray-500 text-[11px] mb-3 whitespace-pre-wrap line-clamp-4">{task.description}</div>
                   )}
 
                   <div className="pt-3 border-t border-[#1a3a24] flex items-center justify-between">

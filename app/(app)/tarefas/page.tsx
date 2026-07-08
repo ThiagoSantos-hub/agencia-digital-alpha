@@ -167,7 +167,7 @@ export default function AdminTasksPage() {
 
                   <h3 className="text-white font-bold text-sm mb-2 line-clamp-2 hover:text-[#00ff88] transition-colors">{task.title}</h3>
                   {task.description && (
-                    <p className="text-gray-500 text-xs line-clamp-2 mb-4">{task.description}</p>
+                    <div className="text-gray-500 text-xs mb-4 whitespace-pre-wrap line-clamp-4">{task.description}</div>
                   )}
 
                   <div className="pt-4 border-t border-[#1a3a24] flex items-center justify-between">
