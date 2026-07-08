@@ -186,14 +186,21 @@ export function useChecklists() {
       }
     })
 
-    // 2. Persistir no banco de dados
-    const { error } = await supabase
-      .from(table)
-      .upsert(items.map(item => ({ id: item.id, position: item.position })), { onConflict: 'id' })
+    // 2. Persistir no banco de dados (atualizar cada registro individualmente para garantir que o UPDATE funcione)
+    let hasError = false
+    for (const item of items) {
+      const { error } = await supabase
+        .from(table)
+        .update({ position: item.position })
+        .eq('id', item.id)
+      if (error) {
+        console.error(`Erro ao atualizar posição ${item.id}:`, error)
+        hasError = true
+      }
+    }
 
-    if (error) {
-      console.error(`Erro ao atualizar posições de ${type}:`, error)
-      // Opcional: Reverter estado local em caso de erro crítico
+    if (hasError) {
+      console.error(`Erro ao atualizar posições de ${type}: reverter para dados do banco`)
       await fetchChecklists()
     }
   }
