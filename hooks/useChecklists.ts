@@ -146,31 +146,33 @@ export function useChecklists() {
   const updatePositions = async (type: 'checklist' | 'item', items: { id: string, position: number }[]) => {
     const table = type === 'checklist' ? 'checklists' : 'checklist_items'
     
-    // Atualização otimizada em lote
+    // 1. Atualizar estado local IMEDIATAMENTE para feedback visual instantâneo
+    setChecklists(prev => {
+      if (type === 'checklist') {
+        return [...prev].map(list => {
+          const found = items.find(i => i.id === list.id)
+          return found ? { ...list, position: found.position } : list
+        }).sort((a, b) => a.position - b.position)
+      } else {
+        return prev.map(list => ({
+          ...list,
+          checklist_items: list.checklist_items?.map(item => {
+            const found = items.find(i => i.id === item.id)
+            return found ? { ...item, position: found.position } : item
+          }).sort((a, b) => a.position - b.position)
+        }))
+      }
+    })
+
+    // 2. Persistir no banco de dados
     const { error } = await supabase
       .from(table)
       .upsert(items.map(item => ({ id: item.id, position: item.position })), { onConflict: 'id' })
 
     if (error) {
       console.error(`Erro ao atualizar posições de ${type}:`, error)
-    } else {
-      // Atualizar estado local para feedback imediato sem fetch completo
-      setChecklists(prev => {
-        if (type === 'checklist') {
-          return [...prev].map(list => {
-            const found = items.find(i => i.id === list.id)
-            return found ? { ...list, position: found.position } : list
-          }).sort((a, b) => a.position - b.position)
-        } else {
-          return prev.map(list => ({
-            ...list,
-            checklist_items: list.checklist_items?.map(item => {
-              const found = items.find(i => i.id === item.id)
-              return found ? { ...item, position: found.position } : item
-            }).sort((a, b) => a.position - b.position)
-          }))
-        }
-      })
+      // Opcional: Reverter estado local em caso de erro crítico
+      await fetchChecklists()
     }
   }
 

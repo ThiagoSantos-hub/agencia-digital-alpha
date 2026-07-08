@@ -117,33 +117,33 @@ export function SortableChecklistCard({
         />
       </div>
 
-      <div className="p-5 flex-1 flex flex-col min-h-[400px]">
-        <div className="flex justify-between items-start mb-4">
+      <div className="p-4 flex-1 flex flex-col min-h-[350px]">
+        <div className="flex justify-between items-start mb-3">
           <button
             {...attributes}
             {...listeners}
-            className="p-1.5 text-gray-700 hover:text-gray-500 cursor-grab active:cursor-grabbing"
+            className="p-1 text-gray-700 hover:text-gray-500 cursor-grab active:cursor-grabbing"
           >
-            <GripHorizontal size={18} />
+            <GripHorizontal size={16} />
           </button>
           
-          <div className="flex gap-1">
-            <button onClick={() => setIsEditing(true)} className="p-1.5 text-gray-700 hover:text-amber-400">
-              <Edit2 size={14} />
+          <div className="flex gap-0.5">
+            <button onClick={() => setIsEditing(true)} className="p-1 text-gray-700 hover:text-amber-400">
+              <Edit2 size={12} />
             </button>
-            <button onClick={() => deleteChecklist(list.id)} className="p-1.5 text-gray-700 hover:text-red-500">
-              <Trash2 size={14} />
+            <button onClick={() => deleteChecklist(list.id)} className="p-1 text-gray-700 hover:text-red-500">
+              <Trash2 size={12} />
             </button>
           </div>
         </div>
 
         {isEditing ? (
-          <div className="space-y-4 mb-6 bg-[#0a0f0c] p-4 rounded-xl border border-[#00ff88]/20">
+          <div className="space-y-3 mb-4 bg-[#0a0f0c] p-3 rounded-xl border border-[#00ff88]/20">
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full bg-[#111] border border-[#2a2a2a] rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-[#00ff88]"
+              className="w-full bg-[#111] border border-[#2a2a2a] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#00ff88]"
               autoFocus
             />
             <div className="flex flex-wrap gap-1">
@@ -154,7 +154,7 @@ export function SortableChecklistCard({
                     if (days.includes(day.id)) setDays(days.filter(d => d !== day.id))
                     else setDays([...days, day.id].sort())
                   }}
-                  className={`w-7 h-7 rounded-lg text-[10px] font-black border transition-all ${
+                  className={`w-6 h-6 rounded-lg text-[9px] font-black border transition-all ${
                     days.includes(day.id) ? 'bg-[#00ff88] text-[#0a0f0c] border-[#00ff88]' : 'bg-[#111] text-gray-600 border-[#2a2a2a]'
                   }`}
                 >
@@ -168,44 +168,44 @@ export function SortableChecklistCard({
                   await updateChecklist(list.id, { title, recurrence_days: days, recurrence: days.length > 0 ? 'daily' : 'once' });
                   setIsEditing(false);
                 }} 
-                className="flex-1 py-2 bg-[#00ff88] text-[#0a0f0c] text-[10px] font-black uppercase rounded-lg"
+                className="flex-1 py-1.5 bg-[#00ff88] text-[#0a0f0c] text-[9px] font-black uppercase rounded-lg"
               >
                 Salvar
               </button>
-              <button onClick={() => setIsEditing(false)} className="flex-1 py-2 bg-white/5 text-gray-400 text-[10px] font-black uppercase rounded-lg">Cancelar</button>
+              <button onClick={() => setIsEditing(false)} className="flex-1 py-1.5 bg-white/5 text-gray-400 text-[9px] font-black uppercase rounded-lg">Sair</button>
             </div>
           </div>
         ) : (
-          <div className="mb-6">
-            <h3 className="text-white font-bold text-lg leading-tight mb-2">{list.title}</h3>
+          <div className="mb-4">
+            <h3 className="text-white font-bold text-sm leading-tight mb-1.5 line-clamp-2">{list.title}</h3>
             <div className="flex flex-wrap gap-1">
               {list.recurrence_days?.map(dayId => (
-                <span key={dayId} className="px-2 py-0.5 bg-[#00ff88]/10 text-[#00ff88] text-[9px] font-black rounded-md uppercase border border-[#00ff88]/10">
+                <span key={dayId} className="px-1.5 py-0.5 bg-[#00ff88]/10 text-[#00ff88] text-[8px] font-black rounded-md uppercase border border-[#00ff88]/10">
                   {DIAS_SEMANA[dayId].label}
                 </span>
               ))}
               {(!list.recurrence_days || list.recurrence_days.length === 0) && (
-                <span className="px-2 py-0.5 bg-white/5 text-gray-500 text-[9px] font-black rounded-md uppercase border border-white/5">Única</span>
+                <span className="px-1.5 py-0.5 bg-white/5 text-gray-500 text-[8px] font-black rounded-md uppercase border border-white/5">Única</span>
               )}
             </div>
           </div>
         )}
 
         <div className="flex-1 flex flex-col">
-          <div className="relative mb-4">
+          <div className="relative mb-3">
             <input
               type="text"
               value={newItemText}
               onChange={(e) => setNewItemText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && (addItem(list.id, newItemText), setNewItemText(''))}
               placeholder="Adicionar tarefa..."
-              className="w-full bg-[#0a0f0c] border border-[#2a2a2a] rounded-xl pl-4 pr-10 py-2.5 text-xs text-white focus:outline-none focus:border-[#00ff88]"
+              className="w-full bg-[#0a0f0c] border border-[#2a2a2a] rounded-xl pl-3 pr-8 py-2 text-[11px] text-white focus:outline-none focus:border-[#00ff88]"
             />
             <button 
               onClick={() => { addItem(list.id, newItemText); setNewItemText(''); }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-[#00ff88] hover:bg-[#00ff88]/10 rounded-lg transition-all"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 text-[#00ff88] hover:bg-[#00ff88]/10 rounded-lg transition-all"
             >
-              <Plus size={16} />
+              <Plus size={14} />
             </button>
           </div>
 
@@ -218,7 +218,7 @@ export function SortableChecklistCard({
               items={items.map(i => i.id)}
               strategy={verticalListSortingStrategy}
             >
-              <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
+              <div className="space-y-1.5 max-h-[250px] overflow-y-auto custom-scrollbar pr-1">
                 {items.map(item => (
                   <SortableChecklistItem
                     key={item.id}

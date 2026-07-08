@@ -263,7 +263,7 @@ export default function ChecklistsPage() {
             >
               <div className="flex gap-6 overflow-x-auto pb-6 custom-scrollbar min-h-[500px]">
                 {pendingLists.map(list => (
-                  <div key={list.id} className="w-[350px] shrink-0">
+                  <div key={list.id} className="w-[300px] shrink-0">
                     <SortableChecklistCard 
                       list={list} 
                       updateChecklist={updateChecklist}
@@ -322,7 +322,7 @@ export default function ChecklistsPage() {
           
           <div className="flex gap-6 overflow-x-auto pb-6 custom-scrollbar">
             {completedLists.map(list => (
-              <div key={list.id} className="w-[350px] shrink-0">
+              <div key={list.id} className="w-[300px] shrink-0">
                 <SortableChecklistCard 
                   list={list} 
                   updateChecklist={updateChecklist}
