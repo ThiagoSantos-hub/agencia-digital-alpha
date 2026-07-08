@@ -123,7 +123,18 @@ export function useClientes() {
 
   useEffect(() => {
     fetchClients(true)
-  }, [fetchClients])
+
+    const channel = supabase
+      .channel('public:clients')
+      .on('postgres_changes', { event: '*', table: 'clients', schema: 'public' }, () => {
+        fetchClients(true)
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [fetchClients, supabase])
 
   const createCliente = async (input: ClientInput) => {
     const payload = { ...input }
@@ -172,6 +183,7 @@ export function useClientes() {
     
     const clienteAtual = clients.find(c => c.id === id)
     const estaReativando = clienteAtual?.status === 'inativo' && (payload.status === 'ativo' || payload.status === 'atrasado')
+    const estaMarcandoComoPago = (clienteAtual?.status === 'atrasado' || clienteAtual?.status === 'inativo') && payload.status === 'ativo'
 
     if (payload.status === 'inativo') {
       payload.inativo_em = new Date().toISOString()
@@ -187,9 +199,38 @@ export function useClientes() {
       .single()
     
     if (!error && data) {
+      // Atualização local imediata para feedback visual
       setClients(prev => 
-        prev.map(c => c.id === id ? { ...data, dias_atraso: c.dias_atraso || 0 } : c)
+        prev.map(c => c.id === id ? { ...data, dias_atraso: payload.status === 'ativo' ? 0 : c.dias_atraso } : c)
       )
+
+      // Se marcou como ativo (pagou), atualizar o financeiro
+      if (estaMarcandoComoPago) {
+        const hoje = new Date()
+        const mesAtual = hoje.getMonth() + 1
+        const anoAtual = hoje.getFullYear()
+        
+        // Buscar lançamento pendente ou atrasado deste mês para este cliente
+        const { data: financeiro } = await supabase
+          .from('finances')
+          .select('id, data_vencimento')
+          .eq('client_id', id)
+          .eq('status', 'pendente')
+          .order('data_vencimento', { ascending: true })
+          .limit(1)
+          .maybeSingle()
+
+        if (financeiro) {
+          // Marcar o lançamento como pago
+          await supabase
+            .from('finances')
+            .update({ 
+              status: 'pago', 
+              data_pagamento: hoje.toISOString().split('T')[0] 
+            })
+            .eq('id', financeiro.id)
+        }
+      }
 
       if (payload.status === 'inativo') {
         await supabase
