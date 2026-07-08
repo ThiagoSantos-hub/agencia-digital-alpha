@@ -30,13 +30,16 @@ export interface CreateTaskInput {
   status?: TaskStatus
 }
 
+import { useMemo } from 'react'
+
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const listTasks = useCallback(async (filters?: { collaboratorId?: string; status?: TaskStatus }) => {
+    console.log('DEBUG: useTasks.listTasks chamado')
     setLoading(true)
     setError(null)
     try {
@@ -53,7 +56,11 @@ export function useTasks() {
       }
 
       const { data, error } = await query
-      if (error) throw error
+      if (error) {
+        console.error('DEBUG: Erro Supabase listTasks:', error)
+        throw error
+      }
+      console.log('DEBUG: Sucesso listTasks, itens:', data?.length)
       setTasks(data || [])
       return data || []
     } catch (err: any) {
