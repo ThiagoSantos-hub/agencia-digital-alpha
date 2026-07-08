@@ -316,33 +316,27 @@ export default function MeusClientesPage() {
               ) : (
                 list.map((c) => (
                   <tr key={c.id} className="hover:bg-white/[0.02] transition-colors group">
-                    <td className="px-3 py-2.5">
-                      <div className="flex flex-col">
-                        <span className="text-white font-bold text-sm">{c.name}</span>
-                        <span className="text-gray-500 text-xs">{c.company || '—'}</span>
-                      </div>
+                    <td className="px-3 py-2.5 whitespace-nowrap">
+                      <span className="text-white font-bold text-sm">{c.name}</span>
+                      <span className="text-gray-500 text-xs ml-2">{c.company || '—'}</span>
                     </td>
-                    <td className="px-3 py-2.5">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-gray-400 text-xs">{c.phone || '—'}</span>
-                        <span className="text-gray-600 text-[10px]">{c.email || '—'}</span>
-                      </div>
+                    <td className="px-3 py-2.5 whitespace-nowrap">
+                      <span className="text-gray-400 text-xs">{c.phone || '—'}</span>
+                      <span className="text-gray-600 text-[10px] ml-2">{c.email || '—'}</span>
                     </td>
-                    <td className="px-3 py-2.5">
-                      <div className="flex flex-col">
-                        <span className="text-white font-medium text-sm">
-                          {c.monthly_fee
-                            ? c.monthly_fee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-                            : '—'}
-                        </span>
-                        <span className="text-gray-500 text-[10px]">
-                          {c.payment_day ? `Dia ${c.payment_day}` : '—'}
-                        </span>
-                      </div>
+                    <td className="px-3 py-2.5 whitespace-nowrap">
+                      <span className="text-white font-medium text-sm">
+                        {c.monthly_fee
+                          ? c.monthly_fee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                          : '—'}
+                      </span>
+                      <span className="text-gray-500 text-[10px] ml-2">
+                        {c.payment_day ? `Dia ${c.payment_day}` : '—'}
+                      </span>
                     </td>
-                    <td className="px-3 py-2.5">
-                      <div className="flex flex-col gap-1">
-                        <span className={`inline-flex items-center w-fit px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusConfig[c.status].className}`}>
+                    <td className="px-3 py-2.5 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusConfig[c.status].className}`}>
                           {statusConfig[c.status].label}
                         </span>
                         {(c.status === 'atrasado') && ((c.dias_atraso ?? 0) > 0) && (
