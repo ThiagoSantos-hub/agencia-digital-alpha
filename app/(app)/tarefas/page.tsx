@@ -492,50 +492,48 @@ export default function AdminTasksPage() {
       {/* Modal de Detalhes da Tarefa */}
       {isDetailModalOpen && selectedTask && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl w-full max-w-2xl overflow-hidden max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="px-6 py-4 border-b border-[#1a3a24] flex justify-between items-center sticky top-0 bg-[#0a0f0c] z-10">
-              <h2 className="text-white font-bold text-lg">Detalhes da Tarefa</h2>
+          <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl w-full max-w-lg shadow-2xl">
+            <div className="px-4 py-3 border-b border-[#1a3a24] flex justify-between items-center">
+              <h2 className="text-white font-bold text-base">Detalhes da Tarefa</h2>
               <button onClick={() => setIsDetailModalOpen(false)} className="text-gray-500 hover:text-white">
-                <X size={24} />
+                <X size={20} />
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-4 space-y-3">
               <div>
-                <h1 className="text-2xl font-bold text-white mb-2">{selectedTask.title}</h1>
-                <span className={`inline-block text-xs font-black uppercase tracking-tighter px-3 py-1 rounded-lg ${getPriorityColor(selectedTask.priority)} bg-[#1a3a24]/50`}>
-                  {getPriorityLabel(selectedTask.priority)}
+                <h1 className="text-lg font-bold text-white">{selectedTask.title}</h1>
+                <span className={`inline-block text-xs font-black uppercase tracking-tighter px-2 py-0.5 rounded-lg ${getPriorityColor(selectedTask.priority)} bg-[#1a3a24]/50`}>              {getPriorityLabel(selectedTask.priority)}
                 </span>
               </div>
 
               {selectedTask.description && (
                 <div>
-                  <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">Descrição</h3>
-                  <div className="text-gray-300 text-sm leading-relaxed bg-[#1a3a24]/30 p-4 rounded-xl border border-[#1a3a24] whitespace-pre-wrap">
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Descrição</h3>
+                  <div className="text-gray-300 text-sm leading-relaxed bg-[#1a3a24]/30 p-3 rounded-lg border border-[#1a3a24] whitespace-pre-wrap line-clamp-4">
                     {selectedTask.description}
                   </div>
                 </div>
               )}
 
               {selectedTask.drive_link && (
-                <div className="mb-4">
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Material no Google Drive</h3>
+                <div>
                   <a 
                     href={selectedTask.drive_link} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 w-full py-3 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 rounded-xl font-bold transition-all"
+                    className="flex items-center justify-center gap-2 w-full py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 rounded-lg font-bold transition-all text-sm"
                   >
-                    <ExternalLink size={20} />
+                    <ExternalLink size={16} />
                     Abrir Google Drive
                   </a>
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Status</h3>
-                  <div className="bg-[#1a3a24]/30 p-3 rounded-xl border border-[#1a3a24]">
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Status</h3>
+                  <div className="bg-[#1a3a24]/30 p-2 rounded-lg border border-[#1a3a24]">
                     <p className="text-sm text-white font-medium capitalize">
                       {COLUMNS.find(c => c.id === selectedTask.status)?.label}
                     </p>
@@ -543,8 +541,8 @@ export default function AdminTasksPage() {
                 </div>
 
                 <div>
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Atribuído a</h3>
-                  <div className="bg-[#1a3a24]/30 p-3 rounded-xl border border-[#1a3a24]">
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Atribuído a</h3>
+                  <div className="bg-[#1a3a24]/30 p-2 rounded-lg border border-[#1a3a24]">
                     <p className="text-sm text-white font-medium">
                       {selectedTask.assignee?.name || selectedTask.assignee?.email || 'Não atribuído'}
                     </p>
@@ -552,9 +550,9 @@ export default function AdminTasksPage() {
                 </div>
 
                 <div>
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Data de Entrega</h3>
-                  <div className="flex items-center gap-2 bg-[#1a3a24]/30 p-3 rounded-xl border border-[#1a3a24]">
-                    <Calendar size={16} className="text-[#00ff88]" />
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Data de Entrega</h3>
+                  <div className="flex items-center gap-2 bg-[#1a3a24]/30 p-2 rounded-lg border border-[#1a3a24]">
+                    <Calendar size={14} className="text-[#00ff88]" />
                     <p className="text-sm text-white font-medium">
                       {selectedTask.due_date ? new Date(selectedTask.due_date).toLocaleDateString('pt-BR') : 'Sem prazo'}
                     </p>
@@ -562,9 +560,9 @@ export default function AdminTasksPage() {
                 </div>
 
                 <div>
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Criado em</h3>
-                  <div className="flex items-center gap-2 bg-[#1a3a24]/30 p-3 rounded-xl border border-[#1a3a24]">
-                    <Clock size={16} className="text-gray-500" />
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Criado em</h3>
+                  <div className="flex items-center gap-2 bg-[#1a3a24]/30 p-2 rounded-lg border border-[#1a3a24]">
+                    <Clock size={14} className="text-gray-500" />
                     <p className="text-sm text-gray-400 font-medium">
                       {new Date(selectedTask.created_at).toLocaleDateString('pt-BR')}
                     </p>
