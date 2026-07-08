@@ -18,6 +18,7 @@ export interface Checklist {
   user_id: string
   title: string
   recurrence: 'once' | 'daily' | 'weekly'
+  recurrence_days: number[] // 0-6
   status: 'pending' | 'completed'
   last_reset_at: string
   created_at: string
@@ -35,8 +36,8 @@ export function useChecklists() {
     if (!user) return
     setLoading(true)
     try {
-      // Chamar a função de reset antes de buscar (para garantir que os diários/semanais estejam atualizados)
-      await supabase.rpc('reset_recurring_checklists')
+      // Chamar a função de reset por dia da semana
+      await supabase.rpc('reset_recurring_checklists_by_day')
 
       const { data, error } = await supabase
         .from('checklists')
@@ -65,12 +66,19 @@ export function useChecklists() {
     fetchChecklists()
   }, [fetchChecklists])
 
-  const createChecklist = async (title: string, recurrence: string = 'once') => {
+  const createChecklist = async (title: string, recurrence: string = 'once', recurrence_days: number[] = []) => {
     if (!user) return
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('checklists')
-      .insert({ title, user_id: user.id, recurrence })
-    if (!error) await fetchChecklists()
+      .insert({ title, user_id: user.id, recurrence, recurrence_days })
+      .select()
+      .single()
+    
+    if (!error) {
+      await fetchChecklists()
+      return data
+    }
+    return null
   }
 
   const updateChecklist = async (id: string, updates: Partial<Checklist>) => {
