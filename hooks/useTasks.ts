@@ -78,9 +78,13 @@ export function useTasks() {
         priority: input.priority || 'media',
         description: input.description?.trim() || null,
         collaborator_id: input.collaborator_id || null,
-        due_date: input.due_date || null,
-        owner_id: user?.id || null,
-        assignee_id: user?.id || null
+        due_date: input.due_date || null
+      }
+
+      if (user?.id) {
+        taskData.owner_id = user.id
+        taskData.assignee_id = user.id
+        taskData.created_by = user.id
       }
 
       const { data, error } = await supabase
