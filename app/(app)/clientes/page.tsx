@@ -187,47 +187,65 @@ function ModalNovoCliente({ onClose }: { onClose: () => void }) {
 function ModalEditarCliente({ client, onClose }: { client: Client; onClose: () => void }) {
   const { updateCliente } = useClientes()
 
-  // Inicialização segura do formulário
-  const [form, setForm] = useState<ClienteForm>(() => ({
-    name:        client?.name || '',
-    company:     client?.company || '',
-    email:       client?.email || '',
-    phone:       client?.phone || '',
-    status:      (client?.status as any) || 'ativo',
-    monthly_fee: client?.monthly_fee != null ? String(client.monthly_fee) : '',
-    start_date:  client?.start_date || '',
-    payment_day: client?.payment_day != null ? String(client.payment_day) : '',
-    meta_ad_account_id: client?.meta_ad_account_id || '',
-    show_campaigns: client?.show_campaigns ?? true
-  }))
+  // Inicialização ultra-segura
+  const [form, setForm] = useState<ClienteForm>(() => {
+    try {
+      return {
+        name:        client?.name || '',
+        company:     client?.company || '',
+        email:       client?.email || '',
+        phone:       client?.phone || '',
+        status:      (client?.status as any) || 'ativo',
+        monthly_fee: client?.monthly_fee != null ? String(client.monthly_fee) : '',
+        start_date:  client?.start_date || '',
+        payment_day: client?.payment_day != null ? String(client.payment_day) : '',
+        meta_ad_account_id: client?.meta_ad_account_id || '',
+        show_campaigns: client?.show_campaigns ?? true
+      }
+    } catch (e) {
+      console.error('Erro ao inicializar form:', e)
+      return {
+        name: '', company: '', email: '', phone: '', status: 'ativo',
+        monthly_fee: '', start_date: '', payment_day: '', meta_ad_account_id: '', show_campaigns: true
+      }
+    }
+  })
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  if (!client) return null
 
   const set = (field: keyof ClienteForm, value: string | boolean) =>
     setForm((prev) => ({ ...prev, [field]: value }))
 
   const handleSubmit = async () => {
-    if (!form.name.trim()) { setError('O nome é obrigatório.'); return }
-    const paymentDay = form.payment_day ? parseInt(form.payment_day) : null
-    if (paymentDay !== null && (paymentDay < 1 || paymentDay > 31)) {
-      setError('Dia de pagamento deve ser entre 1 e 31.'); return
+    try {
+      if (!form.name.trim()) { setError('O nome é obrigatório.'); return }
+      const paymentDay = form.payment_day ? parseInt(form.payment_day) : null
+      if (paymentDay !== null && (isNaN(paymentDay) || paymentDay < 1 || paymentDay > 31)) {
+        setError('Dia de pagamento deve ser entre 1 e 31.'); return
+      }
+      setLoading(true)
+      setError(null)
+      const { error } = await updateCliente(client.id, {
+        name:        form.name.trim(),
+        company:     form.company.trim() || null,
+        email:       form.email.trim() || null,
+        phone:       form.phone.trim() || null,
+        status:      form.status,
+        monthly_fee: form.monthly_fee ? parseFloat(form.monthly_fee.replace(',', '.')) : null,
+        start_date:  form.start_date || null,
+        payment_day: paymentDay,
+        meta_ad_account_id: form.meta_ad_account_id.trim() || null,
+        show_campaigns: form.show_campaigns
+      })
+      if (error) { setError('Erro ao salvar. Tente novamente.'); setLoading(false) }
+      else onClose()
+    } catch (e: any) {
+      setError('Ocorreu um erro inesperado.');
+      setLoading(false);
     }
-    setLoading(true)
-    setError(null)
-    const { error } = await updateCliente(client.id, {
-      name:        form.name.trim(),
-      company:     form.company.trim() || null,
-      email:       form.email.trim() || null,
-      phone:       form.phone.trim() || null,
-      status:      form.status,
-      monthly_fee: form.monthly_fee ? parseFloat(form.monthly_fee.replace(',', '.')) : null,
-      start_date:  form.start_date || null,
-      payment_day: paymentDay,
-      meta_ad_account_id: form.meta_ad_account_id.trim() || null,
-      show_campaigns: form.show_campaigns
-    })
-    if (error) { setError('Erro ao salvar. Tente novamente.'); setLoading(false) }
-    else onClose()
   }
 
   return (
@@ -241,10 +259,15 @@ function ModalEditarCliente({ client, onClose }: { client: Client; onClose: () =
             <X size={18} />
           </button>
         </div>
+        
         <FormFields form={form} set={set} />
+        
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">{error}</div>
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">
+            {error}
+          </div>
         )}
+        
         <div className="flex gap-3 pt-1">
           <button onClick={onClose} disabled={loading}
             className="flex-1 py-2.5 rounded-xl text-sm font-medium text-gray-400 bg-[#0f0f0f] border border-[#2a2a2a] hover:text-white transition-colors">
