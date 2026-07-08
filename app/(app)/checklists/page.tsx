@@ -119,12 +119,12 @@ export default function ChecklistsPage() {
 
   const pendingLists = useMemo(() => 
     checklists.filter(l => l.status === 'pending')
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
   , [checklists])
 
   const completedLists = useMemo(() => 
     checklists.filter(l => l.status === 'completed')
-      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+      .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
   , [checklists])
 
   if (loading && checklists.length === 0) {
