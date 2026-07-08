@@ -87,9 +87,21 @@ export default function CollaboratorTasksPage() {
 
   const getPriorityColor = (priority: TaskPriority) => {
     switch (priority) {
+      case 'urgente': return 'text-red-600'
       case 'alta': return 'text-red-500'
       case 'media': return 'text-amber-500'
       case 'baixa': return 'text-emerald-500'
+      default: return 'text-gray-500'
+    }
+  }
+
+  const getPriorityLabel = (priority: TaskPriority) => {
+    switch (priority) {
+      case 'urgente': return 'URGENTE'
+      case 'alta': return 'ALTA'
+      case 'media': return 'MÉDIA'
+      case 'baixa': return 'BAIXA'
+      default: return 'DESCONHECIDA'
     }
   }
 
@@ -127,7 +139,7 @@ export default function CollaboratorTasksPage() {
                 <div key={task.id} className="bg-[#0a0f0c] border border-[#1a3a24] rounded-xl p-4 hover:border-[#00ff88]/30 transition-all group shadow-md cursor-pointer" onClick={() => { setSelectedTask(task); setIsDetailModalOpen(true); }}>
                   <div className="flex justify-between items-start mb-2">
                     <span className={`text-[9px] font-black uppercase tracking-widest ${getPriorityColor(task.priority)}`}>
-                      {task.priority}
+                      {getPriorityLabel(task.priority)}
                     </span>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                       <button onClick={() => handleDuplicateTask(task)} title="Duplicar" className="p-1 text-gray-700 hover:text-blue-400">
@@ -230,6 +242,7 @@ export default function CollaboratorTasksPage() {
                     <option value="baixa">Baixa</option>
                     <option value="media">Média</option>
                     <option value="alta">Alta</option>
+                    <option value="urgente">Urgente</option>
                   </select>
                 </div>
                 <div className="space-y-1.5">
@@ -274,7 +287,7 @@ export default function CollaboratorTasksPage() {
                   <div className="flex-1">
                     <h1 className="text-2xl font-bold text-white mb-2">{selectedTask.title}</h1>
                     <span className={`inline-block text-xs font-black uppercase tracking-tighter px-3 py-1 rounded-lg ${getPriorityColor(selectedTask.priority)} bg-[#1a3a24]/50`}>
-                      {selectedTask.priority}
+                      {getPriorityLabel(selectedTask.priority)}
                     </span>
                   </div>
                 </div>
@@ -403,6 +416,7 @@ export default function CollaboratorTasksPage() {
                     <option value="baixa">Baixa</option>
                     <option value="media">Média</option>
                     <option value="alta">Alta</option>
+                    <option value="urgente">Urgente</option>
                   </select>
                 </div>
                 <div className="space-y-1.5">
