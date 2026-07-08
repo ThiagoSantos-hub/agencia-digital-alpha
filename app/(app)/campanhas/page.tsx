@@ -307,7 +307,7 @@ const ClienteAccordion = React.memo(function ClienteAccordion({ clienteId, clien
 )
 
 export default function CampanhasPage() {
-  const { campaigns, loading, error, syncCampaigns, fetchMetrics, fetchAllMetricOptions, saveSelectedMetrics } = useCampanhas()
+  const { campaigns, loading, error, syncAllMetaCampaigns, fetchMetrics, fetchAllMetricOptions, saveSelectedMetrics } = useCampanhas()
   const { clients } = useClientes()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('todas')
@@ -324,7 +324,7 @@ export default function CampanhasPage() {
 
   const handleSync = async () => {
     setSyncing(true)
-    await syncCampaigns()
+    await syncAllMetaCampaigns()
     setSyncing(false)
   }
 
