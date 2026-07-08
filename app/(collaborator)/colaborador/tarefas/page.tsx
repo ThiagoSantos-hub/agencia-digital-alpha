@@ -47,7 +47,7 @@ export default function CollaboratorTasksPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [activeTask, setActiveTask] = useState<Task | null>(null)
-  const [admins, setAdmins] = useState<{id: string, name: string, email: string}[]>([])
+  const [users, setUsers] = useState<{id: string, name: string, email: string, role: string}[]>([])
   
   const [newTask, setNewTask] = useState({
     title: '',
@@ -59,16 +59,16 @@ export default function CollaboratorTasksPage() {
   })
 
   useEffect(() => {
-    async function fetchAdmins() {
+    async function fetchUsers() {
       const supabase = createClient()
       const { data } = await supabase
         .from('profiles')
-        .select('id, name, email')
-        .eq('role', 'admin')
-      setAdmins(data || [])
+        .select('id, name, email, role')
+        .neq('id', user?.id) // Não listar o próprio usuário
+      setUsers(data || [])
     }
-    fetchAdmins()
-  }, [])
+    if (user) fetchUsers()
+  }, [user])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -97,10 +97,15 @@ export default function CollaboratorTasksPage() {
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!newTask.assigned_to) {
+      alert('Por favor, selecione para quem enviar esta tarefa.')
+      return
+    }
+
     try {
       await createTask({ 
         ...newTask, 
-        assigned_to: newTask.assigned_to || user?.id 
+        assigned_to: newTask.assigned_to 
       })
       setIsModalOpen(false)
       setNewTask({ title: '', description: '', priority: 'media', due_date: '', status: 'a_fazer', assigned_to: '' })
@@ -290,13 +295,14 @@ export default function CollaboratorTasksPage() {
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Atribuir a</label>
                   <select 
-                    value={editingTask.assigned_to || user?.id}
+                    required
+                    value={editingTask.assigned_to}
                     onChange={e => setEditingTask({...editingTask, assigned_to: e.target.value})}
                     className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
                   >
-                    <option value={user?.id}>Mim mesmo</option>
-                    {admins.map(admin => (
-                      <option key={admin.id} value={admin.id}>ADM: {admin.name || admin.email}</option>
+                    <option value="">Selecione...</option>
+                    {users.map(u => (
+                      <option key={u.id} value={u.id}>{u.role === 'admin' ? 'ADM: ' : ''}{u.name || u.email}</option>
                     ))}
                   </select>
                 </div>
@@ -418,7 +424,7 @@ export default function CollaboratorTasksPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
           <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
             <div className="px-6 py-4 border-b border-[#1a3a24] flex justify-between items-center bg-[#0f1a14]">
-              <h2 className="text-white font-bold">Criar Minha Tarefa</h2>
+              <h2 className="text-white font-bold">Criar Nova Tarefa / Pendência</h2>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-500 hover:text-white text-2xl">&times;</button>
             </div>
             <form onSubmit={handleCreateTask} className="p-6 space-y-4">
@@ -430,7 +436,7 @@ export default function CollaboratorTasksPage() {
                   value={newTask.title}
                   onChange={e => setNewTask({...newTask, title: e.target.value})}
                   className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
-                  placeholder="O que você precisa fazer?"
+                  placeholder="Ex: Falta senha do Instagram do Cliente X"
                 />
               </div>
 
@@ -441,7 +447,7 @@ export default function CollaboratorTasksPage() {
                   value={newTask.description}
                   onChange={e => setNewTask({...newTask, description: e.target.value})}
                   className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50 resize-none"
-                  placeholder="Mais detalhes..."
+                  placeholder="Mais detalhes sobre o que está faltando..."
                 />
               </div>
 
@@ -449,13 +455,14 @@ export default function CollaboratorTasksPage() {
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Enviar para</label>
                   <select 
+                    required
                     value={newTask.assigned_to}
                     onChange={e => setNewTask({...newTask, assigned_to: e.target.value})}
                     className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
                   >
-                    <option value="">Mim mesmo</option>
-                    {admins.map(admin => (
-                      <option key={admin.id} value={admin.id}>ADM: {admin.name || admin.email}</option>
+                    <option value="">Selecione...</option>
+                    {users.map(u => (
+                      <option key={u.id} value={u.id}>{u.role === 'admin' ? 'ADM: ' : ''}{u.name || u.email}</option>
                     ))}
                   </select>
                 </div>
@@ -466,9 +473,8 @@ export default function CollaboratorTasksPage() {
                     onChange={e => setNewTask({...newTask, status: e.target.value as TaskStatus})}
                     className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
                   >
-                    {COLUMNS.map(col => (
-                      <option key={col.id} value={col.id}>{col.label}</option>
-                    ))}
+                    <option value="pendente">Pendência</option>
+                    <option value="a_fazer">A Fazer</option>
                   </select>
                 </div>
               </div>
@@ -502,7 +508,7 @@ export default function CollaboratorTasksPage() {
                 type="submit"
                 className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-[#0a0f0c] font-bold rounded-xl transition-all mt-4"
               >
-                Criar Tarefa
+                Criar e Enviar
               </button>
             </form>
           </div>
