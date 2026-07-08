@@ -9,9 +9,15 @@ import {
   Clock, 
   CheckCircle2,
   Circle,
-  Trash2,
-  AlertCircle
+  PlayCircle,
+  Trash2
 } from 'lucide-react'
+
+const COLUMNS: { id: TaskStatus; label: string; icon: any; color: string }[] = [
+  { id: 'a_fazer', label: 'A Fazer', icon: Circle, color: 'text-gray-500' },
+  { id: 'em_andamento', label: 'Em Andamento', icon: PlayCircle, color: 'text-blue-500' },
+  { id: 'finalizada', label: 'Finalizadas', icon: CheckCircle2, color: 'text-emerald-500' },
+]
 
 export default function CollaboratorTasksPage() {
   const { user } = useAuth()
@@ -35,9 +41,8 @@ export default function CollaboratorTasksPage() {
     }
   }
 
-  const toggleStatus = async (task: Task) => {
-    const newStatus: TaskStatus = task.status === 'concluida' ? 'pendente' : 'concluida'
-    await updateTask(task.id, { status: newStatus })
+  const handleMoveTask = async (id: string, newStatus: TaskStatus) => {
+    await updateTask(id, { status: newStatus })
   }
 
   const getPriorityColor = (priority: TaskPriority) => {
@@ -49,71 +54,82 @@ export default function CollaboratorTasksPage() {
   }
 
   return (
-    <div className="p-8 space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="p-8 space-y-8 h-[calc(100vh-64px)] flex flex-col">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-white">Minhas Tarefas</h1>
-          <p className="text-gray-400 text-sm mt-1">Gerencie suas atividades diárias e entregas.</p>
+          <p className="text-gray-400 text-sm mt-1">Gerencie suas atividades e progresso.</p>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-[#0a0f0c] font-bold rounded-xl transition-all"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-[#0a0f0c] font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20"
         >
           <Plus size={20} />
           Criar Tarefa
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
-        {loading ? (
-          <div className="py-20 text-center text-gray-500">Carregando tarefas...</div>
-        ) : tasks.length === 0 ? (
-          <div className="py-20 text-center bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl">
-            <CheckCircle2 size={48} className="mx-auto text-gray-700 mb-4" />
-            <p className="text-gray-400">Você não tem tarefas no momento.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {tasks.map((task) => (
-              <div 
-                key={task.id} 
-                className={`bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl p-4 flex items-center gap-4 hover:border-[#00ff88]/30 transition-all group ${task.status === 'concluida' ? 'opacity-60' : ''}`}
-              >
-                <button 
-                  onClick={() => toggleStatus(task)}
-                  className={`shrink-0 transition-colors ${task.status === 'concluida' ? 'text-emerald-500' : 'text-gray-600 hover:text-emerald-500'}`}
-                >
-                  {task.status === 'concluida' ? <CheckCircle2 size={24} /> : <Circle size={24} />}
-                </button>
+      <div className="flex-1 flex gap-6 overflow-x-auto pb-4 custom-scrollbar">
+        {COLUMNS.map((column) => (
+          <div key={column.id} className="flex-1 min-w-[300px] bg-[#111]/50 border border-[#1a3a24] rounded-2xl flex flex-col overflow-hidden">
+            <div className="p-4 border-b border-[#1a3a24] flex items-center justify-between bg-[#111]">
+              <div className="flex items-center gap-2">
+                <column.icon size={18} className={column.color} />
+                <h2 className="text-white font-bold text-xs uppercase tracking-widest">{column.label}</h2>
+              </div>
+              <span className="bg-[#1a3a24] text-gray-500 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                {tasks.filter(t => t.status === column.id).length}
+              </span>
+            </div>
 
-                <div className="flex-1 min-w-0">
-                  <h3 className={`text-white font-bold text-sm line-clamp-1 ${task.status === 'concluida' ? 'line-through text-gray-500' : ''}`}>
-                    {task.title}
-                  </h3>
-                  <div className="flex items-center gap-4 mt-1">
-                    <div className="flex items-center gap-1.5 text-[10px] text-gray-500 uppercase font-black tracking-widest">
-                      <Clock size={12} />
-                      <span className={getPriorityColor(task.priority)}>{task.priority}</span>
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+              {tasks.filter(t => t.status === column.id).map((task) => (
+                <div key={task.id} className="bg-[#0a0f0c] border border-[#1a3a24] rounded-xl p-4 hover:border-[#00ff88]/30 transition-all group shadow-md">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className={`text-[9px] font-black uppercase tracking-widest ${getPriorityColor(task.priority)}`}>
+                      {task.priority}
+                    </span>
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => deleteTask(task.id)} className="p-1 text-gray-700 hover:text-red-500">
+                        <Trash2 size={14} />
+                      </button>
                     </div>
-                    {task.due_date && (
-                      <div className="flex items-center gap-1.5 text-[10px] text-gray-500 uppercase font-black tracking-widest">
-                        <Calendar size={12} />
-                        <span>{new Date(task.due_date).toLocaleDateString('pt-BR')}</span>
-                      </div>
-                    )}
+                  </div>
+
+                  <h3 className="text-white font-bold text-sm mb-1 line-clamp-2">{task.title}</h3>
+                  {task.description && (
+                    <p className="text-gray-500 text-[11px] line-clamp-2 mb-3">{task.description}</p>
+                  )}
+
+                  <div className="pt-3 border-t border-[#1a3a24] flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-[10px] text-gray-500">
+                      <Calendar size={12} />
+                      <span>{task.due_date ? new Date(task.due_date).toLocaleDateString('pt-BR') : 'Sem prazo'}</span>
+                    </div>
+
+                    <div className="flex gap-1">
+                      {column.id !== 'a_fazer' && (
+                        <button onClick={() => handleMoveTask(task.id, 'a_fazer')} title="Mover para A Fazer" className="p-1 text-gray-600 hover:text-white transition-colors">
+                          <Circle size={14} />
+                        </button>
+                      )}
+                      {column.id !== 'em_andamento' && (
+                        <button onClick={() => handleMoveTask(task.id, 'em_andamento')} title="Mover para Em Andamento" className="p-1 text-gray-600 hover:text-blue-400 transition-colors">
+                          <PlayCircle size={14} />
+                        </button>
+                      )}
+                      {column.id !== 'finalizada' && (
+                        <button onClick={() => handleMoveTask(task.id, 'finalizada')} title="Mover para Finalizada" className="p-1 text-gray-600 hover:text-emerald-400 transition-colors">
+                          <CheckCircle2 size={14} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-
-                <button 
-                  onClick={() => deleteTask(task.id)}
-                  className="opacity-0 group-hover:opacity-100 p-2 text-gray-600 hover:text-red-500 transition-all"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        )}
+        ))}
       </div>
 
       {/* Modal de Nova Tarefa */}
@@ -122,7 +138,7 @@ export default function CollaboratorTasksPage() {
           <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl w-full max-w-lg overflow-hidden">
             <div className="px-6 py-4 border-b border-[#1a3a24] flex justify-between items-center">
               <h2 className="text-white font-bold">Criar Minha Tarefa</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-500 hover:text-white">×</button>
+              <button onClick={() => setIsModalOpen(false)} className="text-gray-500 hover:text-white text-2xl">&times;</button>
             </div>
             <form onSubmit={handleCreateTask} className="p-6 space-y-4">
               <div className="space-y-1.5">

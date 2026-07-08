@@ -5,16 +5,21 @@ import { useTasks, Task, TaskStatus, TaskPriority } from '@/hooks/useTasks'
 import { createClient } from '@/lib/supabase'
 import { 
   Plus, 
-  Search, 
-  Filter, 
   MoreVertical, 
   Calendar, 
   Clock, 
-  AlertCircle,
-  CheckCircle2,
   Trash2,
-  User as UserIcon
+  User as UserIcon,
+  CheckCircle2,
+  Circle,
+  PlayCircle
 } from 'lucide-react'
+
+const COLUMNS: { id: TaskStatus; label: string; icon: any; color: string }[] = [
+  { id: 'a_fazer', label: 'A Fazer', icon: Circle, color: 'text-gray-400' },
+  { id: 'em_andamento', label: 'Em Andamento', icon: PlayCircle, color: 'text-blue-400' },
+  { id: 'finalizada', label: 'Finalizadas', icon: CheckCircle2, color: 'text-emerald-400' },
+]
 
 export default function AdminTasksPage() {
   const { tasks, loading, createTask, updateTask, deleteTask } = useTasks()
@@ -43,21 +48,19 @@ export default function AdminTasksPage() {
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      await createTask(newTask)
+      await createTask({
+        ...newTask,
+        status: 'a_fazer'
+      })
       setIsModalOpen(false)
       setNewTask({ title: '', description: '', assigned_to: '', priority: 'media', due_date: '' })
     } catch (err) {
-      alert('Erro ao criar tarefa')
+      alert('Erro ao criar tarefa. Verifique se todos os campos estão corretos.')
     }
   }
 
-  const getStatusColor = (status: TaskStatus) => {
-    switch (status) {
-      case 'concluida': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-      case 'em_andamento': return 'bg-blue-500/10 text-blue-500 border-blue-500/20'
-      case 'cancelada': return 'bg-red-500/10 text-red-500 border-red-500/20'
-      default: return 'bg-gray-500/10 text-gray-400 border-gray-500/20'
-    }
+  const handleMoveTask = async (id: string, newStatus: TaskStatus) => {
+    await updateTask(id, { status: newStatus })
   }
 
   const getPriorityColor = (priority: TaskPriority) => {
@@ -69,11 +72,11 @@ export default function AdminTasksPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-6 h-[calc(100vh-120px)] flex flex-col">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
         <div>
-          <h1 className="text-2xl font-bold text-white">Gestão de Tarefas</h1>
-          <p className="text-gray-400 text-sm">Atribua e monitore as atividades da equipe.</p>
+          <h1 className="text-2xl font-bold text-white">Quadro Kanban</h1>
+          <p className="text-gray-400 text-sm">Gerencie o fluxo de trabalho da equipe.</p>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
@@ -84,55 +87,71 @@ export default function AdminTasksPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Lista de Tarefas */}
-        <div className="md:col-span-3 space-y-4">
-          {loading ? (
-            <div className="py-20 text-center text-gray-500">Carregando tarefas...</div>
-          ) : tasks.length === 0 ? (
-            <div className="py-20 text-center bg-[#0f1a14] border border-[#1a3a24] rounded-2xl">
-              <CheckCircle2 size={48} className="mx-auto text-gray-700 mb-4" />
-              <p className="text-gray-400">Nenhuma tarefa encontrada.</p>
+      <div className="flex-1 flex gap-6 overflow-x-auto pb-4 custom-scrollbar">
+        {COLUMNS.map((column) => (
+          <div key={column.id} className="flex-1 min-w-[320px] bg-[#0f1a14]/50 border border-[#1a3a24] rounded-2xl flex flex-col overflow-hidden">
+            <div className="p-4 border-b border-[#1a3a24] flex items-center justify-between bg-[#0f1a14]">
+              <div className="flex items-center gap-2">
+                <column.icon size={18} className={column.color} />
+                <h2 className="text-white font-bold text-sm uppercase tracking-widest">{column.label}</h2>
+              </div>
+              <span className="bg-[#1a3a24] text-gray-400 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                {tasks.filter(t => t.status === column.id).length}
+              </span>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-              {tasks.map((task) => (
-                <div key={task.id} className="bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-5 hover:border-[#00ff88]/30 transition-all group">
-                  <div className="flex justify-between items-start mb-4">
-                    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${getStatusColor(task.status)}`}>
-                      {task.status.replace('_', ' ')}
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+              {tasks.filter(t => t.status === column.id).map((task) => (
+                <div key={task.id} className="bg-[#0a0f0c] border border-[#1a3a24] rounded-xl p-4 hover:border-[#00ff88]/30 transition-all group shadow-lg">
+                  <div className="flex justify-between items-start mb-3">
+                    <span className={`text-[10px] font-black uppercase tracking-tighter ${getPriorityColor(task.priority)}`}>
+                      {task.priority}
                     </span>
-                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => deleteTask(task.id)} className="p-1.5 text-gray-500 hover:text-red-500 transition-colors">
-                        <Trash2 size={16} />
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => deleteTask(task.id)} className="p-1 text-gray-600 hover:text-red-500">
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </div>
 
-                  <h3 className="text-white font-bold mb-2 line-clamp-1">{task.title}</h3>
-                  <p className="text-gray-400 text-sm line-clamp-2 mb-4 h-10">{task.description || 'Sem descrição'}</p>
+                  <h3 className="text-white font-bold text-sm mb-2 line-clamp-2">{task.title}</h3>
+                  {task.description && (
+                    <p className="text-gray-500 text-xs line-clamp-2 mb-4">{task.description}</p>
+                  )}
 
-                  <div className="space-y-3 pt-4 border-t border-[#1a3a24]">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2 text-gray-400">
-                        <UserIcon size={14} />
-                        <span>{task.assignee?.name || 'Não atribuída'}</span>
+                  <div className="pt-4 border-t border-[#1a3a24] flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-[#00ff88]/10 border border-[#00ff88]/20 flex items-center justify-center text-[10px] text-[#00ff88] font-bold uppercase">
+                        {task.assignee?.name?.[0] || task.assignee?.email?.[0] || '?'}
                       </div>
-                      <span className={`font-bold uppercase ${getPriorityColor(task.priority)}`}>
-                        {task.priority}
+                      <span className="text-[10px] text-gray-400 font-medium truncate max-w-[80px]">
+                        {task.assignee?.name || task.assignee?.email}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <Calendar size={14} />
-                      <span>Prazo: {task.due_date ? new Date(task.due_date).toLocaleDateString('pt-BR') : 'Sem prazo'}</span>
+                    <div className="flex gap-1">
+                      {column.id !== 'a_fazer' && (
+                        <button onClick={() => handleMoveTask(task.id, 'a_fazer')} title="Mover para A Fazer" className="p-1 text-gray-600 hover:text-white transition-colors">
+                          <Circle size={14} />
+                        </button>
+                      )}
+                      {column.id !== 'em_andamento' && (
+                        <button onClick={() => handleMoveTask(task.id, 'em_andamento')} title="Mover para Em Andamento" className="p-1 text-gray-600 hover:text-blue-400 transition-colors">
+                          <PlayCircle size={14} />
+                        </button>
+                      )}
+                      {column.id !== 'finalizada' && (
+                        <button onClick={() => handleMoveTask(task.id, 'finalizada')} title="Mover para Finalizada" className="p-1 text-gray-600 hover:text-emerald-400 transition-colors">
+                          <CheckCircle2 size={14} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        ))}
       </div>
 
       {/* Modal de Nova Tarefa */}
@@ -141,7 +160,7 @@ export default function AdminTasksPage() {
           <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl w-full max-w-lg overflow-hidden">
             <div className="px-6 py-4 border-b border-[#1a3a24] flex justify-between items-center">
               <h2 className="text-white font-bold">Criar Nova Tarefa</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-500 hover:text-white">×</button>
+              <button onClick={() => setIsModalOpen(false)} className="text-gray-500 hover:text-white text-2xl">&times;</button>
             </div>
             <form onSubmit={handleCreateTask} className="p-6 space-y-4">
               <div className="space-y-1.5">
@@ -208,7 +227,7 @@ export default function AdminTasksPage() {
 
               <button 
                 type="submit"
-                className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-[#0a0f0c] font-bold rounded-xl transition-all mt-4"
+                className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-[#0a0f0c] font-bold rounded-xl transition-all mt-4 shadow-lg shadow-emerald-500/20"
               >
                 Criar Tarefa
               </button>
