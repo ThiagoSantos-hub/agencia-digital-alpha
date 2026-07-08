@@ -18,10 +18,12 @@ BEGIN
   );
 
   -- 2. Atualizar o status e o timestamp de reset dos checklists
+  -- Forçamos o status para 'pending' para que elas subam para o topo
   UPDATE public.checklists
   SET 
     status = 'pending',
-    last_reset_at = NOW()
+    last_reset_at = NOW(),
+    updated_at = NOW()
   WHERE current_day = ANY(recurrence_days)
   AND (last_reset_at::DATE < NOW()::DATE OR last_reset_at IS NULL);
 

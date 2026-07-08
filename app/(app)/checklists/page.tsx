@@ -72,8 +72,15 @@ export default function ChecklistsPage() {
     setCurrentNewItem('')
   }
 
-  const pendingLists = checklists.filter(l => l.status === 'pending')
-  const completedLists = checklists.filter(l => l.status === 'completed')
+  const pendingLists = useMemo(() => 
+    checklists.filter(l => l.status === 'pending')
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  , [checklists])
+
+  const completedLists = useMemo(() => 
+    checklists.filter(l => l.status === 'completed')
+      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+  , [checklists])
 
   if (loading && checklists.length === 0) {
     return (
