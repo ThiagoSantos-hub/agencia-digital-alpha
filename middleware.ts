@@ -47,22 +47,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(dest, request.url))
   }
 
-  // Rota do colaborador — permite acesso apenas para collaborator
+  // Rota do colaborador — PERMITE acesso para qualquer usuário autenticado
+  // A validação de perfil é feita pelo layout.tsx do colaborador (client-side)
+  // Isso evita race condition onde o profile não foi carregado a tempo
   if (isCollaboratorRoute && user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-    
-    if (profile?.role === 'collaborator') {
-      return NextResponse.next()
-    }
-    // Admin tentando acessar rota do colaborador → redireciona para dashboard
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    return NextResponse.next()
   }
 
-  // Rota do admin — permite acesso apenas para não-collaborator
+  // Rota do admin — verifica se o user é collaborator e redireciona
   const isAdminRoute =
     request.nextUrl.pathname.startsWith('/dashboard') ||
     request.nextUrl.pathname.startsWith('/clientes') ||

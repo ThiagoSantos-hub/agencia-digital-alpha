@@ -59,12 +59,12 @@ export default function LoginPage() {
           .single()
         
         if (profile?.role === 'collaborator') {
-          router.push('/colaborador/dashboard')
+          router.replace('/colaborador/dashboard')
         } else {
-          router.push('/dashboard')
+          router.replace('/dashboard')
         }
       } else {
-        router.push('/dashboard')
+        router.replace('/dashboard')
       }
     }
   }

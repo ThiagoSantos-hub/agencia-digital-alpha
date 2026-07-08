@@ -28,9 +28,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     )
   }
 
+  // Se é collaborator, não renderiza nada — o useEffect já redireciona
   if (profile?.role === 'collaborator') {
-    router.push('/colaborador/dashboard')
-    return null
+    return (
+      <div className="min-h-screen bg-[#0a0f0c] flex items-center justify-center">
+        <div className="text-gray-400 text-sm animate-pulse">Redirecionando...</div>
+      </div>
+    )
   }
 
   return (

@@ -44,8 +44,11 @@ export default function CollaboratorLayout({
 
   if (loading || !profile || profile.role !== 'collaborator') {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-emerald-500"></div>
+      <div className="min-h-screen bg-[#0a0f0c] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-emerald-500 mx-auto mb-3"></div>
+          <p className="text-gray-400 text-sm">Carregando painel...</p>
+        </div>
       </div>
     )
   }
