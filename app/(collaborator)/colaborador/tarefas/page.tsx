@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useTasks, Task, TaskStatus, TaskPriority } from '@/hooks/useTasks'
 import { useAuth } from '@/hooks/useAuth'
+import { createClient } from '@/lib/supabase'
 import { 
   Plus, 
   Calendar, 
@@ -46,14 +47,28 @@ export default function CollaboratorTasksPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [activeTask, setActiveTask] = useState<Task | null>(null)
+  const [admins, setAdmins] = useState<{id: string, name: string, email: string}[]>([])
   
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
     priority: 'media' as TaskPriority,
     due_date: '',
-    status: 'a_fazer' as TaskStatus
+    status: 'a_fazer' as TaskStatus,
+    assigned_to: ''
   })
+
+  useEffect(() => {
+    async function fetchAdmins() {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, name, email')
+        .eq('role', 'admin')
+      setAdmins(data || [])
+    }
+    fetchAdmins()
+  }, [])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -83,9 +98,12 @@ export default function CollaboratorTasksPage() {
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      await createTask({ ...newTask, assigned_to: user?.id })
+      await createTask({ 
+        ...newTask, 
+        assigned_to: newTask.assigned_to || user?.id 
+      })
       setIsModalOpen(false)
-      setNewTask({ title: '', description: '', priority: 'media', due_date: '', status: 'a_fazer' })
+      setNewTask({ title: '', description: '', priority: 'media', due_date: '', status: 'a_fazer', assigned_to: '' })
     } catch (err) {
       alert('Erro ao criar tarefa')
     }
@@ -101,7 +119,8 @@ export default function CollaboratorTasksPage() {
         description: editingTask.description,
         priority: editingTask.priority,
         due_date: editingTask.due_date,
-        status: editingTask.status
+        status: editingTask.status,
+        assigned_to: editingTask.assigned_to
       })
       setIsEditModalOpen(false)
       setEditingTask(null)
@@ -269,6 +288,19 @@ export default function CollaboratorTasksPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Atribuir a</label>
+                  <select 
+                    value={editingTask.assigned_to || user?.id}
+                    onChange={e => setEditingTask({...editingTask, assigned_to: e.target.value})}
+                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  >
+                    <option value={user?.id}>Mim mesmo</option>
+                    {admins.map(admin => (
+                      <option key={admin.id} value={admin.id}>ADM: {admin.name || admin.email}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Status</label>
                   <select 
                     value={editingTask.status}
@@ -280,6 +312,9 @@ export default function CollaboratorTasksPage() {
                     ))}
                   </select>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Prioridade</label>
                   <select 
@@ -293,16 +328,15 @@ export default function CollaboratorTasksPage() {
                     <option value="urgente">Urgente</option>
                   </select>
                 </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Data de Entrega</label>
-                <input 
-                  type="date" 
-                  value={editingTask.due_date ? editingTask.due_date.split('T')[0] : ''}
-                  onChange={e => setEditingTask({...editingTask, due_date: e.target.value})}
-                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
-                />
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Data de Entrega</label>
+                  <input 
+                    type="date" 
+                    value={editingTask.due_date ? editingTask.due_date.split('T')[0] : ''}
+                    onChange={e => setEditingTask({...editingTask, due_date: e.target.value})}
+                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  />
+                </div>
               </div>
 
               <button 
@@ -413,6 +447,19 @@ export default function CollaboratorTasksPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Enviar para</label>
+                  <select 
+                    value={newTask.assigned_to}
+                    onChange={e => setNewTask({...newTask, assigned_to: e.target.value})}
+                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  >
+                    <option value="">Mim mesmo</option>
+                    {admins.map(admin => (
+                      <option key={admin.id} value={admin.id}>ADM: {admin.name || admin.email}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Status Inicial</label>
                   <select 
                     value={newTask.status}
@@ -424,6 +471,9 @@ export default function CollaboratorTasksPage() {
                     ))}
                   </select>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Prioridade</label>
                   <select 
@@ -437,16 +487,15 @@ export default function CollaboratorTasksPage() {
                     <option value="urgente">Urgente</option>
                   </select>
                 </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Data de Entrega</label>
-                <input 
-                  type="date" 
-                  value={newTask.due_date}
-                  onChange={e => setNewTask({...newTask, due_date: e.target.value})}
-                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
-                />
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Data de Entrega</label>
+                  <input 
+                    type="date" 
+                    value={newTask.due_date}
+                    onChange={e => setNewTask({...newTask, due_date: e.target.value})}
+                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  />
+                </div>
               </div>
 
               <button 
