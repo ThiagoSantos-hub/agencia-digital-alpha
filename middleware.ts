@@ -28,23 +28,10 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   const isAuthRoute = request.nextUrl.pathname.startsWith('/login')
-
-  const isAdminRoute =
-    request.nextUrl.pathname.startsWith('/dashboard') ||
-    request.nextUrl.pathname.startsWith('/clientes') ||
-    request.nextUrl.pathname.startsWith('/campanhas') ||
-    request.nextUrl.pathname.startsWith('/integracoes') ||
-    request.nextUrl.pathname.startsWith('/financeiro') ||
-    request.nextUrl.pathname.startsWith('/colaboradores') ||
-    request.nextUrl.pathname.startsWith('/ai') ||
-    request.nextUrl.pathname.startsWith('/perfil') ||
-    request.nextUrl.pathname.startsWith('/checklists') ||
-    request.nextUrl.pathname.startsWith('/tarefas')
-
   const isCollaboratorRoute = request.nextUrl.pathname.startsWith('/colaborador/')
 
   // Usuário não autenticado tentando acessar app → redireciona para login
-  if (!user && (isAdminRoute || isCollaboratorRoute)) {
+  if (!user && !isAuthRoute) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
@@ -60,8 +47,35 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(dest, request.url))
   }
 
-  // Colaborador tentando acessar rota do admin → redireciona para painel do colaborador
-  if (user && isAdminRoute) {
+  // Rota do colaborador — permite acesso apenas para collaborator
+  if (isCollaboratorRoute) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    
+    if (profile?.role === 'collaborator') {
+      return NextResponse.next()
+    }
+    // Admin tentando acessar rota do colaborador → redireciona para dashboard
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+
+  // Rota do admin — permite acesso apenas para não-collaborator
+  const isAdminRoute =
+    request.nextUrl.pathname.startsWith('/dashboard') ||
+    request.nextUrl.pathname.startsWith('/clientes') ||
+    request.nextUrl.pathname.startsWith('/campanhas') ||
+    request.nextUrl.pathname.startsWith('/integracoes') ||
+    request.nextUrl.pathname.startsWith('/financeiro') ||
+    request.nextUrl.pathname.startsWith('/colaboradores') ||
+    request.nextUrl.pathname.startsWith('/ai') ||
+    request.nextUrl.pathname.startsWith('/perfil') ||
+    request.nextUrl.pathname.startsWith('/checklists') ||
+    request.nextUrl.pathname.startsWith('/tarefas')
+
+  if (isAdminRoute) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
@@ -70,19 +84,6 @@ export async function middleware(request: NextRequest) {
     
     if (profile?.role === 'collaborator') {
       return NextResponse.redirect(new URL('/colaborador/dashboard', request.url))
-    }
-  }
-
-  // Admin tentando acessar rota do colaborador → redireciona para painel admin
-  if (user && isCollaboratorRoute) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-    
-    if (profile?.role !== 'collaborator') {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }
 
