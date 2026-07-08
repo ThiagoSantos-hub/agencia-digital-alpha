@@ -85,13 +85,6 @@ export function useNotificacoes() {
   useEffect(() => {
     fetchNotificacoes()
 
-    // Pedir permissão para notificações push ao carregar
-    if (typeof window !== 'undefined' && 'Notification' in window) {
-      if (Notification.permission === 'default') {
-        Notification.requestPermission()
-      }
-    }
-
     // Realtime: atualiza o sino automaticamente quando chega notificação nova
     const channel = supabase
       .channel('notifications_realtime')
@@ -106,13 +99,7 @@ export function useNotificacoes() {
           console.log('Nova notificação recebida em tempo real:', payload.new)
           const novaNotif = payload.new as Notificacao
           
-          // Disparar Notificação Push Nativa
-          if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-            new Notification(novaNotif.titulo, {
-              body: novaNotif.mensagem,
-              icon: '/logo.png', // Certifique-se que o logo existe em public/
-            })
-          }
+          // O som agora é gerenciado pelo componente NotificationSound
 
           setNotificacoes(prev => [novaNotif, ...prev])
           setNaoLidas(prev => prev + 1)
