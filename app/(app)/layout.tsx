@@ -1,5 +1,5 @@
 'use client'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { Sidebar } from '@/components/layout/Sidebar'
@@ -11,28 +11,68 @@ import { AlphaVoiceButton } from '@/components/AlphaVoiceButton'
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, profile, loading } = useAuth()
   const router = useRouter()
+  const didRedirect = useRef(false)
+
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.push('/login')
-      } else if (profile?.role === 'collaborator') {
-        router.push('/colaborador/dashboard')
-      }
+    if (loading || didRedirect.current) return
+
+    if (!user) {
+      didRedirect.current = true
+      router.replace('/login')
+    } else if (!profile) {
+      // User existe mas profile não — redirecionar para login (profile não existe no banco)
+      didRedirect.current = true
+      router.replace('/login')
+    } else if (profile.role === 'collaborator') {
+      didRedirect.current = true
+      router.replace('/colaborador/dashboard')
     }
   }, [user, profile, loading, router])
-  if (loading || !user || !profile) {
+
+  // Loading — query ao Supabase ainda não retornou
+  if (loading) {
     return (
       <div className="min-h-screen bg-[#0a0f0c] flex items-center justify-center">
-        <div className="text-gray-400 text-sm animate-pulse">Carregando Alpha...</div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-emerald-500 mx-auto mb-3"></div>
+          <p className="text-gray-400 text-sm">Carregando...</p>
+        </div>
       </div>
     )
   }
 
-  // Se é collaborator, não renderiza nada — o useEffect já redireciona
-  if (profile?.role === 'collaborator') {
+  // User não autenticado — não renderiza nada, o useEffect já redireciona
+  if (!user) {
     return (
       <div className="min-h-screen bg-[#0a0f0c] flex items-center justify-center">
-        <div className="text-gray-400 text-sm animate-pulse">Redirecionando...</div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-emerald-500 mx-auto mb-3"></div>
+          <p className="text-gray-400 text-sm">Verificando sessão...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // User existe mas profile não existe — não renderiza nada, o useEffect redireciona
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-[#0a0f0c] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-emerald-500 mx-auto mb-3"></div>
+          <p className="text-gray-400 text-sm">Verificando perfil...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Colaborador tentando acessar admin — redireciona
+  if (profile.role === 'collaborator') {
+    return (
+      <div className="min-h-screen bg-[#0a0f0c] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-emerald-500 mx-auto mb-3"></div>
+          <p className="text-gray-400 text-sm">Redirecionando para seu painel...</p>
+        </div>
       </div>
     )
   }

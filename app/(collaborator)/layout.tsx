@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter, usePathname } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { 
   LayoutDashboard, 
@@ -35,19 +35,37 @@ export default function CollaboratorLayout({
   const { profile, loading, signOut } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
+  const didRedirect = useRef(false)
 
   useEffect(() => {
-    if (!loading && (!profile || profile.role !== 'collaborator')) {
+    if (loading || didRedirect.current) return
+
+    if (!profile) {
+      didRedirect.current = true
+      router.replace('/login')
+    } else if (profile.role !== 'collaborator') {
+      didRedirect.current = true
       router.replace('/login')
     }
   }, [profile, loading, router])
 
-  if (loading || !profile || profile.role !== 'collaborator') {
+  if (loading) {
     return (
       <div className="min-h-screen bg-[#0a0f0c] flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-emerald-500 mx-auto mb-3"></div>
           <p className="text-gray-400 text-sm">Carregando painel...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!profile || profile.role !== 'collaborator') {
+    return (
+      <div className="min-h-screen bg-[#0a0f0c] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-emerald-500 mx-auto mb-3"></div>
+          <p className="text-gray-400 text-sm">Verificando acesso...</p>
         </div>
       </div>
     )
@@ -74,6 +92,7 @@ export default function CollaboratorLayout({
               <Link 
                 key={item.href} 
                 href={item.href} 
+                prefetch={false}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
                   isActive 
                     ? 'bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30' 

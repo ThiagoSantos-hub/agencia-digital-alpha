@@ -17,7 +17,7 @@ let cachedProfile: Profile | null = null
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(cachedProfile)
-  const [loading, setLoading] = useState(!cachedProfile)
+  const [loading, setLoading] = useState(true)
   const supabase = useMemo(() => createClient(), [])
 
   const fetchingProfileFor = useRef<string | null>(null)
@@ -27,28 +27,42 @@ export function useAuth() {
     fetchingProfileFor.current = userId
 
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single()
 
+      if (error) {
+        console.error('[useAuth] Erro ao buscar perfil:', error.message)
+      }
+
       if (data) {
         cachedProfile = data
         setProfile(data)
       }
+    } catch (err: any) {
+      console.error('[useAuth] Erro ao buscar perfil:', err?.message ?? err)
     } finally {
       fetchingProfileFor.current = null
     }
   }
 
   useEffect(() => {
-    // 1. Tentar pegar sessão imediata (síncrono se já carregado pelo Supabase)
     const initializeAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
+      // Timeout de 10s para evitar travamento
+      const timeoutPromise = new Promise<null>((resolve) =>
+        setTimeout(() => resolve(null), 10000)
+      )
+      const sessionPromise = supabase.auth.getSession()
+      const { data: { session } } = (await Promise.race([
+        sessionPromise.then(r => ({ result: r as Awaited<typeof sessionPromise>, timeout: false })),
+        timeoutPromise.then(r => ({ result: r, timeout: true }))
+      ])) as any
+
       const initialUser = session?.user ?? null
       setUser(initialUser)
-      
+
       if (initialUser) {
         if (cachedProfile?.id === initialUser.id) {
           setLoading(false)
