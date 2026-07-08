@@ -32,14 +32,14 @@ function FormFields({ form, set }: { form: ClienteForm; set: (f: keyof ClienteFo
         <label className="block text-xs font-medium text-gray-400">Nome <span className="text-red-400">*</span></label>
         <input type="text" placeholder="Nome do responsável" value={form.name}
           onChange={(e) => set('name', e.target.value)}
-          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 transition-colors" />
       </div>
 
       <div className="space-y-1.5">
         <label className="block text-xs font-medium text-gray-400">Empresa</label>
         <input type="text" placeholder="Nome da empresa" value={form.company}
           onChange={(e) => set('company', e.target.value)}
-          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 transition-colors" />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -47,32 +47,32 @@ function FormFields({ form, set }: { form: ClienteForm; set: (f: keyof ClienteFo
           <label className="block text-xs font-medium text-gray-400">Mensalidade (R$)</label>
           <input type="number" placeholder="0,00" min="0" step="0.01" value={form.monthly_fee}
             onChange={(e) => set('monthly_fee', e.target.value)}
-            className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+            className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 transition-colors" />
         </div>
         <div className="space-y-1.5">
           <label className="block text-xs font-medium text-gray-400">Dia de pagamento</label>
           <input type="number" placeholder="Ex: 10" min="1" max="31" value={form.payment_day}
             onChange={(e) => set('payment_day', e.target.value)}
-            className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+            className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 transition-colors" />
         </div>
       </div>
 
       <div className="bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-3 space-y-3">
-        <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+        <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
           <Target size={12} /> Integração Meta Ads
         </p>
         <div className="space-y-1.5">
           <label className="block text-[10px] font-medium text-gray-500">ID da Conta (act_...)</label>
           <input type="text" placeholder="act_123456789" value={form.meta_ad_account_id}
             onChange={(e) => set('meta_ad_account_id', e.target.value)}
-            className="w-full px-3 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs placeholder-gray-700 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+            className="w-full px-3 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs placeholder-gray-700 focus:outline-none focus:border-indigo-500/50 transition-colors" />
         </div>
         <div className="flex items-center justify-between">
           <label className="text-[10px] font-medium text-gray-400">Exibir em Campanhas</label>
           <button 
             type="button"
             onClick={() => set('show_campaigns', !form.show_campaigns)}
-            className={`p-1.5 rounded-lg transition-colors ${form.show_campaigns ? 'bg-emerald-500/10 text-emerald-400' : 'bg-gray-500/10 text-gray-500'}`}
+            className={`p-1.5 rounded-lg transition-colors ${form.show_campaigns ? 'bg-indigo-500/10 text-indigo-400' : 'bg-gray-500/10 text-gray-500'}`}
           >
             {form.show_campaigns ? <Eye size={16} /> : <EyeOff size={16} />}
           </button>
@@ -83,13 +83,13 @@ function FormFields({ form, set }: { form: ClienteForm; set: (f: keyof ClienteFo
         <label className="block text-xs font-medium text-gray-400">Data de entrada</label>
         <input type="date" value={form.start_date}
           onChange={(e) => set('start_date', e.target.value)}
-          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500/50 transition-colors" />
+          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-colors" />
       </div>
 
       <div className="space-y-1.5">
         <label className="block text-xs font-medium text-gray-400">Status</label>
         <select value={form.status} onChange={(e) => set('status', e.target.value as ClienteForm['status'])}
-          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500/50 transition-colors">
+          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-colors">
           <option value="ativo">Ativo</option>
           <option value="atrasado">Atrasado</option>
           <option value="inativo">Inativo</option>
@@ -100,14 +100,14 @@ function FormFields({ form, set }: { form: ClienteForm; set: (f: keyof ClienteFo
         <label className="block text-xs font-medium text-gray-400">Telefone</label>
         <input type="tel" placeholder="(85) 99999-9999" value={form.phone}
           onChange={(e) => set('phone', e.target.value)}
-          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 transition-colors" />
       </div>
 
       <div className="space-y-1.5">
         <label className="block text-xs font-medium text-gray-400">E-mail da empresa</label>
         <input type="email" placeholder="contato@empresa.com" value={form.email}
           onChange={(e) => set('email', e.target.value)}
-          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+          className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 transition-colors" />
       </div>
     </div>
   )
@@ -175,7 +175,7 @@ function ModalNovoCliente({ onClose }: { onClose: () => void }) {
             Cancelar
           </button>
           <button onClick={handleSubmit} disabled={loading}
-            className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white flex items-center justify-center gap-2 transition-colors">
+            className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white flex items-center justify-center gap-2 transition-colors">
             {loading ? <><Loader2 size={14} className="animate-spin" /> Salvando...</> : 'Salvar Cliente'}
           </button>
         </div>
@@ -250,7 +250,7 @@ function ModalEditarCliente({ client, onClose }: { client: Client; onClose: () =
             Cancelar
           </button>
           <button onClick={handleSubmit} disabled={loading}
-            className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white flex items-center justify-center gap-2 transition-colors">
+            className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white flex items-center justify-center gap-2 transition-colors">
             {loading ? <><Loader2 size={14} className="animate-spin" /> Salvando...</> : 'Salvar Alterações'}
           </button>
         </div>
@@ -292,38 +292,66 @@ function ModalConfirmarExclusao({ name, onClose, onConfirm }: { name: string; on
 export default function ClientesPage() {
   const { profile } = useAuth()
   const isCollaborator = profile?.role === 'collaborator'
-  const { clients, loading, deleteCliente } = useClientes()
+  const { clients, loading, deleteCliente, updateCliente } = useClientes()
   const [search, setSearch] = useState('')
+  const [valoresVisiveis, setValoresVisiveis] = useState(true)
   const [modalNovo, setModalNovo] = useState(false)
-  const [editClient, setEditClient] = useState<Client | null>(null)
-  const [deleteClient, setDeleteClient] = useState<Client | null>(null)
+  const [clienteEditar, setClienteEditar] = useState<Client | null>(null)
+  const [clienteExcluir, setClienteExcluir] = useState<Client | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const filtered = useMemo(() => {
-    return clients.filter(c => 
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.company?.toLowerCase().includes(search.toLowerCase()) ||
-      c.email?.toLowerCase().includes(search.toLowerCase())
-    )
-  }, [clients, search])
+  const filteredActive = useMemo(() => 
+    clients.filter(c => 
+      c.status !== 'inativo' && 
+      (c.name.toLowerCase().includes(search.toLowerCase()) || 
+       (c.company ?? '').toLowerCase().includes(search.toLowerCase()) ||
+       (c.email ?? '').toLowerCase().includes(search.toLowerCase()))
+    ), [clients, search])
 
-  const activeClients = filtered.filter(c => c.status !== 'inativo')
-  const inactiveClients = filtered.filter(c => c.status === 'inativo')
+  const filteredInactive = useMemo(() => 
+    clients.filter(c => 
+      c.status === 'inativo' && 
+      (c.name.toLowerCase().includes(search.toLowerCase()) || 
+       (c.company ?? '').toLowerCase().includes(search.toLowerCase()) ||
+       (c.email ?? '').toLowerCase().includes(search.toLowerCase()))
+    ), [clients, search])
 
-  const exportToExcel = () => {
+  const handleExport = () => {
     const data = clients.map(c => ({
-      'Nome': c.name,
-      'Empresa': c.company || '-',
-      'Email': c.email || '-',
-      'Telefone': c.phone || '-',
-      'Status': c.status.toUpperCase(),
-      'Mensalidade': c.monthly_fee || 0,
-      'Dia Pagamento': c.payment_day || '-',
-      'Data Entrada': c.start_date || '-'
+      Nome: c.name,
+      Empresa: c.company || '',
+      Email: c.email || '',
+      Telefone: c.phone || '',
+      Status: c.status.charAt(0).toUpperCase() + c.status.slice(1),
+      Mensalidade: c.monthly_fee || 0,
+      'Dia Pagamento': c.payment_day || '',
+      'Início': c.start_date || '',
+      'Atraso (Dias)': c.dias_atraso || 0
     }))
     const ws = XLSX.utils.json_to_sheet(data)
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Clientes')
     XLSX.writeFile(wb, 'clientes_agencia_alpha.xlsx')
+  }
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (evt) => {
+      const bstr = evt.target?.result
+      const wb = XLSX.read(bstr, { type: 'binary' })
+      const wsname = wb.SheetNames[0]
+      const ws = wb.Sheets[wsname]
+      const data = XLSX.utils.sheet_to_json(ws)
+      console.log('Dados importados:', data)
+      alert(`${data.length} clientes processados para importação.`)
+    }
+    reader.readAsBinaryString(file)
+  }
+
+  const handleQuickStatus = async (id: string, status: 'ativo' | 'atrasado' | 'inativo') => {
+    await updateCliente(id, { status })
   }
 
   const renderTable = (list: Client[], title: string) => (
@@ -341,14 +369,29 @@ export default function ClientesPage() {
               <tr className="border-b border-[#2a2a2a] bg-[#1f1f1f]/50">
                 <th className="px-5 py-3 text-gray-500 font-medium">CLIENTE / EMPRESA</th>
                 <th className="px-5 py-3 text-gray-500 font-medium">CONTATO</th>
+                {!isCollaborator && (
+                  <th className="px-5 py-3 text-gray-500 font-medium">
+                    <div className="flex items-center gap-2">
+                      FINANCEIRO
+                      <button
+                        onClick={() => setValoresVisiveis(v => !v)}
+                        className="text-gray-600 hover:text-gray-300 transition-colors"
+                        title={valoresVisiveis ? 'Ocultar valores' : 'Mostrar valores'}
+                      >
+                        {valoresVisiveis ? <EyeOff size={13} /> : <Eye size={13} />}
+                      </button>
+                    </div>
+                  </th>
+                )}
                 <th className="px-5 py-3 text-gray-500 font-medium">STATUS</th>
-                <th className="px-5 py-3 text-gray-500 font-medium text-right">AÇÕES</th>
+                {title.includes('Inativos') && <th className="px-5 py-3 text-gray-500 font-medium">INATIVADO EM</th>}
+                {!isCollaborator && <th className="px-5 py-3 text-gray-500 font-medium text-right pr-12">AÇÕES</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-[#2a2a2a]/50">
               {list.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-5 py-10 text-center text-gray-600">
+                  <td colSpan={isCollaborator ? 4 : 6} className="px-5 py-10 text-center text-gray-600">
                     Nenhum cliente encontrado nesta seção.
                   </td>
                 </tr>
@@ -369,11 +412,26 @@ export default function ClientesPage() {
                         <span className="text-gray-600 text-[10px]">{c.email || '—'}</span>
                       </div>
                     </td>
+                    {!isCollaborator && (
+                      <td className="px-5 py-4">
+                        <div className="flex flex-col">
+                          <span className="text-white font-medium text-sm">
+                            {c.monthly_fee
+                              ? (valoresVisiveis
+                                  ? `R$ ${c.monthly_fee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                                  : '••••••')
+                              : '—'}
+                          </span>
+                          <span className="text-gray-500 text-[10px]">Dia {c.payment_day || '—'}</span>
+                        </div>
+                      </td>
+                    )}
                     <td className="px-5 py-4">
                       <div className="flex flex-col gap-1.5">
                         <span className={`inline-flex items-center w-fit px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${statusConfig[c.status].className}`}>
                           {statusConfig[c.status].label}
                         </span>
+                        {/* CORREÇÃO: > 0 evita que o React renderize o número 0 na tela */}
                         {(c.status === 'atrasado') && ((c.dias_atraso ?? 0) > 0) && (
                           <span className="text-amber-500 text-[10px] font-bold flex items-center gap-1">
                             <Clock size={10} /> {c.dias_atraso} dias
@@ -381,33 +439,37 @@ export default function ClientesPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
-                          onClick={() => setEditClient(c)}
-                          className="p-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 transition-all"
-                          title="Editar"
-                        >
-                          <Pencil size={14} />
-                        </button>
-                        {!isCollaborator && (
-                          <button 
-                            onClick={() => setDeleteClient(c)}
-                            className="p-2 rounded-xl bg-red-500/5 border border-red-500/10 text-red-400 hover:text-white hover:bg-red-500 transition-all"
-                            title="Excluir"
-                          >
-                            <Trash2 size={14} />
+                    {title.includes('Inativos') && (
+                      <td className="px-5 py-4 text-gray-400 text-xs">
+                        {c.inativo_em ? new Date(c.inativo_em).toLocaleDateString('pt-BR') : '—'}
+                      </td>
+                    )}
+                    {!isCollaborator && (
+                      <td className="px-5 py-4 pr-12">
+                        <div className="flex items-center justify-end gap-1">
+                          <div className="flex items-center bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-0.5 mr-2">
+                            <button onClick={() => handleQuickStatus(c.id, 'ativo')} title="Marcar como Ativo"
+                              className={`p-1 rounded-lg transition-all ${c.status === 'ativo' ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-600 hover:text-emerald-400'}`}>
+                              <CheckCircle2 size={13} />
+                            </button>
+                            <button onClick={() => handleQuickStatus(c.id, 'atrasado')} title="Marcar como Atrasado"
+                              className={`p-1 rounded-lg transition-all ${c.status === 'atrasado' ? 'bg-amber-500/20 text-amber-400' : 'text-gray-600 hover:text-amber-400'}`}>
+                              <Clock size={13} />
+                            </button>
+                            <button onClick={() => handleQuickStatus(c.id, 'inativo')} title="Marcar como Inativo"
+                              className={`p-1 rounded-lg transition-all ${c.status === 'inativo' ? 'bg-gray-500/20 text-gray-400' : 'text-gray-600 hover:text-white'}`}>
+                              <Ban size={13} />
+                            </button>
+                          </div>
+                          <button onClick={() => setClienteEditar(c)} className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all">
+                            <Pencil size={15} />
                           </button>
-                        )}
-                        <button 
-                          onClick={() => window.location.href = `/clientes/${c.id}`}
-                          className={`p-1 rounded-lg transition-all ${c.status === 'ativo' ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-600 hover:text-emerald-400'}`}
-                          title="Ver Perfil"
-                        >
-                          <CheckCircle2 size={16} />
-                        </button>
-                      </div>
-                    </td>
+                          <button onClick={() => setClienteExcluir(c)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/5 rounded-xl transition-all">
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))
               )}
@@ -419,54 +481,51 @@ export default function ClientesPage() {
   )
 
   return (
-    <div className="p-8 space-y-8 pb-20">
+    <div className="space-y-8 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-white text-2xl font-bold">Clientes</h1>
-          <p className="text-gray-400 text-sm mt-1">Gerencie a base de clientes da agência e suas mensalidades.</p>
+          <h1 className="text-white text-2xl font-bold">Gestão de Clientes</h1>
+          <p className="text-gray-400 text-sm mt-1">Gerencie seus clientes ativos, atrasados e o histórico de inativos.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button onClick={exportToExcel} className="flex items-center gap-2 px-4 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] text-gray-400 hover:text-white rounded-xl text-sm font-medium transition-all">
-            <Download size={18} /> Exportar
-          </button>
-          <button onClick={() => setModalNovo(true)} className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-emerald-500/20">
-            <UserPlus size={18} /> Novo Cliente
-          </button>
-        </div>
+        {!isCollaborator && (
+          <div className="flex items-center gap-3">
+            <input type="file" ref={fileInputRef} onChange={handleImport} accept=".xlsx,.xls" className="hidden" />
+            <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-3 py-2 bg-[#1a1a1a] border border-[#2a2a2a] text-gray-400 hover:text-white rounded-xl text-sm transition-all">
+              <Upload size={15} /> Importar
+            </button>
+            <button onClick={handleExport} className="flex items-center gap-2 px-3 py-2 bg-[#1a1a1a] border border-[#2a2a2a] text-gray-400 hover:text-white rounded-xl text-sm transition-all">
+              <Download size={15} /> Exportar
+            </button>
+            <button onClick={() => setModalNovo(true)} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-500/20">
+              <UserPlus size={16} /> Novo Cliente
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="relative max-w-md">
         <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
         <input type="text" placeholder="Buscar por nome, empresa ou e-mail..." value={search} onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-12 pr-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-all shadow-inner" />
+          className="w-full pl-12 pr-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 transition-all shadow-inner" />
       </div>
 
       <div className="space-y-12">
         {loading && clients.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <Loader2 size={32} className="animate-spin text-emerald-500" />
-            <p className="text-gray-500 text-sm">Carregando base de clientes...</p>
+            <Loader2 size={32} className="animate-spin text-indigo-500" />
+            <p className="text-gray-500 text-sm">Carregando sua base de clientes...</p>
           </div>
         ) : (
           <>
-            {renderTable(activeClients, 'Clientes Ativos e Atrasados')}
-            {renderTable(inactiveClients, 'Clientes Inativos')}
+            {renderTable(filteredActive, 'Clientes Ativos e Atrasados')}
+            {renderTable(filteredInactive, 'Clientes Inativos')}
           </>
         )}
       </div>
 
       {modalNovo && <ModalNovoCliente onClose={() => setModalNovo(false)} />}
-      {editClient && <ModalEditarCliente client={editClient} onClose={() => setEditClient(null)} />}
-      {deleteClient && (
-        <ModalConfirmarExclusao 
-          name={deleteClient.name} 
-          onClose={() => setDeleteClient(null)} 
-          onConfirm={async () => {
-            await deleteCliente(deleteClient.id)
-            setDeleteClient(null)
-          }} 
-        />
-      )}
+      {clienteEditar && <ModalEditarCliente client={clienteEditar} onClose={() => setClienteEditar(null)} />}
+      {clienteExcluir && <ModalConfirmarExclusao name={clienteExcluir.name} onClose={() => setClienteExcluir(null)} onConfirm={async () => { await deleteCliente(clienteExcluir.id); setClienteExcluir(null) }} />}
     </div>
   )
 }
