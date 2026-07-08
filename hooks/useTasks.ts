@@ -83,16 +83,22 @@ export function useTasks() {
         created_by: session?.user?.id || null
       }
 
+      console.log('Enviando dados da tarefa:', taskData)
       const { data, error } = await supabase
         .from('tasks')
         .insert([taskData])
         .select()
-        .single()
 
       if (error) {
-        console.error('Erro Supabase (Insert):', error)
+        console.error('Erro Supabase (Insert):', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        })
         throw error
       }
+      console.log('Tarefa criada com sucesso:', data)
       
       await listTasks()
       return data
