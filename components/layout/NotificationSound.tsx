@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useNotifications } from '@/hooks/useNotifications'
+import { useNotificacoes } from '@/hooks/useNotificacoes'
 
 export function NotificationSound() {
-  const { unreadCount, notifications } = useNotifications()
+  const { naoLidas: unreadCount, notificacoes: notifications } = useNotificacoes()
   const [hasInteracted, setHasInteracted] = useState(false)
   const lastUnreadCount = useRef(unreadCount)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -31,15 +31,16 @@ export function NotificationSound() {
     try {
       const audio = new Audio('/sounds/notification.mp3')
       audio.volume = 1.0
+      audio.loop = true // Ativar loop para garantir que o som continue
       
-      // Tocar em loop manual para garantir os 3 segundos se o arquivo for curto
       const playPromise = audio.play()
       
       if (playPromise !== undefined) {
         playPromise.then(() => {
-          // Tocar por 3 segundos
+          // Parar após exatamente 3 segundos
           setTimeout(() => {
             audio.pause()
+            audio.currentTime = 0
           }, 3000)
         }).catch(e => {
           console.warn('Navegador bloqueou o som. Aguardando interação.', e)
