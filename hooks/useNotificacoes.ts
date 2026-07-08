@@ -89,10 +89,33 @@ export function useNotificacoes() {
       .channel('notifications_realtime')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'notifications' },
-        () => { 
-          cachedNotificacoes = null // Invalidar cache
-          fetchNotificacoes() 
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'notifications'
+        },
+        (payload) => { 
+          console.log('Nova notificação recebida em tempo real:', payload.new)
+          const novaNotif = payload.new as Notificacao
+          setNotificacoes(prev => [novaNotif, ...prev])
+          setNaoLidas(prev => prev + 1)
+          cachedNotificacoes = null
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'notifications' },
+        () => {
+          cachedNotificacoes = null
+          fetchNotificacoes()
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'notifications' },
+        () => {
+          cachedNotificacoes = null
+          fetchNotificacoes()
         }
       )
       .subscribe()

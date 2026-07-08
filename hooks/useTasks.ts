@@ -57,7 +57,24 @@ export function useTasks() {
 
   useEffect(() => {
     fetchTasks()
-  }, [fetchTasks])
+
+    // Realtime: Atualiza o quadro Kanban instantaneamente
+    const channel = supabase
+      .channel('tasks_realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tasks' },
+        (payload) => {
+          console.log('Mudança detectada nas tarefas:', payload)
+          fetchTasks() // Recarrega para garantir que os Joins (creator/assignee) venham corretos
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [fetchTasks, supabase])
 
   const createTask = async (task: Partial<Task>) => {
     if (!user) {
