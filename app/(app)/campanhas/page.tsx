@@ -369,7 +369,7 @@ export default function CampanhasPage() {
   }
 
   return (
-    <div className="space-y-8 pb-20 relative">
+    <div className="space-y-8 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-white text-3xl font-bold tracking-tight">Campanhas Ativas</h1>

@@ -120,7 +120,7 @@ export default function CollaboratorLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 flex">
+    <div className="h-screen bg-gray-950 text-gray-100 flex overflow-hidden">
       {/* Sidebar */}
       <aside className="fixed left-0 top-0 h-screen w-64 bg-[#0a0f0c] border-r border-[#1a3a24] flex flex-col z-40">
         <div className="px-6 py-5 border-b border-[#1a3a24]">
@@ -166,7 +166,7 @@ export default function CollaboratorLayout({
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 ml-64 flex flex-col h-screen overflow-y-auto custom-scrollbar">
+      <div className="flex-1 ml-64 flex flex-col h-full">
         {/* Header */}
         <header className="h-16 border-b border-[#1a3a24] bg-[#0a0f0c] px-8 flex items-center justify-between shrink-0">
           <div>
@@ -282,7 +282,7 @@ export default function CollaboratorLayout({
           </div>
         </header>
 
-        <main className="flex-1">
+        <main className="flex-1 overflow-y-auto custom-scrollbar">
           {children}
         </main>
       </div>
