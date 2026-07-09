@@ -336,11 +336,13 @@ export default function ColaboradorCampanhasPage() {
   const campanhasPorCliente = useMemo(() => {
     const grupos: Record<string, { nome: string; adAccountId: string | null; campaigns: Campaign[] }> = {}
     campaigns.forEach(c => {
+      const cliente = clients.find(cl => cl.id === c.client_id)
+      // Ignorar campanhas de clientes inativos
+      if (!cliente || cliente.status === 'inativo') return
       if (!grupos[c.client_id]) {
-        const cliente = clients.find(cl => cl.id === c.client_id)
         grupos[c.client_id] = {
-          nome: cliente?.name ?? `Cliente ${c.client_id.slice(0, 8)}`,
-          adAccountId: cliente?.meta_ad_account_id ?? null,
+          nome: cliente.name ?? `Cliente ${c.client_id.slice(0, 8)}`,
+          adAccountId: cliente.meta_ad_account_id ?? null,
           campaigns: [],
         }
       }
