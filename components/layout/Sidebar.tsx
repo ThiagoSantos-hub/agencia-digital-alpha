@@ -19,25 +19,7 @@ const menuItems = [
 ]
 export function Sidebar() {
   const pathname = usePathname()
-  const [temNovidadeRecente, setTemNovidadeRecente] = useState(false)
-  const supabase = createClient()
 
-  useEffect(() => {
-    const checkNovidades = async () => {
-      const seteDiasAtras = new Date()
-      seteDiasAtras.setDate(seteDiasAtras.getDate() - 7)
-
-      const { count } = await supabase
-        .from('novidades')
-        .select('*', { count: 'exact', head: true })
-        .gt('created_at', seteDiasAtras.toISOString())
-
-      if (count && count > 0) {
-        setTemNovidadeRecente(true)
-      }
-    }
-    checkNovidades()
-  }, [])
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-[#0a0f0c] border-r border-[#1a3a24] flex flex-col">
@@ -60,9 +42,6 @@ export function Sidebar() {
               </div>
             )
           }
-          const isNovidades = item.label === 'Novidades'
-          const showPulse = isNovidades && temNovidadeRecente
-
           return (
             <Link 
               key={item.href} 
@@ -70,12 +49,10 @@ export function Sidebar() {
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
                 isActive 
                   ? 'bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30' 
-                  : showPulse
-                    ? 'text-amber-400 bg-amber-400/10 border border-amber-400/30 animate-pulse'
-                    : 'text-gray-400 hover:text-white hover:bg-[#1a3a24]/40'
+                  : 'text-gray-400 hover:text-white hover:bg-[#1a3a24]/40'
               }`}
             >
-              <Icon size={18} className={showPulse ? 'fill-amber-400' : ''} />
+              <Icon size={18} />
               <span className="text-sm">{item.label}</span>
             </Link>
           )
