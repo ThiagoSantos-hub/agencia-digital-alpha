@@ -68,7 +68,7 @@ export function Header() {
   const inicial   = nome.charAt(0).toUpperCase()
 
   return (
-    <header className="h-16 bg-[#0a0f0c] border-b border-[#1a3a24] flex items-center justify-between px-6">
+    <header className="h-16 bg-[#0a0f0c] border-b border-[#1a3a24] flex items-center justify-between px-6 shrink-0">
       {/* Título */}
       <div>
         <h2 className="text-white font-semibold text-sm">Painel de Controle</h2>

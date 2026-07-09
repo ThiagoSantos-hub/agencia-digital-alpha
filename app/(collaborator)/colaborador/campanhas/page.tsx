@@ -369,7 +369,7 @@ export default function ColaboradorCampanhasPage() {
   }
 
   return (
-    <div className="p-8 space-y-8 pb-20 bg-[#0a0f0c] min-h-screen">
+    <div className="p-8 space-y-8 pb-20 bg-[#0a0f0c]">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-white text-3xl font-bold tracking-tight">Campanhas</h1>
