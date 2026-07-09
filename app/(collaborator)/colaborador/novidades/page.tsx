@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { Sparkles, RefreshCw, Calendar } from 'lucide-react'
-import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+
 
 interface Novidade {
   id: string
@@ -96,7 +95,7 @@ export default function NovidadesCollaboratorPage() {
                         <h3 className={`font-bold text-lg ${!lida ? 'text-white' : 'text-gray-400'}`}>{n.titulo}</h3>
                         <div className="flex items-center gap-1.5 text-gray-600 text-xs font-medium">
                           <Calendar size={12} />
-                          {format(new Date(n.created_at), 'dd/MM/yyyy', { locale: ptBR })}
+                          {new Date(n.created_at).toLocaleDateString('pt-BR')}
                         </div>
                       </div>
                       <p className={`text-sm leading-relaxed whitespace-pre-wrap ${!lida ? 'text-gray-300' : 'text-gray-500'}`}>

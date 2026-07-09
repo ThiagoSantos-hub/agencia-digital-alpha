@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Sparkles, Trash2, Plus, RefreshCw } from 'lucide-react'
-import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+
 
 interface Novidade {
   id: string
@@ -147,7 +146,7 @@ export default function NovidadesAdminPage() {
                     <div className="flex items-center gap-3 mb-1">
                       <h3 className="text-white font-bold text-lg">{n.titulo}</h3>
                       <span className="text-gray-600 text-xs font-medium">
-                        {format(new Date(n.created_at), 'dd/MM/yyyy', { locale: ptBR })}
+                        {new Date(n.created_at).toLocaleDateString('pt-BR')}
                       </span>
                     </div>
                     <p className="text-gray-400 text-sm leading-relaxed whitespace-pre-wrap">{n.descricao}</p>
