@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, Megaphone, CheckSquare, Plug, Wallet, UserCircle, Bot, Sparkles } from 'lucide-react'
+import { LayoutDashboard, Users, Megaphone, CheckSquare, Plug, Wallet, UserCircle, Bot, Sparkles, MessageSquare } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 const menuItems = [
@@ -15,6 +15,7 @@ const menuItems = [
   { label: 'Alpha AI', href: '/ai', icon: Bot, ativo: true },
   { label: 'Integrações', href: '/integracoes', icon: Plug, ativo: true },
   { label: 'Novidades', href: '/novidades', icon: Sparkles, ativo: true },
+  { label: 'Feedbacks', href: '/feedbacks', icon: MessageSquare, ativo: true },
   { label: 'Perfil', href: '/perfil', icon: UserCircle, ativo: true },
 ]
 /**

@@ -122,7 +122,9 @@ export function useNotificacoes() {
           fetchNotificacoes()
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log('Status canal notifications_realtime:', status)
+      })
 
     return () => { supabase.removeChannel(channel) }
   }, [fetchNotificacoes, supabase])

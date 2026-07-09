@@ -16,7 +16,8 @@ import {
   Bell,
   CheckCheck,
   X,
-  Sparkles
+  Sparkles,
+  MessageSquare
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { useNotificacoes } from '@/hooks/useNotificacoes'
@@ -31,6 +32,7 @@ const menuItems = [
   { label: 'Financeiro', href: '/colaborador/financeiro', icon: Wallet },
   { label: 'Integrações', href: '/colaborador/integracoes', icon: Plug },
   { label: 'Novidades', href: '/colaborador/novidades', icon: Sparkles },
+  { label: 'Feedback', href: '/colaborador/feedbacks', icon: MessageSquare },
   { label: 'Perfil', href: '/colaborador/perfil', icon: UserCircle },
 ]
 
