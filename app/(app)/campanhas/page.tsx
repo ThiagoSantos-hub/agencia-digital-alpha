@@ -310,7 +310,7 @@ export default function CampanhasPage() {
   const { campaigns, loading, error, syncAllMetaCampaigns, fetchMetrics, fetchAllMetricOptions, saveSelectedMetrics } = useCampanhas()
   const { clients } = useClientes()
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('todas')
+  const [statusFilter, setStatusFilter] = useState('ativa')
   const [dateStart, setDateStart] = useState('')
   const [dateEnd, setDateEnd] = useState('')
   const [localError, setLocalError] = useState<string | null>(null)
