@@ -76,7 +76,7 @@ export default function CollaboratorLayout({
 
   const [sinoAberto, setSinoAberto] = useState(false)
   const sinoRef = useRef<HTMLDivElement>(null)
-  const [temNovidadeNaoLida, setTemNovidadeNaoLida] = useState(false)
+  const [temNovidade, setTemNovidade] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -89,10 +89,27 @@ export default function CollaboratorLayout({
 
       if (data) {
         const naoLidas = data.some(n => !n.lida_por?.includes(profile.id))
-        setTemNovidadeNaoLida(naoLidas)
+        setTemNovidade(naoLidas)
       }
     }
+
     checkNovidades()
+
+    // Assinar em tempo real para novas novidades
+    const channel = supabase
+      .channel('menu_novidades_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'novidades' },
+        () => {
+          checkNovidades()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [profile?.id])
 
   // Fecha o painel ao clicar fora
@@ -158,7 +175,7 @@ export default function CollaboratorLayout({
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
             
             const isNovidades = item.label === 'Novidades'
-            const showPulse = isNovidades && temNovidadeNaoLida
+            const showPulse = isNovidades && temNovidade
 
             return (
               <Link 
@@ -169,12 +186,12 @@ export default function CollaboratorLayout({
                   isActive 
                     ? 'bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30' 
                     : showPulse
-                      ? 'text-amber-400 bg-amber-400/10 border border-amber-400/30 animate-pulse'
+                      ? 'text-yellow-400 bg-yellow-400/10 border border-yellow-400/30 animate-pulse'
                       : 'text-gray-400 hover:text-white hover:bg-[#1a3a24]/40'
                 }`}
               >
-                <Icon size={18} className={showPulse ? 'fill-amber-400' : ''} />
-                <span className="text-sm font-medium">{item.label}</span>
+                <Icon size={18} className={showPulse ? 'fill-yellow-400' : ''} />
+                <span className={`text-sm font-medium ${showPulse ? 'text-yellow-400' : ''}`}>{item.label}</span>
               </Link>
             )
           })}
