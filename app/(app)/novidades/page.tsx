@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
-import { Sparkles, Trash2, Plus, RefreshCw } from 'lucide-react'
-
+import { Sparkles, Trash2, Plus, RefreshCw, Pencil, Check, X } from 'lucide-react'
 
 interface Novidade {
   id: string
@@ -16,8 +15,12 @@ export default function NovidadesAdminPage() {
   const [novidades, setNovidades] = useState<Novidade[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  
+  // Estados para Cadastro/Edição
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [titulo, setTitulo] = useState('')
   const [descricao, setDescricao] = useState('')
+  
   const supabase = createClient()
 
   const fetchNovidades = async () => {
@@ -37,25 +40,57 @@ export default function NovidadesAdminPage() {
     fetchNovidades()
   }, [])
 
-  const handlePublicar = async (e: React.FormEvent) => {
+  const handleSalvar = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!titulo || !descricao) return
 
     setSaving(true)
-    const { error } = await supabase
-      .from('novidades')
-      .insert([{ titulo, descricao }])
+    
+    if (editingId) {
+      // Atualizar
+      const { error } = await supabase
+        .from('novidades')
+        .update({ titulo, descricao })
+        .eq('id', editingId)
 
-    if (!error) {
-      setTitulo('')
-      setDescricao('')
-      fetchNovidades()
-      // Toast de sucesso simulado por alerta ou estado (já que não há biblioteca de toast instalada visível)
-      alert('Novidade publicada com sucesso!')
+      if (!error) {
+        alert('Novidade atualizada com sucesso!')
+        setEditingId(null)
+        setTitulo('')
+        setDescricao('')
+        fetchNovidades()
+      } else {
+        alert('Erro ao atualizar novidade.')
+      }
     } else {
-      alert('Erro ao publicar novidade.')
+      // Inserir
+      const { error } = await supabase
+        .from('novidades')
+        .insert([{ titulo, descricao }])
+
+      if (!error) {
+        alert('Novidade publicada com sucesso!')
+        setTitulo('')
+        setDescricao('')
+        fetchNovidades()
+      } else {
+        alert('Erro ao publicar novidade.')
+      }
     }
     setSaving(false)
+  }
+
+  const handleEditar = (n: Novidade) => {
+    setEditingId(n.id)
+    setTitulo(n.titulo)
+    setDescricao(n.descricao)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleCancelarEdicao = () => {
+    setEditingId(null)
+    setTitulo('')
+    setDescricao('')
   }
 
   const handleExcluir = async (id: string) => {
@@ -80,13 +115,22 @@ export default function NovidadesAdminPage() {
         <p className="text-gray-400 text-sm mt-1">Gerencie as atualizações que aparecem para os colaboradores.</p>
       </div>
 
-      {/* Formulário de Cadastro */}
-      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-6 shadow-xl">
+      {/* Formulário de Cadastro/Edição */}
+      <div className={`bg-[#1a1a1a] border rounded-2xl p-6 shadow-xl transition-all ${editingId ? 'border-blue-500/50' : 'border-[#2a2a2a]'}`}>
         <h2 className="text-white font-bold text-lg mb-4 flex items-center gap-2">
-          <Plus size={20} className="text-emerald-500" />
-          Publicar Nova Atualização
+          {editingId ? (
+            <>
+              <Pencil size={20} className="text-blue-500" />
+              Editar Novidade
+            </>
+          ) : (
+            <>
+              <Plus size={20} className="text-emerald-500" />
+              Publicar Nova Atualização
+            </>
+          )}
         </h2>
-        <form onSubmit={handlePublicar} className="space-y-4">
+        <form onSubmit={handleSalvar} className="space-y-4">
           <div>
             <label className="block text-gray-400 text-xs font-bold uppercase tracking-wider mb-1.5">Título</label>
             <input
@@ -109,14 +153,26 @@ export default function NovidadesAdminPage() {
               required
             />
           </div>
-          <button
-            type="submit"
-            disabled={saving}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-xl transition-all disabled:opacity-50 flex items-center gap-2"
-          >
-            {saving ? <RefreshCw size={18} className="animate-spin" /> : <Sparkles size={18} />}
-            {saving ? 'Publicando...' : 'Publicar Novidade'}
-          </button>
+          <div className="flex gap-3">
+            <button
+              type="submit"
+              disabled={saving}
+              className={`flex-1 font-bold py-3 px-6 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 ${editingId ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}`}
+            >
+              {saving ? <RefreshCw size={18} className="animate-spin" /> : editingId ? <Check size={18} /> : <Sparkles size={18} />}
+              {saving ? 'Salvando...' : editingId ? 'Salvar Alteração' : 'Publicar Novidade'}
+            </button>
+            {editingId && (
+              <button
+                type="button"
+                onClick={handleCancelarEdicao}
+                className="px-6 py-3 bg-[#2a2a2a] hover:bg-[#3a3a3a] text-gray-300 font-bold rounded-xl transition-all flex items-center gap-2"
+              >
+                <X size={18} />
+                Cancelar
+              </button>
+            )}
+          </div>
         </form>
       </div>
 
@@ -141,8 +197,8 @@ export default function NovidadesAdminPage() {
           <div className="grid grid-cols-1 gap-4">
             {novidades.map((n) => (
               <div key={n.id} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-6 hover:border-emerald-500/30 transition-all group shadow-lg">
-                <div className="flex justify-between items-start gap-4">
-                  <div className="flex-1">
+                <div className="flex flex-col gap-4">
+                  <div>
                     <div className="flex items-center gap-3 mb-1">
                       <h3 className="text-white font-bold text-lg">{n.titulo}</h3>
                       <span className="text-gray-600 text-xs font-medium">
@@ -151,13 +207,24 @@ export default function NovidadesAdminPage() {
                     </div>
                     <p className="text-gray-400 text-sm leading-relaxed whitespace-pre-wrap">{n.descricao}</p>
                   </div>
-                  <button
-                    onClick={() => handleExcluir(n.id)}
-                    className="p-2 rounded-xl text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
-                    title="Excluir"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                  
+                  {/* Botões de Ação no Lado Esquerdo */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleEditar(n)}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-blue-400 hover:bg-blue-400/10 border border-blue-400/20 transition-all text-xs font-bold"
+                    >
+                      <Pencil size={14} />
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => handleExcluir(n.id)}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-red-400 hover:bg-red-400/10 border border-red-400/20 transition-all text-xs font-bold"
+                    >
+                      <Trash2 size={14} />
+                      Excluir
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

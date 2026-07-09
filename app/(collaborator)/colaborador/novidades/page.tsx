@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
-import { Sparkles, RefreshCw, Calendar } from 'lucide-react'
-
+import { Sparkles, RefreshCw, Calendar, X } from 'lucide-react'
 
 interface Novidade {
   id: string
@@ -17,6 +16,7 @@ interface Novidade {
 export default function NovidadesCollaboratorPage() {
   const [novidades, setNovidades] = useState<Novidade[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedNovidade, setSelectedNovidade] = useState<Novidade | null>(null)
   const { user } = useAuth()
   const supabase = createClient()
 
@@ -29,31 +29,54 @@ export default function NovidadesCollaboratorPage() {
 
     if (!error && data) {
       setNovidades(data)
-      
-      // Marcar como lidas se houver usuário logado
-      if (user?.id) {
-        const idsParaMarcar = data
-          .filter(n => !n.lida_por?.includes(user.id))
-          .map(n => n.id)
-
-        if (idsParaMarcar.length > 0) {
-          for (const id of idsParaMarcar) {
-            const novidade = data.find(n => n.id === id)
-            const novaLista = [...(novidade?.lida_por || []), user.id]
-            
-            await supabase
-              .from('novidades')
-              .update({ lida_por: novaLista })
-              .eq('id', id)
-          }
-        }
-      }
+      marcarComoLidas(data)
     }
     setLoading(false)
   }
 
+  const marcarComoLidas = async (lista: Novidade[]) => {
+    if (!user?.id) return
+    
+    const idsParaMarcar = lista
+      .filter(n => !n.lida_por?.includes(user.id))
+      .map(n => n.id)
+
+    if (idsParaMarcar.length > 0) {
+      for (const id of idsParaMarcar) {
+        const novidade = lista.find(n => n.id === id)
+        const novaLista = [...(novidade?.lida_por || []), user.id]
+        
+        await supabase
+          .from('novidades')
+          .update({ lida_por: novaLista })
+          .eq('id', id)
+      }
+    }
+  }
+
   useEffect(() => {
     fetchNovidades()
+
+    // Configurar Tempo Real
+    const channel = supabase
+      .channel('novidades_changes')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'novidades' },
+        (payload) => {
+          const novaNovidade = payload.new as Novidade
+          setNovidades(prev => [novaNovidade, ...prev])
+          // Tenta marcar como lida se a página estiver aberta
+          if (user?.id) {
+            marcarComoLidas([novaNovidade])
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [user?.id])
 
   return (
@@ -80,25 +103,34 @@ export default function NovidadesCollaboratorPage() {
             {novidades.map((n) => {
               const lida = n.lida_por?.includes(user?.id || '')
               return (
-                <div key={n.id} className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl p-6 hover:border-emerald-500/30 transition-all shadow-lg relative overflow-hidden group">
+                <div 
+                  key={n.id} 
+                  onClick={() => setSelectedNovidade(n)}
+                  className="bg-[#0f1a14] border border-emerald-500/30 rounded-2xl p-6 hover:border-emerald-500/60 transition-all shadow-lg relative overflow-hidden group cursor-pointer"
+                >
                   {!lida && (
-                    <div className="absolute top-0 right-0 bg-emerald-500 text-[#0a0f0c] text-[10px] font-black px-3 py-1 rounded-bl-xl uppercase tracking-tighter">
+                    <div className="absolute top-0 right-0 bg-emerald-500 text-[#0a0f0c] text-[10px] font-black px-3 py-1 rounded-bl-xl uppercase tracking-tighter z-10">
                       Nova
                     </div>
                   )}
+                  
+                  <div className="absolute top-4 right-4 text-yellow-400 opacity-50 group-hover:opacity-100 transition-opacity">
+                    <Sparkles size={20} />
+                  </div>
+
                   <div className="flex items-start gap-4">
                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${!lida ? 'bg-emerald-500/10 text-emerald-500' : 'bg-gray-500/5 text-gray-600'}`}>
                       <Sparkles size={24} />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className={`font-bold text-lg ${!lida ? 'text-white' : 'text-gray-400'}`}>{n.titulo}</h3>
-                        <div className="flex items-center gap-1.5 text-gray-600 text-xs font-medium">
+                        <h3 className="font-bold text-base text-white">{n.titulo}</h3>
+                        <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-medium">
                           <Calendar size={12} />
                           {new Date(n.created_at).toLocaleDateString('pt-BR')}
                         </div>
                       </div>
-                      <p className={`text-sm leading-relaxed whitespace-pre-wrap ${!lida ? 'text-gray-300' : 'text-gray-500'}`}>
+                      <p className="text-sm leading-relaxed text-gray-300 line-clamp-2">
                         {n.descricao}
                       </p>
                     </div>
@@ -109,6 +141,49 @@ export default function NovidadesCollaboratorPage() {
           </div>
         )}
       </div>
+
+      {/* Modal de Detalhes */}
+      {selectedNovidade && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedNovidade(null)} />
+          <div className="relative w-full max-w-2xl bg-[#0f1a14] border border-emerald-500/30 rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between px-8 py-6 border-b border-emerald-500/10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                  <Sparkles size={20} />
+                </div>
+                <div>
+                  <h2 className="text-white font-bold text-lg">{selectedNovidade.titulo}</h2>
+                  <p className="text-emerald-400 text-xs font-medium">
+                    Publicado em {new Date(selectedNovidade.created_at).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setSelectedNovidade(null)}
+                className="p-2 rounded-xl text-gray-500 hover:text-white hover:bg-white/5 transition-all"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+              <p className="text-gray-300 text-base leading-relaxed whitespace-pre-wrap">
+                {selectedNovidade.descricao}
+              </p>
+            </div>
+
+            <div className="px-8 py-6 border-t border-emerald-500/10 flex justify-end">
+              <button
+                onClick={() => setSelectedNovidade(null)}
+                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-900/20"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
