@@ -80,7 +80,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[#0a0f0c] flex">
       <Sidebar />
-      <div className="flex-1 flex flex-col ml-64 overflow-y-auto">
+      <div className="flex-1 flex flex-col ml-64">
         <Header />
         <main className="flex-1 p-6">
           {children}

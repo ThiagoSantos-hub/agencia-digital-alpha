@@ -392,7 +392,7 @@ export default function ColaboradorCampanhasPage() {
         </div>
       )}
 
-      <div className="sticky top-0 z-30 flex flex-wrap items-center gap-4 bg-[#121a15]/95 backdrop-blur-md p-3 rounded-2xl border border-[#1a3a24] shadow-lg">
+      <div className="sticky top-16 z-30 flex flex-wrap items-center gap-4 bg-[#121a15]/95 backdrop-blur-md p-3 rounded-2xl border border-[#1a3a24] shadow-lg">
         <div className="relative flex-1 min-w-[200px]">
           <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
           <input type="text" placeholder="Buscar campanha pelo nome..." value={search} onChange={e => setSearch(e.target.value)}
