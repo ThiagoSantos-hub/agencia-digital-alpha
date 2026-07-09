@@ -17,6 +17,10 @@ const menuItems = [
   { label: 'Novidades', href: '/novidades', icon: Sparkles, ativo: true },
   { label: 'Perfil', href: '/perfil', icon: UserCircle, ativo: true },
 ]
+/**
+ * Sidebar Admin
+ * Nota: Pulsação de novidades removida para o Admin.
+ */
 export function Sidebar() {
   const pathname = usePathname()
 
