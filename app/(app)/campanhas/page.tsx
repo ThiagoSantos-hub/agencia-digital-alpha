@@ -310,7 +310,7 @@ export default function CampanhasPage() {
   const { campaigns, loading, error, syncAllMetaCampaigns, fetchMetrics, fetchAllMetricOptions, saveSelectedMetrics } = useCampanhas()
   const { clients } = useClientes()
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('todas')
+  const [statusFilter, setStatusFilter] = useState('ativa')
   const [dateStart, setDateStart] = useState('')
   const [dateEnd, setDateEnd] = useState('')
   const [localError, setLocalError] = useState<string | null>(null)
@@ -392,20 +392,39 @@ export default function CampanhasPage() {
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-4 bg-[#1a1a1a] p-3 rounded-2xl border border-[#2a2a2a] shadow-lg">
+      <div className="sticky top-0 z-30 flex flex-wrap items-center gap-4 bg-[#1a1a1a] p-3 rounded-2xl border border-[#2a2a2a] shadow-lg">
         <div className="relative flex-1 min-w-[200px]">
           <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
           <input type="text" placeholder="Buscar campanha pelo nome..." value={search} onChange={e => setSearch(e.target.value)}
             className="w-full pl-12 pr-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 transition-all" />
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl">
+        <div className="flex items-center gap-2">
           <Filter size={16} className="text-indigo-400" />
-          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="bg-transparent text-white text-sm focus:outline-none cursor-pointer">
-            <option value="todas">Todos os Status</option>
-            <option value="ativa">Ativas</option>
-            <option value="pausada">Pausadas</option>
-            <option value="finalizada">Finalizadas</option>
-          </select>
+          {[{
+            value: 'todas',
+            label: 'Todas'
+          }, {
+            value: 'ativa',
+            label: 'Ativas'
+          }, {
+            value: 'pausada',
+            label: 'Pausadas'
+          }, {
+            value: 'finalizada',
+            label: 'Finalizadas'
+          }].map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => setStatusFilter(opt.value)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                statusFilter === opt.value
+                  ? 'bg-indigo-500 text-white'
+                  : 'bg-[#0f0f0f] border border-[#2a2a2a] text-gray-400 hover:text-white'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl">
           <Calendar size={16} className="text-indigo-400" />
