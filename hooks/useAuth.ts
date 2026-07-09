@@ -55,11 +55,12 @@ export function useAuth() {
         setTimeout(() => resolve(null), 10000)
       )
       const sessionPromise = supabase.auth.getSession()
-      const { data: { session } } = (await Promise.race([
-        sessionPromise.then(r => ({ result: r as Awaited<typeof sessionPromise>, timeout: false })),
+      const raceResult = await Promise.race([
+        sessionPromise.then(r => ({ result: r, timeout: false })),
         timeoutPromise.then(r => ({ result: r, timeout: true }))
-      ])) as any
+      ]) as any
 
+      const session = raceResult.timeout ? null : raceResult.result?.data?.session ?? null
       const initialUser = session?.user ?? null
       setUser(initialUser)
 
