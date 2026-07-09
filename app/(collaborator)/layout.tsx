@@ -15,8 +15,10 @@ import {
   LogOut,
   Bell,
   CheckCheck,
-  X
+  X,
+  Sparkles
 } from 'lucide-react'
+import { createClient } from '@/lib/supabase'
 import { useNotificacoes } from '@/hooks/useNotificacoes'
 
 const menuItems = [
@@ -28,6 +30,7 @@ const menuItems = [
   { label: 'Campanhas', href: '/colaborador/campanhas', icon: Megaphone },
   { label: 'Financeiro', href: '/colaborador/financeiro', icon: Wallet },
   { label: 'Integrações', href: '/colaborador/integracoes', icon: Plug },
+  { label: 'Novidades', href: '/colaborador/novidades', icon: Sparkles },
   { label: 'Perfil', href: '/colaborador/perfil', icon: UserCircle },
 ]
 
@@ -73,6 +76,48 @@ export default function CollaboratorLayout({
 
   const [sinoAberto, setSinoAberto] = useState(false)
   const sinoRef = useRef<HTMLDivElement>(null)
+  const [temNovidade, setTemNovidade] = useState(false)
+  const supabase = createClient()
+
+  useEffect(() => {
+    if (!profile?.id) return
+
+    const checkNovidades = async () => {
+      const { data } = await supabase
+        .from('novidades')
+        .select('lida_por')
+
+      if (data) {
+        const naoLidas = data.some(n => !n.lida_por?.includes(profile.id))
+        setTemNovidade(naoLidas)
+      }
+    }
+
+    checkNovidades()
+
+    // Assinar em tempo real para novas novidades
+    const channel = supabase
+      .channel('menu_novidades_changes')
+      .on(
+        'postgres_changes',
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'novidades' 
+        },
+        (payload) => {
+          console.log('Novidade detectada em tempo real:', payload)
+          checkNovidades()
+        }
+      )
+      .subscribe((status) => {
+        console.log('Status do canal de novidades:', status)
+      })
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [profile?.id])
 
   // Fecha o painel ao clicar fora
   useEffect(() => {
@@ -136,6 +181,9 @@ export default function CollaboratorLayout({
             const Icon = item.icon
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
             
+            const isNovidades = item.label === 'Novidades'
+            const showPulse = isNovidades && temNovidade
+
             return (
               <Link 
                 key={item.href} 
@@ -144,11 +192,13 @@ export default function CollaboratorLayout({
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
                   isActive 
                     ? 'bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30' 
-                    : 'text-gray-400 hover:text-white hover:bg-[#1a3a24]/40'
+                    : showPulse
+                      ? 'text-yellow-400 bg-yellow-400/10 border border-yellow-400/30 animate-pulse'
+                      : 'text-gray-400 hover:text-white hover:bg-[#1a3a24]/40'
                 }`}
               >
-                <Icon size={18} />
-                <span className="text-sm font-medium">{item.label}</span>
+                <Icon size={18} className={showPulse ? 'fill-yellow-400' : ''} />
+                <span className={`text-sm font-medium ${showPulse ? 'text-yellow-400' : ''}`}>{item.label}</span>
               </Link>
             )
           })}
