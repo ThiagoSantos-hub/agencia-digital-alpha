@@ -14,7 +14,10 @@ import {
   RefreshCw,
   Search,
   User,
-  X
+  X,
+  ChevronDown,
+  ChevronUp,
+  Download
 } from 'lucide-react'
 
 interface Feedback {
@@ -39,6 +42,7 @@ export default function FeedbacksAdminPage() {
   const [filterStatus, setFilterStatus] = useState<string>('todos')
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
   
   const supabase = createClient()
 
@@ -73,6 +77,22 @@ export default function FeedbacksAdminPage() {
       alert('Erro ao atualizar status.')
     }
     setUpdatingId(null)
+  }
+
+  const handleDownload = async (url: string) => {
+    try {
+      const response = await fetch(url)
+      const blob = await response.blob()
+      const downloadUrl = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      link.download = `feedback-anexo-${new Date().getTime()}.png`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+    } catch (error) {
+      alert('Erro ao baixar o arquivo.')
+    }
   }
 
   const filteredFeedbacks = feedbacks.filter(f => {
@@ -165,16 +185,28 @@ export default function FeedbacksAdminPage() {
             <div key={f.id} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-6 hover:border-emerald-500/30 transition-all group shadow-lg">
               <div className="flex flex-col md:flex-row justify-between gap-6">
                 <div className="flex-1 space-y-4">
-                  <div className="flex items-center gap-3">
+                  <div 
+                    className="flex items-center gap-3 cursor-pointer"
+                    onClick={() => setExpandedId(expandedId === f.id ? null : f.id)}
+                  >
                     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter border ${
                       f.tipo === 'bug' ? 'text-red-400 bg-red-400/10 border-red-400/20' : 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20'
                     }`}>
                       {f.tipo === 'bug' ? 'Bug' : 'Sugestão'}
                     </span>
-                    <h3 className="text-white font-bold text-lg">{f.titulo}</h3>
+                    <h3 className="text-white font-bold text-lg flex-1">{f.titulo}</h3>
+                    <div className="text-gray-500">
+                      {expandedId === f.id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                    </div>
                   </div>
 
-                  <p className="text-gray-400 text-sm leading-relaxed whitespace-pre-wrap">{f.descricao}</p>
+                  {expandedId === f.id && (
+                    <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                      <p className="text-gray-400 text-sm leading-relaxed whitespace-pre-wrap bg-[#0f0f0f] p-4 rounded-xl border border-[#2a2a2a]">
+                        {f.descricao}
+                      </p>
+                    </div>
+                  )}
 
                   <div className="flex flex-wrap items-center gap-y-2 gap-x-6 pt-2">
                     <div className="flex items-center gap-2 text-gray-500 text-xs">
@@ -228,12 +260,22 @@ export default function FeedbacksAdminPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/90 backdrop-blur-sm" onClick={() => setSelectedImage(null)} />
           <div className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center animate-in fade-in zoom-in duration-200">
-            <button 
-              onClick={() => setSelectedImage(null)}
-              className="absolute -top-12 right-0 p-2 text-gray-400 hover:text-white transition-all"
-            >
-              <X size={32} />
-            </button>
+            <div className="absolute -top-12 right-0 flex items-center gap-4">
+              <button 
+                onClick={() => handleDownload(selectedImage)}
+                className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-xl font-bold text-sm hover:bg-emerald-600 transition-all shadow-lg"
+                title="Baixar Arquivo"
+              >
+                <Download size={18} />
+                Baixar
+              </button>
+              <button 
+                onClick={() => setSelectedImage(null)}
+                className="p-2 text-gray-400 hover:text-white transition-all"
+              >
+                <X size={32} />
+              </button>
+            </div>
             <img 
               src={selectedImage} 
               alt="Anexo do Feedback" 
