@@ -125,9 +125,9 @@ export default function FeedbacksAdminPage() {
             onChange={(e) => setFilterTipo(e.target.value)}
             className="bg-transparent text-white text-sm focus:outline-none cursor-pointer"
           >
-            <option value="todos">Todos</option>
-            <option value="sugestao">Sugestão</option>
-            <option value="bug">Bug</option>
+            <option value="todos" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Todos</option>
+            <option value="sugestao" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Sugestão</option>
+            <option value="bug" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Bug</option>
           </select>
         </div>
 
@@ -139,10 +139,10 @@ export default function FeedbacksAdminPage() {
             onChange={(e) => setFilterStatus(e.target.value)}
             className="bg-transparent text-white text-sm focus:outline-none cursor-pointer"
           >
-            <option value="todos">Todos</option>
-            <option value="pendente">Pendente</option>
-            <option value="em_analise">Em Análise</option>
-            <option value="resolvido">Resolvido</option>
+            <option value="todos" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Todos</option>
+            <option value="pendente" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Pendente</option>
+            <option value="em_analise" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Em Análise</option>
+            <option value="resolvido" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Resolvido</option>
           </select>
         </div>
       </div>
@@ -211,9 +211,9 @@ export default function FeedbacksAdminPage() {
                       onChange={(e) => handleStatusChange(f.id, e.target.value)}
                       className="w-full bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-emerald-500/50 transition-all cursor-pointer disabled:opacity-50"
                     >
-                      <option value="pendente">Pendente</option>
-                      <option value="em_analise">Em Análise</option>
-                      <option value="resolvido">Resolvido</option>
+                      <option value="pendente" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Pendente</option>
+                      <option value="em_analise" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Em Análise</option>
+                      <option value="resolvido" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Resolvido</option>
                     </select>
                   </div>
                 </div>
