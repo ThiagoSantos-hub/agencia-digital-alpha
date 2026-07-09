@@ -166,7 +166,7 @@ export default function CollaboratorLayout({
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 ml-64 flex flex-col min-h-screen">
+      <div className="flex-1 ml-64 flex flex-col min-h-screen overflow-y-auto">
         {/* Header */}
         <header className="h-16 border-b border-[#1a3a24] bg-[#0a0f0c]/80 backdrop-blur-md sticky top-0 z-30 px-8 flex items-center justify-between">
           <div>
