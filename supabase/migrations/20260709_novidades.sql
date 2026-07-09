@@ -44,3 +44,6 @@ CREATE POLICY "Usuários podem marcar novidades como lidas"
   TO authenticated
   USING (true)
   WITH CHECK (true);
+
+-- Habilitar Realtime para a tabela de novidades
+ALTER PUBLICATION supabase_realtime ADD TABLE novidades;

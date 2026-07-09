@@ -100,12 +100,19 @@ export default function CollaboratorLayout({
       .channel('menu_novidades_changes')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'novidades' },
-        () => {
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'novidades' 
+        },
+        (payload) => {
+          console.log('Novidade detectada em tempo real:', payload)
           checkNovidades()
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log('Status do canal de novidades:', status)
+      })
 
     return () => {
       supabase.removeChannel(channel)
