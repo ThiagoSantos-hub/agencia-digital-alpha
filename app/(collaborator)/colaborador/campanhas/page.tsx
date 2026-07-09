@@ -310,7 +310,7 @@ export default function ColaboradorCampanhasPage() {
   const { campaigns, loading, error, syncAllMetaCampaigns, fetchMetrics, fetchAllMetricOptions, saveSelectedMetrics } = useCampanhas()
   const { clients } = useClientes()
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('todas')
+  const [statusFilter, setStatusFilter] = useState('ativa')
   const [dateStart, setDateStart] = useState('')
   const [dateEnd, setDateEnd] = useState('')
   const [localError, setLocalError] = useState<string | null>(null)
@@ -336,11 +336,13 @@ export default function ColaboradorCampanhasPage() {
   const campanhasPorCliente = useMemo(() => {
     const grupos: Record<string, { nome: string; adAccountId: string | null; campaigns: Campaign[] }> = {}
     campaigns.forEach(c => {
+      const cliente = clients.find(cl => cl.id === c.client_id)
+      // Ignorar campanhas de clientes inativos
+      if (!cliente || cliente.status === 'inativo') return
       if (!grupos[c.client_id]) {
-        const cliente = clients.find(cl => cl.id === c.client_id)
         grupos[c.client_id] = {
-          nome: cliente?.name ?? `Cliente ${c.client_id.slice(0, 8)}`,
-          adAccountId: cliente?.meta_ad_account_id ?? null,
+          nome: cliente.name ?? `Cliente ${c.client_id.slice(0, 8)}`,
+          adAccountId: cliente.meta_ad_account_id ?? null,
           campaigns: [],
         }
       }
@@ -396,15 +398,34 @@ export default function ColaboradorCampanhasPage() {
           <input type="text" placeholder="Buscar campanha pelo nome..." value={search} onChange={e => setSearch(e.target.value)}
             className="w-full pl-12 pr-4 py-2.5 bg-[#0a0f0c] border border-[#1a3a24] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-all" />
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-[#0a0f0c] border border-[#1a3a24] rounded-xl">
-          <Filter size={16} className="text-emerald-400" />
-          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="bg-transparent text-white text-sm focus:outline-none cursor-pointer">
-            <option value="todas">Todos os Status</option>
-            <option value="ativa">Ativas</option>
-            <option value="pausada">Pausadas</option>
-            <option value="finalizada">Finalizadas</option>
-          </select>
-        </div>
+  <div className="flex items-center gap-2">
+    <Filter size={16} className="text-emerald-400" />
+    {[{
+      value: 'todas',
+      label: 'Todas'
+    }, {
+      value: 'ativa',
+      label: 'Ativas'
+    }, {
+      value: 'pausada',
+      label: 'Pausadas'
+    }, {
+      value: 'finalizada',
+      label: 'Finalizadas'
+    }, ].map(opt => (
+      <button
+        key={opt.value}
+        onClick={() => setStatusFilter(opt.value)}
+        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+          statusFilter === opt.value
+            ? 'bg-emerald-500 text-[#0a0f0c]'
+            : 'bg-[#0a0f0c] border border-[#1a3a24] text-gray-400 hover:text-white'
+        }`}
+      >
+        {opt.label}
+      </button>
+    ))}
+  </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-[#0a0f0c] border border-[#1a3a24] rounded-xl">
           <Calendar size={16} className="text-emerald-400" />
           <input type="date" value={dateStart} onChange={e => setDateStart(e.target.value)} className="bg-transparent text-white text-sm focus:outline-none" style={{ colorScheme: 'dark' }} />

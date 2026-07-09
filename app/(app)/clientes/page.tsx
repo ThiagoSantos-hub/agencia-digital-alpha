@@ -113,8 +113,11 @@ function FormFields({ form, set }: { form: ClienteForm; set: (f: keyof ClienteFo
   )
 }
 
-function ModalNovoCliente({ onClose }: { onClose: () => void }) {
-  const { createCliente } = useClientes()
+function ModalNovoCliente({ onClose, createCliente, refetch }: {
+  onClose: () => void
+  createCliente: ReturnType<typeof useClientes>["createCliente"]
+  refetch: ReturnType<typeof useClientes>["refetch"]
+}) {
   const { profile } = useAuth()
 
   const [form, setForm] = useState<ClienteForm>({
@@ -151,7 +154,7 @@ function ModalNovoCliente({ onClose }: { onClose: () => void }) {
       show_campaigns: form.show_campaigns
     })
     if (error) { setError('Erro ao salvar. Tente novamente.'); setLoading(false) }
-    else onClose()
+    else { await refetch(true); onClose() }
   }
 
   return (
@@ -184,8 +187,12 @@ function ModalNovoCliente({ onClose }: { onClose: () => void }) {
   )
 }
 
-function ModalEditarCliente({ client, onClose }: { client: Client; onClose: () => void }) {
-  const { updateCliente } = useClientes()
+function ModalEditarCliente({ client, onClose, updateCliente, refetch }: {
+  client: Client
+  onClose: () => void
+  updateCliente: ReturnType<typeof useClientes>["updateCliente"]
+  refetch: ReturnType<typeof useClientes>["refetch"]
+}) {
 
   // Inicialização ultra-segura
   const [form, setForm] = useState<ClienteForm>(() => {
@@ -241,7 +248,7 @@ function ModalEditarCliente({ client, onClose }: { client: Client; onClose: () =
         show_campaigns: form.show_campaigns
       })
       if (error) { setError('Erro ao salvar. Tente novamente.'); setLoading(false) }
-      else onClose()
+      else { await refetch(true); onClose() }
     } catch (e: any) {
       setError('Ocorreu um erro inesperado.');
       setLoading(false);
@@ -316,7 +323,7 @@ function ModalConfirmarExclusao({ name, onClose, onConfirm }: { name: string; on
 export default function ClientesPage() {
   const { profile } = useAuth()
   const isCollaborator = profile?.role === 'collaborator'
-  const { clients, loading, deleteCliente, updateCliente } = useClientes()
+  const { clients, loading, deleteCliente, updateCliente, createCliente, refetch } = useClientes()
   const [search, setSearch] = useState('')
   const [valoresVisiveis, setValoresVisiveis] = useState(true)
   const [modalNovo, setModalNovo] = useState(false)
@@ -547,8 +554,8 @@ export default function ClientesPage() {
         )}
       </div>
 
-      {modalNovo && <ModalNovoCliente onClose={() => setModalNovo(false)} />}
-      {clienteEditar && <ModalEditarCliente client={clienteEditar} onClose={() => setClienteEditar(null)} />}
+      {modalNovo && <ModalNovoCliente onClose={() => setModalNovo(false)} createCliente={createCliente} refetch={refetch} />}
+      {clienteEditar && <ModalEditarCliente client={clienteEditar} onClose={() => setClienteEditar(null)} updateCliente={updateCliente} refetch={refetch} />}
       {clienteExcluir && <ModalConfirmarExclusao name={clienteExcluir.name} onClose={() => setClienteExcluir(null)} onConfirm={async () => { await deleteCliente(clienteExcluir.id); setClienteExcluir(null) }} />}
     </div>
   )

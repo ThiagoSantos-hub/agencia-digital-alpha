@@ -26,6 +26,7 @@ export default function PerfilColaboradorPage() {
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [cargo, setCargo] = useState('')
 
   const supabase = createClient()
 
@@ -33,7 +34,17 @@ export default function PerfilColaboradorPage() {
     if (profile) {
       setName(profile.name || '')
     }
-  }, [profile])
+    if (user) {
+      supabase
+        .from('collaborators')
+        .select('role')
+        .eq('email', user.email)
+        .single()
+        .then(({ data }) => {
+          if (data?.role) setCargo(data.role)
+        })
+    }
+  }, [profile, user])
 
   const showToast = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text })
@@ -165,9 +176,9 @@ export default function PerfilColaboradorPage() {
 
             <div className="space-y-1">
               <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Cargo</label>
-              <div className="bg-[#1a3a24]/10 border border-[#1a3a24] rounded-xl px-3 py-2 text-sm text-emerald-400 font-medium">
-                Colaborador
-              </div>
+  <div className="bg-[#1a3a24]/10 border border-[#1a3a24] rounded-xl px-3 py-2 text-sm text-emerald-400 font-medium">
+    {cargo || 'Colaborador'}
+  </div>
             </div>
 
             <button 
