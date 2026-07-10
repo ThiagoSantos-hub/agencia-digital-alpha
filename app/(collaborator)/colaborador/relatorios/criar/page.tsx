@@ -1,0 +1,357 @@
+'use client'
+
+import { useState, useEffect, useRef, Suspense, useMemo } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { 
+  ArrowLeft, 
+  Facebook, 
+  Globe, 
+  Smartphone, 
+  Users, 
+  Save, 
+  X,
+  Info,
+  ChevronDown,
+  Loader2
+} from 'lucide-react'
+import { useRelatorios, ReportInput } from '@/hooks/useRelatorios'
+import { createClient } from '@/lib/supabase'
+
+// Variáveis disponíveis para o template
+const variables = [
+  { label: 'Período', key: '<DATA>', example: '01/01 a 07/01' },
+  { label: 'Alcance', key: '<ALCAN>', example: '15.420' },
+  { label: 'Impressões', key: '<IMP>', example: '45.890' },
+  { label: 'Cliques', key: '<CLIQ>', example: '840' },
+  { label: 'CTR', key: '<CTR>', example: '1.83%' },
+  { label: 'Leads', key: '<LEADS>', example: '42' },
+  { label: 'CPL', key: '<CPL>', example: 'R$ 12,50' },
+  { label: 'Investido', key: '<INV>', example: 'R$ 525,00' },
+  { label: 'ROAS', key: '<ROAS>', example: '4.5x' },
+  { label: 'CPM', key: '<CPM>', example: 'R$ 11,44' },
+  { label: 'Conversões', key: '<CONV>', example: '15' },
+  { label: 'Conta', key: '<CA>', example: 'Alpha Digital - Principal' },
+]
+
+function CreateEditReportContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const id = searchParams.get('id')
+  const { createRelatorio, updateRelatorio, reports, loading: loadingHook } = useRelatorios()
+  const supabase = createClient()
+
+  const [loading, setLoading] = useState(false)
+  const [clients, setClients] = useState<{id: string, name: string}[]>([])
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const [formData, setFormData] = useState<ReportInput>({
+    nome: '',
+    canal: 'meta',
+    frequencia: 'diario',
+    periodo: 'dia_anterior',
+    recebedor_tipo: 'privado',
+    recebedor_numero: '',
+    mensagem_template: 'Olá! Segue o relatório de <DATA> da conta <CA>:\n\nAlcance: <ALCAN>\nCliques: <CLIQ>\nInvestimento: <INV>\nLeads: <LEADS>\nCPL: <CPL>',
+    horario_envio: '08:00',
+    dias_semana: null,
+    ativo: true,
+    proximo_envio: null,
+    client_id: null
+  })
+
+  useEffect(() => {
+    const fetchClients = async () => {
+      const { data } = await supabase.from('clients').select('id, name').order('name')
+      if (data) setClients(data)
+    }
+    fetchClients()
+  }, [])
+
+  useEffect(() => {
+    if (id && reports.length > 0) {
+      const report = reports.find(r => r.id === id)
+      if (report) {
+        const { id: _, user_id: __, created_at: ___, updated_at: ____, ...rest } = report
+        setFormData(rest)
+      }
+    }
+  }, [id, reports])
+
+  const insertVariable = (variable: string) => {
+    if (!textareaRef.current) return
+    const start = textareaRef.current.selectionStart
+    const end = textareaRef.current.selectionEnd
+    const text = formData.mensagem_template
+    const before = text.substring(0, start)
+    const after = text.substring(end)
+    const newText = before + variable + after
+    
+    setFormData({ ...formData, mensagem_template: newText })
+    
+    // Devolver foco e posicionar cursor após a variável
+    setTimeout(() => {
+      textareaRef.current?.focus()
+      textareaRef.current?.setSelectionRange(start + variable.length, start + variable.length)
+    }, 0)
+  }
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      if (id) {
+        await updateRelatorio(id, formData)
+      } else {
+        await createRelatorio(formData)
+      }
+      router.push('/colaborador/relatorios')
+    } catch (error) {
+      console.error(error)
+      alert('Erro ao salvar relatório. Verifique os campos e tente novamente.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const previewMessage = useMemo(() => {
+    let text = formData.mensagem_template
+    variables.forEach(v => {
+      text = text.replaceAll(v.key, v.example)
+    })
+    return text
+  }, [formData.mensagem_template])
+
+  return (
+    <div className="min-h-full text-white">
+      {/* Header */}
+      <div className="max-w-6xl mx-auto flex justify-between items-center mb-8">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => router.push('/colaborador/relatorios')}
+            className="p-2 hover:bg-[#1a1a2e] rounded-lg text-gray-400 transition-colors"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <h1 className="text-2xl font-bold">{id ? 'Editar Relatório' : 'Criar Relatório'}</h1>
+        </div>
+      </div>
+
+      <form onSubmit={handleSave} className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Left Side: Form */}
+        <div className="space-y-6 bg-[#0a0a0f] border border-[#1a1a2e] p-8 rounded-2xl shadow-xl">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-400">Nome do Relatório *</label>
+            <input 
+              required
+              type="text"
+              value={formData.nome}
+              onChange={e => setFormData({ ...formData, nome: e.target.value })}
+              placeholder="Ex: Relatório Diário - Cliente X"
+              className="w-full bg-[#050508] border border-[#1a1a2e] rounded-xl px-4 py-3 outline-none focus:border-[#10b981] transition-colors"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-400">Canal</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, canal: 'meta' })}
+                  className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border transition-all ${
+                    formData.canal === 'meta' ? 'bg-[#10b981]/10 border-[#10b981] text-[#10b981]' : 'bg-[#050508] border-[#1a1a2e] text-gray-500 hover:border-gray-700'
+                  }`}
+                >
+                  <Facebook size={16} /> Meta
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, canal: 'google' })}
+                  className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border transition-all ${
+                    formData.canal === 'google' ? 'bg-[#10b981]/10 border-[#10b981] text-[#10b981]' : 'bg-[#050508] border-[#1a1a2e] text-gray-500 hover:border-gray-700'
+                  }`}
+                >
+                  <Globe size={16} /> Google
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-400">Período</label>
+              <select 
+                value={formData.periodo}
+                onChange={e => setFormData({ ...formData, periodo: e.target.value as any })}
+                className="w-full bg-[#050508] border border-[#1a1a2e] rounded-xl px-4 py-2.5 outline-none focus:border-[#10b981] transition-colors appearance-none"
+              >
+                <option value="dia_anterior">Dia anterior</option>
+                <option value="ultima_semana">Última semana (Dom-Sab)</option>
+                <option value="ultimo_mes">Último mês</option>
+                <option value="ultimos_7_dias">Últimos 7 dias</option>
+                <option value="ultimos_30_dias">Últimos 30 dias</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-400">Recebedor</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, recebedor_tipo: 'privado' })}
+                  className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border transition-all ${
+                    formData.recebedor_tipo === 'privado' ? 'bg-[#10b981]/10 border-[#10b981] text-[#10b981]' : 'bg-[#050508] border-[#1a1a2e] text-gray-500 hover:border-gray-700'
+                  }`}
+                >
+                  <Smartphone size={16} /> Privado
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, recebedor_tipo: 'grupo' })}
+                  className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border transition-all ${
+                    formData.recebedor_tipo === 'grupo' ? 'bg-[#10b981]/10 border-[#10b981] text-[#10b981]' : 'bg-[#050508] border-[#1a1a2e] text-gray-500 hover:border-gray-700'
+                  }`}
+                >
+                  <Users size={16} /> Grupo
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-400">WhatsApp (com DDI) *</label>
+              <input 
+                required
+                type="text"
+                value={formData.recebedor_numero}
+                onChange={e => setFormData({ ...formData, recebedor_numero: e.target.value.replace(/\D/g, '') })}
+                placeholder="5511999999999"
+                className="w-full bg-[#050508] border border-[#1a1a2e] rounded-xl px-4 py-2.5 outline-none focus:border-[#10b981] transition-colors"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-400">Frequência</label>
+              <div className="grid grid-cols-3 gap-2">
+                {['diario', 'semanal', 'mensal'].map((freq) => (
+                  <button
+                    key={freq}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, frequencia: freq as any })}
+                    className={`py-2.5 rounded-xl border text-xs font-bold uppercase transition-all ${
+                      formData.frequencia === freq ? 'bg-[#10b981]/10 border-[#10b981] text-[#10b981]' : 'bg-[#050508] border-[#1a1a2e] text-gray-500 hover:border-gray-700'
+                    }`}
+                  >
+                    {freq}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-400">Horário de Envio</label>
+              <input 
+                type="time"
+                value={formData.horario_envio}
+                onChange={e => setFormData({ ...formData, horario_envio: e.target.value })}
+                className="w-full bg-[#050508] border border-[#1a1a2e] rounded-xl px-4 py-2.5 outline-none focus:border-[#10b981] transition-colors"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-400">Cliente Vinculado (Opcional)</label>
+            <select 
+              value={formData.client_id || ''}
+              onChange={e => setFormData({ ...formData, client_id: e.target.value || null })}
+              className="w-full bg-[#050508] border border-[#1a1a2e] rounded-xl px-4 py-2.5 outline-none focus:border-[#10b981] transition-colors appearance-none"
+            >
+              <option value="">Selecione um cliente...</option>
+              {clients.map(client => (
+                <option key={client.id} value={client.id}>{client.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex gap-4 pt-4">
+            <button
+              type="button"
+              onClick={() => router.push('/colaborador/relatorios')}
+              className="flex-1 bg-transparent border border-[#1a1a2e] hover:bg-[#1a1a2e] text-gray-400 py-3 rounded-xl transition-colors font-medium"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-2 bg-[#10b981] hover:bg-[#059669] text-white py-3 px-8 rounded-xl transition-colors font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+              Salvar Relatório
+            </button>
+          </div>
+        </div>
+
+        {/* Right Side: Message Editor & Preview */}
+        <div className="space-y-6">
+          <div className="bg-[#0a0a0f] border border-[#1a1a2e] p-8 rounded-2xl shadow-xl flex flex-col h-full">
+            <div className="flex justify-between items-center mb-4">
+              <label className="text-sm font-medium text-gray-400">Template da Mensagem</label>
+              <div className="flex items-center gap-1 text-[10px] text-gray-500 bg-[#050508] px-2 py-1 rounded-md">
+                <Info size={12} />
+                Clique nas variáveis abaixo para inserir
+              </div>
+            </div>
+            
+            <textarea
+              ref={textareaRef}
+              value={formData.mensagem_template}
+              onChange={e => setFormData({ ...formData, mensagem_template: e.target.value })}
+              className="w-full bg-[#050508] border border-[#1a1a2e] rounded-xl px-4 py-4 outline-none focus:border-[#10b981] transition-colors resize-none min-h-[250px] font-mono text-sm leading-relaxed"
+              placeholder="Digite a mensagem do relatório..."
+            />
+
+            <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {variables.map(v => (
+                <button
+                  key={v.key}
+                  type="button"
+                  onClick={() => insertVariable(v.key)}
+                  className="px-2 py-1.5 bg-[#050508] border border-[#1a1a2e] hover:border-[#10b981] hover:text-[#10b981] rounded-lg text-[10px] font-bold text-gray-400 transition-all"
+                >
+                  {v.key}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-8">
+              <label className="text-sm font-medium text-gray-400 mb-4 block">Preview WhatsApp</label>
+              <div className="bg-[#0d141b] rounded-2xl p-6 relative overflow-hidden">
+                <div className="relative z-10 flex flex-col items-end">
+                  <div className="bg-[#075e54] text-white p-4 rounded-2xl rounded-tr-none shadow-lg max-w-[85%] relative">
+                    <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+                      {previewMessage}
+                    </pre>
+                    <div className="text-[10px] text-gray-300 text-right mt-1">
+                      {new Date().getHours()}:{new Date().getMinutes().toString().padStart(2, '0')}
+                    </div>
+                    <div className="absolute -right-2 top-0 w-4 h-4 bg-[#075e54] rounded-bl-full" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  )
+}
+
+export default function ColaboradorCreateEditReportPage() {
+  return (
+    <Suspense fallback={<div className="min-h-full flex items-center justify-center"><Loader2 className="animate-spin text-[#10b981]" size={48} /></div>}>
+      <CreateEditReportContent />
+    </Suspense>
+  )
+}

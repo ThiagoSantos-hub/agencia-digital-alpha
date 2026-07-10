@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { 
   LayoutDashboard, 
   Users,
+  UsersRound,
   CheckSquare, 
   Megaphone, 
   Wallet, 
@@ -17,23 +18,51 @@ import {
   CheckCheck,
   X,
   Sparkles,
-  MessageSquare
+  MessageSquare,
+  BarChart2,
+  List
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { useNotificacoes } from '@/hooks/useNotificacoes'
 
-const menuItems = [
-  { label: 'Dashboard', href: '/colaborador/dashboard', icon: LayoutDashboard },
-  { label: 'Tarefas', href: '/colaborador/tarefas', icon: CheckSquare },
-  { label: 'Checklists', href: '/colaborador/checklists', icon: CheckSquare },
-  { label: 'Meus Clientes', href: '/colaborador/meus-clientes', icon: Users },
-  { label: 'Clientes Agência', href: '/colaborador/clientes', icon: Users },
-  { label: 'Campanhas', href: '/colaborador/campanhas', icon: Megaphone },
-  { label: 'Financeiro', href: '/colaborador/financeiro', icon: Wallet },
-  { label: 'Integrações', href: '/colaborador/integracoes', icon: Plug },
-  { label: 'Novidades', href: '/colaborador/novidades', icon: Sparkles },
-  { label: 'Feedback', href: '/colaborador/feedbacks', icon: MessageSquare },
-  { label: 'Perfil', href: '/colaborador/perfil', icon: UserCircle },
+const menuGroups = [
+  {
+    label: 'PRINCIPAL',
+    items: [
+      { label: 'Novidades',  href: '/colaborador/novidades', icon: Sparkles,      ativo: true },
+      { label: 'Feedback',   href: '/colaborador/feedbacks',  icon: MessageSquare, ativo: true },
+    ],
+  },
+  {
+    label: 'CLIENTES & CAMPANHAS',
+    items: [
+      { label: 'Meus Clientes',    href: '/colaborador/meus-clientes',    icon: Users,      ativo: true },
+      { label: 'Clientes Agência', href: '/colaborador/clientes',         icon: UsersRound, ativo: true },
+      { label: 'Campanhas',        href: '/colaborador/campanhas',        icon: Megaphone,  ativo: true  },
+      { label: 'Relatórios',       href: '/colaborador/relatorios',       icon: BarChart2,  ativo: true },
+      { label: 'Alertas',          href: '/colaborador/alertas',          icon: Bell,       ativo: true },
+    ],
+  },
+  {
+    label: 'GESTÃO',
+    items: [
+      { label: 'Tarefas',    href: '/colaborador/tarefas',    icon: CheckSquare, ativo: true },
+      { label: 'Checklists', href: '/colaborador/checklists', icon: List,        ativo: true },
+      { label: 'Financeiro', href: '/colaborador/financeiro', icon: Wallet,      ativo: true },
+    ],
+  },
+  {
+    label: 'FERRAMENTAS',
+    items: [
+      { label: 'Integrações', href: '/colaborador/integracoes', icon: Plug, ativo: true },
+    ],
+  },
+  {
+    label: 'OUTROS',
+    items: [
+      { label: 'Perfil',    href: '/colaborador/perfil',    icon: UserCircle,    ativo: true  },
+    ],
+  },
 ]
 
 // ── Ícone por tipo de notificação ─────────────────────────────
@@ -85,12 +114,18 @@ export default function CollaboratorLayout({
     if (!profile?.id) return
 
     const checkNovidades = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('novidades')
         .select('lida_por')
 
+      if (error) {
+        console.error('Erro ao verificar novidades:', error)
+        return
+      }
+
       if (data) {
         const naoLidas = data.some(n => !n.lida_por?.includes(profile.id))
+        console.log('Verificação de novidades:', { total: data.length, temNaoLidas: naoLidas })
         setTemNovidade(naoLidas)
       }
     }
@@ -178,32 +213,58 @@ export default function CollaboratorLayout({
           <p className="text-[10px] text-emerald-500/70 font-bold uppercase tracking-widest mt-1">Painel Colaborador</p>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {menuItems.map((item) => {
-            const Icon = item.icon
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-            
-            const isNovidades = item.label === 'Novidades'
-            const showPulse = isNovidades && temNovidade
+        <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-4 custom-scrollbar">
+          {/* Dashboard isolado no topo */}
+          <div className="mb-2">
+            <Link href="/colaborador/dashboard"
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
+                pathname === '/colaborador/dashboard' || pathname.startsWith('/colaborador/dashboard/')
+                  ? 'bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30'
+                  : 'text-gray-400 hover:text-white hover:bg-[#1a3a24]/40'
+              }`}>
+              <LayoutDashboard size={18} />
+              <span className="text-sm">Dashboard</span>
+            </Link>
+          </div>
 
-            return (
-              <Link 
-                key={item.href} 
-                href={item.href} 
-                prefetch={false}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
-                  isActive 
-                    ? 'bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30' 
-                    : showPulse
-                      ? 'text-yellow-400 bg-yellow-400/10 border border-yellow-400/30 animate-pulse'
-                      : 'text-gray-400 hover:text-white hover:bg-[#1a3a24]/40'
-                }`}
-              >
-                <Icon size={18} className={showPulse ? 'fill-yellow-400' : ''} />
-                <span className={`text-sm font-medium ${showPulse ? 'text-yellow-400' : ''}`}>{item.label}</span>
-              </Link>
-            )
-          })}
+          {menuGroups.map((group) => (
+            <div key={group.label}>
+              <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-600">
+                {group.label}
+              </p>
+              <div className="space-y-0.5">
+                {group.items.map((item) => {
+                  const Icon = item.icon
+                  const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+                  
+                  const isNovidades = item.label === 'Novidades'
+                  const showPulse = isNovidades && temNovidade
+
+                  if (!item.ativo) return (
+                    <div key={item.href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 cursor-not-allowed opacity-50">
+                      <Icon size={18} />
+                      <span className="text-sm">{item.label}</span>
+                      <span className="ml-auto text-xs bg-[#1a3a24]/50 text-gray-500 px-1.5 py-0.5 rounded-md">Em breve</span>
+                    </div>
+                  )
+                  return (
+                    <Link key={item.href} href={item.href}
+                      prefetch={false}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
+                        isActive
+                          ? 'bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30'
+                          : showPulse
+                            ? 'text-yellow-400 bg-yellow-400/10 border border-yellow-400/30 animate-pulse'
+                            : 'text-gray-400 hover:text-white hover:bg-[#1a3a24]/40'
+                      }`}>
+                      <Icon size={18} className={showPulse ? 'fill-yellow-400' : ''} />
+                      <span className={`text-sm font-medium ${showPulse ? 'text-yellow-400' : ''}`}>{item.label}</span>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
         <div className="px-3 py-4 border-t border-[#1a3a24]">
@@ -218,7 +279,7 @@ export default function CollaboratorLayout({
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 ml-64 flex flex-col h-full">
+      <div className="flex-1 ml-64 flex flex-col h-full overflow-hidden">
         {/* Header */}
         <header className="h-16 border-b border-[#1a3a24] bg-[#0a0f0c] px-8 flex items-center justify-between shrink-0">
           <div>
@@ -328,13 +389,16 @@ export default function CollaboratorLayout({
               )}
             </div>
 
-            <div className="h-8 w-8 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xs font-bold uppercase">
-              {profile.name?.[0] || profile.email?.[0]}
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-[#00ff88]/10 border border-[#00ff88]/40 flex items-center justify-center">
+                <span className="text-[#00ff88] text-sm font-bold">{(profile.name || profile.email).charAt(0).toUpperCase()}</span>
+              </div>
             </div>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+        {/* Content Area */}
+        <main className="flex-1 overflow-y-auto p-8 custom-scrollbar">
           {children}
         </main>
       </div>

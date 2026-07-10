@@ -42,7 +42,7 @@ export default function FeedbacksAdminPage() {
   const [filterStatus, setFilterStatus] = useState<string>('todos')
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
-  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null)
   
   const supabase = createClient()
 
@@ -72,7 +72,9 @@ export default function FeedbacksAdminPage() {
 
     if (!error) {
       setFeedbacks(feedbacks.map(f => f.id === id ? { ...f, status: newStatus as any } : f))
-      alert('Status atualizado com sucesso!')
+      if (selectedFeedback?.id === id) {
+        setSelectedFeedback({ ...selectedFeedback, status: newStatus as any })
+      }
     } else {
       alert('Erro ao atualizar status.')
     }
@@ -182,33 +184,23 @@ export default function FeedbacksAdminPage() {
       ) : (
         <div className="grid grid-cols-1 gap-4">
           {filteredFeedbacks.map((f) => (
-            <div key={f.id} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-6 hover:border-emerald-500/30 transition-all group shadow-lg">
+            <div 
+              key={f.id} 
+              onClick={() => setSelectedFeedback(f)}
+              className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-6 hover:border-emerald-500/30 transition-all group shadow-lg cursor-pointer"
+            >
               <div className="flex flex-col md:flex-row justify-between gap-6">
-                <div className="flex-1 space-y-4">
-                  <div 
-                    className="flex items-center gap-3 cursor-pointer"
-                    onClick={() => setExpandedId(expandedId === f.id ? null : f.id)}
-                  >
+                <div className="flex-1 space-y-3">
+                  <div className="flex items-center gap-3">
                     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter border ${
                       f.tipo === 'bug' ? 'text-red-400 bg-red-400/10 border-red-400/20' : 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20'
                     }`}>
                       {f.tipo === 'bug' ? 'Bug' : 'Sugestão'}
                     </span>
                     <h3 className="text-white font-bold text-lg flex-1">{f.titulo}</h3>
-                    <div className="text-gray-500">
-                      {expandedId === f.id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                    </div>
                   </div>
 
-                  {expandedId === f.id && (
-                    <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-                      <p className="text-gray-400 text-sm leading-relaxed whitespace-pre-wrap bg-[#0f0f0f] p-4 rounded-xl border border-[#2a2a2a]">
-                        {f.descricao}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="flex flex-wrap items-center gap-y-2 gap-x-6 pt-2">
+                  <div className="flex flex-wrap items-center gap-y-2 gap-x-6">
                     <div className="flex items-center gap-2 text-gray-500 text-xs">
                       <User size={14} className="text-emerald-500" />
                       <span className="font-medium">{f.profiles?.name || f.profiles?.email || 'Desconhecido'}</span>
@@ -218,35 +210,18 @@ export default function FeedbacksAdminPage() {
                       <span>{new Date(f.created_at).toLocaleDateString('pt-BR')}</span>
                     </div>
                     {f.anexo_url && (
-                      <button 
-                        onClick={() => setSelectedImage(f.anexo_url)}
-                        className="flex items-center gap-2 text-emerald-400 hover:text-emerald-300 text-xs font-bold transition-colors"
-                      >
+                      <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold">
                         <ExternalLink size={14} />
-                        Ver Anexo
-                      </button>
+                        Possui Anexo
+                      </div>
                     )}
                   </div>
                 </div>
 
-                <div className="flex flex-col justify-between items-end gap-4 min-w-[160px]">
+                <div className="flex items-center">
                   <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold ${getStatusColor(f.status)}`}>
                     {getStatusIcon(f.status)}
                     <span className="capitalize">{f.status.replace('_', ' ')}</span>
-                  </div>
-
-                  <div className="w-full">
-                    <label className="block text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1.5">Alterar Status</label>
-                    <select 
-                      value={f.status}
-                      disabled={updatingId === f.id}
-                      onChange={(e) => handleStatusChange(f.id, e.target.value)}
-                      className="w-full bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-emerald-500/50 transition-all cursor-pointer disabled:opacity-50"
-                    >
-                      <option value="pendente" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Pendente</option>
-                      <option value="em_analise" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Em Análise</option>
-                      <option value="resolvido" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Resolvido</option>
-                    </select>
                   </div>
                 </div>
               </div>
@@ -255,16 +230,90 @@ export default function FeedbacksAdminPage() {
         </div>
       )}
 
-      {/* Modal de Imagem */}
-      {selectedImage && (
+      {/* Modal de Detalhes do Feedback */}
+      {selectedFeedback && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/90 backdrop-blur-sm" onClick={() => setSelectedImage(null)} />
-          <div className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center animate-in fade-in zoom-in duration-200">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedFeedback(null)} />
+          <div className="relative w-full max-w-2xl bg-[#1a1a1a] border border-[#2a2a2a] rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between px-8 py-6 border-b border-[#2a2a2a]">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${selectedFeedback.tipo === 'bug' ? 'bg-red-400/10 text-red-400' : 'bg-emerald-400/10 text-emerald-400'}`}>
+                  {selectedFeedback.tipo === 'bug' ? <Bug size={20} /> : <MessageSquare size={20} />}
+                </div>
+                <div>
+                  <h2 className="text-white font-bold text-lg">{selectedFeedback.titulo}</h2>
+                  <p className="text-gray-500 text-xs">
+                    Por {selectedFeedback.profiles?.name || selectedFeedback.profiles?.email} em {new Date(selectedFeedback.created_at).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setSelectedFeedback(null)}
+                className="p-2 rounded-xl text-gray-500 hover:text-white hover:bg-white/5 transition-all"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+              <div className="space-y-2">
+                <label className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Descrição</label>
+                <p className="text-gray-300 text-base leading-relaxed whitespace-pre-wrap bg-[#0f0f0f] p-4 rounded-xl border border-[#2a2a2a]">
+                  {selectedFeedback.descricao}
+                </p>
+              </div>
+
+              {selectedFeedback.anexo_url && (
+                <div className="space-y-2">
+                  <label className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Anexo</label>
+                  <div className="relative group cursor-pointer" onClick={() => setSelectedImage(selectedFeedback.anexo_url)}>
+                    <img 
+                      src={selectedFeedback.anexo_url} 
+                      alt="Anexo" 
+                      className="w-full rounded-xl border border-[#2a2a2a] hover:border-emerald-500/50 transition-all"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
+                      <Search size={32} className="text-white" />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="px-8 py-6 border-t border-[#2a2a2a] flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3 w-full md:w-auto">
+                <span className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Status:</span>
+                <select 
+                  value={selectedFeedback.status}
+                  disabled={updatingId === selectedFeedback.id}
+                  onChange={(e) => handleStatusChange(selectedFeedback.id, e.target.value)}
+                  className="bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl px-3 py-1.5 text-white text-xs focus:outline-none focus:border-emerald-500/50 transition-all cursor-pointer"
+                >
+                  <option value="pendente" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Pendente</option>
+                  <option value="em_analise" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Em Análise</option>
+                  <option value="resolvido" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Resolvido</option>
+                </select>
+              </div>
+              <button
+                onClick={() => setSelectedFeedback(null)}
+                className="w-full md:w-auto px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-900/20"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Imagem (Zoom) */}
+      {selectedImage && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/95 backdrop-blur-md" onClick={() => setSelectedImage(null)} />
+          <div className="relative max-w-5xl w-full max-h-[90vh] flex flex-col items-center animate-in fade-in zoom-in duration-200">
             <div className="absolute -top-12 right-0 flex items-center gap-4">
               <button 
                 onClick={() => handleDownload(selectedImage)}
                 className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-xl font-bold text-sm hover:bg-emerald-600 transition-all shadow-lg"
-                title="Baixar Arquivo"
               >
                 <Download size={18} />
                 Baixar
@@ -279,7 +328,7 @@ export default function FeedbacksAdminPage() {
             <img 
               src={selectedImage} 
               alt="Anexo do Feedback" 
-              className="w-full h-full object-contain rounded-2xl shadow-2xl border border-emerald-500/20"
+              className="w-full h-full object-contain rounded-2xl shadow-2xl"
             />
           </div>
         </div>
