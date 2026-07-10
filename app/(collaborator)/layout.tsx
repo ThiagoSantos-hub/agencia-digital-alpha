@@ -30,6 +30,8 @@ const menuGroups = [
     label: 'PRINCIPAL',
     items: [
       { label: 'Dashboard', href: '/colaborador/dashboard', icon: LayoutDashboard, ativo: true },
+      { label: 'Novidades',  href: '/colaborador/novidades', icon: Sparkles,      ativo: true },
+      { label: 'Feedback',   href: '/colaborador/feedbacks',  icon: MessageSquare, ativo: true },
     ],
   },
   {
@@ -59,8 +61,6 @@ const menuGroups = [
   {
     label: 'OUTROS',
     items: [
-      { label: 'Novidades', href: '/colaborador/novidades', icon: Sparkles,      ativo: true },
-      { label: 'Feedback',  href: '/colaborador/feedbacks',  icon: MessageSquare, ativo: true },
       { label: 'Perfil',    href: '/colaborador/perfil',    icon: UserCircle,    ativo: true  },
     ],
   },
