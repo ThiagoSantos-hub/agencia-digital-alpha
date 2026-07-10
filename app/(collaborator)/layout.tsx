@@ -17,7 +17,8 @@ import {
   CheckCheck,
   X,
   Sparkles,
-  MessageSquare
+  MessageSquare,
+  BarChart2
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { useNotificacoes } from '@/hooks/useNotificacoes'
@@ -29,6 +30,8 @@ const menuItems = [
   { label: 'Meus Clientes', href: '/colaborador/meus-clientes', icon: Users },
   { label: 'Clientes Agência', href: '/colaborador/clientes', icon: Users },
   { label: 'Campanhas', href: '/colaborador/campanhas', icon: Megaphone },
+  { label: 'Relatórios', href: '/colaborador/relatorios', icon: BarChart2 },
+  { label: 'Alertas', href: '/colaborador/alertas', icon: Bell },
   { label: 'Financeiro', href: '/colaborador/financeiro', icon: Wallet },
   { label: 'Integrações', href: '/colaborador/integracoes', icon: Plug },
   { label: 'Novidades', href: '/colaborador/novidades', icon: Sparkles },
@@ -184,7 +187,7 @@ export default function CollaboratorLayout({
           <p className="text-[10px] text-emerald-500/70 font-bold uppercase tracking-widest mt-1">Painel Colaborador</p>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1">
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar">
           {menuItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
@@ -224,7 +227,7 @@ export default function CollaboratorLayout({
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 ml-64 flex flex-col h-full">
+      <div className="flex-1 ml-64 flex flex-col h-full overflow-hidden">
         {/* Header */}
         <header className="h-16 border-b border-[#1a3a24] bg-[#0a0f0c] px-8 flex items-center justify-between shrink-0">
           <div>
