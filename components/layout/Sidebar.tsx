@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, Megaphone, CheckSquare, Plug, Wallet, UserCircle, Bot, Sparkles, MessageSquare, BarChart2 } from 'lucide-react'
+import { LayoutDashboard, Users, Megaphone, CheckSquare, Plug, Wallet, UserCircle, Bot, Sparkles, MessageSquare, BarChart2, Bell } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 
@@ -10,6 +10,7 @@ const menuItems = [
   { label: 'Clientes', href: '/clientes', icon: Users, ativo: true },
   { label: 'Campanhas', href: '/campanhas', icon: Megaphone, ativo: true },
   { label: 'Relatórios', href: '/relatorios', icon: BarChart2, ativo: true },
+  { label: 'Alertas', href: '/alertas', icon: Bell, ativo: true },
   { label: 'Tarefas', href: '/tarefas', icon: CheckSquare, ativo: true },
   { label: 'Checklists', href: '/checklists', icon: CheckSquare, ativo: true },
   { label: 'Financeiro', href: '/financeiro', icon: Wallet, ativo: true },
