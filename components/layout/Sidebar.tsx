@@ -7,13 +7,11 @@ import {
   Sparkles, MessageSquare, UserCircle, LogOut
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
-import { createClient } from '@/lib/supabase'
 
 const menuGroups = [
   {
     label: 'PRINCIPAL',
     items: [
-      { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, ativo: true },
       { label: 'Novidades',  href: '/novidades', icon: Sparkles,      ativo: true },
       { label: 'Feedbacks',  href: '/feedbacks', icon: MessageSquare, ativo: true },
     ],
@@ -65,6 +63,19 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-4 custom-scrollbar">
+        {/* Dashboard isolado no topo */}
+        <div className="mb-2">
+          <Link href="/dashboard"
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
+              pathname === '/dashboard' || pathname.startsWith('/dashboard/')
+                ? 'bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30'
+                : 'text-gray-400 hover:text-white hover:bg-[#1a3a24]/40'
+            }`}>
+            <LayoutDashboard size={18} />
+            <span className="text-sm">Dashboard</span>
+          </Link>
+        </div>
+
         {menuGroups.map((group) => (
           <div key={group.label}>
             <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-600">

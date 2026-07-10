@@ -29,7 +29,6 @@ const menuGroups = [
   {
     label: 'PRINCIPAL',
     items: [
-      { label: 'Dashboard', href: '/colaborador/dashboard', icon: LayoutDashboard, ativo: true },
       { label: 'Novidades',  href: '/colaborador/novidades', icon: Sparkles,      ativo: true },
       { label: 'Feedback',   href: '/colaborador/feedbacks',  icon: MessageSquare, ativo: true },
     ],
@@ -215,6 +214,19 @@ export default function CollaboratorLayout({
         </div>
 
         <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-4 custom-scrollbar">
+          {/* Dashboard isolado no topo */}
+          <div className="mb-2">
+            <Link href="/colaborador/dashboard"
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
+                pathname === '/colaborador/dashboard' || pathname.startsWith('/colaborador/dashboard/')
+                  ? 'bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30'
+                  : 'text-gray-400 hover:text-white hover:bg-[#1a3a24]/40'
+              }`}>
+              <LayoutDashboard size={18} />
+              <span className="text-sm">Dashboard</span>
+            </Link>
+          </div>
+
           {menuGroups.map((group) => (
             <div key={group.label}>
               <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-600">
@@ -377,13 +389,16 @@ export default function CollaboratorLayout({
               )}
             </div>
 
-            <div className="h-8 w-8 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xs font-bold uppercase">
-              {profile.name?.[0] || profile.email?.[0]}
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-[#00ff88]/10 border border-[#00ff88]/40 flex items-center justify-center">
+                <span className="text-[#00ff88] text-sm font-bold">{(profile.name || profile.email).charAt(0).toUpperCase()}</span>
+              </div>
             </div>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+        {/* Content Area */}
+        <main className="flex-1 overflow-y-auto p-8 custom-scrollbar">
           {children}
         </main>
       </div>
