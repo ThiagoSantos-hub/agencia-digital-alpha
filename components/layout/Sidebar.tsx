@@ -44,8 +44,8 @@ const menuGroups = [
   {
     label: 'OUTROS',
     items: [
-      { label: 'Novidades', href: '/novidades', icon: Sparkles,     ativo: false },
-      { label: 'Feedbacks', href: '/feedbacks', icon: MessageSquare,ativo: false },
+      { label: 'Novidades', href: '/novidades', icon: Sparkles,     ativo: true },
+      { label: 'Feedbacks', href: '/feedbacks', icon: MessageSquare,ativo: true },
       { label: 'Perfil',    href: '/perfil',    icon: UserCircle,   ativo: true  },
     ],
   },
