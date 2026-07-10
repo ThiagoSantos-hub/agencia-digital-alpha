@@ -224,6 +224,10 @@ export default function CollaboratorLayout({
                 {group.items.map((item) => {
                   const Icon = item.icon
                   const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+                  
+                  const isNovidades = item.label === 'Novidades'
+                  const showPulse = isNovidades && temNovidade
+
                   if (!item.ativo) return (
                     <div key={item.href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 cursor-not-allowed opacity-50">
                       <Icon size={18} />
@@ -233,13 +237,16 @@ export default function CollaboratorLayout({
                   )
                   return (
                     <Link key={item.href} href={item.href}
+                      prefetch={false}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
                         isActive
                           ? 'bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30'
-                          : 'text-gray-400 hover:text-white hover:bg-[#1a3a24]/40'
+                          : showPulse
+                            ? 'text-yellow-400 bg-yellow-400/10 border border-yellow-400/30 animate-pulse'
+                            : 'text-gray-400 hover:text-white hover:bg-[#1a3a24]/40'
                       }`}>
-                      <Icon size={18} />
-                      <span className="text-sm font-medium">{item.label}</span>
+                      <Icon size={18} className={showPulse ? 'fill-yellow-400' : ''} />
+                      <span className={`text-sm font-medium ${showPulse ? 'text-yellow-400' : ''}`}>{item.label}</span>
                     </Link>
                   )
                 })}
