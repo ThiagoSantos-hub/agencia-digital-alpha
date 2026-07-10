@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase';
 
 export interface Report {
   id: string;
@@ -30,6 +30,8 @@ export interface ReportHistory {
 }
 
 export type ReportInput = Omit<Report, 'id' | 'user_id' | 'created_at' | 'updated_at'>;
+
+const supabase = createClient();
 
 export const useRelatorios = () => {
   const [reports, setReports] = useState<Report[]>([]);
@@ -103,7 +105,6 @@ export const useRelatorios = () => {
       
       let updateData = { ...input };
       if (input.frequencia || input.horario_envio) {
-        // Se mudou frequência ou horário, recalculamos o próximo envio
         const current = reports.find(r => r.id === id);
         const freq = input.frequencia || current?.frequencia || 'diario';
         const hora = input.horario_envio || current?.horario_envio || '08:00';
