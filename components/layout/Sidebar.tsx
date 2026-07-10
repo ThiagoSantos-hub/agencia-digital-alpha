@@ -1,13 +1,15 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, Megaphone, CheckSquare, Plug, Wallet, UserCircle, Bot, Sparkles, MessageSquare } from 'lucide-react'
+import { LayoutDashboard, Users, Megaphone, CheckSquare, Plug, Wallet, UserCircle, Bot, Sparkles, MessageSquare, BarChart2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
+
 const menuItems = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, ativo: true },
   { label: 'Clientes', href: '/clientes', icon: Users, ativo: true },
   { label: 'Campanhas', href: '/campanhas', icon: Megaphone, ativo: true },
+  { label: 'Relatórios', href: '/relatorios', icon: BarChart2, ativo: true },
   { label: 'Tarefas', href: '/tarefas', icon: CheckSquare, ativo: true },
   { label: 'Checklists', href: '/checklists', icon: CheckSquare, ativo: true },
   { label: 'Financeiro', href: '/financeiro', icon: Wallet, ativo: true },
@@ -18,6 +20,7 @@ const menuItems = [
   { label: 'Feedbacks', href: '/feedbacks', icon: MessageSquare, ativo: true },
   { label: 'Perfil', href: '/perfil', icon: UserCircle, ativo: true },
 ]
+
 /**
  * Sidebar Admin
  * Nota: Pulsação de novidades removida para o Admin.
