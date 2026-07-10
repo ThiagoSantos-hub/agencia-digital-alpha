@@ -1,12 +1,12 @@
 'use client'
-// components/layout/Header.tsx — v0.3.0
-// Atualização: sino de notificações com badge + painel dropdown
+// components/layout/Header.tsx — v0.3.1
+// Atualização: remoção do botão sair do topo
 // Projeto: Agência Digital Alpha
 
 import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useNotificacoes } from '@/hooks/useNotificacoes'
-import { LogOut, Bell, CheckCheck, Trash2, X } from 'lucide-react'
+import { Bell, CheckCheck, Trash2, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 // ── Ícone por tipo de notificação ─────────────────────────────
@@ -32,7 +32,7 @@ function tempoRelativo(dateStr: string): string {
 }
 
 export function Header() {
-  const { profile, role, signOut } = useAuth()
+  const { profile, role } = useAuth()
   const router = useRouter()
 
   const {
@@ -57,11 +57,6 @@ export function Header() {
     document.addEventListener('mousedown', handleClickFora)
     return () => document.removeEventListener('mousedown', handleClickFora)
   }, [])
-
-  const handleSignOut = async () => {
-    await signOut()
-    router.push('/login')
-  }
 
   const roleLabel = role === 'admin' ? 'Administrador' : 'Gestor'
   const nome      = profile?.name ?? profile?.email ?? 'Usuário'
@@ -205,15 +200,6 @@ export function Header() {
             <p className="text-gray-500 text-xs mt-0.5">{roleLabel}</p>
           </div>
         </div>
-
-        {/* ── SAIR ── */}
-        <button
-          onClick={handleSignOut}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl text-gray-400 hover:text-white hover:bg-[#1a3a24]/40 transition-colors text-sm"
-        >
-          <LogOut size={16} />
-          <span>Sair</span>
-        </button>
       </div>
     </header>
   )
