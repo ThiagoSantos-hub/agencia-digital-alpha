@@ -145,14 +145,14 @@ export default function DashboardPage() {
             type="date"
             value={dataInicio}
             onChange={(e) => setDataInicio(e.target.value)}
-            className="bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-[#00ff88]/50"
+            className="bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-[#00ff88]/50 [color-scheme:dark]"
           />
           <span className="text-gray-500 text-sm">até</span>
           <input
             type="date"
             value={dataFim}
             onChange={(e) => setDataFim(e.target.value)}
-            className="bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-[#00ff88]/50"
+            className="bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-[#00ff88]/50 [color-scheme:dark]"
           />
         </div>
       </div>

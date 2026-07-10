@@ -113,7 +113,6 @@ export default function CollaboratorDashboardPage() {
           <div>
             <h1 className="text-white text-xl font-bold">Olá, {nome}! 👋</h1>
             <p className="text-gray-400 text-sm mt-0.5">{getFraseDoDia()}</p>
-            <p className="text-[10px] text-[#00ff88]/60 font-medium uppercase tracking-widest mt-1">Colaborador</p>
           </div>
         </div>
 
@@ -124,14 +123,14 @@ export default function CollaboratorDashboardPage() {
             type="date"
             value={dataInicio}
             onChange={(e) => setDataInicio(e.target.value)}
-            className="bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-[#00ff88]/50"
+            className="bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-[#00ff88]/50 [color-scheme:dark]"
           />
           <span className="text-gray-500 text-sm">até</span>
           <input
             type="date"
             value={dataFim}
             onChange={(e) => setDataFim(e.target.value)}
-            className="bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-[#00ff88]/50"
+            className="bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-[#00ff88]/50 [color-scheme:dark]"
           />
         </div>
       </div>
