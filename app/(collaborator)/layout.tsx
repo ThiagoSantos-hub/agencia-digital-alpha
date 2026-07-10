@@ -36,7 +36,7 @@ const menuGroups = [
     label: 'CLIENTES & CAMPANHAS',
     items: [
       { label: 'Meus Clientes',    href: '/colaborador/meus-clientes',    icon: Users,      ativo: true },
-      { label: 'Clientes Agência', href: '/colaborador/clientes-agencia', icon: UsersRound, ativo: true },
+      { label: 'Clientes Agência', href: '/colaborador/clientes',         icon: UsersRound, ativo: true },
       { label: 'Campanhas',        href: '/colaborador/campanhas',        icon: Megaphone,  ativo: true  },
       { label: 'Relatórios',       href: '/colaborador/relatorios',       icon: BarChart2,  ativo: true },
       { label: 'Alertas',          href: '/colaborador/alertas',          icon: Bell,       ativo: true },
@@ -60,7 +60,7 @@ const menuGroups = [
     label: 'OUTROS',
     items: [
       { label: 'Novidades', href: '/colaborador/novidades', icon: Sparkles,      ativo: true },
-      { label: 'Feedback',  href: '/colaborador/feedback',  icon: MessageSquare, ativo: true },
+      { label: 'Feedback',  href: '/colaborador/feedbacks',  icon: MessageSquare, ativo: true },
       { label: 'Perfil',    href: '/colaborador/perfil',    icon: UserCircle,    ativo: true  },
     ],
   },
