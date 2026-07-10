@@ -42,14 +42,25 @@ export default function NovidadesCollaboratorPage() {
       .map(n => n.id)
 
     if (idsParaMarcar.length > 0) {
+      console.log('Marcando novidades como lidas:', idsParaMarcar)
+      
       for (const id of idsParaMarcar) {
         const novidade = lista.find(n => n.id === id)
         const novaLista = [...(novidade?.lida_por || []), user.id]
         
-        await supabase
+        const { error } = await supabase
           .from('novidades')
           .update({ lida_por: novaLista })
           .eq('id', id)
+
+        if (error) {
+          console.error(`Erro ao marcar novidade ${id} como lida:`, error)
+        } else {
+          // Atualização otimista do estado local para garantir que o pulso pare imediatamente
+          setNovidades(prev => prev.map(n => 
+            n.id === id ? { ...n, lida_por: novaLista } : n
+          ))
+        }
       }
     }
   }

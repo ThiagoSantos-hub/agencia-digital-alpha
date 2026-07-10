@@ -85,12 +85,18 @@ export default function CollaboratorLayout({
     if (!profile?.id) return
 
     const checkNovidades = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('novidades')
         .select('lida_por')
 
+      if (error) {
+        console.error('Erro ao verificar novidades:', error)
+        return
+      }
+
       if (data) {
         const naoLidas = data.some(n => !n.lida_por?.includes(profile.id))
+        console.log('Verificação de novidades:', { total: data.length, temNaoLidas: naoLidas })
         setTemNovidade(naoLidas)
       }
     }
