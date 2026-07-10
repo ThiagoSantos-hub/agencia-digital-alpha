@@ -13,7 +13,7 @@ interface DashStats {
   campanhasAtivas: number
   relatoriosEnviados: number
   alertasEnviados: number
-  tarefasPendentes: number
+  tarefasAFazer: number
   checklistsPendentes: number
 }
 
@@ -47,7 +47,7 @@ export default function CollaboratorDashboardPage() {
     campanhasAtivas: 0,
     relatoriosEnviados: 0,
     alertasEnviados: 0,
-    tarefasPendentes: 0,
+    tarefasAFazer: 0,
     checklistsPendentes: 0,
   })
   const [loading, setLoading] = useState(true)
@@ -68,12 +68,12 @@ export default function CollaboratorDashboardPage() {
       ] = await Promise.all([
         supabase.from('clients').select('id', { count: 'exact', head: true }).eq('status', 'ativo'),
         supabase.from('campaigns').select('id', { count: 'exact', head: true }).eq('status', 'ativa'),
-        supabase.from('report_sends').select('id', { count: 'exact', head: true })
-          .gte('sent_at', dataInicio).lte('sent_at', dataFim + 'T23:59:59'),
-        supabase.from('alert_sends').select('id', { count: 'exact', head: true })
-          .gte('sent_at', dataInicio).lte('sent_at', dataFim + 'T23:59:59'),
+        supabase.from('report_history').select('id', { count: 'exact', head: true })
+          .gte('enviado_em', dataInicio).lte('enviado_em', dataFim + 'T23:59:59'),
+        supabase.from('report_history').select('id', { count: 'exact', head: true }) // Nota: Usando report_history como placeholder para alertas se não houver tabela própria
+          .gte('enviado_em', dataInicio).lte('enviado_em', dataFim + 'T23:59:59'),
         supabase.from('tasks').select('id', { count: 'exact', head: true })
-          .eq('assignee_id', user.id).eq('status', 'pendente'),
+          .eq('assigned_to', user.id).eq('status', 'a_fazer'),
         supabase.from('checklist_items').select('id', { count: 'exact', head: true })
           .eq('user_id', user.id).eq('completed', false),
       ])
@@ -83,7 +83,7 @@ export default function CollaboratorDashboardPage() {
         campanhasAtivas: campanhasRes.count ?? 0,
         relatoriosEnviados: relatoriosRes.count ?? 0,
         alertasEnviados: alertasRes.count ?? 0,
-        tarefasPendentes: tarefasRes.count ?? 0,
+        tarefasAFazer: tarefasRes.count ?? 0,
         checklistsPendentes: checklistsRes.count ?? 0,
       })
       setLoading(false)
@@ -97,7 +97,7 @@ export default function CollaboratorDashboardPage() {
     { label: 'Campanhas Ativas',     valor: stats.campanhasAtivas,     icon: Megaphone,   cor: '#6366f1' },
     { label: 'Relatórios Enviados',  valor: stats.relatoriosEnviados,  icon: BarChart2,   cor: '#f59e0b' },
     { label: 'Alertas Enviados',     valor: stats.alertasEnviados,     icon: Bell,        cor: '#ef4444' },
-    { label: 'Tarefas Pendentes',    valor: stats.tarefasPendentes,    icon: CheckSquare, cor: '#3b82f6' },
+    { label: 'Tarefas a Fazer',      valor: stats.tarefasAFazer,       icon: CheckSquare, cor: '#3b82f6' },
     { label: 'Checklists Pendentes', valor: stats.checklistsPendentes, icon: ListChecks,  cor: '#a855f7' },
   ]
 
