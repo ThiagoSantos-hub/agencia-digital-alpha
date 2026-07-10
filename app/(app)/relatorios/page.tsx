@@ -108,11 +108,11 @@ export default function RelatoriosPage() {
   }
 
   const handleDuplicate = async (report: Report) => {
-    const { id, user_id, created_at, updated_at, proximo_envio, ...input } = report
+    const { id, user_id, created_at, updated_at, ...rest } = report
     try {
       await createRelatorio({
-        ...input,
-        nome: `${input.nome} (Cópia)`
+        ...rest,
+        nome: `${rest.nome} (Cópia)`
       })
     } catch (error) {
       console.error(error)
