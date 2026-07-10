@@ -35,18 +35,18 @@ function formatDate(date: Date) {
   return date.toISOString().split('T')[0]
 }
 
-// Componente de Gráfico de Pizza Nativo (SVG)
+// Componente de Gráfico de Pizza Nativo (SVG) - Ajustado para alinhamento
 function DonutChart({ data }: { data: { label: string; value: number; color: string }[] }) {
   const total = data.reduce((s, d) => s + d.value, 0)
   if (total === 0) return (
     <div className="flex flex-col items-center justify-center h-full text-gray-600">
-      <PieIcon size={40} className="mb-2 opacity-20" />
-      <p className="text-xs">Sem dados</p>
+      <PieIcon size={32} className="mb-2 opacity-20" />
+      <p className="text-[10px]">Sem dados</p>
     </div>
   )
 
   let cumAngle = -Math.PI / 2
-  const cx = 80, cy = 80, r = 60, inner = 35
+  const cx = 80, cy = 80, r = 60, inner = 38
 
   const slices = data.map((d, i) => {
     const angle = (d.value / total) * 2 * Math.PI
@@ -70,21 +70,24 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
   })
 
   return (
-    <div className="flex items-center justify-around h-full gap-4 px-4">
-      <svg viewBox="0 0 160 160" className="w-32 h-32 flex-shrink-0">
+    <div className="flex flex-col items-center justify-center h-full w-full">
+      <div className="relative w-32 h-32 flex-shrink-0">
+        <svg viewBox="0 0 160 160" className="w-full h-full transform -rotate-90">
+          {slices.map((s, i) => (
+            <path key={i} d={s.d} fill={s.color} className="transition-all duration-500 hover:opacity-80" />
+          ))}
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-white text-lg font-black leading-none">{total}</span>
+          <span className="text-[8px] text-gray-500 uppercase font-bold">Total</span>
+        </div>
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-1 w-full max-w-[200px]">
         {slices.map((s, i) => (
-          <path key={i} d={s.d} fill={s.color} className="transition-all duration-500 hover:opacity-80" />
-        ))}
-        <text x={cx} y={cy + 4} textAnchor="middle" fill="#fff" fontSize="12" fontWeight="bold">{total}</text>
-      </svg>
-      <div className="space-y-2 flex-1">
-        {slices.map((s, i) => (
-          <div key={i} className="flex items-center justify-between text-[10px]">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
-              <span className="text-gray-400 truncate">{s.label}</span>
-            </div>
-            <span className="text-white font-bold ml-2">{s.pct}%</span>
+          <div key={i} className="flex items-center gap-1.5 min-w-0">
+            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
+            <span className="text-gray-400 text-[9px] truncate">{s.label}</span>
+            <span className="text-white text-[9px] font-bold ml-auto">{s.pct}%</span>
           </div>
         ))}
       </div>
@@ -92,20 +95,20 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
   )
 }
 
-// Componente de Gráfico de Barras Nativo (SVG)
+// Componente de Gráfico de Barras Nativo (SVG) - Ajustado para alinhamento
 function BarChart({ data, color }: { data: number[], color: string }) {
   const max = Math.max(...data, 1)
   return (
-    <div className="flex items-end justify-between h-full gap-1 px-2 pt-4">
+    <div className="flex items-end justify-between h-full w-full gap-1 px-2 pt-2 pb-1">
       {data.map((v, i) => {
         const height = (v / max) * 100
         return (
-          <div key={i} className="flex-1 group relative flex flex-col items-center">
+          <div key={i} className="flex-1 group relative flex flex-col items-center h-full justify-end">
             <div 
               className="w-full rounded-t-sm transition-all duration-500 hover:brightness-125"
-              style={{ height: `${height}%`, backgroundColor: color, opacity: 0.6 + (height / 250) }}
+              style={{ height: `${height}%`, backgroundColor: color, opacity: 0.5 + (height / 200) }}
             />
-            <div className="absolute -top-5 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-white font-bold">
+            <div className="absolute -top-4 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] text-white font-bold bg-[#0a0f0c] px-1 rounded border border-[#1a3a24] z-10">
               {v}
             </div>
           </div>
@@ -205,25 +208,25 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div className="h-[calc(100vh-100px)] flex flex-col gap-4 overflow-hidden">
+    <div className="h-[calc(100vh-100px)] flex flex-col gap-4 overflow-hidden p-1">
       
-      {/* Topo: Boas-vindas e Filtros */}
-      <div className="flex flex-shrink-0 items-center gap-4">
-        <div className="bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-4 flex items-center gap-4 flex-1">
-          <div className="w-10 h-10 rounded-xl bg-[#00ff88]/10 border border-[#00ff88]/30 flex items-center justify-center flex-shrink-0">
-            <span className="text-[#00ff88] text-base font-bold">{nome.charAt(0).toUpperCase()}</span>
+      {/* Topo: Boas-vindas e Filtros - Altura Fixa */}
+      <div className="h-16 flex flex-shrink-0 items-center gap-4">
+        <div className="bg-[#0f1a14] border border-[#1a3a24] rounded-2xl px-5 h-full flex items-center gap-4 flex-1 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-[#00ff88]/10 border border-[#00ff88]/30 flex items-center justify-center flex-shrink-0">
+            <span className="text-[#00ff88] text-sm font-bold">{nome.charAt(0).toUpperCase()}</span>
           </div>
           <div className="min-w-0">
-            <h1 className="text-white text-lg font-bold truncate">Olá, {nome}! 👋</h1>
-            <p className="text-gray-500 text-xs truncate">{getFraseDoDia()}</p>
+            <h1 className="text-white text-base font-bold truncate">Olá, {nome}! 👋</h1>
+            <p className="text-gray-500 text-[10px] truncate">{getFraseDoDia()}</p>
           </div>
-          <div className="ml-auto text-right hidden sm:block">
-             <p className="text-[9px] text-[#00ff88]/60 font-bold uppercase tracking-widest">{roleLabel}</p>
-             <p className="text-gray-500 text-[10px] mt-0.5">{hoje.toLocaleDateString('pt-BR')}</p>
+          <div className="ml-auto text-right hidden md:block flex-shrink-0">
+             <p className="text-[9px] text-[#00ff88]/60 font-bold uppercase tracking-widest leading-none">{roleLabel}</p>
+             <p className="text-gray-500 text-[9px] mt-1">{hoje.toLocaleDateString('pt-BR')}</p>
           </div>
         </div>
 
-        <div className="bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-3 flex items-center gap-3">
+        <div className="bg-[#0f1a14] border border-[#1a3a24] rounded-2xl px-4 h-full flex items-center gap-3 flex-shrink-0">
           <Calendar size={14} className="text-[#00ff88]" />
           <div className="flex items-center gap-2">
             <input
@@ -243,65 +246,65 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Grid Principal: KPIs e Gráficos */}
+      {/* Grid Principal - Ocupa o restante da tela sem scroll */}
       <div className="flex-1 grid grid-cols-12 grid-rows-6 gap-4 min-h-0">
         
-        {/* KPIs Laterais */}
-        <div className="col-span-3 row-span-6 grid grid-rows-6 gap-3">
+        {/* KPIs Laterais - Altura Total Dividida */}
+        <div className="col-span-3 row-span-6 grid grid-rows-6 gap-3 min-h-0">
           {cards.map((card) => {
             const Icon = card.icon
             return (
-              <div key={card.label} className="bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-4 flex items-center justify-between transition-all hover:bg-[#1a3a24]/20">
+              <div key={card.label} className="bg-[#0f1a14] border border-[#1a3a24] rounded-2xl px-4 flex items-center justify-between transition-all hover:bg-[#1a3a24]/20 min-h-0 overflow-hidden">
                 <div className="min-w-0">
-                  <p className="text-gray-500 text-[10px] font-medium uppercase tracking-tight mb-1 truncate">{card.label}</p>
-                  <p className="text-2xl font-black tracking-tighter" style={{ color: card.cor }}>
+                  <p className="text-gray-500 text-[9px] font-bold uppercase tracking-tight mb-0.5 truncate">{card.label}</p>
+                  <p className="text-xl font-black tracking-tighter leading-none" style={{ color: card.cor }}>
                     {loading ? '...' : card.valor}
                   </p>
                 </div>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                   style={{ backgroundColor: card.cor + '15', border: `1px solid ${card.cor}25` }}>
-                  <Icon size={18} style={{ color: card.cor }} />
+                  <Icon size={16} style={{ color: card.cor }} />
                 </div>
               </div>
             )
           })}
         </div>
 
-        {/* Gráficos Centrais */}
-        <div className="col-span-6 row-span-4 bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-5 flex flex-col">
-          <div className="flex items-center justify-between mb-6">
+        {/* Gráficos Centrais - Ocupa 4/6 da altura */}
+        <div className="col-span-6 row-span-4 bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-4 flex flex-col min-h-0">
+          <div className="flex items-center justify-between mb-4 flex-shrink-0">
             <div className="flex items-center gap-2">
-              <TrendingUp size={16} className="text-[#00ff88]" />
-              <h2 className="text-white font-bold text-sm">Visão Geral de Desempenho</h2>
+              <TrendingUp size={14} className="text-[#00ff88]" />
+              <h2 className="text-white font-bold text-xs uppercase tracking-wide">Desempenho Geral</h2>
             </div>
-            <div className="flex gap-2">
-              <span className="flex items-center gap-1.5 text-[10px] text-gray-400">
-                <span className="w-2 h-2 rounded-full bg-[#6366f1]" /> Campanhas
+            <div className="flex gap-3">
+              <span className="flex items-center gap-1 text-[9px] text-gray-500 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#6366f1]" /> CAMPANHAS
               </span>
-              <span className="flex items-center gap-1.5 text-[10px] text-gray-400">
-                <span className="w-2 h-2 rounded-full bg-[#00ff88]" /> Clientes
+              <span className="flex items-center gap-1 text-[9px] text-gray-500 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#00ff88]" /> CLIENTES
               </span>
             </div>
           </div>
-          <div className="flex-1 min-h-0">
+          <div className="flex-1 min-h-0 w-full overflow-hidden">
             <BarChart 
               data={[12, 19, 15, 25, 22, 30, 28, 35, 32, 40, 38, 45]} 
               color="#00ff88" 
             />
           </div>
-          <div className="mt-4 pt-4 border-t border-[#1a3a24] flex items-center justify-between">
-            <div className="text-[10px] text-gray-500">Média de crescimento: <span className="text-[#00ff88] font-bold">+12.5%</span></div>
-            <div className="text-[10px] text-gray-500 italic">Atualizado agora</div>
+          <div className="mt-3 pt-3 border-t border-[#1a3a24] flex items-center justify-between flex-shrink-0">
+            <div className="text-[9px] text-gray-500">Média de crescimento: <span className="text-[#00ff88] font-bold">+12.5%</span></div>
+            <div className="text-[9px] text-gray-500 italic">Dados consolidados</div>
           </div>
         </div>
 
-        {/* Distribuição (Pizza) */}
-        <div className="col-span-3 row-span-4 bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-5 flex flex-col">
-          <div className="flex items-center gap-2 mb-6">
-            <Activity size={16} className="text-[#f59e0b]" />
-            <h2 className="text-white font-bold text-sm">Distribuição</h2>
+        {/* Distribuição (Pizza) - Ocupa 4/6 da altura */}
+        <div className="col-span-3 row-span-4 bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-4 flex flex-col min-h-0">
+          <div className="flex items-center gap-2 mb-4 flex-shrink-0">
+            <Activity size={14} className="text-[#f59e0b]" />
+            <h2 className="text-white font-bold text-xs uppercase tracking-wide">Canais</h2>
           </div>
-          <div className="flex-1 min-h-0">
+          <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center overflow-hidden">
             <DonutChart data={[
               { label: 'Meta Ads', value: 45, color: '#6366f1' },
               { label: 'Google Ads', value: 35, color: '#00ff88' },
@@ -310,31 +313,31 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Ranking Inferior */}
-        <div className="col-span-9 row-span-2 bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-5 flex flex-col">
-          <div className="flex items-center justify-between mb-4">
+        {/* Ranking Inferior - Ocupa 2/6 da altura */}
+        <div className="col-span-9 row-span-2 bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-4 flex flex-col min-h-0">
+          <div className="flex items-center justify-between mb-3 flex-shrink-0">
             <div className="flex items-center gap-2">
-              <Trophy size={16} className="text-[#f59e0b]" />
-              <h2 className="text-white font-bold text-sm">Top Colaboradores</h2>
+              <Trophy size={14} className="text-[#f59e0b]" />
+              <h2 className="text-white font-bold text-xs uppercase tracking-wide">Top Colaboradores</h2>
             </div>
-            <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Performance Mensal</span>
+            <span className="text-[9px] text-[#00ff88]/60 uppercase font-black tracking-widest">RANKING MENSAL</span>
           </div>
-          <div className="flex-1 min-h-0 overflow-hidden flex items-center gap-6">
+          <div className="flex-1 min-h-0 overflow-hidden flex items-center gap-5">
             {loading ? (
-              <div className="w-full flex justify-center py-2"><div className="animate-spin h-4 w-4 border-2 border-[#00ff88] border-t-transparent rounded-full" /></div>
+              <div className="w-full flex justify-center"><div className="animate-spin h-3 w-3 border-2 border-[#00ff88] border-t-transparent rounded-full" /></div>
             ) : stats.rankingColaboradores.length === 0 ? (
-              <p className="text-gray-600 text-[10px] italic">Nenhuma atividade registrada.</p>
+              <p className="text-gray-600 text-[10px] italic">Aguardando atividades...</p>
             ) : (
               stats.rankingColaboradores.map((colab, i) => {
                 const max = stats.rankingColaboradores[0].concluidas
                 const pct = max > 0 ? (colab.concluidas / max) * 100 : 0
                 return (
-                  <div key={colab.nome} className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1 px-1">
+                  <div key={colab.nome} className="flex-1 min-w-0 flex flex-col justify-center">
+                    <div className="flex items-center justify-between mb-1 px-0.5">
                       <span className="text-white text-[10px] font-bold truncate">{i + 1}º {colab.nome}</span>
                       <span className="text-[#00ff88] text-[10px] font-black">{colab.concluidas}</span>
                     </div>
-                    <div className="h-1.5 bg-[#1a3a24] rounded-full overflow-hidden">
+                    <div className="h-1 bg-[#1a3a24] rounded-full overflow-hidden">
                       <div className="h-full bg-gradient-to-r from-[#00ff88]/50 to-[#00ff88] rounded-full transition-all duration-1000"
                         style={{ width: `${pct}%` }} />
                     </div>

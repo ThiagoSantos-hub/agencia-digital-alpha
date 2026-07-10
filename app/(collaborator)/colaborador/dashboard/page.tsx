@@ -35,18 +35,18 @@ function formatDate(date: Date) {
   return date.toISOString().split('T')[0]
 }
 
-// Componente de Gráfico de Pizza Nativo (SVG) - Tema Esmeralda
+// Componente de Gráfico de Pizza Nativo (SVG) - Ajustado para o Colaborador (Esmeralda)
 function DonutChart({ data }: { data: { label: string; value: number; color: string }[] }) {
   const total = data.reduce((s, d) => s + d.value, 0)
   if (total === 0) return (
     <div className="flex flex-col items-center justify-center h-full text-gray-600">
-      <PieIcon size={40} className="mb-2 opacity-20" />
-      <p className="text-xs">Sem dados</p>
+      <PieIcon size={32} className="mb-2 opacity-20" />
+      <p className="text-[10px]">Sem dados</p>
     </div>
   )
 
   let cumAngle = -Math.PI / 2
-  const cx = 80, cy = 80, r = 60, inner = 35
+  const cx = 80, cy = 80, r = 60, inner = 38
 
   const slices = data.map((d, i) => {
     const angle = (d.value / total) * 2 * Math.PI
@@ -70,21 +70,24 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
   })
 
   return (
-    <div className="flex items-center justify-around h-full gap-4 px-4">
-      <svg viewBox="0 0 160 160" className="w-32 h-32 flex-shrink-0">
+    <div className="flex flex-col items-center justify-center h-full w-full">
+      <div className="relative w-32 h-32 flex-shrink-0">
+        <svg viewBox="0 0 160 160" className="w-full h-full transform -rotate-90">
+          {slices.map((s, i) => (
+            <path key={i} d={s.d} fill={s.color} className="transition-all duration-500 hover:opacity-80" />
+          ))}
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-white text-lg font-black leading-none">{total}</span>
+          <span className="text-[8px] text-gray-500 uppercase font-bold">Demandas</span>
+        </div>
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-1 w-full max-w-[200px]">
         {slices.map((s, i) => (
-          <path key={i} d={s.d} fill={s.color} className="transition-all duration-500 hover:opacity-80" />
-        ))}
-        <text x={cx} y={cy + 4} textAnchor="middle" fill="#fff" fontSize="12" fontWeight="bold">{total}</text>
-      </svg>
-      <div className="space-y-2 flex-1">
-        {slices.map((s, i) => (
-          <div key={i} className="flex items-center justify-between text-[10px]">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
-              <span className="text-gray-400 truncate">{s.label}</span>
-            </div>
-            <span className="text-white font-bold ml-2">{s.pct}%</span>
+          <div key={i} className="flex items-center gap-1.5 min-w-0">
+            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
+            <span className="text-gray-400 text-[9px] truncate">{s.label}</span>
+            <span className="text-white text-[9px] font-bold ml-auto">{s.pct}%</span>
           </div>
         ))}
       </div>
@@ -92,20 +95,20 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
   )
 }
 
-// Componente de Gráfico de Barras Nativo (SVG) - Tema Esmeralda
+// Componente de Gráfico de Barras Nativo (SVG) - Ajustado para o Colaborador (Esmeralda)
 function BarChart({ data, color }: { data: number[], color: string }) {
   const max = Math.max(...data, 1)
   return (
-    <div className="flex items-end justify-between h-full gap-1 px-2 pt-4">
+    <div className="flex items-end justify-between h-full w-full gap-1 px-2 pt-2 pb-1">
       {data.map((v, i) => {
         const height = (v / max) * 100
         return (
-          <div key={i} className="flex-1 group relative flex flex-col items-center">
+          <div key={i} className="flex-1 group relative flex flex-col items-center h-full justify-end">
             <div 
               className="w-full rounded-t-sm transition-all duration-500 hover:brightness-125"
-              style={{ height: `${height}%`, backgroundColor: color, opacity: 0.6 + (height / 250) }}
+              style={{ height: `${height}%`, backgroundColor: color, opacity: 0.5 + (height / 200) }}
             />
-            <div className="absolute -top-5 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-white font-bold">
+            <div className="absolute -top-4 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] text-white font-bold bg-[#0a0f0c] px-1 rounded border border-[#1a3a24] z-10">
               {v}
             </div>
           </div>
@@ -186,25 +189,25 @@ export default function CollaboratorDashboardPage() {
   ]
 
   return (
-    <div className="h-[calc(100vh-100px)] flex flex-col gap-4 overflow-hidden">
+    <div className="h-[calc(100vh-100px)] flex flex-col gap-4 overflow-hidden p-1">
       
-      {/* Topo: Boas-vindas e Filtros */}
-      <div className="flex flex-shrink-0 items-center gap-4">
-        <div className="bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-4 flex items-center gap-4 flex-1">
-          <div className="w-10 h-10 rounded-xl bg-[#10b981]/10 border border-[#10b981]/30 flex items-center justify-center flex-shrink-0">
-            <span className="text-[#10b981] text-base font-bold">{nome.charAt(0).toUpperCase()}</span>
+      {/* Topo: Boas-vindas e Filtros - Altura Fixa */}
+      <div className="h-16 flex flex-shrink-0 items-center gap-4">
+        <div className="bg-[#0f1a14] border border-[#1a3a24] rounded-2xl px-5 h-full flex items-center gap-4 flex-1 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-[#10b981]/10 border border-[#10b981]/30 flex items-center justify-center flex-shrink-0">
+            <span className="text-[#10b981] text-sm font-bold">{nome.charAt(0).toUpperCase()}</span>
           </div>
           <div className="min-w-0">
-            <h1 className="text-white text-lg font-bold truncate">Olá, {nome}! 👋</h1>
-            <p className="text-gray-500 text-xs truncate">{getFraseDoDia()}</p>
+            <h1 className="text-white text-base font-bold truncate">Olá, {nome}! 👋</h1>
+            <p className="text-gray-500 text-[10px] truncate">{getFraseDoDia()}</p>
           </div>
-          <div className="ml-auto text-right hidden sm:block">
-             <p className="text-[9px] text-[#10b981]/60 font-bold uppercase tracking-widest">Painel Colaborador</p>
-             <p className="text-gray-500 text-[10px] mt-0.5">{hoje.toLocaleDateString('pt-BR')}</p>
+          <div className="ml-auto text-right hidden md:block flex-shrink-0">
+             <p className="text-[9px] text-[#10b981]/60 font-bold uppercase tracking-widest leading-none">Painel Colaborador</p>
+             <p className="text-gray-500 text-[9px] mt-1">{hoje.toLocaleDateString('pt-BR')}</p>
           </div>
         </div>
 
-        <div className="bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-3 flex items-center gap-3">
+        <div className="bg-[#0f1a14] border border-[#1a3a24] rounded-2xl px-4 h-full flex items-center gap-3 flex-shrink-0">
           <Calendar size={14} className="text-[#10b981]" />
           <div className="flex items-center gap-2">
             <input
@@ -224,62 +227,62 @@ export default function CollaboratorDashboardPage() {
         </div>
       </div>
 
-      {/* Grid Principal: KPIs e Gráficos */}
+      {/* Grid Principal - Ocupa o restante da tela sem scroll */}
       <div className="flex-1 grid grid-cols-12 grid-rows-6 gap-4 min-h-0">
         
-        {/* KPIs Laterais */}
-        <div className="col-span-3 row-span-6 grid grid-rows-6 gap-3">
+        {/* KPIs Laterais - Altura Total Dividida */}
+        <div className="col-span-3 row-span-6 grid grid-rows-6 gap-3 min-h-0">
           {cards.map((card) => {
             const Icon = card.icon
             return (
-              <div key={card.label} className="bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-4 flex items-center justify-between transition-all hover:bg-[#1a3a24]/20">
+              <div key={card.label} className="bg-[#0f1a14] border border-[#1a3a24] rounded-2xl px-4 flex items-center justify-between transition-all hover:bg-[#1a3a24]/20 min-h-0 overflow-hidden">
                 <div className="min-w-0">
-                  <p className="text-gray-500 text-[10px] font-medium uppercase tracking-tight mb-1 truncate">{card.label}</p>
-                  <p className="text-2xl font-black tracking-tighter" style={{ color: card.cor }}>
+                  <p className="text-gray-500 text-[9px] font-bold uppercase tracking-tight mb-0.5 truncate">{card.label}</p>
+                  <p className="text-xl font-black tracking-tighter leading-none" style={{ color: card.cor }}>
                     {loading ? '...' : card.valor}
                   </p>
                 </div>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                   style={{ backgroundColor: card.cor + '15', border: `1px solid ${card.cor}25` }}>
-                  <Icon size={18} style={{ color: card.cor }} />
+                  <Icon size={16} style={{ color: card.cor }} />
                 </div>
               </div>
             )
           })}
         </div>
 
-        {/* Gráficos Centrais: Meu Desempenho */}
-        <div className="col-span-6 row-span-4 bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-5 flex flex-col">
-          <div className="flex items-center justify-between mb-6">
+        {/* Gráficos Centrais - Ocupa 4/6 da altura */}
+        <div className="col-span-6 row-span-4 bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-4 flex flex-col min-h-0">
+          <div className="flex items-center justify-between mb-4 flex-shrink-0">
             <div className="flex items-center gap-2">
-              <TrendingUp size={16} className="text-[#10b981]" />
-              <h2 className="text-white font-bold text-sm">Meu Histórico de Produtividade</h2>
+              <TrendingUp size={14} className="text-[#10b981]" />
+              <h2 className="text-white font-bold text-xs uppercase tracking-wide">Meu Histórico</h2>
             </div>
-            <div className="flex gap-2">
-              <span className="flex items-center gap-1.5 text-[10px] text-gray-400">
-                <span className="w-2 h-2 rounded-full bg-[#10b981]" /> Tarefas Concluídas
+            <div className="flex gap-3">
+              <span className="flex items-center gap-1 text-[9px] text-gray-500 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" /> TAREFAS CONCLUÍDAS
               </span>
             </div>
           </div>
-          <div className="flex-1 min-h-0">
+          <div className="flex-1 min-h-0 w-full overflow-hidden">
             <BarChart 
               data={[5, 8, 12, 7, 10, 15, 9, 11, 14, 13, 16, 18]} 
               color="#10b981" 
             />
           </div>
-          <div className="mt-4 pt-4 border-t border-[#1a3a24] flex items-center justify-between">
-            <div className="text-[10px] text-gray-500">Total no período: <span className="text-[#10b981] font-bold">{stats.tarefasAFazer + 25}</span></div>
-            <div className="text-[10px] text-gray-500 italic">Atualizado agora</div>
+          <div className="mt-3 pt-3 border-t border-[#1a3a24] flex items-center justify-between flex-shrink-0">
+            <div className="text-[9px] text-gray-500">Total no período: <span className="text-[#10b981] font-bold">{stats.tarefasAFazer + 25}</span></div>
+            <div className="text-[9px] text-gray-500 italic">Atualizado agora</div>
           </div>
         </div>
 
-        {/* Distribuição de Demandas (Pizza) */}
-        <div className="col-span-3 row-span-4 bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-5 flex flex-col">
-          <div className="flex items-center gap-2 mb-6">
-            <Activity size={16} className="text-[#f59e0b]" />
-            <h2 className="text-white font-bold text-sm">Minhas Demandas</h2>
+        {/* Distribuição (Pizza) - Ocupa 4/6 da altura */}
+        <div className="col-span-3 row-span-4 bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-4 flex flex-col min-h-0">
+          <div className="flex items-center gap-2 mb-4 flex-shrink-0">
+            <Activity size={14} className="text-[#f59e0b]" />
+            <h2 className="text-white font-bold text-xs uppercase tracking-wide">Minhas Demandas</h2>
           </div>
-          <div className="flex-1 min-h-0">
+          <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center overflow-hidden">
             <DonutChart data={[
               { label: 'Tarefas', value: stats.tarefasAFazer, color: '#10b981' },
               { label: 'Checklists', value: stats.checklistsPendentes, color: '#a855f7' },
@@ -288,35 +291,35 @@ export default function CollaboratorDashboardPage() {
           </div>
         </div>
 
-        {/* Resumo de Status Inferior */}
-        <div className="col-span-9 row-span-2 bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-5 flex flex-col">
-          <div className="flex items-center justify-between mb-4">
+        {/* Próximas Tarefas - Ocupa 2/6 da altura */}
+        <div className="col-span-9 row-span-2 bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-4 flex flex-col min-h-0">
+          <div className="flex items-center justify-between mb-3 flex-shrink-0">
             <div className="flex items-center gap-2">
-              <CheckCircle2 size={16} className="text-[#10b981]" />
-              <h2 className="text-white font-bold text-sm">Próximas Tarefas</h2>
+              <CheckCircle2 size={14} className="text-[#10b981]" />
+              <h2 className="text-white font-bold text-xs uppercase tracking-wide">Próximas Tarefas</h2>
             </div>
-            <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Fila de Trabalho</span>
+            <span className="text-[9px] text-[#10b981]/60 uppercase font-black tracking-widest">FILA DE TRABALHO</span>
           </div>
-          <div className="flex-1 min-h-0 flex items-center gap-4">
-             <div className="flex-1 bg-[#0a0f0c] border border-[#1a3a24] rounded-xl p-3 flex items-center gap-3">
-                <Clock size={14} className="text-amber-400" />
+          <div className="flex-1 min-h-0 flex items-center gap-4 overflow-hidden">
+             <div className="flex-1 bg-[#0a0f0c] border border-[#1a3a24] rounded-xl p-2.5 flex items-center gap-3 min-w-0">
+                <Clock size={12} className="text-amber-400 flex-shrink-0" />
                 <div className="min-w-0">
-                   <p className="text-white text-[10px] font-bold truncate">Ajustar orçamentos Meta</p>
-                   <p className="text-gray-500 text-[9px]">Prioridade Alta</p>
+                   <p className="text-white text-[9px] font-bold truncate">Ajustar orçamentos Meta</p>
+                   <p className="text-gray-500 text-[8px]">Prioridade Alta</p>
                 </div>
              </div>
-             <div className="flex-1 bg-[#0a0f0c] border border-[#1a3a24] rounded-xl p-3 flex items-center gap-3">
-                <Clock size={14} className="text-blue-400" />
+             <div className="flex-1 bg-[#0a0f0c] border border-[#1a3a24] rounded-xl p-2.5 flex items-center gap-3 min-w-0">
+                <Clock size={12} className="text-blue-400 flex-shrink-0" />
                 <div className="min-w-0">
-                   <p className="text-white text-[10px] font-bold truncate">Relatório Semanal Alpha</p>
-                   <p className="text-gray-500 text-[9px]">Prioridade Média</p>
+                   <p className="text-white text-[9px] font-bold truncate">Relatório Semanal Alpha</p>
+                   <p className="text-gray-500 text-[8px]">Prioridade Média</p>
                 </div>
              </div>
-             <div className="flex-1 bg-[#0a0f0c] border border-[#1a3a24] rounded-xl p-3 flex items-center gap-3">
-                <Clock size={14} className="text-gray-400" />
+             <div className="flex-1 bg-[#0a0f0c] border border-[#1a3a24] rounded-xl p-2.5 flex items-center gap-3 min-w-0">
+                <Clock size={12} className="text-gray-400 flex-shrink-0" />
                 <div className="min-w-0">
-                   <p className="text-white text-[10px] font-bold truncate">Configurar novo Pixel</p>
-                   <p className="text-gray-500 text-[9px]">Prioridade Baixa</p>
+                   <p className="text-white text-[9px] font-bold truncate">Configurar novo Pixel</p>
+                   <p className="text-gray-500 text-[8px]">Prioridade Baixa</p>
                 </div>
              </div>
           </div>
