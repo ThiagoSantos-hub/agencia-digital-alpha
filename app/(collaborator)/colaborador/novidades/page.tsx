@@ -29,40 +29,36 @@ export default function NovidadesCollaboratorPage() {
 
     if (!error && data) {
       setNovidades(data)
-      marcarComoLidas(data)
     }
     setLoading(false)
   }
 
-  const marcarComoLidas = async (lista: Novidade[]) => {
+  const marcarComoLida = async (novidade: Novidade) => {
     if (!user?.id) return
+    if (novidade.lida_por?.includes(user.id)) return
     
-    const idsParaMarcar = lista
-      .filter(n => !n.lida_por?.includes(user.id))
-      .map(n => n.id)
+    console.log('Marcando novidade como lida:', novidade.id)
+    
+    const novaLista = [...(novidade.lida_por || []), user.id]
+    
+    const { error } = await supabase
+      .from('novidades')
+      .update({ lida_por: novaLista })
+      .eq('id', novidade.id)
 
-    if (idsParaMarcar.length > 0) {
-      console.log('Marcando novidades como lidas:', idsParaMarcar)
-      
-      for (const id of idsParaMarcar) {
-        const novidade = lista.find(n => n.id === id)
-        const novaLista = [...(novidade?.lida_por || []), user.id]
-        
-        const { error } = await supabase
-          .from('novidades')
-          .update({ lida_por: novaLista })
-          .eq('id', id)
-
-        if (error) {
-          console.error(`Erro ao marcar novidade ${id} como lida:`, error)
-        } else {
-          // Atualização otimista do estado local para garantir que o pulso pare imediatamente
-          setNovidades(prev => prev.map(n => 
-            n.id === id ? { ...n, lida_por: novaLista } : n
-          ))
-        }
-      }
+    if (error) {
+      console.error(`Erro ao marcar novidade ${novidade.id} como lida:`, error)
+    } else {
+      // Atualização otimista do estado local
+      setNovidades(prev => prev.map(n => 
+        n.id === novidade.id ? { ...n, lida_por: novaLista } : n
+      ))
     }
+  }
+
+  const handleOpenNovidade = (n: Novidade) => {
+    setSelectedNovidade(n)
+    marcarComoLida(n)
   }
 
   useEffect(() => {
@@ -77,10 +73,6 @@ export default function NovidadesCollaboratorPage() {
         (payload) => {
           const novaNovidade = payload.new as Novidade
           setNovidades(prev => [novaNovidade, ...prev])
-          // Tenta marcar como lida se a página estiver aberta
-          if (user?.id) {
-            marcarComoLidas([novaNovidade])
-          }
         }
       )
       .subscribe()
@@ -116,7 +108,7 @@ export default function NovidadesCollaboratorPage() {
               return (
                 <div 
                   key={n.id} 
-                  onClick={() => setSelectedNovidade(n)}
+                  onClick={() => handleOpenNovidade(n)}
                   className="bg-[#0f1a14] border border-emerald-500/30 rounded-2xl p-6 hover:border-emerald-500/60 transition-all shadow-lg relative overflow-hidden group cursor-pointer"
                 >
                   {!lida && (
