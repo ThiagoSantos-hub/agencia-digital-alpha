@@ -406,7 +406,7 @@ export default function CollaboratorTasksPage() {
               {selectedTask.description && (
                 <div>
                   <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Descrição</h3>
-                  <div className="text-gray-300 text-sm leading-relaxed bg-[#1a3a24]/30 p-3 rounded-lg border border-[#1a3a24] whitespace-pre-wrap line-clamp-4">
+                  <div className="text-gray-300 text-sm leading-relaxed bg-[#1a3a24]/30 p-3 rounded-lg border border-[#1a3a24] whitespace-pre-wrap overflow-y-auto max-h-48 custom-scrollbar">
                     {selectedTask.description}
                   </div>
                 </div>
