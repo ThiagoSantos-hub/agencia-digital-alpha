@@ -22,8 +22,6 @@ import {
   Loader2
 } from 'lucide-react'
 import { useRelatorios, Report, ReportHistory } from '@/hooks/useRelatorios'
-import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
 
 export default function RelatoriosPage() {
   const router = useRouter()
@@ -42,6 +40,34 @@ export default function RelatoriosPage() {
   const [historyData, setHistoryData] = useState<ReportHistory[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [actionMenuId, setActionMenuId] = useState<string | null>(null)
+
+  // Formatação de data nativa
+  const formatDate = (dateString: string) => {
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(new Date(dateString))
+  }
+
+  const formatDateTime = (dateString: string) => {
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(new Date(dateString)).replace(',', ' às')
+  }
+
+  const formatHistoryDate = (dateString: string) => {
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(new Date(dateString)).replace(',', ' às')
+  }
 
   // Filtragem dos relatórios
   const filteredReports = useMemo(() => {
@@ -62,7 +88,7 @@ export default function RelatoriosPage() {
       .sort((a, b) => a.getTime() - b.getTime())
     
     const proximoEnvio = proximos.length > 0 
-      ? format(proximos[0], "dd/MM 'às' HH:mm", { locale: ptBR })
+      ? formatDateTime(proximos[0].toISOString())
       : '--'
 
     return { ativos, total, proximoEnvio }
@@ -217,7 +243,7 @@ export default function RelatoriosPage() {
                   </td>
                   <td className="p-4">
                     <div className="font-medium text-gray-200">{report.nome}</div>
-                    <div className="text-xs text-gray-500">Criado em {format(new Date(report.created_at), 'dd/MM/yyyy')}</div>
+                    <div className="text-xs text-gray-500">Criado em {formatDate(report.created_at)}</div>
                   </td>
                   <td className="p-4">
                     {report.canal === 'meta' ? (
@@ -236,7 +262,7 @@ export default function RelatoriosPage() {
                   </td>
                   <td className="p-4">
                     <div className="text-sm text-gray-300">
-                      {report.proximo_envio ? format(new Date(report.proximo_envio), "dd/MM 'às' HH:mm") : '--'}
+                      {report.proximo_envio ? formatDateTime(report.proximo_envio) : '--'}
                     </div>
                   </td>
                   <td className="p-4 text-right relative">
@@ -328,7 +354,7 @@ export default function RelatoriosPage() {
                     <div className={`absolute -left-1.5 top-0 w-3 h-3 rounded-full ${item.status === 'enviado' ? 'bg-green-500' : 'bg-red-500'}`} />
                     <div className="mb-1 flex justify-between items-center">
                       <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                        {format(new Date(item.enviado_em), "dd MMM, yyyy 'às' HH:mm", { locale: ptBR })}
+                        {formatHistoryDate(item.enviado_em)}
                       </span>
                       <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
                         item.status === 'enviado' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
