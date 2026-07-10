@@ -72,8 +72,10 @@ export default function DashboardPage() {
         supabase.from('clients').select('id', { count: 'exact', head: true }).eq('status', 'ativo'),
         supabase.from('campaigns').select('id', { count: 'exact', head: true }).eq('status', 'ativa'),
         supabase.from('report_history').select('id', { count: 'exact', head: true })
+          .eq('status', 'enviado')
           .gte('enviado_em', dataInicio).lte('enviado_em', dataFim + 'T23:59:59'),
-        supabase.from('report_history').select('id', { count: 'exact', head: true }) // Nota: alertas não têm histórico próprio no schema atual, usando placeholder ou ajuste se houver tabela alert_history
+        supabase.from('report_history').select('id', { count: 'exact', head: true }) // Nota: alertas não têm histórico próprio no schema atual, usando placeholder
+          .eq('status', 'enviado')
           .gte('enviado_em', dataInicio).lte('enviado_em', dataFim + 'T23:59:59'),
         supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('status', 'a_fazer'),
         supabase.from('checklist_items').select('id', { count: 'exact', head: true }).eq('completed', false),

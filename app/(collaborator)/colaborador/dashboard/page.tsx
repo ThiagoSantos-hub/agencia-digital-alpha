@@ -69,8 +69,10 @@ export default function CollaboratorDashboardPage() {
         supabase.from('clients').select('id', { count: 'exact', head: true }).eq('status', 'ativo'),
         supabase.from('campaigns').select('id', { count: 'exact', head: true }).eq('status', 'ativa'),
         supabase.from('report_history').select('id', { count: 'exact', head: true })
+          .eq('status', 'enviado')
           .gte('enviado_em', dataInicio).lte('enviado_em', dataFim + 'T23:59:59'),
         supabase.from('report_history').select('id', { count: 'exact', head: true }) // Nota: Usando report_history como placeholder para alertas se não houver tabela própria
+          .eq('status', 'enviado')
           .gte('enviado_em', dataInicio).lte('enviado_em', dataFim + 'T23:59:59'),
         supabase.from('tasks').select('id', { count: 'exact', head: true })
           .eq('assigned_to', user.id).eq('status', 'a_fazer'),
