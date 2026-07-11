@@ -14,19 +14,18 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
   // ============================================================
-  // LÓGICA: Se o usuário logado NÃO tem instância própria
-  // (ou seja, é um colaborador), verificar se o admin permite
-  // que colaboradores vejam os grupos do seu WhatsApp.
+  // LÓGICA: Verificar se o usuário logado é um colaborador
+  // (tabela collaborators onde user_id = auth.uid()).
   // ============================================================
 
-  const { data: ownInstance } = await supabase
-    .from('whatsapp_instances')
-    .select('*')
+  const { data: collaborator } = await supabase
+    .from('collaborators')
+    .select('id, user_id')
     .eq('user_id', user.id)
     .maybeSingle()
 
-  if (!ownInstance) {
-    // Usuário sem instância própria — verificar se é colaborador de um admin
+  if (collaborator) {
+    // É colaborador — buscar admin e instância do admin
     const { data: adminProfile } = await supabase
       .from('profiles')
       .select('id')
@@ -36,7 +35,6 @@ export async function GET() {
     if (adminProfile) {
       const adminUserId = adminProfile.id
 
-      // Buscar a instância do admin
       const { data: adminInstance } = await supabase
         .from('whatsapp_instances')
         .select('*')
@@ -53,14 +51,13 @@ export async function GET() {
 
         return NextResponse.json(cached || [])
       } else {
-        // Admin não permite ou instância não existe
         return NextResponse.json({ error: 'O admin não permite acesso aos grupos' }, { status: 403 })
       }
     }
   }
 
   // ============================================================
-  // LÓGICA PADRÃO: usuário com instância própria (admin/gestor)
+  // LÓGICA PADRÃO: usuário NÃO é colaborador (admin/gestor)
   // Busca grupos da Evolution API e faz cache no Supabase.
   // ============================================================
 
