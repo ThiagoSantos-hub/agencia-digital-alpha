@@ -76,6 +76,7 @@ function CreateEditReportContent() {
 
   const [loading, setLoading] = useState(false)
   const [clients, setClients] = useState<{id: string, name: string}[]>([])
+  const [campanhasDoCliente, setCampanhasDoCliente] = useState<{nome: string}[]>([])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const [formData, setFormData] = useState<ReportInput>({
@@ -100,6 +101,21 @@ function CreateEditReportContent() {
     }
     fetchClients()
   }, [])
+
+  useEffect(() => {
+    if (!formData.client_id) {
+      setCampanhasDoCliente([])
+      return
+    }
+    supabase
+      .from('campaigns')
+      .select('nome')
+      .eq('client_id', formData.client_id)
+      .not('meta_campaign_id', 'is', null)
+      .order('created_at', { ascending: true })
+      .limit(10)
+      .then(({ data }) => setCampanhasDoCliente(data ?? []))
+  }, [formData.client_id])
 
   useEffect(() => {
     if (id && reports.length > 0) {
@@ -326,6 +342,21 @@ function CreateEditReportContent() {
             </button>
           </div>
         </div>
+
+        {/* Campanhas do Cliente */}
+        {campanhasDoCliente.length > 0 && (
+          <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+            <p className="text-xs text-gray-400 mb-2">
+              📋 Referência de campanhas deste cliente (apenas visível aqui):
+            </p>
+            {campanhasDoCliente.map((c, i) => (
+              <p key={i} className="text-xs text-gray-300">
+                <span className="text-indigo-400 font-mono">&lt;CAMP_{i + 1}&gt;</span>
+                {' → '}{c.nome}
+              </p>
+            ))}
+          </div>
+        )}
 
         {/* Right Side: Message Editor & Preview */}
         <div className="space-y-6">
