@@ -19,15 +19,15 @@ export async function GET() {
 
   const name = instanceName(user.id)
 
-  // 1. Tenta buscar o status da conexão na Evolution API
   try {
+    // 1. Verifica o estado da conexão
     const statusRes = await fetch(`${EVO_URL}/instance/connectionState/${name}`, {
       headers: { 'apikey': EVO_KEY },
     })
     
-    const statusData = await statusRes.json()
-    
-    // Se a instância não existir (404 ou erro específico), vamos criá-la
+    let statusData = await statusRes.json()
+
+    // 2. Se a instância não existe, cria ela
     if (statusRes.status === 404 || statusData?.error || !statusData?.instance) {
       const createRes = await fetch(`${EVO_URL}/instance/create`, {
         method: 'POST',
@@ -35,18 +35,16 @@ export async function GET() {
         body: JSON.stringify({ instanceName: name, qrcode: true, integration: 'WHATSAPP-BAILEYS' }),
       })
       
-      if (!createRes.ok) {
-        const errData = await createRes.json()
-        // Se já existir na Evolution mas não no nosso banco, ignoramos o erro e seguimos
-        if (errData?.response?.message?.[0]?.includes('already exists')) {
-           // prossegue
-        } else {
-           return NextResponse.json({ error: 'Erro ao criar instância no servidor WhatsApp.' }, { status: 500 })
-        }
+      if (createRes.ok) {
+        // Após criar, busca o estado novamente para pegar o QR Code inicial
+        const newStatusRes = await fetch(`${EVO_URL}/instance/connectionState/${name}`, {
+          headers: { 'apikey': EVO_KEY },
+        })
+        statusData = await newStatusRes.json()
       }
     }
 
-    // 2. Se estiver conectada (open), atualiza banco e retorna
+    // 3. Se estiver conectada, retorna sucesso
     const isConnected = statusData?.instance?.state === 'open'
     if (isConnected) {
       await supabase.from('whatsapp_instances').upsert({
@@ -62,28 +60,29 @@ export async function GET() {
       })
     }
 
-    // 3. Se não estiver conectada, gera/busca o QR Code
+    // 4. Se não estiver conectada, solicita o QR Code explicitamente
     const qrRes = await fetch(`${EVO_URL}/instance/connect/${name}`, {
       headers: { 'apikey': EVO_KEY },
     })
     const qrData = await qrRes.json()
 
-    // Atualiza o banco com o status de conectando
     await supabase.from('whatsapp_instances').upsert({
       user_id: user.id,
       instance_name: name,
       status: 'connecting',
     }, { onConflict: 'user_id' })
 
-    // Retorna o QR Code (suporta múltiplos formatos de resposta da Evolution API)
+    // Pega o QR Code de onde quer que ele esteja na resposta (a Evolution muda às vezes)
+    const qrcode = qrData?.base64 || qrData?.qrcode?.base64 || qrData?.code || statusData?.instance?.qrcode?.base64 || null
+
     return NextResponse.json({
       status: 'connecting',
       instance_name: name,
-      qrcode: qrData?.base64 || qrData?.qrcode?.base64 || qrData?.code || null,
+      qrcode: qrcode,
     })
 
   } catch (err: any) {
-    console.error('Erro na rota de WhatsApp Instance:', err)
+    console.error('Erro detalhado WhatsApp:', err)
     return NextResponse.json({ error: 'Erro de comunicação com o servidor WhatsApp.' }, { status: 500 })
   }
 }
