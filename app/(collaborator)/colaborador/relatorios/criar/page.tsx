@@ -77,6 +77,16 @@ function CreateEditReportContent() {
   const [loading, setLoading] = useState(false)
   const [clients, setClients] = useState<{id: string, name: string}[]>([])
   const [campanhasDoCliente, setCampanhasDoCliente] = useState<{name: string}[]>([])
+  const [diasSelecionados, setDiasSelecionados] = useState<number[]>([])
+
+  const toggleDia = (i: number) => {
+    setDiasSelecionados(prev => {
+      const novos = prev.includes(i) ? prev.filter(d => d !== i) : [...prev, i]
+      setFormData(f => ({ ...f, dias_semana: novos.map(String) }))
+      return novos
+    })
+  }
+
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const [formData, setFormData] = useState<ReportInput>({
@@ -116,18 +126,6 @@ function CreateEditReportContent() {
       .limit(10)
       .then(({ data }) => setCampanhasDoCliente(data ?? []))
   }, [formData.client_id])
-
-  // Define frequência automaticamente com base no período escolhido
-  useEffect(() => {
-    const mapa: Record<string, ReportInput['frequencia']> = {
-      ontem: 'diario',
-      ultimos_7_dias: 'semanal',
-      ultimos_30_dias: 'mensal',
-      personalizado: 'manual',
-    }
-    const freq = mapa[formData.periodo] ?? 'diario'
-    setFormData(prev => ({ ...prev, frequencia: freq }))
-  }, [formData.periodo])
 
   useEffect(() => {
     if (id && reports.length > 0) {
@@ -240,9 +238,10 @@ function CreateEditReportContent() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-400">Período</label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 {[
                   { value: 'ontem', label: 'Ontem' },
+                  { value: 'ultimos_3_dias', label: 'Últ. 3 dias' },
                   { value: 'ultimos_7_dias', label: 'Últ. 7 dias' },
                   { value: 'ultimos_30_dias', label: 'Últ. 30 dias' },
                   { value: 'personalizado', label: '📅 Custom' },
@@ -283,34 +282,29 @@ function CreateEditReportContent() {
                       className="w-full bg-white text-gray-900 border border-[#1a1a2e] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#10b981] transition-colors"
                     />
                   </div>
-                  <p className="col-span-2 text-xs text-yellow-500/80">
-                    ⚠️ Período personalizado: envio apenas manual (sem automático)
-                  </p>
                 </div>
               )}
 
-              {/* Dia da semana — só aparece quando Últimos 7 dias */}
-              {formData.periodo === 'ultimos_7_dias' && (
-                <div className="mt-2">
-                  <label className="text-xs text-gray-500 mb-1 block">Dia de envio semanal</label>
-                  <div className="grid grid-cols-7 gap-1">
-                    {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((dia, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, dia_semana_envio: i })}
-                        className={`py-1.5 rounded-lg border text-[10px] font-bold transition-all ${
-                          formData.dia_semana_envio === i
-                            ? 'bg-[#10b981]/10 border-[#10b981] text-[#10b981]'
-                            : 'bg-[#050508] border-[#1a1a2e] text-gray-500 hover:border-gray-700'
-                        }`}
-                      >
-                        {dia}
-                      </button>
-                    ))}
-                  </div>
+              {/* Dias de envio — múltipla seleção — sempre visível */}
+              <div className="mt-2">
+                <label className="text-xs text-gray-500 mb-1 block">Dias de envio (selecione um ou mais)</label>
+                <div className="grid grid-cols-7 gap-1">
+                  {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((dia, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => toggleDia(i)}
+                      className={`py-1.5 rounded-lg border text-[10px] font-bold transition-all ${
+                        diasSelecionados.includes(i)
+                          ? 'bg-[#10b981]/10 border-[#10b981] text-[#10b981]'
+                          : 'bg-[#050508] border-[#1a1a2e] text-gray-500 hover:border-gray-700'
+                      }`}
+                    >
+                      {dia}
+                    </button>
+                  ))}
                 </div>
-              )}
+              </div>
             </div>
           </div>
 

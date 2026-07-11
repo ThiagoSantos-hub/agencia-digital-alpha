@@ -286,6 +286,11 @@ function calcularPeriodo(periodo: string, dataInicio?: string, dataFim?: string)
       inicio.setDate(hoje.getDate() - 7);
       return { dateStart: fmt(inicio), dateEnd: fmt(hoje), diasAtivo: 7 };
     }
+    case 'ultimos_3_dias': {
+      const inicio = new Date(hoje);
+      inicio.setDate(hoje.getDate() - 3);
+      return { dateStart: fmt(inicio), dateEnd: fmt(hoje), diasAtivo: 3 };
+    }
     case 'ultimos_7_dias': {
       const inicio = new Date(hoje);
       inicio.setDate(hoje.getDate() - 7);
