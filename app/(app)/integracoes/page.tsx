@@ -446,7 +446,7 @@ export default function IntegracoesPage() {
   <p className="text-xs mb-4" style={{ color: '#4a7a5a' }}>
     Conecte seu WhatsApp para enviar relatórios automáticos para contatos e grupos.
   </p>
-  <WhatsAppConnect />
+  <WhatsAppConnect showGroupsButton={true} />
 </section>
 
       <section>
