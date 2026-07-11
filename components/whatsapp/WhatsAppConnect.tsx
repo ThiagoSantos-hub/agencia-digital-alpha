@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Smartphone, RefreshCw, Loader2, Users } from 'lucide-react'
-import { Check } from 'lucide-react'
+import { Smartphone, RefreshCw, Loader2, Users, Check } from 'lucide-react'
 
 interface WhatsAppStatus {
   status: 'connected' | 'connecting' | 'disconnected' | 'loading' | 'error'
@@ -62,10 +61,12 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
     }
   }, [])
 
+  // Fetch status on mount
   useEffect(() => {
     fetchStatus()
   }, [fetchStatus])
 
+  // Polling while connecting
   useEffect(() => {
     if (state.status === 'connecting') {
       const interval = setInterval(async () => {
@@ -81,6 +82,44 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
       if (pollingInterval) clearInterval(pollingInterval)
     }
   }, [state.status])
+
+  // Fetch grupos_visiveis_colaboradores when connected
+  useEffect(() => {
+    if (state.status !== 'connected') return
+    let cancelled = false
+    const fetchGruposVisiveis = async () => {
+      try {
+        const res = await fetch('/api/whatsapp/instance')
+        if (res.ok) {
+          const data = await res.json()
+          if (!cancelled && typeof data.grupos_visiveis_colaboradores === 'boolean') {
+            setGruposVisiveis(data.grupos_visiveis_colaboradores)
+          }
+        }
+      } catch { /* silencioso */ }
+    }
+    fetchGruposVisiveis()
+    return () => { cancelled = true }
+  }, [state.status])
+
+  // PATCH handler for toggle
+  const handleToggleGruposVisiveis = useCallback(async (enabled: boolean) => {
+    setSavingGruposVisiveis(true)
+    try {
+      const res = await fetch('/api/whatsapp/instance', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ grupos_visiveis_colaboradores: enabled }),
+      })
+      if (res.ok) {
+        setGruposVisiveis(enabled)
+        setShowSavedFeedback(true)
+        setTimeout(() => setShowSavedFeedback(false), 2000)
+      }
+    } finally {
+      setSavingGruposVisiveis(false)
+    }
+  }, [])
 
   async function handleDisconnect() {
     setDisconnecting(true)
@@ -125,45 +164,7 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
     )
   }
 
-  // Fetch grupos_visiveis_colaboradores when connected
-  useEffect(() => {
-    if (state.status !== 'connected') return
-    let cancelled = false
-    const fetchGruposVisiveis = async () => {
-      try {
-        const res = await fetch('/api/whatsapp/instance')
-        if (res.ok) {
-          const data = await res.json()
-          if (!cancelled && typeof data.grupos_visiveis_colaboradores === 'boolean') {
-            setGruposVisiveis(data.grupos_visiveis_colaboradores)
-          }
-        }
-      } catch { /* silencioso */ }
-    }
-    fetchGruposVisiveis()
-    return () => { cancelled = true }
-  }, [state.status])
-
-  const handleToggleGruposVisiveis = useCallback(async (enabled: boolean) => {
-    setSavingGruposVisiveis(true)
-    try {
-      const res = await fetch('/api/whatsapp/instance', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ grupos_visiveis_colaboradores: enabled }),
-      })
-      if (res.ok) {
-        setGruposVisiveis(enabled)
-        setShowSavedFeedback(true)
-        setTimeout(() => setShowSavedFeedback(false), 2000)
-      }
-    } finally {
-      setSavingGruposVisiveis(false)
-    }
-  }, [])
-
   if (state.status === 'connected') {
-
     return (
       <div className="space-y-4">
         <div className="rounded-xl p-4" style={{ backgroundColor: '#0a1f0f', border: '1px solid #1a3a24' }}>
