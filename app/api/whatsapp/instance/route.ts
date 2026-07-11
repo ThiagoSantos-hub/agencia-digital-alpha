@@ -98,6 +98,7 @@ export async function DELETE() {
         headers: { 'apikey': EVO_KEY },
       })
     } catch { }
+  }
 
   await supabase.from('whatsapp_instances').delete().eq('user_id', user.id)
   await supabase.from('whatsapp_groups').delete().eq('user_id', user.id)
