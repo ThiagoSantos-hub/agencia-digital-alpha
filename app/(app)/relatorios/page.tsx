@@ -302,7 +302,7 @@ export default function RelatoriosPage() {
                           className="fixed inset-0 z-10" 
                           onClick={() => setActionMenuId(null)} 
                         />
-                        <div className="absolute right-4 top-12 w-48 bg-[#0d0d14] border border-[#1a1a2e] rounded-xl shadow-2xl z-20 overflow-hidden">
+                        <div className="absolute right-4 bottom-12 w-48 bg-[#0d0d14] border border-[#1a1a2e] rounded-xl shadow-2xl z-20 overflow-hidden">
                           <button 
                             onClick={() => handleSendNow(report)}
                             disabled={sendingId === report.id}
