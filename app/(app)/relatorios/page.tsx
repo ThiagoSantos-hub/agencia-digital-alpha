@@ -40,6 +40,7 @@ export default function RelatoriosPage() {
   const [historyData, setHistoryData] = useState<ReportHistory[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [actionMenuId, setActionMenuId] = useState<string | null>(null)
+  const [sendingId, setSendingId] = useState<string | null>(null)
 
   // Formatação de data nativa
   const formatDate = (dateString: string) => {
@@ -122,6 +123,28 @@ export default function RelatoriosPage() {
   const handleDelete = async (id: string) => {
     if (confirm('Tem certeza que deseja excluir este relatório?')) {
       await deleteRelatorio(id)
+    }
+  }
+
+  const handleSendNow = async (report: Report) => {
+    setSendingId(report.id)
+    setActionMenuId(null)
+    try {
+      const response = await fetch('/api/reports/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ report_id: report.id })
+      })
+      const data = await response.json()
+      if (response.ok) {
+        alert(`✅ Relatório "${report.nome}" enviado com sucesso!`)
+      } else {
+        alert(`❌ Erro ao enviar: ${data.error || 'Erro desconhecido'}`)
+      }
+    } catch (error: any) {
+      alert(`❌ Erro ao enviar: ${error.message}`)
+    } finally {
+      setSendingId(null)
     }
   }
 
@@ -280,8 +303,17 @@ export default function RelatoriosPage() {
                           onClick={() => setActionMenuId(null)} 
                         />
                         <div className="absolute right-4 top-12 w-48 bg-[#0d0d14] border border-[#1a1a2e] rounded-xl shadow-2xl z-20 overflow-hidden">
-                          <button className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1a2e] transition-colors">
-                            <Send size={14} /> Enviar agora
+                          <button 
+                            onClick={() => handleSendNow(report)}
+                            disabled={sendingId === report.id}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1a2e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {sendingId === report.id ? (
+                              <Loader2 className="animate-spin" size={14} />
+                            ) : (
+                              <Send size={14} />
+                            )}
+                            Enviar agora
                           </button>
                           <button 
                             onClick={() => router.push(`/relatorios/criar?id=${report.id}`)}
@@ -351,24 +383,22 @@ export default function RelatoriosPage() {
               ) : (
                 historyData.map((item) => (
                   <div key={item.id} className="relative pl-6 border-l border-[#1a1a2e]">
-                    <div className={`absolute -left-1.5 top-0 w-3 h-3 rounded-full ${item.status === 'enviado' ? 'bg-green-500' : 'bg-red-500'}`} />
-                    <div className="mb-1 flex justify-between items-center">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                        {formatHistoryDate(item.enviado_em)}
-                      </span>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
-                        item.status === 'enviado' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
-                      }`}>
+                    <div className={`absolute -left-1.5 top-0 w-3 h-3 rounded-full ${item.status === 'enviado' ? 'bg-[#10b981]' : 'bg-red-500'}`} />
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className={`text-xs font-bold uppercase ${item.status === 'enviado' ? 'text-[#10b981]' : 'text-red-500'}`}>
                         {item.status}
                       </span>
+                      <span className="text-[10px] text-gray-500">
+                        {formatHistoryDate(item.created_at)}
+                      </span>
                     </div>
-                    <div className="bg-[#0a0a0f] border border-[#1a1a2e] p-3 rounded-xl text-sm text-gray-300">
+                    {item.erro_detalhe && (
+                      <p className="text-xs text-red-400/80 mt-1 bg-red-400/5 p-2 rounded border border-red-400/10">
+                        {item.erro_detalhe}
+                      </p>
+                    )}
+                    <div className="mt-2 text-xs text-gray-400 bg-[#0d0d14] p-3 rounded-lg border border-[#1a1a2e] whitespace-pre-wrap font-mono">
                       {item.mensagem_enviada}
-                      {item.erro_detalhe && (
-                        <div className="mt-2 pt-2 border-t border-[#1a1a2e] text-red-400 text-xs">
-                          Erro: {item.erro_detalhe}
-                        </div>
-                      )}
                     </div>
                   </div>
                 ))
