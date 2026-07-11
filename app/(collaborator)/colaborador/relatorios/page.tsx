@@ -395,9 +395,9 @@ export default function ColaboradorRelatoriosPage() {
                       </span>
                       <span className="text-[10px] text-gray-500">{formatHistoryDate(item.enviado_em)}</span>
                     </div>
-                    {item.erro && (
+                    {item.erro_detalhe && (
                       <p className="text-xs text-red-400/80 bg-red-400/5 p-2 rounded border border-red-400/10 mt-2">
-                        {item.erro}
+                        {item.erro_detalhe}
                       </p>
                     )}
                   </div>
