@@ -13,51 +13,41 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
-  // ============================================================
-  // LÓGICA UNIFICADA: qualquer usuário (admin, gestor ou
-  // colaborador) passa pelo mesmo fluxo — verificar/criar a
-  // própria instância na Evolution API.
-  // O colaborador tem sua própria instância separada do admin.
-  // Para acessar grupos do admin, o colaborador usa a rota
-  // GET /api/whatsapp/groups?source=agency.
-  // ============================================================
-
   if (!EVO_URL || !EVO_KEY) {
-    return NextResponse.json({ error: 'Evolution API não configurada. Adicione EVOLUTION_API_URL e EVOLUTION_API_KEY nas variáveis de ambiente.' }, { status: 503 })
+    return NextResponse.json({ error: 'Evolution API não configurada.' }, { status: 503 })
   }
 
   const name = instanceName(user.id)
 
-  const { data: instance } = await supabase
-    .from('whatsapp_instances')
-    .select('*')
-    .eq('user_id', user.id)
-    .maybeSingle()
-
-  if (!instance) {
-    try {
+  // 1. Tenta buscar o status da conexão na Evolution API
+  try {
+    const statusRes = await fetch(`${EVO_URL}/instance/connectionState/${name}`, {
+      headers: { 'apikey': EVO_KEY },
+    })
+    
+    const statusData = await statusRes.json()
+    
+    // Se a instância não existir (404 ou erro específico), vamos criá-la
+    if (statusRes.status === 404 || statusData?.error || !statusData?.instance) {
       const createRes = await fetch(`${EVO_URL}/instance/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': EVO_KEY },
         body: JSON.stringify({ instanceName: name, qrcode: true, integration: 'WHATSAPP-BAILEYS' }),
       })
-      await createRes.json()
-    } catch { }
+      
+      if (!createRes.ok) {
+        const errData = await createRes.json()
+        // Se já existir na Evolution mas não no nosso banco, ignoramos o erro e seguimos
+        if (errData?.response?.message?.[0]?.includes('already exists')) {
+           // prossegue
+        } else {
+           return NextResponse.json({ error: 'Erro ao criar instância no servidor WhatsApp.' }, { status: 500 })
+        }
+      }
+    }
 
-    await supabase.from('whatsapp_instances').upsert({
-      user_id: user.id,
-      instance_name: name,
-      status: 'connecting',
-    }, { onConflict: 'user_id' })
-  }
-
-  try {
-    const statusRes = await fetch(`${EVO_URL}/instance/connectionState/${name}`, {
-      headers: { 'apikey': EVO_KEY },
-    })
-    const statusData = await statusRes.json()
+    // 2. Se estiver conectada (open), atualiza banco e retorna
     const isConnected = statusData?.instance?.state === 'open'
-
     if (isConnected) {
       await supabase.from('whatsapp_instances').upsert({
         user_id: user.id,
@@ -65,31 +55,36 @@ export async function GET() {
         status: 'connected',
         connected_at: new Date().toISOString(),
       }, { onConflict: 'user_id' })
+      
       return NextResponse.json({
         status: 'connected',
         instance_name: name,
-        grupos_visiveis_colaboradores: instance?.grupos_visiveis_colaboradores ?? false,
       })
     }
 
+    // 3. Se não estiver conectada, gera/busca o QR Code
     const qrRes = await fetch(`${EVO_URL}/instance/connect/${name}`, {
       headers: { 'apikey': EVO_KEY },
     })
     const qrData = await qrRes.json()
 
+    // Atualiza o banco com o status de conectando
     await supabase.from('whatsapp_instances').upsert({
       user_id: user.id,
       instance_name: name,
       status: 'connecting',
     }, { onConflict: 'user_id' })
 
+    // Retorna o QR Code (suporta múltiplos formatos de resposta da Evolution API)
     return NextResponse.json({
       status: 'connecting',
       instance_name: name,
-      qrcode: qrData?.base64 || qrData?.qrcode?.base64 || null,
+      qrcode: qrData?.base64 || qrData?.qrcode?.base64 || qrData?.code || null,
     })
+
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    console.error('Erro na rota de WhatsApp Instance:', err)
+    return NextResponse.json({ error: 'Erro de comunicação com o servidor WhatsApp.' }, { status: 500 })
   }
 }
 
