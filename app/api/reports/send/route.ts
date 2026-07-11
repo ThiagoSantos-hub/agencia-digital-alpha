@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 
+const EVO_URL = process.env.EVOLUTION_API_URL || '';
+const EVO_KEY = process.env.EVOLUTION_API_KEY || '';
+
+function instanceName(userId: string) {
+  return `alpha_${userId.replace(/-/g, '').slice(0, 16)}`;
+}
+
 export async function POST(request: Request) {
   const supabase = createServerClient();
 
@@ -197,31 +204,69 @@ export async function POST(request: Request) {
     }
     mensagemFinal = mensagemFinal.replace(/<[A-Z_]+>/g, '—');
 
-    const n8nWebhookUrl = 'https://webhook.digitalalpha.cloud/webhook/disparo-relatorio';
     let status: 'enviado' | 'erro' = 'enviado';
     let erroDetalhe = null;
 
-    try {
-      const n8nResponse = await fetch(n8nWebhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          report_id: report.id,
-          nome: report.nome,
-          recebedor_numero: report.recebedor_numero,
-          recebedor_tipo: report.recebedor_tipo,
-          mensagem: mensagemFinal,
-        }),
-      });
+    const evoCan = EVO_URL && EVO_KEY;
+    let enviouViaEvo = false;
 
-      const responseData = await n8nResponse.json();
-      if (!n8nResponse.ok) {
-        status = 'erro';
-        erroDetalhe = responseData?.message || 'Erro no N8N';
+    if (evoCan) {
+      try {
+        const { data: wpInstance } = await supabase
+          .from('whatsapp_instances')
+          .select('instance_name, status')
+          .eq('user_id', report.user_id)
+          .maybeSingle();
+
+        if (wpInstance?.status === 'connected' && wpInstance.instance_name) {
+          const instName = wpInstance.instance_name;
+          const evoBody = { number: report.recebedor_numero, text: mensagemFinal };
+
+          const evoRes = await fetch(`${EVO_URL}/message/sendText/${instName}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': EVO_KEY },
+            body: JSON.stringify(evoBody),
+          });
+
+          const evoData = await evoRes.json();
+
+          if (evoRes.ok && !evoData.error) {
+            enviouViaEvo = true;
+          } else {
+            erroDetalhe = evoData?.message || 'Erro na Evolution API';
+          }
+        }
+      } catch (evoErr: any) {
+        erroDetalhe = evoErr.message;
       }
-    } catch (fetchError: any) {
-      status = 'erro';
-      erroDetalhe = fetchError.message;
+    }
+
+    if (!enviouViaEvo) {
+      const n8nWebhookUrl = 'https://webhook.digitalalpha.cloud/webhook/disparo-relatorio';
+      try {
+        const n8nResponse = await fetch(n8nWebhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            report_id: report.id,
+            nome: report.nome,
+            recebedor_numero: report.recebedor_numero,
+            recebedor_tipo: report.recebedor_tipo,
+            mensagem: mensagemFinal,
+          }),
+        });
+
+        const responseData = await n8nResponse.json();
+        if (!n8nResponse.ok) {
+          status = 'erro';
+          erroDetalhe = responseData?.message || 'Erro no N8N';
+        } else {
+          erroDetalhe = null;
+        }
+      } catch (fetchError: any) {
+        status = 'erro';
+        erroDetalhe = fetchError.message;
+      }
     }
 
     const debugInfo = Object.keys(debugActions).length > 0
