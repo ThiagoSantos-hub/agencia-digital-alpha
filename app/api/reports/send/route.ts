@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Relatório não encontrado' }, { status: 404 });
     }
 
-    const { dateStart, dateEnd, diasAtivo } = calcularPeriodo(report.periodo);
+    const { dateStart, dateEnd, diasAtivo } = calcularPeriodo(report.periodo, report.data_inicio, report.data_fim);
 
     const { data: integration } = await supabase
       .from('integrations')
@@ -252,12 +252,31 @@ export async function POST(request: Request) {
   }
 }
 
-function calcularPeriodo(periodo: string): { dateStart: string; dateEnd: string; diasAtivo: number } {
-  const hoje = new Date();
-  const fmt = (d: Date) => d.toISOString().split('T')[0];
+function calcularPeriodo(periodo: string, dataInicio?: string, dataFim?: string): { dateStart: string; dateEnd: string; diasAtivo: number } {
+  const agoraBR = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  const hoje = agoraBR;
+  const fmt = (d: Date) => {
+    const ano = d.getFullYear();
+    const mes = String(d.getMonth() + 1).padStart(2, '0');
+    const dia = String(d.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
+  };
 
   switch (periodo) {
-    case 'dia_anterior': {
+    case 'dia_anterior':
+    case 'ontem': {
+      const ontem = new Date(hoje);
+      ontem.setDate(hoje.getDate() - 1);
+      return { dateStart: fmt(ontem), dateEnd: fmt(ontem), diasAtivo: 1 };
+    }
+    case 'personalizado': {
+      if (dataInicio && dataFim) {
+        const inicio = new Date(dataInicio);
+        const fim = new Date(dataFim);
+        const dias = Math.round((fim.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        return { dateStart: dataInicio, dateEnd: dataFim, diasAtivo: dias };
+      }
+      // fallback: ontem
       const ontem = new Date(hoje);
       ontem.setDate(hoje.getDate() - 1);
       return { dateStart: fmt(ontem), dateEnd: fmt(ontem), diasAtivo: 1 };
@@ -266,6 +285,11 @@ function calcularPeriodo(periodo: string): { dateStart: string; dateEnd: string;
       const inicio = new Date(hoje);
       inicio.setDate(hoje.getDate() - 7);
       return { dateStart: fmt(inicio), dateEnd: fmt(hoje), diasAtivo: 7 };
+    }
+    case 'ultimos_3_dias': {
+      const inicio = new Date(hoje);
+      inicio.setDate(hoje.getDate() - 3);
+      return { dateStart: fmt(inicio), dateEnd: fmt(hoje), diasAtivo: 3 };
     }
     case 'ultimos_7_dias': {
       const inicio = new Date(hoje);

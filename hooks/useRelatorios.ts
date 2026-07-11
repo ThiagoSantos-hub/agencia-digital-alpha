@@ -6,8 +6,8 @@ export interface Report {
   user_id: string;
   nome: string;
   canal: 'meta' | 'google';
-  frequencia: 'diario' | 'semanal' | 'mensal';
-  periodo: 'dia_anterior' | 'ultima_semana' | 'ultimo_mes' | 'ultimos_7_dias' | 'ultimos_30_dias';
+  frequencia: 'diario' | 'semanal' | 'mensal' | 'manual';
+  periodo: 'dia_anterior' | 'ontem' | 'ultima_semana' | 'ultimo_mes' | 'ultimos_3_dias' | 'ultimos_7_dias' | 'ultimos_30_dias' | 'personalizado';
   recebedor_tipo: 'privado' | 'grupo';
   recebedor_numero: string;
   mensagem_template: string;
@@ -16,6 +16,9 @@ export interface Report {
   ativo: boolean;
   proximo_envio: string | null;
   client_id: string | null;
+  data_inicio?: string | null;
+  data_fim?: string | null;
+  dia_semana_envio?: number | null;
   created_at: string;
   updated_at: string;
 }
