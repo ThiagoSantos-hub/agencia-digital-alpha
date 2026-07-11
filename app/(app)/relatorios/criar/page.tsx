@@ -76,7 +76,7 @@ function CreateEditReportContent() {
 
   const [loading, setLoading] = useState(false)
   const [clients, setClients] = useState<{id: string, name: string}[]>([])
-  const [campanhasDoCliente, setCampanhasDoCliente] = useState<{nome: string}[]>([])
+  const [campanhasDoCliente, setCampanhasDoCliente] = useState<{name: string}[]>([])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const [formData, setFormData] = useState<ReportInput>({
@@ -109,7 +109,7 @@ function CreateEditReportContent() {
     }
     supabase
       .from('campaigns')
-      .select('nome')
+      .select('name')
       .eq('client_id', formData.client_id)
       .not('meta_campaign_id', 'is', null)
       .order('created_at', { ascending: true })
@@ -327,13 +327,13 @@ function CreateEditReportContent() {
           {campanhasDoCliente.length > 0 && (
             <div className="rounded-lg border border-indigo-500/20 bg-indigo-500/5 p-3">
               <p className="text-xs text-indigo-400 font-semibold mb-2">
-                📋 Referência de campanhas (só visível aqui, não vai no WhatsApp):
+                📋 Campanhas deste cliente (referência — não vai no WhatsApp):
               </p>
               {campanhasDoCliente.map((c, i) => (
                 <p key={i} className="text-xs text-gray-300 py-0.5">
                   <span className="text-indigo-400 font-mono font-bold">&lt;CAMP_{i + 1}&gt;</span>
                   <span className="text-gray-500"> → </span>
-                  {c.nome}
+                  {c.name}
                 </p>
               ))}
             </div>
