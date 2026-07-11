@@ -41,20 +41,22 @@ export const useRelatorios = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const calcularProximoEnvio = (frequencia: string, horario: string, diasSemana?: string[] | null): string => {
+  const calcularProximoEnvio = (frequencia: string, horario: string, diasSemana?: string[] | null): string | null => {
+    if (frequencia === 'manual') return null;
+    
     const agora = new Date();
-    const [horas, minutos] = horario.split(':').map(Number);
+    const [horas, minutos] = (horario || '08:00').split(':').map(Number);
 
     // Se tem dias da semana selecionados, calcular o próximo dia correto
-    if (diasSemana && diasSemana.length > 0) {
+    if (diasSemana && Array.isArray(diasSemana) && diasSemana.length > 0) {
       const diasNums = diasSemana.map(Number).sort((a, b) => a - b);
-      let proximo = new Date();
-      proximo.setHours(horas, minutos, 0, 0);
+      let base = new Date();
+      base.setHours(horas, minutos, 0, 0);
 
-      // Tentar os próximos 7 dias para achar o próximo dia da semana programado
-      for (let i = 0; i <= 7; i++) {
-        const tentativa = new Date(proximo);
-        tentativa.setDate(proximo.getDate() + i);
+      // Tentar os próximos 8 dias para garantir que pegamos o próximo (incluindo hoje se for mais tarde)
+      for (let i = 0; i <= 8; i++) {
+        const tentativa = new Date(base);
+        tentativa.setDate(base.getDate() + i);
         if (diasNums.includes(tentativa.getDay())) {
           if (tentativa > agora) {
             return tentativa.toISOString();
@@ -63,9 +65,10 @@ export const useRelatorios = () => {
       }
     }
 
-    // Fallback: lógica original
+    // Fallback: lógica padrão por frequência
     let proximo = new Date();
     proximo.setHours(horas, minutos, 0, 0);
+    
     if (proximo <= agora) {
       if (frequencia === 'diario') {
         proximo.setDate(proximo.getDate() + 1);
@@ -73,6 +76,8 @@ export const useRelatorios = () => {
         proximo.setDate(proximo.getDate() + 7);
       } else if (frequencia === 'mensal') {
         proximo.setMonth(proximo.getMonth() + 1);
+      } else {
+        proximo.setDate(proximo.getDate() + 1);
       }
     }
     return proximo.toISOString();
@@ -105,7 +110,14 @@ export const useRelatorios = () => {
       
       const { data, error } = await supabase
         .from('reports')
-        .insert([{ ...input, user_id: user.id, proximo_envio }])
+        .insert([{ 
+          ...input, 
+          user_id: user.id, 
+          proximo_envio,
+          data_inicio: input.data_inicio || null,
+          data_fim: input.data_fim || null,
+          dia_semana_envio: input.dia_semana_envio || null
+        }])
         .select()
         .single();
 
@@ -124,12 +136,19 @@ export const useRelatorios = () => {
     try {
       setLoading(true);
       
-      let updateData = { ...input };
-      if (input.frequencia || input.horario_envio) {
+      let updateData = { 
+        ...input,
+        data_inicio: input.data_inicio === undefined ? undefined : (input.data_inicio || null),
+        data_fim: input.data_fim === undefined ? undefined : (input.data_fim || null),
+        dia_semana_envio: input.dia_semana_envio === undefined ? undefined : (input.dia_semana_envio || null)
+      };
+      
+      if (input.frequencia || input.horario_envio || input.dias_semana) {
         const current = reports.find(r => r.id === id);
         const freq = input.frequencia || current?.frequencia || 'diario';
         const hora = input.horario_envio || current?.horario_envio || '08:00';
-        (updateData as any).proximo_envio = calcularProximoEnvio(freq, hora, input.dias_semana);
+        const dias = input.dias_semana !== undefined ? input.dias_semana : current?.dias_semana;
+        (updateData as any).proximo_envio = calcularProximoEnvio(freq, hora, dias);
       }
 
       const { data, error } = await supabase

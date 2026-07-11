@@ -41,14 +41,8 @@ export async function GET(request: NextRequest) {
     targetInstanceName = adminInstance.instance_name
   }
 
-  // ANÁLISE: Se o administrador vê 53 grupos mas só tem 30, o problema é que 
-  // o fetchAllGroups da Evolution API pode estar retornando grupos arquivados 
-  // ou o cache do Supabase não está sendo limpo corretamente por causa de 
-  // erros silenciosos.
-
   if (EVO_URL && EVO_KEY && targetInstanceName) {
     try {
-      // Forçamos um timeout curto para não travar a requisição
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 15000)
 
@@ -57,7 +51,7 @@ export async function GET(request: NextRequest) {
         { 
           headers: { 'apikey': EVO_KEY },
           signal: controller.signal,
-          cache: 'no-store' // GARANTE QUE NÃO HÁ CACHE HTTP
+          cache: 'no-store'
         }
       )
       clearTimeout(timeoutId)
@@ -66,30 +60,46 @@ export async function GET(request: NextRequest) {
         const groups = await res.json()
 
         if (Array.isArray(groups)) {
-          // FILTRAGEM ULTRA-AGRESSIVA:
-          // 1. Deve ter ID e Nome (subject)
-          // 2. Não pode ser um grupo de "anúncios" do WhatsApp ou comunidades se não desejado
-          // 3. A Evolution API às vezes retorna grupos onde você não é mais participante
+          // FILTRAGEM DEFINITIVA CONTRA GRUPOS FANTASMAS:
           const validGroups = groups.filter(g => {
-            const hasName = (g.subject || g.name)
-            const hasId = g.id && g.id.includes('@g.us')
-            const isNotGhost = g.size !== 0 || (g.participants && g.participants.length > 0)
-            // Filtro para evitar grupos arquivados ou marcados como 'read-only' se a API prover isso
-            return hasName && hasId && isNotGhost
+            const name = (g.subject || g.name || '').trim()
+            const id = g.id || ''
+            
+            // 1. Deve ter um nome válido e não ser vazio
+            if (!name || name.length < 2) return false
+            
+            // 2. Deve ser um grupo real (@g.us) e não uma transmissão ou status
+            if (!id.endsWith('@g.us')) return false
+            
+            // 3. Deve ter participantes
+            const size = g.size || (g.participants ? g.participants.length : 0)
+            if (size <= 0) return false
+            
+            // 4. Remover grupos de sistema ou suporte técnico
+            const lowerName = name.toLowerCase()
+            if (lowerName.includes('whatsapp') || lowerName.includes('broadcast') || lowerName.includes('rascunho')) return false
+            
+            return true
           })
 
-          // FILTRAGEM E MAPEAMENTO
           const rows = validGroups.map((g: any) => ({
             user_id: targetUserId,
             group_id: g.id,
             name: g.subject || g.name || 'Grupo sem nome',
-            participant_count: g.size || g.participants?.length || 0,
+            participant_count: size || 0,
             updated_at: new Date().toISOString(),
           }))
 
-          // LIMPEZA E INSERÇÃO ATÔMICA (DENTRO DO POSSÍVEL)
-          // Primeiro deletamos o que não está mais na lista para evitar "lixo"
-          const currentGroupIds = rows.map(r => r.group_id)
+          // Corrige variável 'size' que não estava definida no mapeamento
+          const rowsFixed = validGroups.map((g: any) => ({
+            user_id: targetUserId,
+            group_id: g.id,
+            name: g.subject || g.name || 'Grupo sem nome',
+            participant_count: g.size || (g.participants ? g.participants.length : 0),
+            updated_at: new Date().toISOString(),
+          }))
+
+          const currentGroupIds = rowsFixed.map(r => r.group_id)
           if (currentGroupIds.length > 0) {
             await supabase
               .from('whatsapp_groups')
@@ -100,18 +110,13 @@ export async function GET(request: NextRequest) {
             await supabase.from('whatsapp_groups').delete().eq('user_id', targetUserId)
           }
 
-          // Depois fazemos o upsert dos dados novos/atualizados
-          if (rows.length > 0) {
-            const { error: upsertError } = await supabase
+          if (rowsFixed.length > 0) {
+            await supabase
               .from('whatsapp_groups')
-              .upsert(rows, { onConflict: 'user_id,group_id' })
-            
-            if (upsertError) {
-              console.error('Erro ao sincronizar grupos no Supabase:', upsertError)
-            }
+              .upsert(rowsFixed, { onConflict: 'user_id,group_id' })
           }
 
-          return NextResponse.json(rows.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')))
+          return NextResponse.json(rowsFixed.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')))
         }
       }
     } catch (err) {
@@ -119,8 +124,6 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Fallback: se a API falhar, retornamos o que está no banco, 
-  // mas se o usuário quer atualização, o ideal é que ele veja a lista real.
   const { data: cached } = await supabase
     .from('whatsapp_groups')
     .select('group_id, name, participant_count')
