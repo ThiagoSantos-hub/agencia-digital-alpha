@@ -66,9 +66,27 @@ export async function GET(request: NextRequest) {
         const groups = await res.json()
 
         if (Array.isArray(groups)) {
-          // FILTRAGEM AGRESSIVA: Apenas grupos onde o nome existe e não são "fantasmas"
-          // Alguns grupos vêm sem subject ou com dados corrompidos da API
-          const validGroups = groups.filter(g => (g.subject || g.name) && g.id)
+          // FILTRAGEM DEFINITIVA CONTRA GRUPOS FANTASMAS:
+          const validGroups = groups.filter(g => {
+            const name = (g.subject || g.name || '').trim()
+            const id = g.id || ''
+            
+            // 1. Deve ter um nome válido e não ser vazio
+            if (!name || name.length < 2) return false
+            
+            // 2. Deve ser um grupo real (@g.us) e não uma transmissão ou status
+            if (!id.endsWith('@g.us')) return false
+            
+            // 3. Deve ter participantes (grupos fantasmas costumam vir com size 0 ou nulo)
+            const size = g.size || (g.participants ? g.participants.length : 0)
+            if (size <= 0) return false
+            
+            // 4. Remover grupos de sistema ou suporte técnico que a API às vezes injeta
+            const lowerName = name.toLowerCase()
+            if (lowerName.includes('whatsapp') || lowerName.includes('broadcast') || lowerName.includes('rascunho')) return false
+            
+            return true
+          })
 
           // FILTRAGEM E MAPEAMENTO
           const rows = validGroups.map((g: any) => ({
