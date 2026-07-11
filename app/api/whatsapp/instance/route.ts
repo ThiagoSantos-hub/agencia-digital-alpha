@@ -13,6 +13,53 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
+  // ============================================================
+  // LÓGICA: Se o usuário logado é um colaborador, retornar o
+  // status da instância do admin (sem criar instância nova).
+  // ============================================================
+
+  const { data: collaborator } = await supabase
+    .from('collaborators')
+    .select('id, user_id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (collaborator) {
+    // É colaborador — buscar o admin e a instância do admin
+    const { data: adminProfile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('role', 'admin')
+      .maybeSingle()
+
+    if (adminProfile) {
+      const adminUserId = adminProfile.id
+
+      const { data: adminInstance } = await supabase
+        .from('whatsapp_instances')
+        .select('*')
+        .eq('user_id', adminUserId)
+        .maybeSingle()
+
+      if (adminInstance && adminInstance.grupos_visiveis_colaboradores === true) {
+        return NextResponse.json({
+          status: 'connected',
+          is_admin_instance: true,
+        })
+      } else {
+        return NextResponse.json({
+          status: 'disconnected',
+          is_admin_instance: true,
+        })
+      }
+    }
+  }
+
+  // ============================================================
+  // LÓGICA PADRÃO: usuário NÃO é colaborador (admin/gestor)
+  // Fluxo normal: verificar/criar instância na Evolution API.
+  // ============================================================
+
   if (!EVO_URL || !EVO_KEY) {
     return NextResponse.json({ error: 'Evolution API não configurada. Adicione EVOLUTION_API_URL e EVOLUTION_API_KEY nas variáveis de ambiente.' }, { status: 503 })
   }
