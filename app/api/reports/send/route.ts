@@ -59,6 +59,7 @@ export async function POST(request: Request) {
         .from('campaigns')
         .select('id, meta_campaign_id')
         .eq('client_id', report.client_id)
+        .eq('status', 'ativa')
         .order('created_at', { ascending: true })
         .limit(10);
 
