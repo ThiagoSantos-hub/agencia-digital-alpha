@@ -80,6 +80,8 @@ function CreateEditReportContent() {
   const [clients, setClients] = useState<{id: string, name: string}[]>([])
   const [campanhasDoCliente, setCampanhasDoCliente] = useState<{name: string}[]>([])
   const [diasSelecionados, setDiasSelecionados] = useState<number[]>([])
+  const [agencyGroups, setAgencyGroups] = useState<{group_id: string, name: string, participant_count: number}[]>([])
+  const [loadingAgencyGroups, setLoadingAgencyGroups] = useState(false)
 
   const toggleDia = (i: number) => {
     setDiasSelecionados(prev => {
@@ -141,6 +143,21 @@ function CreateEditReportContent() {
       }
     }
   }, [id, reports])
+
+  // Fetch grupos da agência ao montar o componente
+  useEffect(() => {
+    let cancelled = false
+    setLoadingAgencyGroups(true)
+    fetch('/api/whatsapp/groups?source=agency')
+      .then(res => res.json())
+      .then(data => {
+        if (!cancelled && Array.isArray(data) && data.length > 0) {
+          setAgencyGroups(data)
+        }
+      })
+      .finally(() => { if (!cancelled) setLoadingAgencyGroups(false) })
+    return () => { cancelled = true }
+  }, [])
 
   const insertVariable = (variable: string) => {
     if (!textareaRef.current) return
@@ -345,7 +362,6 @@ function CreateEditReportContent() {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-400">WhatsApp (com DDI) *</label>
                 <input 
-                  required
                   type="text"
                   value={formData.recebedor_numero}
                   onChange={e => setFormData({ ...formData, recebedor_numero: e.target.value.replace(/\D/g, '') })}
@@ -358,52 +374,67 @@ function CreateEditReportContent() {
             {formData.recebedor_tipo === 'grupo' && (
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-400">Grupo do WhatsApp *</label>
-                {wpInstance.status === 'loading' && (
+
+                {/* Loading state */}
+                {(wpInstance.status === 'loading' || loadingAgencyGroups) && (
                   <div className="flex items-center gap-2 py-2">
                     <Loader2 size={14} className="animate-spin text-gray-500" />
-                    <span className="text-xs text-gray-500">Verificando conexão...</span>
+                    <span className="text-xs text-gray-500">Carregando grupos...</span>
                   </div>
                 )}
+
+                {/* Error state */}
                 {wpInstance.status === 'error' && (
                   <div className="rounded-xl px-4 py-3 text-xs" style={{ backgroundColor: '#1a0a0a', border: '1px solid #3a1a1a', color: '#ff6666' }}>
                     ⚠️ {wpInstance.error || 'WhatsApp não configurado.'}{' '}
                     <a href="/colaborador/integracoes" className="underline text-indigo-400">Configurar em Integrações</a>
                   </div>
                 )}
-                {(wpInstance.status === 'disconnected' || wpInstance.status === 'connecting') && (
+
+                {/* Disconnected + no agency groups */}
+                {(wpInstance.status === 'disconnected' || wpInstance.status === 'connecting') && agencyGroups.length === 0 && (
                   <div className="rounded-xl px-4 py-3 text-xs" style={{ backgroundColor: '#0f0f1a', border: '1px solid #2a2a4a', color: '#818cf8' }}>
                     📵 WhatsApp não conectado.{' '}
                     <a href="/colaborador/integracoes" className="underline font-semibold">Conecte em Integrações →</a>
                   </div>
                 )}
-                {wpInstance.status === 'connected' && (
-                  <>
-                    {wpLoadingGroups ? (
-                      <div className="flex items-center gap-2 py-2">
-                        <Loader2 size={14} className="animate-spin text-gray-500" />
-                        <span className="text-xs text-gray-500">Carregando grupos...</span>
-                      </div>
-                    ) : wpGroups.length === 0 ? (
-                      <div className="rounded-xl px-4 py-3 text-xs" style={{ backgroundColor: '#0f1320', border: '1px solid #1a2040', color: '#818cf8' }}>
-                        Nenhum grupo encontrado.{' '}
-                        <button type="button" onClick={wpFetchGroups} className="underline">Atualizar</button>
-                      </div>
-                    ) : (
-                      <select
-                        required
-                        value={formData.recebedor_numero}
-                        onChange={e => setFormData({ ...formData, recebedor_numero: e.target.value })}
-                        className="w-full bg-[#050508] border border-[#1a1a2e] rounded-xl px-4 py-2.5 outline-none focus:border-[#10b981] transition-colors appearance-none"
-                      >
-                        <option value="">Selecione um grupo...</option>
+
+                {/* Show select if there are groups from either source */}
+                {(wpInstance.status === 'connected' || agencyGroups.length > 0) && (wpGroups.length > 0 || agencyGroups.length > 0) && (
+                  <select
+                    required
+                    value={formData.recebedor_numero}
+                    onChange={e => setFormData({ ...formData, recebedor_numero: e.target.value })}
+                    className="w-full bg-[#050508] border border-[#1a1a2e] rounded-xl px-4 py-2.5 outline-none focus:border-[#10b981] transition-colors appearance-none"
+                  >
+                    <option value="">Selecione um grupo...</option>
+                    {wpGroups.length > 0 && (
+                      <optgroup label="Meus Grupos">
                         {wpGroups.map(g => (
                           <option key={g.group_id} value={g.group_id}>
                             {g.name}{g.participant_count > 0 ? ` (${g.participant_count})` : ''}
                           </option>
                         ))}
-                      </select>
+                      </optgroup>
                     )}
-                  </>
+                    {agencyGroups.length > 0 && (
+                      <optgroup label="Grupos da Agência">
+                        {agencyGroups.map(g => (
+                          <option key={g.group_id} value={g.group_id}>
+                            {g.name}{g.participant_count > 0 ? ` (${g.participant_count})` : ''}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </select>
+                )}
+
+                {/* No groups at all */}
+                {(wpInstance.status === 'connected' || agencyGroups.length > 0) && wpGroups.length === 0 && agencyGroups.length === 0 && (
+                  <div className="rounded-xl px-4 py-3 text-xs" style={{ backgroundColor: '#0f1320', border: '1px solid #1a2040', color: '#818cf8' }}>
+                    Nenhum grupo encontrado.{' '}
+                    <button type="button" onClick={wpFetchGroups} className="underline">Atualizar</button>
+                  </div>
                 )}
               </div>
             )}

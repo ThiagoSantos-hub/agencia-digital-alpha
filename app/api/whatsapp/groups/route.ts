@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
 
 const EVO_URL = process.env.EVOLUTION_API_URL || ''
@@ -8,24 +8,20 @@ function instanceName(userId: string) {
   return `alpha_${userId.replace(/-/g, '').slice(0, 16)}`
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const supabase = createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
   // ============================================================
-  // LÓGICA: Verificar se o usuário logado é um colaborador
-  // (tabela collaborators onde user_id = auth.uid()).
+  // LÓGICA: source=agency — buscar grupos do admin para colaborador
+  // (independente de ser colaborador na tabela collaborators).
   // ============================================================
 
-  const { data: collaborator } = await supabase
-    .from('collaborators')
-    .select('id, user_id')
-    .eq('user_id', user.id)
-    .maybeSingle()
+  const { searchParams } = new URL(request.url)
+  const source = searchParams.get('source')
 
-  if (collaborator) {
-    // É colaborador — buscar admin e instância do admin
+  if (source === 'agency') {
     const { data: adminProfile } = await supabase
       .from('profiles')
       .select('id')
@@ -42,7 +38,6 @@ export async function GET() {
         .maybeSingle()
 
       if (adminInstance && adminInstance.grupos_visiveis_colaboradores === true) {
-        // Admin permite: retornar os grupos do admin
         const { data: cached } = await supabase
           .from('whatsapp_groups')
           .select('group_id, name, participant_count')
@@ -50,14 +45,14 @@ export async function GET() {
           .order('name')
 
         return NextResponse.json(cached || [])
-      } else {
-        return NextResponse.json({ error: 'O admin não permite acesso aos grupos' }, { status: 403 })
       }
     }
+
+    return NextResponse.json([])
   }
 
   // ============================================================
-  // LÓGICA PADRÃO: usuário NÃO é colaborador (admin/gestor)
+  // LÓGICA PADRÃO: grupos do próprio usuário logado.
   // Busca grupos da Evolution API e faz cache no Supabase.
   // ============================================================
 
