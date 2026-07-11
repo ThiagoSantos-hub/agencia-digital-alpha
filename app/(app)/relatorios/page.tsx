@@ -389,7 +389,7 @@ export default function RelatoriosPage() {
                         {item.status}
                       </span>
                       <span className="text-[10px] text-gray-500">
-                        {formatHistoryDate(item.created_at)}
+                        {formatHistoryDate(item.enviado_em)}
                       </span>
                     </div>
                     {item.erro_detalhe && (
