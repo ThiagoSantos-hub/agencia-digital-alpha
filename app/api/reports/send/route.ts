@@ -22,85 +22,40 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Relatório não encontrado' }, { status: 404 });
     }
 
-    // 2. Buscar integração Evolution API
-    const { data: integration, error: integrationError } = await supabase
-      .from('integrations')
-      .select('config')
-      .eq('type', 'evolution_api')
-      .single();
+    // 2. Chamar o N8N via webhook
+    const n8nWebhookUrl = 'https://webhook.digitalalpha.cloud/webhook/disparo-relatorio';
 
-    if (integrationError || !integration) {
-      const errorMsg = 'Evolution API não configurada em integrações';
-      await supabase.from('report_history').insert({
-        report_id,
-        status: 'erro',
-        mensagem_enviada: 'N/A',
-        erro_detalhe: errorMsg
-      });
-      return NextResponse.json({ error: errorMsg }, { status: 400 });
-    }
-
-    const config = integration.config as any;
-    const urlBase = config?.url;
-    const apiKey = config?.api_key;
-    const instance = config?.instance;
-
-    if (!urlBase || !apiKey || !instance) {
-      const errorMsg = 'Configurações da Evolution API incompletas (url, api_key ou instance ausentes)';
-      await supabase.from('report_history').insert({
-        report_id,
-        status: 'erro',
-        mensagem_enviada: 'N/A',
-        erro_detalhe: errorMsg
-      });
-      return NextResponse.json({ error: errorMsg }, { status: 400 });
-    }
-
-    // 3. Substituir variáveis (Fase 1: Valores de Exemplo)
-    const dataAtual = new Intl.DateTimeFormat('pt-BR').format(new Date());
-    let mensagemFinal = report.mensagem_template
-      .replaceAll('<DATA>', dataAtual)
-      .replaceAll('<ALCAN>', '—')
-      .replaceAll('<IMP>', '—')
-      .replaceAll('<CLIQ>', '—')
-      .replaceAll('<CTR>', '—')
-      .replaceAll('<LEADS>', '—')
-      .replaceAll('<CPL>', '—')
-      .replaceAll('<INV>', '—')
-      .replaceAll('<ROAS>', '—')
-      .replaceAll('<CPM>', '—')
-      .replaceAll('<CONV>', '—')
-      .replaceAll('<CA>', report.nome);
-
-    // 4. Enviar mensagem via Evolution API
     let status: 'enviado' | 'erro' = 'enviado';
     let erroDetalhe = null;
+    let mensagemFinal = report.mensagem_template;
 
     try {
-      const evolutionResponse = await fetch(`${urlBase}/message/sendText/${instance}`, {
+      const n8nResponse = await fetch(n8nWebhookUrl, {
         method: 'POST',
-        headers: {
-          'apikey': apiKey,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          number: report.recebedor_numero,
-          text: mensagemFinal
+          report_id: report.id,
+          nome: report.nome,
+          recebedor_numero: report.recebedor_numero,
+          recebedor_tipo: report.recebedor_tipo,
+          mensagem_template: report.mensagem_template,
+          frequencia: report.frequencia,
+          horario_envio: report.horario_envio,
         })
       });
 
-      const responseData = await evolutionResponse.json();
+      const responseData = await n8nResponse.json();
 
-      if (!evolutionResponse.ok) {
+      if (!n8nResponse.ok) {
         status = 'erro';
-        erroDetalhe = responseData?.message || 'Erro desconhecido na Evolution API';
+        erroDetalhe = responseData?.message || 'Erro no N8N';
       }
     } catch (fetchError: any) {
       status = 'erro';
       erroDetalhe = fetchError.message;
     }
 
-    // 5. Registrar no histórico
+    // 3. Registrar no histórico
     await supabase.from('report_history').insert({
       report_id,
       status,
@@ -108,7 +63,7 @@ export async function POST(request: Request) {
       erro_detalhe: erroDetalhe
     });
 
-    // 6. Atualizar próximo envio
+    // 4. Atualizar próximo envio
     if (status === 'enviado') {
       const proximoEnvio = calcularProximoEnvio(report.frequencia, report.horario_envio);
       await supabase
@@ -129,25 +84,16 @@ export async function POST(request: Request) {
   }
 }
 
-// Função utilitária para calcular o próximo envio
 function calcularProximoEnvio(frequencia: string, horario: string): string {
   const agora = new Date();
   const [horas, minutos] = horario.split(':').map(Number);
   let proximo = new Date();
   proximo.setHours(horas, minutos, 0, 0);
 
-  // Se o horário já passou hoje, agenda para o próximo ciclo
   if (proximo <= agora) {
-    if (frequencia === 'diario') {
-      proximo.setDate(proximo.getDate() + 1);
-    } else if (frequencia === 'semanal') {
-      proximo.setDate(proximo.getDate() + 7);
-    } else if (frequencia === 'mensal') {
-      proximo.setMonth(proximo.getMonth() + 1);
-    }
-  } else {
-    // Se o horário ainda não passou hoje, mas a frequência for semanal ou mensal,
-    // o cálculo acima já cobre o "hoje".
+    if (frequencia === 'diario') proximo.setDate(proximo.getDate() + 1);
+    else if (frequencia === 'semanal') proximo.setDate(proximo.getDate() + 7);
+    else if (frequencia === 'mensal') proximo.setMonth(proximo.getMonth() + 1);
   }
 
   return proximo.toISOString();
