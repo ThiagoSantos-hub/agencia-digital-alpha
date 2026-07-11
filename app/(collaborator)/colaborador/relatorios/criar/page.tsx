@@ -243,9 +243,9 @@ function CreateEditReportContent() {
               <div className="grid grid-cols-2 gap-2">
                 {[
                   { value: 'ontem', label: 'Ontem' },
-                  { value: 'ultimos_7_dias', label: 'Últimos 7 dias' },
-                  { value: 'ultimos_30_dias', label: 'Últimos 30 dias' },
-                  { value: 'personalizado', label: '📅 Personalizado' },
+                  { value: 'ultimos_7_dias', label: 'Últ. 7 dias' },
+                  { value: 'ultimos_30_dias', label: 'Últ. 30 dias' },
+                  { value: 'personalizado', label: '📅 Custom' },
                 ].map((opt) => (
                   <button
                     key={opt.value}
@@ -271,7 +271,7 @@ function CreateEditReportContent() {
                       type="date"
                       value={formData.data_inicio ?? ''}
                       onChange={e => setFormData({ ...formData, data_inicio: e.target.value })}
-                      className="w-full bg-[#050508] border border-[#1a1a2e] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#10b981] transition-colors"
+                      className="w-full bg-white text-gray-900 border border-[#1a1a2e] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#10b981] transition-colors"
                     />
                   </div>
                   <div>
@@ -280,7 +280,7 @@ function CreateEditReportContent() {
                       type="date"
                       value={formData.data_fim ?? ''}
                       onChange={e => setFormData({ ...formData, data_fim: e.target.value })}
-                      className="w-full bg-[#050508] border border-[#1a1a2e] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#10b981] transition-colors"
+                      className="w-full bg-white text-gray-900 border border-[#1a1a2e] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#10b981] transition-colors"
                     />
                   </div>
                   <p className="col-span-2 text-xs text-yellow-500/80">
