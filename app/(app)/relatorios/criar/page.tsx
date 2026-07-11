@@ -119,7 +119,7 @@ function CreateEditReportContent() {
 
   // Define frequência automaticamente com base no período escolhido
   useEffect(() => {
-    const mapa: Record<string, string> = {
+    const mapa: Record<string, ReportInput['frequencia']> = {
       ontem: 'diario',
       ultimos_7_dias: 'semanal',
       ultimos_30_dias: 'mensal',

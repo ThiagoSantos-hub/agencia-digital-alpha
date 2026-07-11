@@ -6,7 +6,7 @@ export interface Report {
   user_id: string;
   nome: string;
   canal: 'meta' | 'google';
-  frequencia: 'diario' | 'semanal' | 'mensal';
+  frequencia: 'diario' | 'semanal' | 'mensal' | 'manual';
   periodo: 'dia_anterior' | 'ontem' | 'ultima_semana' | 'ultimo_mes' | 'ultimos_7_dias' | 'ultimos_30_dias' | 'personalizado';
   recebedor_tipo: 'privado' | 'grupo';
   recebedor_numero: string;
