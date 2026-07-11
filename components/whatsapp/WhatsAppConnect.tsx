@@ -135,11 +135,13 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
 
   async function handleConnect() {
     setState({ status: 'loading' })
-    setShowQR(false)
+    setShowQR(true)
+    // Força a limpeza de estados anteriores para garantir um novo QR Code
+    setState(prev => ({ ...prev, qrcode: null, error: undefined }))
     await fetchStatus()
   }
 
-  if (state.status === 'loading') {
+  if (state.status === 'loading' && !showQR) {
     return (
       <div className="flex items-center gap-3 py-3">
         <Loader2 size={18} className="animate-spin text-gray-500" />
@@ -335,13 +337,13 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
         <div className="py-6">
           <button
             onClick={() => {
-              setShowQR(true)
               handleConnect()
             }}
-            className="text-sm px-6 py-3 rounded-xl font-semibold transition-all hover:opacity-90"
+            className="text-sm px-6 py-3 rounded-xl font-semibold transition-all hover:opacity-90 flex items-center gap-2 mx-auto"
             style={{ backgroundColor: '#25D366', color: '#fff' }}
           >
-            📱 Conectar WhatsApp
+            {state.status === 'loading' ? <Loader2 size={18} className="animate-spin" /> : '📱'} 
+            Conectar WhatsApp
           </button>
           <p className="text-xs mt-3" style={{ color: '#4a5a7a' }}>
             Seu WhatsApp será vinculado a esta conta

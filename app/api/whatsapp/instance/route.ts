@@ -73,12 +73,14 @@ export async function GET() {
     const connectData = await connectRes.json()
 
     // LÓGICA DE EXTRAÇÃO DE QR CODE (A Evolution API varia a resposta conforme a versão)
-    // Procuramos em todas as propriedades possíveis
+    // Procuramos em todas as propriedades possíveis, incluindo o objeto qrcode direto
     const qrcode = 
       connectData?.base64 || 
       connectData?.qrcode?.base64 || 
+      connectData?.qrcode || // Às vezes o objeto qrcode já é a string base64
       connectData?.code || 
       statusData?.instance?.qrcode?.base64 || 
+      statusData?.instance?.qrcode ||
       null
 
     // Atualiza estado no banco

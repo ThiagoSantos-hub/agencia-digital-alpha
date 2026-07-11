@@ -70,29 +70,40 @@ export async function GET(request: NextRequest) {
           // Alguns grupos vêm sem subject ou com dados corrompidos da API
           const validGroups = groups.filter(g => (g.subject || g.name) && g.id)
 
-          // LIMPEZA TOTAL: Deletamos TUDO do usuário antes de reinserir
-          // Usamos um delete explícito para garantir que o upsert não mantenha lixo
-          await supabase.from('whatsapp_groups').delete().eq('user_id', targetUserId)
+          // FILTRAGEM E MAPEAMENTO
+          const rows = validGroups.map((g: any) => ({
+            user_id: targetUserId,
+            group_id: g.id,
+            name: g.subject || g.name || 'Grupo sem nome',
+            participant_count: g.size || g.participants?.length || 0,
+            updated_at: new Date().toISOString(),
+          }))
 
-          if (validGroups.length > 0) {
-            const rows = validGroups.map((g: any) => ({
-              user_id: targetUserId,
-              group_id: g.id,
-              name: g.subject || g.name || 'Grupo sem nome',
-              participant_count: g.size || g.participants?.length || 0,
-              updated_at: new Date().toISOString(),
-            }))
+          // LIMPEZA E INSERÇÃO ATÔMICA (DENTRO DO POSSÍVEL)
+          // Primeiro deletamos o que não está mais na lista para evitar "lixo"
+          const currentGroupIds = rows.map(r => r.group_id)
+          if (currentGroupIds.length > 0) {
+            await supabase
+              .from('whatsapp_groups')
+              .delete()
+              .eq('user_id', targetUserId)
+              .not('group_id', 'in', `(${currentGroupIds.map(id => `'${id}'`).join(',')})`)
+          } else {
+            await supabase.from('whatsapp_groups').delete().eq('user_id', targetUserId)
+          }
 
-            // Inserção em lote
-            const { error: upsertError } = await supabase.from('whatsapp_groups').insert(rows)
+          // Depois fazemos o upsert dos dados novos/atualizados
+          if (rows.length > 0) {
+            const { error: upsertError } = await supabase
+              .from('whatsapp_groups')
+              .upsert(rows, { onConflict: 'user_id,group_id' })
             
             if (upsertError) {
-              console.error('Erro ao inserir grupos no Supabase:', upsertError)
+              console.error('Erro ao sincronizar grupos no Supabase:', upsertError)
             }
-
-            return NextResponse.json(rows.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')))
           }
-          return NextResponse.json([])
+
+          return NextResponse.json(rows.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')))
         }
       }
     } catch (err) {
