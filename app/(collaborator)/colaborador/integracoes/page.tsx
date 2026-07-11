@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { CheckCircle2, AlertCircle, Lock, Save } from 'lucide-react'
+import { WhatsAppConnect } from '@/components/whatsapp/WhatsAppConnect'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://agencia-digital-alpha.vercel.app'
 
@@ -184,6 +185,14 @@ export default function IntegracoesColaboradorPage() {
       )}
 
       <section>
+  <h2 className="text-white text-lg font-semibold mb-1">Meu WhatsApp</h2>
+  <p className="text-xs mb-4" style={{ color: '#4a7a5a' }}>
+    Conecte seu WhatsApp pessoal para enviar relatórios automáticos para seus contatos e grupos.
+  </p>
+  <WhatsAppConnect />
+</section>
+
+      <section>
         <h2 className="text-white text-lg font-semibold mb-4">Minhas Conexões</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
@@ -253,38 +262,7 @@ export default function IntegracoesColaboradorPage() {
             </div>
           </div>
 
-          {/* WhatsApp Pessoal */}
-          <div className="rounded-xl p-4 flex flex-col justify-between gap-4"
-            style={{ backgroundColor: '#0f1f14', border: '1px solid #1a3a24' }}>
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 flex items-center justify-center rounded-lg"
-                style={{ backgroundColor: '#0a0f0c' }}>
-                <IntegrationIcon type="whatsapp" />
-              </div>
-              <div>
-                <p className="text-white text-sm font-medium">WhatsApp Pessoal</p>
-                <p className="text-xs mt-0.5" style={{ color: whatsappKey ? '#00ff88' : '#4a7a5a' }}>
-                  {whatsappKey ? 'Conectado' : 'Desconectado'}
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <input 
-                type="password" 
-                placeholder="API Key..."
-                value={whatsappKey}
-                onChange={(e) => setWhatsappKey(e.target.value)}
-                className="flex-1 bg-[#0a0f0c] border border-[#1a3a24] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#00ff88]/50"
-              />
-              <button 
-                onClick={() => handleSaveApiKey('whatsapp', whatsappKey)}
-                disabled={saving === 'whatsapp'}
-                className="text-xs px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1"
-                style={{ backgroundColor: whatsappKey ? '#1a3a24' : '#00ff88', color: whatsappKey ? '#00ff88' : '#0a0f0c' }}>
-                {saving === 'whatsapp' ? '...' : whatsappKey ? 'Atualizar' : 'Salvar'}
-              </button>
-            </div>
-          </div>
+
 
           {/* Google Ads Pessoal — OAuth */}
           <div className="rounded-xl p-4 flex items-center justify-between"

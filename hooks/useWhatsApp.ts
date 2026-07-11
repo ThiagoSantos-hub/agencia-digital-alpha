@@ -44,9 +44,7 @@ export function useWhatsApp() {
   }, [])
 
   useEffect(() => {
-    fetchInstance().then(status => {
-      if (status === 'connected') fetchGroups()
-    })
+    fetchInstance()
   }, [])
 
   return { instance, groups, loadingGroups, fetchInstance, fetchGroups }

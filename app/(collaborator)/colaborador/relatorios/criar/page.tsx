@@ -15,6 +15,7 @@ import {
   Loader2
 } from 'lucide-react'
 import { useRelatorios, ReportInput } from '@/hooks/useRelatorios'
+import { useWhatsApp } from '@/hooks/useWhatsApp'
 import { createClient } from '@/lib/supabase'
 
 // Variáveis disponíveis para o template
@@ -73,6 +74,7 @@ function CreateEditReportContent() {
   const id = searchParams.get('id')
   const { createRelatorio, updateRelatorio, reports, loading: loadingHook } = useRelatorios()
   const supabase = createClient()
+  const { instance: wpInstance, groups: wpGroups, loadingGroups: wpLoadingGroups, fetchGroups: wpFetchGroups } = useWhatsApp()
 
   const [loading, setLoading] = useState(false)
   const [clients, setClients] = useState<{id: string, name: string}[]>([])
@@ -311,13 +313,13 @@ function CreateEditReportContent() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-3">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-400">Recebedor</label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  onClick={() => setFormData({ ...formData, recebedor_tipo: 'privado' })}
+                  onClick={() => setFormData({ ...formData, recebedor_tipo: 'privado', recebedor_numero: '' })}
                   className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border transition-all ${
                     formData.recebedor_tipo === 'privado' ? 'bg-[#10b981]/10 border-[#10b981] text-[#10b981]' : 'bg-[#050508] border-[#1a1a2e] text-gray-500 hover:border-gray-700'
                   }`}
@@ -326,7 +328,10 @@ function CreateEditReportContent() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFormData({ ...formData, recebedor_tipo: 'grupo' })}
+                  onClick={() => {
+                    setFormData({ ...formData, recebedor_tipo: 'grupo', recebedor_numero: '' })
+                    if (wpInstance.status === 'connected' && wpGroups.length === 0) wpFetchGroups()
+                  }}
                   className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border transition-all ${
                     formData.recebedor_tipo === 'grupo' ? 'bg-[#10b981]/10 border-[#10b981] text-[#10b981]' : 'bg-[#050508] border-[#1a1a2e] text-gray-500 hover:border-gray-700'
                   }`}
@@ -336,17 +341,72 @@ function CreateEditReportContent() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-400">WhatsApp (com DDI) *</label>
-              <input 
-                required
-                type="text"
-                value={formData.recebedor_numero}
-                onChange={e => setFormData({ ...formData, recebedor_numero: e.target.value.replace(/\D/g, '') })}
-                placeholder="5511999999999"
-                className="w-full bg-[#050508] border border-[#1a1a2e] rounded-xl px-4 py-2.5 outline-none focus:border-[#10b981] transition-colors"
-              />
-            </div>
+            {formData.recebedor_tipo === 'privado' && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-400">WhatsApp (com DDI) *</label>
+                <input 
+                  required
+                  type="text"
+                  value={formData.recebedor_numero}
+                  onChange={e => setFormData({ ...formData, recebedor_numero: e.target.value.replace(/\D/g, '') })}
+                  placeholder="5511999999999"
+                  className="w-full bg-[#050508] border border-[#1a1a2e] rounded-xl px-4 py-2.5 outline-none focus:border-[#10b981] transition-colors"
+                />
+              </div>
+            )}
+
+            {formData.recebedor_tipo === 'grupo' && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-400">Grupo do WhatsApp *</label>
+                {wpInstance.status === 'loading' && (
+                  <div className="flex items-center gap-2 py-2">
+                    <Loader2 size={14} className="animate-spin text-gray-500" />
+                    <span className="text-xs text-gray-500">Verificando conexão...</span>
+                  </div>
+                )}
+                {wpInstance.status === 'error' && (
+                  <div className="rounded-xl px-4 py-3 text-xs" style={{ backgroundColor: '#1a0a0a', border: '1px solid #3a1a1a', color: '#ff6666' }}>
+                    ⚠️ {wpInstance.error || 'WhatsApp não configurado.'}{' '}
+                    <a href="/colaborador/integracoes" className="underline text-indigo-400">Configurar em Integrações</a>
+                  </div>
+                )}
+                {(wpInstance.status === 'disconnected' || wpInstance.status === 'connecting') && (
+                  <div className="rounded-xl px-4 py-3 text-xs" style={{ backgroundColor: '#0f0f1a', border: '1px solid #2a2a4a', color: '#818cf8' }}>
+                    📵 WhatsApp não conectado.{' '}
+                    <a href="/colaborador/integracoes" className="underline font-semibold">Conecte em Integrações →</a>
+                  </div>
+                )}
+                {wpInstance.status === 'connected' && (
+                  <>
+                    {wpLoadingGroups ? (
+                      <div className="flex items-center gap-2 py-2">
+                        <Loader2 size={14} className="animate-spin text-gray-500" />
+                        <span className="text-xs text-gray-500">Carregando grupos...</span>
+                      </div>
+                    ) : wpGroups.length === 0 ? (
+                      <div className="rounded-xl px-4 py-3 text-xs" style={{ backgroundColor: '#0f1320', border: '1px solid #1a2040', color: '#818cf8' }}>
+                        Nenhum grupo encontrado.{' '}
+                        <button type="button" onClick={wpFetchGroups} className="underline">Atualizar</button>
+                      </div>
+                    ) : (
+                      <select
+                        required
+                        value={formData.recebedor_numero}
+                        onChange={e => setFormData({ ...formData, recebedor_numero: e.target.value })}
+                        className="w-full bg-[#050508] border border-[#1a1a2e] rounded-xl px-4 py-2.5 outline-none focus:border-[#10b981] transition-colors appearance-none"
+                      >
+                        <option value="">Selecione um grupo...</option>
+                        {wpGroups.map(g => (
+                          <option key={g.group_id} value={g.group_id}>
+                            {g.name}{g.participant_count > 0 ? ` (${g.participant_count})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
