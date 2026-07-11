@@ -213,7 +213,7 @@ export default function RelatoriosPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-[#0a0a0f] border border-[#1a1a2e] rounded-2xl overflow-hidden">
+      <div className="bg-[#0a0a0f] border border-[#1a1a2e] rounded-2xl">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-[#1a1a2e] bg-[#0d0d14]">
