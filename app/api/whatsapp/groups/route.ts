@@ -15,10 +15,11 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url)
   const source = searchParams.get('source')
-  const forceRefresh = searchParams.get('refresh') === 'true'
 
   // ============================================================
   // source=agency — Grupos do admin compartilhados com colaboradores.
+  // IMPORTANTE: Colaboradores devem SEMPRE ver a lista atualizada.
+  // Para evitar grupos excluídos, buscamos direto na API do admin.
   // ============================================================
 
   if (source === 'agency') {
@@ -42,20 +43,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json([])
     }
 
-    // Se não for forceRefresh, tenta ler do cache primeiro
-    if (!forceRefresh) {
-      const { data: cached } = await supabase
-        .from('whatsapp_groups')
-        .select('group_id, name, participant_count')
-        .eq('user_id', adminUserId)
-        .order('name')
-
-      if (cached && cached.length > 0) {
-        return NextResponse.json(cached)
-      }
-    }
-
-    // Busca na Evolution API do admin para atualizar o cache
+    // SEMPRE busca na Evolution API do admin para garantir que grupos excluídos sumam na hora
     if (EVO_URL && EVO_KEY && adminInstance.instance_name) {
       try {
         const res = await fetch(
@@ -67,11 +55,10 @@ export async function GET(request: NextRequest) {
           const groups = await res.json()
 
           if (Array.isArray(groups)) {
-            // 1. Limpa os grupos antigos do admin no banco para evitar "fantasmas"
+            // Sincroniza o cache do admin no banco (limpa e reinsere)
             await supabase.from('whatsapp_groups').delete().eq('user_id', adminUserId)
 
             if (groups.length > 0) {
-              // 2. Insere os grupos atuais vindos da API
               const rows = groups.map((g: any) => ({
                 user_id: adminUserId,
                 group_id: g.id,
@@ -86,20 +73,23 @@ export async function GET(request: NextRequest) {
             return NextResponse.json([])
           }
         }
-      } catch { }
+      } catch (err) {
+        console.error('Erro ao buscar grupos do admin na API:', err)
+      }
     }
 
-    // Se a API falhar e não for refresh, retorna o que tiver no cache (mesmo que antigo)
-    const { data: fallback } = await supabase
+    // Fallback para o cache apenas se a API falhar
+    const { data: cached } = await supabase
       .from('whatsapp_groups')
       .select('group_id, name, participant_count')
       .eq('user_id', adminUserId)
       .order('name')
-    return NextResponse.json(fallback || [])
+    return NextResponse.json(cached || [])
   }
 
   // ============================================================
   // Fluxo padrão — grupos do próprio usuário logado.
+  // Também busca na API para manter sincronizado.
   // ============================================================
 
   const name = instanceName(user.id)
@@ -114,7 +104,6 @@ export async function GET(request: NextRequest) {
         const groups = await res.json()
 
         if (Array.isArray(groups)) {
-          // Limpa grupos antigos do usuário para sincronizar com a realidade da API
           await supabase.from('whatsapp_groups').delete().eq('user_id', user.id)
 
           if (groups.length > 0) {
@@ -132,7 +121,9 @@ export async function GET(request: NextRequest) {
           return NextResponse.json([])
         }
       }
-    } catch { }
+    } catch (err) {
+      console.error('Erro ao buscar grupos do usuário na API:', err)
+    }
   }
 
   const { data: cached } = await supabase
