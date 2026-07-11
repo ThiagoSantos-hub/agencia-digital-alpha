@@ -387,11 +387,11 @@ export default function ColaboradorRelatoriosPage() {
                 historyData.map((item) => (
                   <div key={item.id} className="relative pl-6 border-l border-[#1a1a2e]">
                     <div className={`absolute left-[-5px] top-0 w-[9px] h-[9px] rounded-full ${
-                      item.status === 'sucesso' ? 'bg-[#10b981]' : 'bg-red-500'
+                      item.status === 'enviado' ? 'bg-[#10b981]' : 'bg-red-500'
                     }`} />
                     <div className="mb-1 flex items-center justify-between">
                       <span className="text-sm font-medium text-gray-200">
-                        {item.status === 'sucesso' ? 'Enviado com sucesso' : 'Falha no envio'}
+                        {item.status === 'enviado' ? 'Enviado com sucesso' : 'Falha no envio'}
                       </span>
                       <span className="text-[10px] text-gray-500">{formatHistoryDate(item.enviado_em)}</span>
                     </div>
