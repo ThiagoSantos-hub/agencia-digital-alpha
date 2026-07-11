@@ -86,20 +86,11 @@ export async function GET(request: NextRequest) {
             user_id: targetUserId,
             group_id: g.id,
             name: g.subject || g.name || 'Grupo sem nome',
-            participant_count: size || 0,
-            updated_at: new Date().toISOString(),
-          }))
-
-          // Corrige variável 'size' que não estava definida no mapeamento
-          const rowsFixed = validGroups.map((g: any) => ({
-            user_id: targetUserId,
-            group_id: g.id,
-            name: g.subject || g.name || 'Grupo sem nome',
             participant_count: g.size || (g.participants ? g.participants.length : 0),
             updated_at: new Date().toISOString(),
           }))
 
-          const currentGroupIds = rowsFixed.map(r => r.group_id)
+          const currentGroupIds = rows.map(r => r.group_id)
           if (currentGroupIds.length > 0) {
             await supabase
               .from('whatsapp_groups')
@@ -110,13 +101,13 @@ export async function GET(request: NextRequest) {
             await supabase.from('whatsapp_groups').delete().eq('user_id', targetUserId)
           }
 
-          if (rowsFixed.length > 0) {
+          if (rows.length > 0) {
             await supabase
               .from('whatsapp_groups')
-              .upsert(rowsFixed, { onConflict: 'user_id,group_id' })
+              .upsert(rows, { onConflict: 'user_id,group_id' })
           }
 
-          return NextResponse.json(rowsFixed.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')))
+          return NextResponse.json(rows.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')))
         }
       }
     } catch (err) {
