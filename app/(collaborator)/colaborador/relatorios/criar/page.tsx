@@ -83,7 +83,7 @@ function CreateEditReportContent() {
     nome: '',
     canal: 'meta',
     frequencia: 'diario',
-    periodo: 'dia_anterior',
+    periodo: 'ontem',
     recebedor_tipo: 'privado',
     recebedor_numero: '',
     mensagem_template: 'Olá! Segue o relatório de <DATA>\nda conta <CA>:\n\nAlcance: <ALCAN>\nImpressões: <IMP>\nInvestimento: <INV>\nResultados: <RESULT>\nCusto por Resultado: <CPR>\nROAS: <ROAS>',
@@ -116,6 +116,18 @@ function CreateEditReportContent() {
       .limit(10)
       .then(({ data }) => setCampanhasDoCliente(data ?? []))
   }, [formData.client_id])
+
+  // Define frequência automaticamente com base no período escolhido
+  useEffect(() => {
+    const mapa: Record<string, string> = {
+      ontem: 'diario',
+      ultimos_7_dias: 'semanal',
+      ultimos_30_dias: 'mensal',
+      personalizado: 'manual',
+    }
+    const freq = mapa[formData.periodo] ?? 'diario'
+    setFormData(prev => ({ ...prev, frequencia: freq }))
+  }, [formData.periodo])
 
   useEffect(() => {
     if (id && reports.length > 0) {
@@ -228,17 +240,77 @@ function CreateEditReportContent() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-400">Período</label>
-              <select 
-                value={formData.periodo}
-                onChange={e => setFormData({ ...formData, periodo: e.target.value as any })}
-                className="w-full bg-[#050508] border border-[#1a1a2e] rounded-xl px-4 py-2.5 outline-none focus:border-[#10b981] transition-colors appearance-none"
-              >
-                <option value="dia_anterior">Dia anterior</option>
-                <option value="ultima_semana">Última semana (Dom-Sab)</option>
-                <option value="ultimo_mes">Último mês</option>
-                <option value="ultimos_7_dias">Últimos 7 dias</option>
-                <option value="ultimos_30_dias">Últimos 30 dias</option>
-              </select>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { value: 'ontem', label: 'Ontem' },
+                  { value: 'ultimos_7_dias', label: 'Últimos 7 dias' },
+                  { value: 'ultimos_30_dias', label: 'Últimos 30 dias' },
+                  { value: 'personalizado', label: '📅 Personalizado' },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, periodo: opt.value as any })}
+                    className={`py-2.5 rounded-xl border text-xs font-bold uppercase transition-all ${
+                      formData.periodo === opt.value
+                        ? 'bg-[#10b981]/10 border-[#10b981] text-[#10b981]'
+                        : 'bg-[#050508] border-[#1a1a2e] text-gray-500 hover:border-gray-700'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Calendário para período personalizado */}
+              {formData.periodo === 'personalizado' && (
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Data início</label>
+                    <input
+                      type="date"
+                      value={formData.data_inicio ?? ''}
+                      onChange={e => setFormData({ ...formData, data_inicio: e.target.value })}
+                      className="w-full bg-[#050508] border border-[#1a1a2e] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#10b981] transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Data fim</label>
+                    <input
+                      type="date"
+                      value={formData.data_fim ?? ''}
+                      onChange={e => setFormData({ ...formData, data_fim: e.target.value })}
+                      className="w-full bg-[#050508] border border-[#1a1a2e] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#10b981] transition-colors"
+                    />
+                  </div>
+                  <p className="col-span-2 text-xs text-yellow-500/80">
+                    ⚠️ Período personalizado: envio apenas manual (sem automático)
+                  </p>
+                </div>
+              )}
+
+              {/* Dia da semana — só aparece quando Últimos 7 dias */}
+              {formData.periodo === 'ultimos_7_dias' && (
+                <div className="mt-2">
+                  <label className="text-xs text-gray-500 mb-1 block">Dia de envio semanal</label>
+                  <div className="grid grid-cols-7 gap-1">
+                    {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((dia, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, dia_semana_envio: i })}
+                        className={`py-1.5 rounded-lg border text-[10px] font-bold transition-all ${
+                          formData.dia_semana_envio === i
+                            ? 'bg-[#10b981]/10 border-[#10b981] text-[#10b981]'
+                            : 'bg-[#050508] border-[#1a1a2e] text-gray-500 hover:border-gray-700'
+                        }`}
+                      >
+                        {dia}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -281,24 +353,6 @@ function CreateEditReportContent() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-400">Frequência</label>
-              <div className="grid grid-cols-3 gap-2">
-                {['diario', 'semanal', 'mensal'].map((freq) => (
-                  <button
-                    key={freq}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, frequencia: freq as any })}
-                    className={`py-2.5 rounded-xl border text-xs font-bold uppercase transition-all ${
-                      formData.frequencia === freq ? 'bg-[#10b981]/10 border-[#10b981] text-[#10b981]' : 'bg-[#050508] border-[#1a1a2e] text-gray-500 hover:border-gray-700'
-                    }`}
-                  >
-                    {freq}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-400">Horário de Envio</label>
               <input 

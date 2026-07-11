@@ -16,6 +16,9 @@ export interface Report {
   ativo: boolean;
   proximo_envio: string | null;
   client_id: string | null;
+  data_inicio?: string | null;
+  data_fim?: string | null;
+  dia_semana_envio?: number | null;
   created_at: string;
   updated_at: string;
 }
