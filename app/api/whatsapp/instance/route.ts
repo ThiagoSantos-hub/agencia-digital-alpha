@@ -53,7 +53,12 @@ export async function GET() {
     }
 
     // PASSO 3: Se já está conectada, atualizar banco e retornar
-    if (statusData?.instance?.state === 'open') {
+    // A Evolution API pode retornar 'open' ou 'connected' dependendo da versão/endpoint
+    const isConnected = statusData?.instance?.state === 'open' || 
+                        statusData?.instance?.state === 'connected' ||
+                        statusData?.state === 'open'
+                        
+    if (isConnected) {
       await supabase.from('whatsapp_instances').upsert({
         user_id: user.id,
         instance_name: name,

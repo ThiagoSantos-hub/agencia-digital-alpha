@@ -66,9 +66,17 @@ export async function GET(request: NextRequest) {
         const groups = await res.json()
 
         if (Array.isArray(groups)) {
-          // FILTRAGEM AGRESSIVA: Apenas grupos onde o nome existe e não são "fantasmas"
-          // Alguns grupos vêm sem subject ou com dados corrompidos da API
-          const validGroups = groups.filter(g => (g.subject || g.name) && g.id)
+          // FILTRAGEM ULTRA-AGRESSIVA:
+          // 1. Deve ter ID e Nome (subject)
+          // 2. Não pode ser um grupo de "anúncios" do WhatsApp ou comunidades se não desejado
+          // 3. A Evolution API às vezes retorna grupos onde você não é mais participante
+          const validGroups = groups.filter(g => {
+            const hasName = (g.subject || g.name)
+            const hasId = g.id && g.id.includes('@g.us')
+            const isNotGhost = g.size !== 0 || (g.participants && g.participants.length > 0)
+            // Filtro para evitar grupos arquivados ou marcados como 'read-only' se a API prover isso
+            return hasName && hasId && isNotGhost
+          })
 
           // FILTRAGEM E MAPEAMENTO
           const rows = validGroups.map((g: any) => ({

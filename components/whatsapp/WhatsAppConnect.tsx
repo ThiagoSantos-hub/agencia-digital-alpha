@@ -69,13 +69,15 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
   // Polling while connecting
   useEffect(() => {
     if (state.status === 'connecting') {
+      // Polling mais agressivo (2s) para detectar a conexão assim que o usuário escaneia
       const interval = setInterval(async () => {
         const newStatus = await fetchStatus()
         if (newStatus === 'connected') {
           clearInterval(interval)
-          fetchGroups()
+          // Pequeno delay antes de buscar grupos para a API estabilizar
+          setTimeout(fetchGroups, 1000)
         }
-      }, 4000)
+      }, 2000)
       setPollingInterval(interval)
       return () => clearInterval(interval)
     } else {
