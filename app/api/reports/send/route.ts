@@ -143,8 +143,6 @@ export async function POST(request: Request) {
             '<CTR>':               fmtPct(ctrMedio),
             '<RESULT>':            fmtNum(resultValue),
             '<CPR>':               fmtBRL(resultCost),
-            '<SEG_IG>':            fmtNum(getAction('follow')),
-            '<VISIT_IG>':          fmtNum(getAction('onsite_conversion.view_content')),
             '<ADD_CART>':          fmtNum(getAction('add_to_cart')),
             '<CUSTO_ADD_CART>':    fmtBRL(getCost('add_to_cart')),
             '<VIEW_DEST_SITE>':    fmtNum(getAction('landing_page_view')),
