@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { WhatsAppConnect } from '@/components/whatsapp/WhatsAppConnect'
 
 interface Integration {
   id: string
@@ -439,6 +440,14 @@ export default function IntegracoesPage() {
             ))}
         </div>
       </section>
+
+      <section>
+  <h2 className="text-white text-lg font-semibold mb-1">WhatsApp</h2>
+  <p className="text-xs mb-4" style={{ color: '#4a7a5a' }}>
+    Conecte seu WhatsApp para enviar relatórios automáticos para contatos e grupos.
+  </p>
+  <WhatsAppConnect />
+</section>
 
       <section>
         <h2 className="text-white text-lg font-semibold mb-4">Webhooks</h2>

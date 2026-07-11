@@ -1,0 +1,292 @@
+{
+  "name": "Verificador de Relatórios Agendados",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "id": "850a9858-fb1c-4c0a-b23b-44778c8d055e",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        300,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/reports",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "select",
+              "value": "id,mensagem_template,mensagem,recebedor_numero,frequencia,dias_semana,horario_envio,proximo_envio,ativo"
+            },
+            {
+              "name": "ativo",
+              "value": "eq.true"
+            },
+            {
+              "name": "proximo_envio",
+              "value": "lte.now()"
+            }
+          ]
+        },
+        "options": {
+          "sendQuery": false
+        }
+      },
+      "id": "78db6272-df3e-4d18-994b-0381b701d545",
+      "name": "Consultar Relatórios Pendentes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        540,
+        240
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "Supabase Service Role"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filtrar apenas relatórios com dados válidos\nconst reports = $input.all();\nreturn reports.filter(item => {\n  const data = item.json;\n  return data.id && data.mensagem_template && data.recebedor_numero;\n});"
+      },
+      "id": "96c88208-5d73-45b3-8e9d-04fa715cdb14",
+      "name": "Filtrar Relatórios Válidos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webhook.digitalalpha.cloud/webhook/disparo-relatorio",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"report_id\": \"{{ $json.id }}\",\n  \"recebedor_numero\": \"{{ $json.recebedor_numero }}\",\n  \"mensagem\": \"{{ $json.mensagem_template }}\"\n}",
+        "options": {}
+      },
+      "id": "57af0f5b-3b05-4bd2-967d-27261f01ba4a",
+      "name": "Disparar Webhook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1020,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const report = $input.first().json;\n\n// Verificar se o webhook retornou sucesso\nconst webhookOutput = $input.first();\nconst statusCode = webhookOutput.json?.statusCode || webhookOutput.statusCode;\n\nif (statusCode >= 400) {\n  // Se houve erro no webhook, NÃO recalcular proximo_envio\n  return [{ json: { ...report, skip_update: true, webhook_error: true, webhook_status: statusCode } }];\n}\n\n// Calcular proximo_envio apenas se NÃO for manual\nconst frequencia = report.frequencia;\nconst horario = report.horario_envio;\nconst diasSemana = report.dias_semana;\n\nif (frequencia === 'manual') {\n  // Manual: não recalcular, apenas marcar para não atualizar\n  return [{ json: { ...report, skip_update: true, frequencia_manual: true } }];\n}\n\n// Calcular novo proximo_envio baseado na frequencia\nconst agora = new Date();\nconst [horas, minutos] = horario.split(':').map(Number);\n\nlet proximoEnvio;\n\nif (frequencia === 'diario') {\n  proximoEnvio = new Date(agora);\n  proximoEnvio.setDate(proximoEnvio.getDate() + 1);\n  proximoEnvio.setHours(horas, minutos, 0, 0);\n} else if (frequencia === 'semanal') {\n  // Encontrar o próximo dia da semana válido\n  if (diasSemana && diasSemana.length > 0) {\n    const diasNums = diasSemana.map(Number).sort((a, b) => a - b);\n    let tentativa = new Date(agora);\n    tentativa.setDate(agora.getDate() + 1);\n    tentativa.setHours(horas, minutos, 0, 0);\n    let encontrou = false;\n    for (let i = 0; i < 7; i++) {\n      if (diasNums.includes(tentativa.getDay())) {\n        encontrou = true;\n        break;\n      }\n      tentativa.setDate(tentativa.getDate() + 1);\n    }\n    proximoEnvio = tentativa;\n  } else {\n    // Sem dias_semana definidos, somar 7 dias\n    proximoEnvio = new Date(agora);\n    proximoEnvio.setDate(proximoEnvio.getDate() + 7);\n    proximoEnvio.setHours(horas, minutos, 0, 0);\n  }\n} else if (frequencia === 'mensal') {\n  proximoEnvio = new Date(agora);\n  proximoEnvio.setMonth(proximoEnvio.getMonth() + 1);\n  proximoEnvio.setHours(horas, minutos, 0, 0);\n}\n\nconst novoProximoEnvio = proximoEnvio.toISOString();\n\nreturn [{ json: { ...report, novo_proximo_envio: novoProximoEnvio, skip_update: false } }];"
+      },
+      "id": "969ccc1a-69fa-4550-8755-6b33b1c45f96",
+      "name": "Calcular Próximo Envio",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1260,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Separar relatórios que precisam de update dos que não precisam\nconst items = $input.all();\nconst updates = [];\nconst skips = [];\n\nfor (const item of items) {\n  if (item.json.skip_update) {\n    skips.push({ json: { report_id: item.json.id, skipped: true, reason: item.json.webhook_error ? 'webhook_error' : 'frequencia_manual' } });\n  } else {\n    updates.push({ json: { id: item.json.id, proximo_envio: item.json.novo_proximo_envio } });\n  }\n}\n\nreturn updates;"
+      },
+      "id": "58caadd6-6d08-40fe-a025-0d9329f2ac0e",
+      "name": "Separar Updates e Skips",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1500,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/reports?id=eq.{{ $json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"proximo_envio\": \"{{ $json.proximo_envio }}\"}",
+        "options": {}
+      },
+      "id": "e21843b5-889f-4429-9d1a-b13a18c7ebfa",
+      "name": "Atualizar Proximo Envio",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1740,
+        240
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "Supabase Service Role"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Registrar logs dos relatórios disparados\nconst items = $input.all();\n\nfor (const item of items) {\n  const report = item.json;\n  console.log(`Relatório ${report.id || report.report_id} disparado com sucesso`);\n  \n  if (report.skip_update) {\n    if (report.webhook_error) {\n      console.log(`  ⚠ Erro no webhook - proximo_envio NÃO atualizado (tentará novamente em 15min)`);\n    } else {\n      console.log(`  ℹ Frequência manual - proximo_envio NÃO recalculado`);\n    }\n  } else {\n    console.log(`  ✓ proximo_envio atualizado para: ${report.novo_proximo_envio || report.proximo_envio}`);\n  }\n}\n\nreturn items;"
+      },
+      "id": "9ac2f658-2683-439e-be6c-279d0fa18c12",
+      "name": "Log de Execução",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1740,
+        420
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Consultar Relatórios Pendentes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar Relatórios Pendentes": {
+      "main": [
+        [
+          {
+            "node": "Filtrar Relatórios Válidos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar Relatórios Válidos": {
+      "main": [
+        [
+          {
+            "node": "Disparar Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Disparar Webhook": {
+      "main": [
+        [
+          {
+            "node": "Calcular Próximo Envio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log de Execução",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular Próximo Envio": {
+      "main": [
+        [
+          {
+            "node": "Separar Updates e Skips",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar Updates e Skips": {
+      "main": [
+        [
+          {
+            "node": "Atualizar Proximo Envio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualizar Proximo Envio": {
+      "main": [
+        [
+          {
+            "node": "Log de Execução",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "versionId": "1",
+  "active": false,
+  "tags": [
+    {
+      "name": "relatórios"
+    },
+    {
+      "name": "agendamento"
+    },
+    {
+      "name": "produção"
+    }
+  ]
+}
