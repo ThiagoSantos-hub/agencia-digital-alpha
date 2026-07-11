@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -19,14 +18,17 @@ interface WhatsAppGroup {
 
 interface WhatsAppConnectProps {
   compact?: boolean
+  showGroupsButton?: boolean
 }
 
-export function WhatsAppConnect({ compact = false }: WhatsAppConnectProps) {
+export function WhatsAppConnect({ compact = false, showGroupsButton = false }: WhatsAppConnectProps) {
   const [state, setState] = useState<WhatsAppStatus>({ status: 'loading' })
   const [groups, setGroups] = useState<WhatsAppGroup[]>([])
   const [loadingGroups, setLoadingGroups] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null)
+  const [showQR, setShowQR] = useState(false)
+  const [showGroups, setShowGroups] = useState(false)
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -76,16 +78,13 @@ export function WhatsAppConnect({ compact = false }: WhatsAppConnectProps) {
     }
   }, [state.status])
 
-  useEffect(() => {
-    if (state.status === 'connected') fetchGroups()
-  }, [state.status])
-
   async function handleDisconnect() {
     setDisconnecting(true)
     try {
       await fetch('/api/whatsapp/instance', { method: 'DELETE' })
       setState({ status: 'disconnected' })
       setGroups([])
+      setShowQR(false)
     } finally {
       setDisconnecting(false)
     }
@@ -93,6 +92,7 @@ export function WhatsAppConnect({ compact = false }: WhatsAppConnectProps) {
 
   async function handleConnect() {
     setState({ status: 'loading' })
+    setShowQR(false)
     await fetchStatus()
   }
 
@@ -161,43 +161,65 @@ export function WhatsAppConnect({ compact = false }: WhatsAppConnectProps) {
           </div>
         </div>
 
-        {!compact && (
+        {showGroupsButton && (
           <div className="rounded-xl p-4" style={{ backgroundColor: '#0f1320', border: '1px solid #1a2040' }}>
-            <div className="flex items-center gap-2 mb-3">
-              <Users size={14} className="text-indigo-400" />
-              <p className="text-sm font-medium text-white">
-                Grupos disponíveis
-                {groups.length > 0 && (
-                  <span className="ml-2 text-xs px-1.5 py-0.5 rounded-full" style={{ backgroundColor: '#1a2040', color: '#818cf8' }}>
-                    {groups.length}
-                  </span>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Users size={14} className="text-indigo-400" />
+                <p className="text-sm font-medium text-white">
+                  Grupos disponíveis
+                  {groups.length > 0 && (
+                    <span className="ml-2 text-xs px-1.5 py-0.5 rounded-full" style={{ backgroundColor: '#1a2040', color: '#818cf8' }}>
+                      {groups.length}
+                    </span>
+                  )}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowGroups(!showGroups)
+                  if (!showGroups) fetchGroups()
+                }}
+                disabled={loadingGroups}
+                className="text-xs px-3 py-1.5 rounded-lg flex items-center gap-1"
+                style={{ backgroundColor: '#1a2040', color: '#818cf8', border: '1px solid #2a3060' }}
+              >
+                {loadingGroups ? (
+                  <Loader2 size={12} className="animate-spin" />
+                ) : (
+                  showGroups ? 'Ocultar' : 'Ver Grupos da Agência'
                 )}
-              </p>
+              </button>
             </div>
-            {loadingGroups ? (
-              <div className="flex items-center gap-2 py-2">
-                <Loader2 size={14} className="animate-spin text-gray-500" />
-                <span className="text-xs text-gray-500">Carregando grupos...</span>
-              </div>
-            ) : groups.length === 0 ? (
-              <p className="text-xs text-gray-500 py-2">
-                Nenhum grupo encontrado. Verifique se seu WhatsApp está em algum grupo.
-              </p>
-            ) : (
-              <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
-                {groups.map(g => (
-                  <div key={g.group_id} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ backgroundColor: '#0a0f1a' }}>
-                    <span className="text-sm text-white truncate">{g.name}</span>
-                    {g.participant_count > 0 && (
-                      <span className="text-xs text-gray-500 ml-2 shrink-0">{g.participant_count} membros</span>
-                    )}
+            
+            {showGroups && (
+              <>
+                {loadingGroups ? (
+                  <div className="flex items-center gap-2 py-2">
+                    <Loader2 size={14} className="animate-spin text-gray-500" />
+                    <span className="text-xs text-gray-500">Carregando grupos...</span>
                   </div>
-                ))}
-              </div>
+                ) : groups.length === 0 ? (
+                  <p className="text-xs text-gray-500 py-2">
+                    Nenhum grupo encontrado. Verifique se seu WhatsApp está em algum grupo.
+                  </p>
+                ) : (
+                  <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+                    {groups.map(g => (
+                      <div key={g.group_id} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ backgroundColor: '#0a0f1a' }}>
+                        <span className="text-sm text-white truncate">{g.name}</span>
+                        {g.participant_count > 0 && (
+                          <span className="text-xs text-gray-500 ml-2 shrink-0">{g.participant_count} membros</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs mt-3" style={{ color: '#4a5a7a' }}>
+                  Esses grupos aparecem automaticamente ao criar um relatório do tipo "Grupo".
+                </p>
+              </>
             )}
-            <p className="text-xs mt-3" style={{ color: '#4a5a7a' }}>
-              Esses grupos aparecem automaticamente ao criar um relatório do tipo "Grupo".
-            </p>
           </div>
         )}
       </div>
@@ -211,7 +233,7 @@ export function WhatsAppConnect({ compact = false }: WhatsAppConnectProps) {
         <p className="text-white text-sm font-semibold">Conectar WhatsApp</p>
       </div>
 
-      {state.qrcode ? (
+      {showQR && state.qrcode ? (
         <>
           <div className="bg-white rounded-xl p-3 inline-block mb-4 shadow-lg">
             <img
@@ -241,11 +263,14 @@ export function WhatsAppConnect({ compact = false }: WhatsAppConnectProps) {
       ) : (
         <div className="py-6">
           <button
-            onClick={handleConnect}
+            onClick={() => {
+              setShowQR(true)
+              handleConnect()
+            }}
             className="text-sm px-6 py-3 rounded-xl font-semibold transition-all hover:opacity-90"
             style={{ backgroundColor: '#25D366', color: '#fff' }}
           >
-            📱 Gerar QR Code para conectar
+            📱 Conectar WhatsApp
           </button>
           <p className="text-xs mt-3" style={{ color: '#4a5a7a' }}>
             Seu WhatsApp será vinculado a esta conta
