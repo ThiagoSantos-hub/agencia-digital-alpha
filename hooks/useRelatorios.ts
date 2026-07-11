@@ -7,7 +7,7 @@ export interface Report {
   nome: string;
   canal: 'meta' | 'google';
   frequencia: 'diario' | 'semanal' | 'mensal';
-  periodo: 'dia_anterior' | 'ultima_semana' | 'ultimo_mes' | 'ultimos_7_dias' | 'ultimos_30_dias';
+  periodo: 'dia_anterior' | 'ontem' | 'ultima_semana' | 'ultimo_mes' | 'ultimos_7_dias' | 'ultimos_30_dias' | 'personalizado';
   recebedor_tipo: 'privado' | 'grupo';
   recebedor_numero: string;
   mensagem_template: string;
