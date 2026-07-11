@@ -14,50 +14,12 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
   // ============================================================
-  // LÓGICA: Se o usuário logado é um colaborador, retornar o
-  // status da instância do admin (sem criar instância nova).
-  // ============================================================
-
-  const { data: collaborator } = await supabase
-    .from('collaborators')
-    .select('id, user_id')
-    .eq('user_id', user.id)
-    .maybeSingle()
-
-  if (collaborator) {
-    // É colaborador — buscar o admin e a instância do admin
-    const { data: adminProfile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('role', 'admin')
-      .maybeSingle()
-
-    if (adminProfile) {
-      const adminUserId = adminProfile.id
-
-      const { data: adminInstance } = await supabase
-        .from('whatsapp_instances')
-        .select('*')
-        .eq('user_id', adminUserId)
-        .maybeSingle()
-
-      if (adminInstance && adminInstance.grupos_visiveis_colaboradores === true) {
-        return NextResponse.json({
-          status: 'connected',
-          is_admin_instance: true,
-        })
-      } else {
-        return NextResponse.json({
-          status: 'disconnected',
-          is_admin_instance: true,
-        })
-      }
-    }
-  }
-
-  // ============================================================
-  // LÓGICA PADRÃO: usuário NÃO é colaborador (admin/gestor)
-  // Fluxo normal: verificar/criar instância na Evolution API.
+  // LÓGICA UNIFICADA: qualquer usuário (admin, gestor ou
+  // colaborador) passa pelo mesmo fluxo — verificar/criar a
+  // própria instância na Evolution API.
+  // O colaborador tem sua própria instância separada do admin.
+  // Para acessar grupos do admin, o colaborador usa a rota
+  // GET /api/whatsapp/groups?source=agency.
   // ============================================================
 
   if (!EVO_URL || !EVO_KEY) {
