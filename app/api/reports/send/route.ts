@@ -10,7 +10,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'report_id é obrigatório' }, { status: 400 });
     }
 
-    // 1. Buscar o relatório
     const { data: report, error: reportError } = await supabase
       .from('reports')
       .select('*')
@@ -21,10 +20,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Relatório não encontrado' }, { status: 404 });
     }
 
-    // 2. Calcular datas do período
     const { dateStart, dateEnd, diasAtivo } = calcularPeriodo(report.periodo);
 
-    // 3. Buscar token Meta Ads
     const { data: integration } = await supabase
       .from('integrations')
       .select('access_token')
@@ -32,7 +29,6 @@ export async function POST(request: Request) {
       .eq('status', 'connected')
       .maybeSingle();
 
-    // 4. Buscar nome do cliente
     let nomeConta = '—';
     if (report.client_id) {
       const { data: client } = await supabase
@@ -43,11 +39,10 @@ export async function POST(request: Request) {
       if (client) nomeConta = client.name;
     }
 
-    // 5. Buscar métricas reais do Meta Ads — por campanha (igual ao painel)
     let metaValues: Record<string, string> = {};
+    const debugActions: Record<string, string[]> = {};
 
     if (integration?.access_token && report.client_id) {
-      // Buscar todas as campanhas do cliente que têm meta_campaign_id
       const { data: campaigns } = await supabase
         .from('campaigns')
         .select('id, meta_campaign_id')
@@ -55,7 +50,6 @@ export async function POST(request: Request) {
         .not('meta_campaign_id', 'is', null);
 
       if (campaigns && campaigns.length > 0) {
-        // Acumular dados de todas as campanhas
         const acc = {
           impressions: 0, reach: 0, clicks: 0, spend: 0,
           cpm_sum: 0, cpc_sum: 0, ctr_sum: 0, frequency_sum: 0,
@@ -93,12 +87,12 @@ export async function POST(request: Request) {
           acc.video3s       += parseFloat(d.video_30_sec_watched_actions?.[0]?.value ?? '0');
           acc.roas          += parseFloat(d.purchase_roas?.[0]?.value ?? '0');
 
-          // Somar actions
           for (const action of (d.actions ?? [])) {
             acc.actions[action.action_type] = (acc.actions[action.action_type] ?? 0) + parseFloat(action.value ?? '0');
           }
 
-          // Média ponderada do cost_per_action_type
+          debugActions[campaign.meta_campaign_id] = (d.actions ?? []).map((a: any) => `${a.action_type}=${a.value}`);
+
           for (const cost of (d.cost_per_action_type ?? [])) {
             acc.costs[cost.action_type] = (acc.costs[cost.action_type] ?? 0) + parseFloat(cost.value ?? '0');
           }
@@ -169,15 +163,12 @@ export async function POST(request: Request) {
       }
     }
 
-    // 6. Substituir variáveis no template
     let mensagemFinal = report.mensagem_template;
     for (const [variavel, valor] of Object.entries(metaValues)) {
       mensagemFinal = mensagemFinal.replaceAll(variavel, valor);
     }
-    // Substituir variáveis não resolvidas por —
     mensagemFinal = mensagemFinal.replace(/<[A-Z_]+>/g, '—');
 
-    // 7. Enviar para o N8N
     const n8nWebhookUrl = 'https://webhook.digitalalpha.cloud/webhook/disparo-relatorio';
     let status: 'enviado' | 'erro' = 'enviado';
     let erroDetalhe = null;
@@ -205,15 +196,17 @@ export async function POST(request: Request) {
       erroDetalhe = fetchError.message;
     }
 
-    // 8. Registrar no histórico
+    const debugInfo = Object.keys(debugActions).length > 0
+      ? `[DEBUG actions] ${JSON.stringify(debugActions)}`
+      : null;
+
     await supabase.from('report_history').insert({
       report_id,
       status,
       mensagem_enviada: mensagemFinal,
-      erro_detalhe: erroDetalhe,
+      erro_detalhe: erroDetalhe ?? debugInfo,
     });
 
-    // 9. Atualizar próximo envio
     if (status === 'enviado') {
       const proximoEnvio = calcularProximoEnvio(report.frequencia, report.horario_envio);
       await supabase.from('reports').update({ proximo_envio: proximoEnvio }).eq('id', report_id);
