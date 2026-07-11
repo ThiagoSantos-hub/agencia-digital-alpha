@@ -40,6 +40,7 @@ export default function ColaboradorRelatoriosPage() {
   const [historyData, setHistoryData] = useState<ReportHistory[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [actionMenuId, setActionMenuId] = useState<string | null>(null)
+  const [sendingId, setSendingId] = useState<string | null>(null)
 
   // Formatação de data nativa
   const formatDate = (dateString: string) => {
@@ -122,6 +123,28 @@ export default function ColaboradorRelatoriosPage() {
   const handleDelete = async (id: string) => {
     if (confirm('Tem certeza que deseja excluir este relatório?')) {
       await deleteRelatorio(id)
+    }
+  }
+
+  const handleSendNow = async (reportId: string) => {
+    setSendingId(reportId)
+    setActionMenuId(null)
+    try {
+      const res = await fetch('/api/reports/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ report_id: reportId }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        alert(data.error || 'Erro ao enviar relatório.')
+      } else {
+        alert('Relatório enviado com sucesso!')
+      }
+    } catch {
+      alert('Erro ao enviar relatório.')
+    } finally {
+      setSendingId(null)
     }
   }
 
@@ -265,7 +288,7 @@ export default function ColaboradorRelatoriosPage() {
                       {report.proximo_envio ? formatDateTime(report.proximo_envio) : '--'}
                     </div>
                   </td>
-                  <td className="p-4 text-right relative">
+                  <td className="p-4 text-right">
                     <button 
                       onClick={() => setActionMenuId(actionMenuId === report.id ? null : report.id)}
                       className="p-2 hover:bg-[#1a1a2e] rounded-lg text-gray-400 transition-colors"
@@ -279,9 +302,21 @@ export default function ColaboradorRelatoriosPage() {
                           className="fixed inset-0 z-10" 
                           onClick={() => setActionMenuId(null)} 
                         />
-                        <div className="absolute right-4 top-12 w-48 bg-[#0d0d14] border border-[#1a1a2e] rounded-xl shadow-2xl z-20 overflow-hidden">
-                          <button className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1a2e] transition-colors">
-                            <Send size={14} /> Enviar agora
+                        <div 
+                          className="fixed right-8 w-48 bg-[#0d0d14] border border-[#1a1a2e] rounded-xl shadow-2xl z-20 overflow-hidden"
+                          style={{ top: 'auto' }}
+                        >
+                          <button
+                            onClick={() => handleSendNow(report.id)}
+                            disabled={sendingId === report.id}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1a2e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {sendingId === report.id ? (
+                              <Loader2 className="animate-spin" size={14} />
+                            ) : (
+                              <Send size={14} />
+                            )}
+                            Enviar agora
                           </button>
                           <button 
                             onClick={() => router.push(`/colaborador/relatorios/criar?id=${report.id}`)}
@@ -351,25 +386,20 @@ export default function ColaboradorRelatoriosPage() {
               ) : (
                 historyData.map((item) => (
                   <div key={item.id} className="relative pl-6 border-l border-[#1a1a2e]">
-                    <div className={`absolute -left-1.5 top-0 w-3 h-3 rounded-full ${item.status === 'enviado' ? 'bg-green-500' : 'bg-red-500'}`} />
-                    <div className="mb-1 flex justify-between items-center">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                        {formatHistoryDate(item.enviado_em)}
+                    <div className={`absolute left-[-5px] top-0 w-[9px] h-[9px] rounded-full ${
+                      item.status === 'enviado' ? 'bg-[#10b981]' : 'bg-red-500'
+                    }`} />
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-200">
+                        {item.status === 'enviado' ? 'Enviado com sucesso' : 'Falha no envio'}
                       </span>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
-                        item.status === 'enviado' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
-                      }`}>
-                        {item.status}
-                      </span>
+                      <span className="text-[10px] text-gray-500">{formatHistoryDate(item.enviado_em)}</span>
                     </div>
-                    <div className="bg-[#0a0a0f] border border-[#1a1a2e] p-3 rounded-xl text-sm text-gray-300">
-                      {item.mensagem_enviada}
-                      {item.erro_detalhe && (
-                        <div className="mt-2 pt-2 border-t border-[#1a1a2e] text-red-400 text-xs">
-                          Erro: {item.erro_detalhe}
-                        </div>
-                      )}
-                    </div>
+                    {item.erro_detalhe && (
+                      <p className="text-xs text-red-400/80 bg-red-400/5 p-2 rounded border border-red-400/10 mt-2">
+                        {item.erro_detalhe}
+                      </p>
+                    )}
                   </div>
                 ))
               )}
