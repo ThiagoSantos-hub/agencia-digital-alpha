@@ -32,104 +32,140 @@ export async function POST(request: Request) {
       .eq('status', 'connected')
       .maybeSingle();
 
-    // 4. Buscar dados do cliente para pegar meta_ad_account_id
+    // 4. Buscar nome do cliente
     let nomeConta = '—';
-    let adAccountId: string | null = null;
-
     if (report.client_id) {
       const { data: client } = await supabase
         .from('clients')
-        .select('name, meta_ad_account_id')
+        .select('name')
         .eq('id', report.client_id)
         .single();
-
-      if (client) {
-        nomeConta = client.name;
-        adAccountId = client.meta_ad_account_id;
-      }
+      if (client) nomeConta = client.name;
     }
 
-    // 5. Buscar métricas reais do Meta Ads
+    // 5. Buscar métricas reais do Meta Ads — por campanha (igual ao painel)
     let metaValues: Record<string, string> = {};
 
-    if (integration?.access_token && adAccountId) {
-      const accountId = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`;
+    if (integration?.access_token && report.client_id) {
+      // Buscar todas as campanhas do cliente que têm meta_campaign_id
+      const { data: campaigns } = await supabase
+        .from('campaigns')
+        .select('id, meta_campaign_id')
+        .eq('client_id', report.client_id)
+        .not('meta_campaign_id', 'is', null);
 
-      // Buscar insights da conta de anúncio no período
-      const fields = 'impressions,reach,clicks,ctr,spend,cpm,cpc,frequency,actions,cost_per_action_type,purchase_roas,conversion_values,video_30_sec_watched_actions,budget_remaining';
-      const metaUrl = new URL(`https://graph.facebook.com/v19.0/${accountId}/insights`);
-      metaUrl.searchParams.set('fields', fields);
-      metaUrl.searchParams.set('time_range', JSON.stringify({ since: dateStart, until: dateEnd }));
-      metaUrl.searchParams.set('access_token', integration.access_token);
-
-      const metaRes = await fetch(metaUrl.toString());
-      const metaData = await metaRes.json();
-
-      if (!metaData.error && metaData.data?.[0]) {
-        const d = metaData.data[0];
-
-        const getAction = (key: string) =>
-          d.actions?.find((a: any) => a.action_type === key)?.value ?? null;
-        const getCost = (key: string) =>
-          d.cost_per_action_type?.find((a: any) => a.action_type === key)?.value ?? null;
-
-        const fmtBRL = (v: any) =>
-          v ? parseFloat(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '—';
-        const fmtNum = (v: any) =>
-          v ? parseInt(v).toLocaleString('pt-BR') : '—';
-        const fmtDec = (v: any) =>
-          v ? parseFloat(v).toFixed(2).replace('.', ',') : '—';
-        const fmtPct = (v: any) =>
-          v ? `${parseFloat(v).toFixed(2).replace('.', ',')}%` : '—';
-
-        const spend = d.spend ? parseFloat(d.spend) : 0;
-        const convCompra = d.conversion_values ? parseFloat(d.conversion_values) : 0;
-        const imp = d.impressions ? parseFloat(d.impressions) : 0;
-        const video3s = d.video_30_sec_watched_actions?.[0]?.value
-          ? parseFloat(d.video_30_sec_watched_actions[0].value) : 0;
-
-        // Grana no Bolso = Valor de conversão da compra - Valor usado
-        const granaNoB = convCompra - spend;
-        // Taxa de Gancho = Reproduções 3s ÷ Impressões
-        const taxaGancho = imp > 0 ? (video3s / imp) * 100 : 0;
-
-        // Orçamento da conta
-        const { data: accData } = await supabase
-          .from('integrations')
-          .select('access_token')
-          .eq('type', 'meta_ads')
-          .maybeSingle();
-
-        metaValues = {
-          '<DATA>': `${formatarDataBR(dateStart)} a ${formatarDataBR(dateEnd)}`,
-          '<CA>': nomeConta,
-          '<DIAS_ATIVO>': String(diasAtivo),
-          '<ORC>': '—',
-          '<INV>': fmtBRL(d.spend),
-          '<IMP>': fmtNum(d.impressions),
-          '<ALCAN>': fmtNum(d.reach),
-          '<FREQ>': fmtDec(d.frequency),
-          '<CPM>': fmtBRL(d.cpm),
-          '<CPC>': fmtBRL(d.cpc),
-          '<CTR>': fmtPct(d.ctr),
-          '<RESULT>': fmtNum(getAction('lead') || getAction('purchase') || getAction('onsite_conversion.messaging_conversation_started_7d')),
-          '<CPR>': fmtBRL(getCost('lead') || getCost('purchase') || getCost('onsite_conversion.messaging_conversation_started_7d')),
-          '<SEG_IG>': fmtNum(getAction('follow')),
-          '<VISIT_IG>': fmtNum(getAction('onsite_conversion.view_content')),
-          '<ADD_CART>': fmtNum(getAction('add_to_cart')),
-          '<CUSTO_ADD_CART>': fmtBRL(getCost('add_to_cart')),
-          '<VIEW_DEST_SITE>': fmtNum(getAction('landing_page_view')),
-          '<VIEW_DEST>': fmtNum(getAction('view_content')),
-          '<CUSTO_VIEW_DEST>': fmtBRL(getCost('view_content')),
-          '<INIC_COMPRA>': fmtNum(getAction('initiate_checkout')),
-          '<CUSTO_INIC_COMPRA>': fmtBRL(getCost('initiate_checkout')),
-          '<COMPRAS>': fmtNum(getAction('purchase')),
-          '<CUSTO_COMPRA>': fmtBRL(getCost('purchase')),
-          '<CONV_COMPRA>': fmtBRL(d.conversion_values),
-          '<ROAS>': d.purchase_roas?.[0]?.value ? `${parseFloat(d.purchase_roas[0].value).toFixed(2).replace('.', ',')}x` : '—',
-          '<GRANA>': fmtBRL(granaNoB > 0 ? granaNoB : 0),
-          '<GANCHO>': fmtPct(taxaGancho > 0 ? taxaGancho : null),
+      if (campaigns && campaigns.length > 0) {
+        // Acumular dados de todas as campanhas
+        const acc = {
+          impressions: 0, reach: 0, clicks: 0, spend: 0,
+          cpm_sum: 0, cpc_sum: 0, ctr_sum: 0, frequency_sum: 0,
+          conv_values: 0, video3s: 0,
+          actions: {} as Record<string, number>,
+          costs: {} as Record<string, number>,
+          roas: 0,
+          count: 0,
         };
+
+        for (const campaign of campaigns) {
+          const fields = 'impressions,reach,clicks,ctr,spend,cpm,cpc,frequency,actions,cost_per_action_type,purchase_roas,conversion_values,video_30_sec_watched_actions';
+          const metaUrl = new URL(`https://graph.facebook.com/v19.0/${campaign.meta_campaign_id}/insights`);
+          metaUrl.searchParams.set('fields', fields);
+          metaUrl.searchParams.set('time_range', JSON.stringify({ since: dateStart, until: dateEnd }));
+          metaUrl.searchParams.set('access_token', integration.access_token);
+
+          const metaRes = await fetch(metaUrl.toString());
+          const metaData = await metaRes.json();
+
+          if (metaData.error || !metaData.data?.[0]) continue;
+
+          const d = metaData.data[0];
+          acc.count++;
+
+          acc.impressions   += parseFloat(d.impressions  ?? '0');
+          acc.reach         += parseFloat(d.reach        ?? '0');
+          acc.clicks        += parseFloat(d.clicks       ?? '0');
+          acc.spend         += parseFloat(d.spend        ?? '0');
+          acc.cpm_sum       += parseFloat(d.cpm          ?? '0');
+          acc.cpc_sum       += parseFloat(d.cpc          ?? '0');
+          acc.ctr_sum       += parseFloat(d.ctr          ?? '0');
+          acc.frequency_sum += parseFloat(d.frequency    ?? '0');
+          acc.conv_values   += parseFloat(d.conversion_values ?? '0');
+          acc.video3s       += parseFloat(d.video_30_sec_watched_actions?.[0]?.value ?? '0');
+          acc.roas          += parseFloat(d.purchase_roas?.[0]?.value ?? '0');
+
+          // Somar actions
+          for (const action of (d.actions ?? [])) {
+            acc.actions[action.action_type] = (acc.actions[action.action_type] ?? 0) + parseFloat(action.value ?? '0');
+          }
+
+          // Média ponderada do cost_per_action_type
+          for (const cost of (d.cost_per_action_type ?? [])) {
+            acc.costs[cost.action_type] = (acc.costs[cost.action_type] ?? 0) + parseFloat(cost.value ?? '0');
+          }
+        }
+
+        if (acc.count > 0) {
+          const getAction = (key: string) => acc.actions[key] > 0 ? String(acc.actions[key]) : null;
+          const getCost   = (key: string) => acc.costs[key]   > 0 ? String(acc.costs[key] / acc.count) : null;
+
+          const fmtBRL = (v: any) =>
+            v ? parseFloat(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '—';
+          const fmtNum = (v: any) =>
+            v ? Math.round(parseFloat(v)).toLocaleString('pt-BR') : '—';
+          const fmtDec = (v: any) =>
+            v ? parseFloat(v).toFixed(2).replace('.', ',') : '—';
+          const fmtPct = (v: any) =>
+            v ? `${parseFloat(v).toFixed(2).replace('.', ',')}%` : '—';
+
+          const cpmMedio      = acc.cpm_sum       / acc.count;
+          const cpcMedio      = acc.cpc_sum       / acc.count;
+          const ctrMedio      = acc.ctr_sum       / acc.count;
+          const frequenciaMed = acc.frequency_sum / acc.count;
+          const roasMedio     = acc.roas          / acc.count;
+
+          const granaNoB   = acc.conv_values - acc.spend;
+          const taxaGancho = acc.impressions > 0 ? (acc.video3s / acc.impressions) * 100 : 0;
+
+          const resultValue =
+            getAction('onsite_conversion.messaging_conversation_started_7d') ||
+            getAction('lead') ||
+            getAction('purchase');
+          const resultCost =
+            getCost('onsite_conversion.messaging_conversation_started_7d') ||
+            getCost('lead') ||
+            getCost('purchase');
+
+          metaValues = {
+            '<DATA>':              `${formatarDataBR(dateStart)} a ${formatarDataBR(dateEnd)}`,
+            '<CA>':                nomeConta,
+            '<DIAS_ATIVO>':        String(diasAtivo),
+            '<ORC>':               '—',
+            '<INV>':               fmtBRL(acc.spend),
+            '<IMP>':               fmtNum(acc.impressions),
+            '<ALCAN>':             fmtNum(acc.reach),
+            '<FREQ>':              fmtDec(frequenciaMed),
+            '<CPM>':               fmtBRL(cpmMedio),
+            '<CPC>':               fmtBRL(cpcMedio),
+            '<CTR>':               fmtPct(ctrMedio),
+            '<RESULT>':            fmtNum(resultValue),
+            '<CPR>':               fmtBRL(resultCost),
+            '<SEG_IG>':            fmtNum(getAction('follow')),
+            '<VISIT_IG>':          fmtNum(getAction('onsite_conversion.view_content')),
+            '<ADD_CART>':          fmtNum(getAction('add_to_cart')),
+            '<CUSTO_ADD_CART>':    fmtBRL(getCost('add_to_cart')),
+            '<VIEW_DEST_SITE>':    fmtNum(getAction('landing_page_view')),
+            '<VIEW_DEST>':         fmtNum(getAction('view_content')),
+            '<CUSTO_VIEW_DEST>':   fmtBRL(getCost('view_content')),
+            '<INIC_COMPRA>':       fmtNum(getAction('initiate_checkout')),
+            '<CUSTO_INIC_COMPRA>': fmtBRL(getCost('initiate_checkout')),
+            '<COMPRAS>':           fmtNum(getAction('purchase')),
+            '<CUSTO_COMPRA>':      fmtBRL(getCost('purchase')),
+            '<CONV_COMPRA>':       fmtBRL(acc.conv_values > 0 ? acc.conv_values : null),
+            '<ROAS>':              roasMedio > 0 ? `${roasMedio.toFixed(2).replace('.', ',')}x` : '—',
+            '<GRANA>':             fmtBRL(granaNoB > 0 ? granaNoB : null),
+            '<GANCHO>':            fmtPct(taxaGancho > 0 ? taxaGancho : null),
+          };
+        }
       }
     }
 
