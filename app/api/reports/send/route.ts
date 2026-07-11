@@ -236,7 +236,7 @@ export async function POST(request: Request) {
     });
 
     if (status === 'enviado') {
-      const proximoEnvio = calcularProximoEnvio(report.frequencia, report.horario_envio);
+      const proximoEnvio = calcularProximoEnvio(report.frequencia, report.horario_envio, report.dias_semana);
       await supabase.from('reports').update({ proximo_envio: proximoEnvio }).eq('id', report_id);
     }
 
@@ -320,12 +320,25 @@ function formatarDataBR(dateStr: string): string {
   return `${dia}/${mes}/${ano}`;
 }
 
-function calcularProximoEnvio(frequencia: string, horario: string): string {
+function calcularProximoEnvio(frequencia: string, horario: string, diasSemana?: string[] | null): string {
   const agora = new Date();
   const [horas, minutos] = horario.split(':').map(Number);
+
+  if (diasSemana && diasSemana.length > 0) {
+    const diasNums = diasSemana.map(Number).sort((a, b) => a - b);
+    let proximo = new Date();
+    proximo.setHours(horas, minutos, 0, 0);
+    for (let i = 1; i <= 7; i++) {
+      const tentativa = new Date(proximo);
+      tentativa.setDate(proximo.getDate() + i);
+      if (diasNums.includes(tentativa.getDay()) && tentativa > agora) {
+        return tentativa.toISOString();
+      }
+    }
+  }
+
   let proximo = new Date();
   proximo.setHours(horas, minutos, 0, 0);
-
   if (proximo <= agora) {
     if (frequencia === 'diario') proximo.setDate(proximo.getDate() + 1);
     else if (frequencia === 'semanal') proximo.setDate(proximo.getDate() + 7);
