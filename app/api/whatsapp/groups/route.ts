@@ -13,13 +13,14 @@ export async function GET(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
-  // ============================================================
-  // LÓGICA: source=agency — buscar grupos do admin para colaborador.
-  // Se o cache estiver vazio, busca na Evolution API do admin.
-  // ============================================================
-
   const { searchParams } = new URL(request.url)
   const source = searchParams.get('source')
+
+  // ============================================================
+  // source=agency — Grupos do admin compartilhados com colaboradores.
+  // Qualquer usuário autenticado pode chamar este endpoint.
+  // Retorna grupos somente se o admin ativou grupos_visiveis_colaboradores.
+  // ============================================================
 
   if (source === 'agency') {
     const { data: adminProfile } = await supabase
@@ -28,65 +29,69 @@ export async function GET(request: NextRequest) {
       .eq('role', 'admin')
       .maybeSingle()
 
-    if (adminProfile) {
-      const adminUserId = adminProfile.id
+    if (!adminProfile) return NextResponse.json([])
 
-      const { data: adminInstance } = await supabase
-        .from('whatsapp_instances')
-        .select('*')
-        .eq('user_id', adminUserId)
-        .maybeSingle()
+    const adminUserId = adminProfile.id
 
-      if (adminInstance && adminInstance.grupos_visiveis_colaboradores === true) {
-        // Primeiro tenta ler do cache
-        const { data: cached } = await supabase
-          .from('whatsapp_groups')
-          .select('group_id, name, participant_count')
-          .eq('user_id', adminUserId)
-          .order('name')
+    const { data: adminInstance } = await supabase
+      .from('whatsapp_instances')
+      .select('*')
+      .eq('user_id', adminUserId)
+      .maybeSingle()
 
-        if (cached && cached.length > 0) {
-          return NextResponse.json(cached)
+    if (!adminInstance || adminInstance.grupos_visiveis_colaboradores !== true) {
+      return NextResponse.json([])
+    }
+
+    // Primeiro tenta ler do cache
+    const { data: cached } = await supabase
+      .from('whatsapp_groups')
+      .select('group_id, name, participant_count')
+      .eq('user_id', adminUserId)
+      .order('name')
+
+    if (cached && cached.length > 0) {
+      return NextResponse.json(cached)
+    }
+
+    // Cache vazio — busca na Evolution API do admin
+    if (EVO_URL && EVO_KEY && adminInstance.instance_name) {
+      try {
+        const res = await fetch(
+          `${EVO_URL}/group/fetchAllGroups/${adminInstance.instance_name}?getParticipants=false`,
+          { headers: { 'apikey': EVO_KEY } }
+        )
+
+        if (res.ok) {
+          const groups = await res.json()
+
+          if (Array.isArray(groups) && groups.length > 0) {
+            const rows = groups.map((g: any) => ({
+              user_id: adminUserId,
+              group_id: g.id,
+              name: g.subject || g.name || 'Grupo sem nome',
+              participant_count: g.size || g.participants?.length || 0,
+              updated_at: new Date().toISOString(),
+            }))
+
+            await supabase
+              .from('whatsapp_groups')
+              .upsert(rows, { onConflict: 'user_id,group_id' })
+
+            return NextResponse.json(rows.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')))
+          }
         }
-
-        // Cache vazio — busca na Evolution API do admin
-        if (EVO_URL && EVO_KEY && adminInstance.instance_name) {
-          try {
-            const res = await fetch(
-              `${EVO_URL}/group/fetchAllGroups/${adminInstance.instance_name}?getParticipants=false`,
-              { headers: { 'apikey': EVO_KEY } }
-            )
-
-            if (res.ok) {
-              const groups = await res.json()
-
-              if (Array.isArray(groups) && groups.length > 0) {
-                const rows = groups.map((g: any) => ({
-                  user_id: adminUserId,
-                  group_id: g.id,
-                  name: g.subject || g.name || 'Grupo sem nome',
-                  participant_count: g.size || g.participants?.length || 0,
-                  updated_at: new Date().toISOString(),
-                }))
-
-                await supabase
-                  .from('whatsapp_groups')
-                  .upsert(rows, { onConflict: 'user_id,group_id' })
-
-                return NextResponse.json(rows.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')))
-              }
-            }
-          } catch { }
-        }
-      }
+      } catch { }
     }
 
     return NextResponse.json([])
   }
 
   // ============================================================
-  // LÓGICA PADRÃO: grupos do próprio usuário logado.
-  // Busca grupos da Evolution API e faz cache no Supabase.
+  // Fluxo padrão — grupos do próprio usuário logado (admin ou
+  // colaborador com WhatsApp próprio conectado).
+  // Busca na Evolution API usando a instância do usuário e
+  // faz cache no Supabase.
   // ============================================================
 
   const name = instanceName(user.id)
