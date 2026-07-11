@@ -56,7 +56,11 @@ export async function GET() {
         status: 'connected',
         connected_at: new Date().toISOString(),
       }, { onConflict: 'user_id' })
-      return NextResponse.json({ status: 'connected', instance_name: name })
+      return NextResponse.json({
+        status: 'connected',
+        instance_name: name,
+        grupos_visiveis_colaboradores: instance?.grupos_visiveis_colaboradores ?? false,
+      })
     }
 
     const qrRes = await fetch(`${EVO_URL}/instance/connect/${name}`, {
@@ -78,6 +82,26 @@ export async function GET() {
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
+}
+
+export async function PATCH(request: NextRequest) {
+  const supabase = createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+
+  const body = await request.json()
+
+  if (typeof body.grupos_visiveis_colaboradores === 'boolean') {
+    const { error } = await supabase
+      .from('whatsapp_instances')
+      .update({ grupos_visiveis_colaboradores: body.grupos_visiveis_colaboradores })
+      .eq('user_id', user.id)
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+  }
+
+  return NextResponse.json({ success: true })
 }
 
 export async function DELETE() {

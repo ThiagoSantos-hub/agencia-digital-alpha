@@ -387,7 +387,7 @@ export default function IntegracoesPage() {
               />
             ))}
           {integrations
-            .filter(i => !OAUTH_INTEGRATIONS.includes(i.type) && i.type !== 'elevenlabs')
+            .filter(i => !OAUTH_INTEGRATIONS.includes(i.type) && i.type !== 'elevenlabs' && i.type !== 'whatsapp' && i.type !== 'evolution_api')
             .map(integration => (
               <div
                 key={integration.type}

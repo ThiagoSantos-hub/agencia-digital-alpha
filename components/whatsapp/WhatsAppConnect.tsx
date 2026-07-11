@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Smartphone, RefreshCw, Loader2, Users } from 'lucide-react'
+import { Smartphone, RefreshCw, Loader2, Users, Check } from 'lucide-react'
 
 interface WhatsAppStatus {
   status: 'connected' | 'connecting' | 'disconnected' | 'loading' | 'error'
@@ -29,6 +29,9 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null)
   const [showQR, setShowQR] = useState(false)
   const [showGroups, setShowGroups] = useState(false)
+  const [gruposVisiveis, setGruposVisiveis] = useState(false)
+  const [savingGruposVisiveis, setSavingGruposVisiveis] = useState(false)
+  const [showSavedFeedback, setShowSavedFeedback] = useState(false)
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -58,10 +61,12 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
     }
   }, [])
 
+  // Fetch status on mount
   useEffect(() => {
     fetchStatus()
   }, [fetchStatus])
 
+  // Polling while connecting
   useEffect(() => {
     if (state.status === 'connecting') {
       const interval = setInterval(async () => {
@@ -77,6 +82,44 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
       if (pollingInterval) clearInterval(pollingInterval)
     }
   }, [state.status])
+
+  // Fetch grupos_visiveis_colaboradores when connected
+  useEffect(() => {
+    if (state.status !== 'connected') return
+    let cancelled = false
+    const fetchGruposVisiveis = async () => {
+      try {
+        const res = await fetch('/api/whatsapp/instance')
+        if (res.ok) {
+          const data = await res.json()
+          if (!cancelled && typeof data.grupos_visiveis_colaboradores === 'boolean') {
+            setGruposVisiveis(data.grupos_visiveis_colaboradores)
+          }
+        }
+      } catch { /* silencioso */ }
+    }
+    fetchGruposVisiveis()
+    return () => { cancelled = true }
+  }, [state.status])
+
+  // PATCH handler for toggle
+  const handleToggleGruposVisiveis = useCallback(async (enabled: boolean) => {
+    setSavingGruposVisiveis(true)
+    try {
+      const res = await fetch('/api/whatsapp/instance', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ grupos_visiveis_colaboradores: enabled }),
+      })
+      if (res.ok) {
+        setGruposVisiveis(enabled)
+        setShowSavedFeedback(true)
+        setTimeout(() => setShowSavedFeedback(false), 2000)
+      }
+    } finally {
+      setSavingGruposVisiveis(false)
+    }
+  }, [])
 
   async function handleDisconnect() {
     setDisconnecting(true)
@@ -159,6 +202,34 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
               </button>
             </div>
           </div>
+        </div>
+
+        <div className="rounded-xl p-4" style={{ backgroundColor: '#0a1f0f', border: '1px solid #1a3a24' }}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white text-sm font-medium">Permitir que colaboradores vejam meus grupos</p>
+              <p className="text-xs" style={{ color: '#00ff88' }}>Se ativo, os colaboradores poderão visualizar os grupos do seu WhatsApp</p>
+            </div>
+            <button
+              onClick={() => handleToggleGruposVisiveis(!gruposVisiveis)}
+              disabled={savingGruposVisiveis}
+              className={`w-11 h-6 rounded-full transition-colors relative flex items-center px-1 ${
+                gruposVisiveis ? 'bg-[#00ff88]' : 'bg-[#1a3a24]'
+              }`}
+            >
+              <div
+                className={`w-4 h-4 bg-white rounded-full shadow-md transition-all duration-200 transform ${
+                  gruposVisiveis ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+          {showSavedFeedback && (
+            <div className="flex items-center gap-1.5 mt-2">
+              <Check size={12} className="text-emerald-400" />
+              <span className="text-xs text-emerald-400 font-medium">Salvo!</span>
+            </div>
+          )}
         </div>
 
         {showGroupsButton && (
