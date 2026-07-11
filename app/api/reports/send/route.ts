@@ -33,10 +33,22 @@ export async function POST(request: Request) {
     if (report.client_id) {
       const { data: client } = await supabase
         .from('clients')
-        .select('name')
+        .select('name, meta_ad_account_id')
         .eq('id', report.client_id)
         .single();
-      if (client) nomeConta = client.name;
+      if (client) {
+        nomeConta = client.name;
+        if (integration?.access_token && client.meta_ad_account_id) {
+          try {
+            const metaContaUrl = `https://graph.facebook.com/v19.0/${client.meta_ad_account_id}?fields=name&access_token=${integration.access_token}`;
+            const metaContaRes = await fetch(metaContaUrl);
+            const metaContaData = await metaContaRes.json();
+            if (metaContaData?.name) nomeConta = metaContaData.name;
+          } catch {
+            // fallback: client.name já definido acima
+          }
+        }
+      }
     }
 
     let metaValues: Record<string, string> = {};
@@ -47,7 +59,9 @@ export async function POST(request: Request) {
         .from('campaigns')
         .select('id, meta_campaign_id')
         .eq('client_id', report.client_id)
-        .not('meta_campaign_id', 'is', null);
+        .not('meta_campaign_id', 'is', null)
+        .order('created_at', { ascending: true })
+        .limit(10);
 
       if (campaigns && campaigns.length > 0) {
         const acc = {
@@ -59,6 +73,7 @@ export async function POST(request: Request) {
           roas: 0,
           count: 0,
         };
+        const conversasPorCampanha: number[] = [];
 
         for (const campaign of campaigns) {
           const fields = 'impressions,reach,clicks,ctr,spend,cpm,cpc,frequency,actions,cost_per_action_type,purchase_roas,conversion_values,video_30_sec_watched_actions';
@@ -92,6 +107,11 @@ export async function POST(request: Request) {
           }
 
           debugActions[campaign.meta_campaign_id] = (d.actions ?? []).map((a: any) => `${a.action_type}=${a.value}`);
+
+          const convCampanha = parseFloat(
+            (d.actions ?? []).find((a: any) => a.action_type === 'onsite_conversion.messaging_conversation_started_7d')?.value ?? '0'
+          );
+          conversasPorCampanha.push(Math.round(convCampanha));
 
           for (const cost of (d.cost_per_action_type ?? [])) {
             acc.costs[cost.action_type] = (acc.costs[cost.action_type] ?? 0) + parseFloat(cost.value ?? '0');
@@ -156,6 +176,12 @@ export async function POST(request: Request) {
             '<ROAS>':              roasMedio > 0 ? `${roasMedio.toFixed(2).replace('.', ',')}x` : '—',
             '<GRANA>':             fmtBRL(granaNoB > 0 ? granaNoB : null),
             '<GANCHO>':            fmtPct(taxaGancho > 0 ? taxaGancho : null),
+            ...Object.fromEntries(
+              Array.from({ length: 10 }, (_, i) => [
+                `<CAMP_${i + 1}>`,
+                String(conversasPorCampanha[i] ?? 0),
+              ])
+            ),
           };
         }
       }

@@ -54,6 +54,17 @@ const variables = [
   // Métricas Personalizadas
   { label: 'Grana no Bolso', key: '<GRANA>', example: 'R$ 2.325,00' },
   { label: 'Taxa de Gancho', key: '<GANCHO>', example: '32,5%' },
+  // Conversas por Campanha
+  { label: 'Camp. 1 — Conversas', key: '<CAMP_1>', example: '12' },
+  { label: 'Camp. 2 — Conversas', key: '<CAMP_2>', example: '8' },
+  { label: 'Camp. 3 — Conversas', key: '<CAMP_3>', example: '5' },
+  { label: 'Camp. 4 — Conversas', key: '<CAMP_4>', example: '3' },
+  { label: 'Camp. 5 — Conversas', key: '<CAMP_5>', example: '0' },
+  { label: 'Camp. 6 — Conversas', key: '<CAMP_6>', example: '0' },
+  { label: 'Camp. 7 — Conversas', key: '<CAMP_7>', example: '0' },
+  { label: 'Camp. 8 — Conversas', key: '<CAMP_8>', example: '0' },
+  { label: 'Camp. 9 — Conversas', key: '<CAMP_9>', example: '0' },
+  { label: 'Camp. 10 — Conversas', key: '<CAMP_10>', example: '0' },
 ]
 
 function CreateEditReportContent() {
