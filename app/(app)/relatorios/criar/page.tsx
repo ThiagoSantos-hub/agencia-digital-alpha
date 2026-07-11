@@ -324,6 +324,21 @@ function CreateEditReportContent() {
             </select>
           </div>
 
+          {campanhasDoCliente.length > 0 && (
+            <div className="rounded-lg border border-indigo-500/20 bg-indigo-500/5 p-3">
+              <p className="text-xs text-indigo-400 font-semibold mb-2">
+                📋 Referência de campanhas (só visível aqui, não vai no WhatsApp):
+              </p>
+              {campanhasDoCliente.map((c, i) => (
+                <p key={i} className="text-xs text-gray-300 py-0.5">
+                  <span className="text-indigo-400 font-mono font-bold">&lt;CAMP_{i + 1}&gt;</span>
+                  <span className="text-gray-500"> → </span>
+                  {c.nome}
+                </p>
+              ))}
+            </div>
+          )}
+
           <div className="flex gap-4 pt-4">
             <button
               type="button"
@@ -342,21 +357,6 @@ function CreateEditReportContent() {
             </button>
           </div>
         </div>
-
-        {/* Campanhas do Cliente */}
-        {campanhasDoCliente.length > 0 && (
-          <div className="rounded-lg border border-white/10 bg-white/5 p-3">
-            <p className="text-xs text-gray-400 mb-2">
-              📋 Referência de campanhas deste cliente (apenas visível aqui):
-            </p>
-            {campanhasDoCliente.map((c, i) => (
-              <p key={i} className="text-xs text-gray-300">
-                <span className="text-indigo-400 font-mono">&lt;CAMP_{i + 1}&gt;</span>
-                {' → '}{c.nome}
-              </p>
-            ))}
-          </div>
-        )}
 
         {/* Right Side: Message Editor & Preview */}
         <div className="space-y-6">
