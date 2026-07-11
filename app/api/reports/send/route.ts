@@ -287,19 +287,19 @@ function calcularPeriodo(periodo: string, dataInicio?: string, dataFim?: string)
       return { dateStart: fmt(inicio), dateEnd: fmt(hoje), diasAtivo: 7 };
     }
     case 'ultimos_3_dias': {
-      const inicio = new Date(hoje);
-      inicio.setDate(hoje.getDate() - 3);
-      return { dateStart: fmt(inicio), dateEnd: fmt(hoje), diasAtivo: 3 };
+      const ontem = new Date(hoje); ontem.setDate(hoje.getDate() - 1);
+      const inicio = new Date(hoje); inicio.setDate(hoje.getDate() - 3);
+      return { dateStart: fmt(inicio), dateEnd: fmt(ontem), diasAtivo: 3 };
     }
     case 'ultimos_7_dias': {
-      const inicio = new Date(hoje);
-      inicio.setDate(hoje.getDate() - 7);
-      return { dateStart: fmt(inicio), dateEnd: fmt(hoje), diasAtivo: 7 };
+      const ontem = new Date(hoje); ontem.setDate(hoje.getDate() - 1);
+      const inicio = new Date(hoje); inicio.setDate(hoje.getDate() - 7);
+      return { dateStart: fmt(inicio), dateEnd: fmt(ontem), diasAtivo: 7 };
     }
     case 'ultimos_30_dias': {
-      const inicio = new Date(hoje);
-      inicio.setDate(hoje.getDate() - 30);
-      return { dateStart: fmt(inicio), dateEnd: fmt(hoje), diasAtivo: 30 };
+      const ontem = new Date(hoje); ontem.setDate(hoje.getDate() - 1);
+      const inicio = new Date(hoje); inicio.setDate(hoje.getDate() - 30);
+      return { dateStart: fmt(inicio), dateEnd: fmt(ontem), diasAtivo: 30 };
     }
     case 'ultimo_mes': {
       const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
