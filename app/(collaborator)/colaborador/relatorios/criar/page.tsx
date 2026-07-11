@@ -19,18 +19,43 @@ import { createClient } from '@/lib/supabase'
 
 // Variáveis disponíveis para o template
 const variables = [
-  { label: 'Período', key: '<DATA>', example: '01/01 a 07/01' },
+  // Geral
+  { label: 'Período', key: '<DATA>', example: '01/07 a 07/07' },
+  { label: 'Conta', key: '<CA>', example: 'Alpha Digital' },
+  // Investimento
+  { label: 'Orçamento', key: '<ORC>', example: 'R$ 1.000,00' },
+  { label: 'Investido', key: '<INV>', example: 'R$ 875,00' },
+  // Alcance e Entrega
   { label: 'Alcance', key: '<ALCAN>', example: '15.420' },
   { label: 'Impressões', key: '<IMP>', example: '45.890' },
-  { label: 'Cliques', key: '<CLIQ>', example: '840' },
-  { label: 'CTR', key: '<CTR>', example: '1.83%' },
-  { label: 'Leads', key: '<LEADS>', example: '42' },
-  { label: 'CPL', key: '<CPL>', example: 'R$ 12,50' },
-  { label: 'Investido', key: '<INV>', example: 'R$ 525,00' },
-  { label: 'ROAS', key: '<ROAS>', example: '4.5x' },
-  { label: 'CPM', key: '<CPM>', example: 'R$ 11,44' },
-  { label: 'Conversões', key: '<CONV>', example: '15' },
-  { label: 'Conta', key: '<CA>', example: 'Alpha Digital - Principal' },
+  { label: 'Frequência', key: '<FREQ>', example: '2,97' },
+  { label: 'CPM', key: '<CPM>', example: 'R$ 19,05' },
+  // Cliques
+  { label: 'CPC', key: '<CPC>', example: 'R$ 1,04' },
+  { label: 'CTR', key: '<CTR>', example: '1,83%' },
+  // Resultados
+  { label: 'Resultados', key: '<RESULT>', example: '42' },
+  { label: 'Custo/Resultado', key: '<CPR>', example: 'R$ 20,83' },
+  // Instagram
+  { label: 'Seguid. IG', key: '<SEG_IG>', example: '38' },
+  { label: 'Visitas IG', key: '<VISIT_IG>', example: '210' },
+  // Carrinho
+  { label: 'Adic. Carrinho', key: '<ADD_CART>', example: '25' },
+  { label: 'Custo/Carrinho', key: '<CUSTO_ADD_CART>', example: 'R$ 35,00' },
+  // Página de Destino
+  { label: 'View Dest. Site', key: '<VIEW_DEST_SITE>', example: '530' },
+  { label: 'View Destino', key: '<VIEW_DEST>', example: '480' },
+  { label: 'Custo/View Dest', key: '<CUSTO_VIEW_DEST>', example: 'R$ 1,82' },
+  // Compras
+  { label: 'Inic. Compra', key: '<INIC_COMPRA>', example: '18' },
+  { label: 'Custo/Inic.Compra', key: '<CUSTO_INIC_COMPRA>', example: 'R$ 48,61' },
+  { label: 'Compras', key: '<COMPRAS>', example: '10' },
+  { label: 'Custo/Compra', key: '<CUSTO_COMPRA>', example: 'R$ 87,50' },
+  { label: 'Conv. Compra', key: '<CONV_COMPRA>', example: 'R$ 3.200,00' },
+  { label: 'ROAS', key: '<ROAS>', example: '3,66x' },
+  // Métricas Personalizadas
+  { label: 'Grana no Bolso', key: '<GRANA>', example: 'R$ 2.325,00' },
+  { label: 'Taxa de Gancho', key: '<GANCHO>', example: '32,5%' },
 ]
 
 function CreateEditReportContent() {
@@ -51,7 +76,7 @@ function CreateEditReportContent() {
     periodo: 'dia_anterior',
     recebedor_tipo: 'privado',
     recebedor_numero: '',
-    mensagem_template: 'Olá! Segue o relatório de <DATA> da conta <CA>:\n\nAlcance: <ALCAN>\nCliques: <CLIQ>\nInvestimento: <INV>\nLeads: <LEADS>\nCPL: <CPL>',
+    mensagem_template: 'Olá! Segue o relatório de <DATA>\nda conta <CA>:\n\nAlcance: <ALCAN>\nImpressões: <IMP>\nInvestimento: <INV>\nResultados: <RESULT>\nCusto por Resultado: <CPR>\nROAS: <ROAS>',
     horario_envio: '08:00',
     dias_semana: null,
     ativo: true,
@@ -336,7 +361,6 @@ function CreateEditReportContent() {
                     <div className="text-[10px] text-gray-300 text-right mt-1">
                       {new Date().getHours()}:{new Date().getMinutes().toString().padStart(2, '0')}
                     </div>
-                    <div className="absolute -right-2 top-0 w-4 h-4 bg-[#075e54] rounded-bl-full" />
                   </div>
                 </div>
               </div>
@@ -348,9 +372,13 @@ function CreateEditReportContent() {
   )
 }
 
-export default function ColaboradorCreateEditReportPage() {
+export default function CreateEditReportPage() {
   return (
-    <Suspense fallback={<div className="min-h-full flex items-center justify-center"><Loader2 className="animate-spin text-[#10b981]" size={48} /></div>}>
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#050508] flex items-center justify-center">
+        <Loader2 className="animate-spin text-[#10b981]" size={40} />
+      </div>
+    }>
       <CreateEditReportContent />
     </Suspense>
   )
