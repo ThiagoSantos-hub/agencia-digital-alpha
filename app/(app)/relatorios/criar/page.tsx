@@ -37,8 +37,6 @@ const variables = [
   { label: 'Resultados', key: '<RESULT>', example: '42' },
   { label: 'Custo/Resultado', key: '<CPR>', example: 'R$ 20,83' },
   // Instagram
-  { label: 'Seguid. IG', key: '<SEG_IG>', example: '38' },
-  { label: 'Visitas IG', key: '<VISIT_IG>', example: '210' },
   // Carrinho
   { label: 'Adic. Carrinho', key: '<ADD_CART>', example: '25' },
   { label: 'Custo/Carrinho', key: '<CUSTO_ADD_CART>', example: 'R$ 35,00' },
