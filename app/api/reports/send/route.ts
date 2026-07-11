@@ -59,7 +59,6 @@ export async function POST(request: Request) {
         .from('campaigns')
         .select('id, meta_campaign_id')
         .eq('client_id', report.client_id)
-        .not('meta_campaign_id', 'is', null)
         .order('created_at', { ascending: true })
         .limit(10);
 
@@ -76,6 +75,10 @@ export async function POST(request: Request) {
         const conversasPorCampanha: number[] = [];
 
         for (const campaign of campaigns) {
+          if (!campaign.meta_campaign_id) {
+            conversasPorCampanha.push(0);
+            continue;
+          }
           const fields = 'impressions,reach,clicks,ctr,spend,cpm,cpc,frequency,actions,cost_per_action_type,purchase_roas,conversion_values,video_30_sec_watched_actions';
           const metaUrl = new URL(`https://graph.facebook.com/v19.0/${campaign.meta_campaign_id}/insights`);
           metaUrl.searchParams.set('fields', fields);
