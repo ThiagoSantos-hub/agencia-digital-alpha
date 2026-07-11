@@ -33,10 +33,22 @@ export async function POST(request: Request) {
     if (report.client_id) {
       const { data: client } = await supabase
         .from('clients')
-        .select('name')
+        .select('name, meta_ad_account_id')
         .eq('id', report.client_id)
         .single();
-      if (client) nomeConta = client.name;
+      if (client) {
+        nomeConta = client.name;
+        if (integration?.access_token && client.meta_ad_account_id) {
+          try {
+            const metaContaUrl = `https://graph.facebook.com/v19.0/${client.meta_ad_account_id}?fields=name&access_token=${integration.access_token}`;
+            const metaContaRes = await fetch(metaContaUrl);
+            const metaContaData = await metaContaRes.json();
+            if (metaContaData?.name) nomeConta = metaContaData.name;
+          } catch {
+            // fallback: client.name já definido acima
+          }
+        }
+      }
     }
 
     let metaValues: Record<string, string> = {};
