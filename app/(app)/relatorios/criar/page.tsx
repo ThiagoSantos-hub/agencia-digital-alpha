@@ -133,6 +133,9 @@ function CreateEditReportContent() {
       if (report) {
         const { id: _, user_id: __, created_at: ___, updated_at: ____, ...rest } = report
         setFormData(rest)
+        if (rest.dias_semana) {
+          setDiasSelecionados(rest.dias_semana.map(Number))
+        }
       }
     }
   }, [id, reports])

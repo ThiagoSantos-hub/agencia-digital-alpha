@@ -41,12 +41,31 @@ export const useRelatorios = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const calcularProximoEnvio = (frequencia: string, horario: string): string => {
+  const calcularProximoEnvio = (frequencia: string, horario: string, diasSemana?: string[] | null): string => {
     const agora = new Date();
     const [horas, minutos] = horario.split(':').map(Number);
+
+    // Se tem dias da semana selecionados, calcular o próximo dia correto
+    if (diasSemana && diasSemana.length > 0) {
+      const diasNums = diasSemana.map(Number).sort((a, b) => a - b);
+      let proximo = new Date();
+      proximo.setHours(horas, minutos, 0, 0);
+
+      // Tentar os próximos 7 dias para achar o próximo dia da semana programado
+      for (let i = 0; i <= 7; i++) {
+        const tentativa = new Date(proximo);
+        tentativa.setDate(proximo.getDate() + i);
+        if (diasNums.includes(tentativa.getDay())) {
+          if (tentativa > agora) {
+            return tentativa.toISOString();
+          }
+        }
+      }
+    }
+
+    // Fallback: lógica original
     let proximo = new Date();
     proximo.setHours(horas, minutos, 0, 0);
-
     if (proximo <= agora) {
       if (frequencia === 'diario') {
         proximo.setDate(proximo.getDate() + 1);
@@ -56,7 +75,6 @@ export const useRelatorios = () => {
         proximo.setMonth(proximo.getMonth() + 1);
       }
     }
-
     return proximo.toISOString();
   };
 
@@ -83,7 +101,7 @@ export const useRelatorios = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
-      const proximo_envio = calcularProximoEnvio(input.frequencia, input.horario_envio);
+      const proximo_envio = calcularProximoEnvio(input.frequencia, input.horario_envio, input.dias_semana);
       
       const { data, error } = await supabase
         .from('reports')
@@ -111,7 +129,7 @@ export const useRelatorios = () => {
         const current = reports.find(r => r.id === id);
         const freq = input.frequencia || current?.frequencia || 'diario';
         const hora = input.horario_envio || current?.horario_envio || '08:00';
-        (updateData as any).proximo_envio = calcularProximoEnvio(freq, hora);
+        (updateData as any).proximo_envio = calcularProximoEnvio(freq, hora, input.dias_semana);
       }
 
       const { data, error } = await supabase
