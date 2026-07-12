@@ -17,7 +17,7 @@ const TOOL_LABELS: Record<string, string> = {
 export function AlphaToolBadge({ toolName }: AlphaToolBadgeProps) {
   const label = TOOL_LABELS[toolName] ?? toolName
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/20">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[#EFF6FF] text-[#1A56DB] border border-[#BFDBFE]">
       {label}
     </span>
   )
