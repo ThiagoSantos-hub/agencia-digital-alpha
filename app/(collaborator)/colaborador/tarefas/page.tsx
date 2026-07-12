@@ -3,10 +3,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useTasks, Task, TaskStatus, TaskPriority } from '@/hooks/useTasks'
 import { useAuth } from '@/hooks/useAuth'
-import { createClient } from '@/lib/supabase'
 import { 
   Calendar, 
-  Clock, 
   X,
   Circle,
   PlayCircle,
@@ -50,7 +48,7 @@ const COLUMNS: { id: TaskStatus; label: string; icon: any; color: string }[] = [
 
 export default function ColaboradorTasksPage() {
   const { user } = useAuth()
-  const { tasks, loading, updateTask } = useTasks()
+  const { tasks, updateTask } = useTasks()
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [activeTask, setActiveTask] = useState<Task | null>(null)
@@ -159,6 +157,7 @@ export default function ColaboradorTasksPage() {
               key={column.id}
               {...column}
               userRole="collaborator"
+              currentUserId={user?.id}
               tasks={myTasks.filter(t => t.status === column.id)}
               onDuplicate={() => {}}
               onEdit={() => {}}
@@ -183,6 +182,7 @@ export default function ColaboradorTasksPage() {
               <TaskCard 
                 task={activeTask} 
                 userRole="collaborator"
+                currentUserId={user?.id}
                 onDuplicate={() => {}}
                 onEdit={() => {}}
                 onDelete={() => {}}
