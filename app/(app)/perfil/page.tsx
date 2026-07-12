@@ -93,12 +93,12 @@ export default function PerfilAdminPage() {
     <div className="px-6 py-4 space-y-4">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="p-2 rounded-xl bg-[#00ff88]/10 border border-[#00ff88]/30">
-          <Shield size={20} className="text-[#00ff88]" />
+        <div className="p-2 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE]">
+          <Shield size={20} className="text-[#1A56DB]" />
         </div>
         <div>
           <h1 className="text-xl font-bold text-[#1E293B]">Meu Perfil</h1>
-          <p className="text-gray-400 text-xs">Gerencie suas informações e segurança da conta.</p>
+          <p className="text-[#64748B] text-xs">Gerencie suas informações e segurança da conta.</p>
         </div>
       </div>
 
@@ -106,8 +106,8 @@ export default function PerfilAdminPage() {
       {message && (
         <div className={`fixed top-20 right-8 z-50 flex items-center gap-3 px-4 py-2.5 rounded-xl border shadow-2xl animate-in fade-in slide-in-from-right-4 ${
           message.type === 'success' 
-            ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' 
-            : 'bg-red-500/10 border-red-500/50 text-red-400'
+            ? 'bg-green-50 border-green-200 text-green-700'
+            : 'bg-red-50 border-red-200 text-red-700'
         }`}>
           {message.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
           <p className="text-sm font-medium">{message.text}</p>
@@ -118,7 +118,7 @@ export default function PerfilAdminPage() {
         {/* Dados Pessoais */}
         <section className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow p-5 rounded-2xl">
           <div className="flex items-center gap-2.5 mb-4">
-            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
+            <div className="p-1.5 rounded-lg bg-[#EFF6FF] text-[#1A56DB]">
               <User size={16} />
             </div>
             <h2 className="text-base font-bold text-[#1E293B]">Dados Pessoais</h2>
@@ -126,21 +126,21 @@ export default function PerfilAdminPage() {
 
           <form onSubmit={handleUpdateName} className="space-y-3">
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">E-mail</label>
+              <label className="text-[10px] font-black text-[#64748B] uppercase tracking-widest">E-mail</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" size={14} />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]" size={14} />
                 <input 
                   type="email" 
                   disabled
                   value={user?.email || ''}
-                  className="w-full bg-[#1a3a24]/10 border border-[#1a3a24] rounded-xl pl-9 pr-3 py-2 text-sm text-gray-500 cursor-not-allowed"
+                  className="w-full bg-[#F1F5F9] border border-[#E2E8F0] rounded-lg pl-9 pr-3 py-2 text-sm text-[#94A3B8] cursor-not-allowed"
                 />
               </div>
               <p className="text-[10px] text-amber-500/70 font-medium">O email não pode ser alterado.</p>
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Nome de exibição</label>
+              <label className="text-[10px] font-black text-[#64748B] uppercase tracking-widest">Nome de exibição</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={14} />
                 <input 
@@ -155,8 +155,8 @@ export default function PerfilAdminPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Cargo</label>
-              <div className="bg-[#1a3a24]/10 border border-[#1a3a24] rounded-xl px-3 py-2 text-sm text-gray-400 font-medium">
+              <label className="text-[10px] font-black text-[#64748B] uppercase tracking-widest">Cargo</label>
+              <div className="bg-[#F1F5F9] border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm text-[#94A3B8] font-medium">
                 {profile?.role === 'admin' ? 'Administrador' : 'Gestor'}
               </div>
             </div>
@@ -164,7 +164,7 @@ export default function PerfilAdminPage() {
             <button 
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-[#0a0f0c] font-bold rounded-xl transition-all disabled:opacity-50 text-sm"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold rounded-xl transition-all disabled:opacity-50 text-sm"
             >
               <Save size={16} />
               {loading ? 'Salvando...' : 'Salvar Alterações'}
@@ -175,7 +175,7 @@ export default function PerfilAdminPage() {
         {/* Segurança / Senha */}
         <section className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow p-5 rounded-2xl">
           <div className="flex items-center gap-2.5 mb-4">
-            <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
+            <div className="p-1.5 rounded-lg bg-[#EFF6FF] text-[#1A56DB]">
               <Lock size={16} />
             </div>
             <h2 className="text-base font-bold text-[#1E293B]">Segurança</h2>
@@ -183,7 +183,7 @@ export default function PerfilAdminPage() {
 
           <form onSubmit={handleUpdatePassword} className="space-y-3">
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Nova Senha</label>
+              <label className="text-[10px] font-black text-[#64748B] uppercase tracking-widest">Nova Senha</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={14} />
                 <input 
@@ -205,7 +205,7 @@ export default function PerfilAdminPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Confirmar Senha</label>
+              <label className="text-[10px] font-black text-[#64748B] uppercase tracking-widest">Confirmar Senha</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={14} />
                 <input 
@@ -229,7 +229,7 @@ export default function PerfilAdminPage() {
             <button 
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-gray-100 text-[#0a0f0c] font-bold rounded-xl transition-all disabled:opacity-50 text-sm"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-bold rounded-xl transition-all disabled:opacity-50 text-sm"
             >
               <KeyRound size={16} />
               {loading ? 'Processando...' : 'Atualizar Senha'}

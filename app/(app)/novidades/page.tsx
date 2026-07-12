@@ -116,7 +116,7 @@ export default function NovidadesAdminPage() {
       </div>
 
       {/* Formulário de Cadastro/Edição */}
-      <div className={`bg-[#1a1a1a] border rounded-2xl p-6 shadow-xl transition-all ${editingId ? 'border-blue-500/50' : 'border-[#2a2a2a]'}`}>
+      <div className={`bg-white border rounded-2xl p-6 shadow-xl transition-all ${editingId ? 'border-[#1A56DB]' : 'border-[#E2E8F0]'}`}>
         <h2 className="text-[#1E293B] font-semibold text-lg mb-4 flex items-center gap-2">
           {editingId ? (
             <>
@@ -132,7 +132,7 @@ export default function NovidadesAdminPage() {
         </h2>
         <form onSubmit={handleSalvar} className="space-y-4">
           <div>
-            <label className="block text-gray-400 text-xs font-bold uppercase tracking-wider mb-1.5">Título</label>
+            <label className="block text-[#64748B] text-xs font-bold uppercase tracking-wider mb-1.5">Título</label>
             <input
               type="text"
               value={titulo}
@@ -143,7 +143,7 @@ export default function NovidadesAdminPage() {
             />
           </div>
           <div>
-            <label className="block text-gray-400 text-xs font-bold uppercase tracking-wider mb-1.5">Descrição</label>
+            <label className="block text-[#64748B] text-xs font-bold uppercase tracking-wider mb-1.5">Descrição</label>
             <textarea
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
@@ -157,7 +157,7 @@ export default function NovidadesAdminPage() {
             <button
               type="submit"
               disabled={saving}
-              className={`flex-1 font-bold py-3 px-6 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 ${editingId ? 'bg-blue-600 hover:bg-blue-700 text-[#1E293B]' : 'bg-emerald-600 hover:bg-emerald-700 text-[#1E293B]'}`}
+              className={`flex-1 font-bold py-3 px-6 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 ${editingId ? 'bg-[#1A56DB] hover:bg-[#1E40AF] text-[#1E293B]' : 'bg-[#16A34A] hover:bg-[#15803D] text-[#1E293B]'}`}
             >
               {saving ? <RefreshCw size={18} className="animate-spin" /> : editingId ? <Check size={18} /> : <Sparkles size={18} />}
               {saving ? 'Salvando...' : editingId ? 'Salvar Alteração' : 'Publicar Novidade'}
@@ -166,7 +166,7 @@ export default function NovidadesAdminPage() {
               <button
                 type="button"
                 onClick={handleCancelarEdicao}
-                className="px-6 py-3 bg-[#2a2a2a] hover:bg-[#3a3a3a] text-gray-300 font-bold rounded-xl transition-all flex items-center gap-2"
+                className="px-6 py-3 bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#64748B] font-bold rounded-xl transition-all flex items-center gap-2"
               >
                 <X size={18} />
                 Cancelar
@@ -178,7 +178,7 @@ export default function NovidadesAdminPage() {
 
       {/* Listagem */}
       <div className="space-y-4">
-        <h2 className="text-gray-400 text-xs font-black uppercase tracking-[0.2em] flex items-center gap-2">
+        <h2 className="text-[#64748B] text-xs font-black uppercase tracking-[0.2em] flex items-center gap-2">
           <span className="text-[8px]">●</span> Histórico de Novidades
         </h2>
 
@@ -212,7 +212,7 @@ export default function NovidadesAdminPage() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleEditar(n)}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-blue-400 hover:bg-blue-400/10 border border-blue-400/20 transition-all text-xs font-bold"
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[#1A56DB] hover:bg-[#EFF6FF] border border-[#BFDBFE] transition-all text-xs font-bold"
                     >
                       <Pencil size={14} />
                       Editar

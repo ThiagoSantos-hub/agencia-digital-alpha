@@ -107,7 +107,7 @@ export default function FeedbacksAdminPage() {
     switch (status) {
       case 'pendente': return 'text-amber-400 bg-amber-400/10 border-amber-400/20'
       case 'em_analise': return 'text-blue-400 bg-blue-400/10 border-blue-400/20'
-      case 'resolvido': return 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20'
+      case 'resolvido': return 'text-green-700 bg-green-50 border-green-200'
       default: return 'text-gray-400 bg-gray-400/10 border-gray-400/20'
     }
   }
@@ -130,7 +130,7 @@ export default function FeedbacksAdminPage() {
         </div>
         <button 
           onClick={fetchFeedbacks}
-          className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow rounded-xl text-gray-400 hover:text-[#1E293B] hover:border-emerald-500/50 transition-all"
+          className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow rounded-xl text-gray-400 hover:text-[#1E293B] hover:border-[#1A56DB] transition-all"
           title="Recarregar"
         >
           <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
@@ -140,31 +140,31 @@ export default function FeedbacksAdminPage() {
       {/* Filtros */}
       <div className="flex flex-wrap gap-4 p-4 bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow rounded-2xl shadow-lg">
         <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] rounded-xl">
-          <Filter size={16} className="text-emerald-500" />
+          <Filter size={16} className="text-[#1A56DB]" />
           <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Tipo:</span>
           <select 
             value={filterTipo}
             onChange={(e) => setFilterTipo(e.target.value)}
             className="bg-transparent text-[#1E293B] text-sm focus:outline-none cursor-pointer"
           >
-            <option value="todos" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Todos</option>
-            <option value="sugestao" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Sugestão</option>
-            <option value="bug" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Bug</option>
+            <option value="todos">Todos</option>
+            <option value="sugestao">Sugestão</option>
+            <option value="bug">Bug</option>
           </select>
         </div>
 
         <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] rounded-xl">
-          <Clock size={16} className="text-emerald-500" />
+          <Clock size={16} className="text-[#1A56DB]" />
           <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Status:</span>
           <select 
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
             className="bg-transparent text-[#1E293B] text-sm focus:outline-none cursor-pointer"
           >
-            <option value="todos" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Todos</option>
-            <option value="pendente" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Pendente</option>
-            <option value="em_analise" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Em Análise</option>
-            <option value="resolvido" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Resolvido</option>
+            <option value="todos">Todos</option>
+            <option value="pendente">Pendente</option>
+            <option value="em_analise">Em Análise</option>
+            <option value="resolvido">Resolvido</option>
           </select>
         </div>
       </div>
@@ -187,13 +187,13 @@ export default function FeedbacksAdminPage() {
             <div 
               key={f.id} 
               onClick={() => setSelectedFeedback(f)}
-              className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow rounded-2xl p-6 hover:border-emerald-500/30 transition-all group shadow-lg cursor-pointer"
+              className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow rounded-2xl p-6 hover:border-[#1A56DB] transition-all group shadow-lg cursor-pointer"
             >
               <div className="flex flex-col md:flex-row justify-between gap-6">
                 <div className="flex-1 space-y-3">
                   <div className="flex items-center gap-3">
                     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter border ${
-                      f.tipo === 'bug' ? 'text-red-400 bg-red-400/10 border-red-400/20' : 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20'
+                      f.tipo === 'bug' ? 'text-red-700 bg-red-50 border-red-200' : 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20'
                     }`}>
                       {f.tipo === 'bug' ? 'Bug' : 'Sugestão'}
                     </span>
@@ -202,11 +202,11 @@ export default function FeedbacksAdminPage() {
 
                   <div className="flex flex-wrap items-center gap-y-2 gap-x-6">
                     <div className="flex items-center gap-2 text-gray-500 text-xs">
-                      <User size={14} className="text-emerald-500" />
+                      <User size={14} className="text-[#1A56DB]" />
                       <span className="font-medium">{f.profiles?.name || f.profiles?.email || 'Desconhecido'}</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-500 text-xs">
-                      <Calendar size={14} className="text-emerald-500" />
+                      <Calendar size={14} className="text-[#1A56DB]" />
                       <span>{new Date(f.created_at).toLocaleDateString('pt-BR')}</span>
                     </div>
                     {f.anexo_url && (
@@ -235,7 +235,7 @@ export default function FeedbacksAdminPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedFeedback(null)} />
           <div className="relative w-full max-w-2xl bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center justify-between px-8 py-6 border-b border-[#2a2a2a]">
+            <div className="flex items-center justify-between px-8 py-6 border-b border-[#E2E8F0]">
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${selectedFeedback.tipo === 'bug' ? 'bg-bg-red-50 text-red-700 border border-red-200' : 'bg-bg-green-50 text-green-700 border border-green-200'}`}>
                   {selectedFeedback.tipo === 'bug' ? <Bug size={20} /> : <MessageSquare size={20} />}
@@ -249,7 +249,7 @@ export default function FeedbacksAdminPage() {
               </div>
               <button 
                 onClick={() => setSelectedFeedback(null)}
-                className="p-2 rounded-xl text-gray-500 hover:text-[#1E293B] hover:bg-white/5 transition-all"
+                className="p-2 rounded-xl text-[#64748B] hover:text-[#1E293B] hover:bg-white/5 transition-all"
               >
                 <X size={20} />
               </button>
@@ -258,7 +258,7 @@ export default function FeedbacksAdminPage() {
             <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
               <div className="space-y-2">
                 <label className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Descrição</label>
-                <p className="text-gray-300 text-base leading-relaxed whitespace-pre-wrap bg-[#0f0f0f] p-4 rounded-xl border border-[#2a2a2a]">
+                <p className="text-[#1E293B] text-base leading-relaxed whitespace-pre-wrap bg-[#F8FAFC] p-4 rounded-xl border border-[#E2E8F0]">
                   {selectedFeedback.descricao}
                 </p>
               </div>
@@ -270,7 +270,7 @@ export default function FeedbacksAdminPage() {
                     <img 
                       src={selectedFeedback.anexo_url} 
                       alt="Anexo" 
-                      className="w-full rounded-xl border border-[#2a2a2a] hover:border-emerald-500/50 transition-all"
+                      className="w-full rounded-xl border border-[#E2E8F0] hover:border-[#1A56DB] transition-all"
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
                       <Search size={32} className="text-[#1E293B]" />
@@ -280,7 +280,7 @@ export default function FeedbacksAdminPage() {
               )}
             </div>
 
-            <div className="px-8 py-6 border-t border-[#2a2a2a] flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="px-8 py-6 border-t border-[#E2E8F0] flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-3 w-full md:w-auto">
                 <span className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Status:</span>
                 <select 
@@ -289,14 +289,14 @@ export default function FeedbacksAdminPage() {
                   onChange={(e) => handleStatusChange(selectedFeedback.id, e.target.value)}
                   className="bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] rounded-xl px-3 py-1.5 text-[#1E293B] text-xs focus:outline-none focus:border-emerald-500/50 transition-all cursor-pointer"
                 >
-                  <option value="pendente" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Pendente</option>
-                  <option value="em_analise" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Em Análise</option>
-                  <option value="resolvido" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Resolvido</option>
+                  <option value="pendente">Pendente</option>
+                  <option value="em_analise">Em Análise</option>
+                  <option value="resolvido">Resolvido</option>
                 </select>
               </div>
               <button
                 onClick={() => setSelectedFeedback(null)}
-                className="w-full md:w-auto px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-[#1E293B] font-semibold rounded-xl transition-all shadow-lg shadow-emerald-900/20"
+                className="w-full md:w-auto px-6 py-2.5 bg-[#1A56DB] hover:bg-[#1E40AF] text-white font-semibold rounded-xl transition-all shadow-lg shadow-emerald-900/20"
               >
                 Fechar
               </button>
