@@ -14,7 +14,8 @@ import {
   ChevronDown,
   Loader2,
   Check,
-  Send
+  Send,
+  Smile
 } from 'lucide-react'
 import { useRelatorios, ReportInput } from '@/hooks/useRelatorios'
 import { useWhatsApp } from '@/hooks/useWhatsApp'
@@ -70,6 +71,8 @@ const variables = [
   { label: 'Camp. 10 — Conversas', key: '<CAMP_10>', example: '0' },
 ]
 
+const commonEmojis = ['📊', '📈', '💰', '🎯', '🚀', '🔥', '✅', '📱', '✨', '👋', '🤝', '💎', '💡', '📅', '🔗']
+
 function CreateEditReportContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -81,6 +84,7 @@ function CreateEditReportContent() {
   const [clients, setClients] = useState<{id: string, name: string}[]>([])
   const [campanhasDoCliente, setCampanhasDoCliente] = useState<{name: string}[]>([])
   const [diasSelecionados, setDiasSelecionados] = useState<number[]>([])
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
 
   const toggleDia = (i: number) => {
     setDiasSelecionados(prev => {
@@ -409,9 +413,42 @@ function CreateEditReportContent() {
           <div className="bg-white border border-[#E2E8F0] p-8 rounded-2xl shadow-sm space-y-4">
             <div className="flex justify-between items-center">
               <label className="text-sm font-semibold text-[#64748B]">Corpo da Mensagem</label>
-              <div className="flex items-center gap-2 text-[#1A56DB] bg-[#EFF6FF] px-2 py-1 rounded-lg">
-                <Info size={14} />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Clique nas variáveis abaixo para inserir</span>
+              <div className="flex items-center gap-3">
+                {/* Emoji Selector Trigger */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    className={`p-1.5 rounded-lg transition-all flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider ${
+                      showEmojiPicker ? 'bg-[#1A56DB] text-white shadow-md' : 'bg-[#EFF6FF] text-[#1A56DB] hover:bg-[#DBEAFE]'
+                    }`}
+                  >
+                    <Smile size={16} />
+                    Emojis
+                  </button>
+
+                  {showEmojiPicker && (
+                    <div className="absolute bottom-full right-0 mb-2 p-3 bg-white border border-[#E2E8F0] rounded-2xl shadow-2xl z-50 w-[200px] grid grid-cols-5 gap-2 animate-in fade-in slide-in-from-bottom-2">
+                      {commonEmojis.map(emoji => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => {
+                            insertVariable(emoji)
+                            setShowEmojiPicker(false)
+                          }}
+                          className="w-8 h-8 flex items-center justify-center hover:bg-[#F8FAFC] rounded-lg text-lg transition-all active:scale-90"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 text-[#1A56DB] bg-[#EFF6FF] px-2 py-1 rounded-lg">
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Clique para inserir</span>
+                </div>
               </div>
             </div>
             
@@ -463,6 +500,18 @@ function CreateEditReportContent() {
 
         {/* Right Side: Smartphone Preview (5 cols) */}
         <div className="lg:col-span-5 sticky top-8 space-y-6">
+          {/* Dicas de UX - REPOSICIONADA PARA CIMA */}
+          <div className="bg-[#EFF6FF] border border-[#BFDBFE] p-5 rounded-2xl space-y-2">
+            <h3 className="text-[#1A56DB] font-bold text-xs flex items-center gap-2">
+              <Info size={14} /> Dica do Especialista
+            </h3>
+            <p className="text-[#1E293B] text-[11px] leading-relaxed">
+              O visual abaixo simula exatamente como o seu cliente receberá o relatório. 
+              Dica: Use quebras de linha e emojis no template para tornar a leitura mais agradável no celular!
+            </p>
+          </div>
+
+          {/* Smartphone Frame */}
           <div className="relative mx-auto w-[280px] h-[560px] bg-[#1E293B] rounded-[2.5rem] border-[6px] border-[#1E293B] shadow-2xl overflow-hidden ring-4 ring-[#E2E8F0]">
             {/* Notch */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-5 bg-[#1E293B] rounded-b-xl z-20" />
@@ -504,17 +553,6 @@ function CreateEditReportContent() {
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Dicas de UX */}
-          <div className="bg-[#EFF6FF] border border-[#BFDBFE] p-5 rounded-2xl space-y-2">
-            <h3 className="text-[#1A56DB] font-bold text-xs flex items-center gap-2">
-              <Info size={14} /> Dica do Especialista
-            </h3>
-            <p className="text-[#1E293B] text-[11px] leading-relaxed">
-              O visual ao lado simula exatamente como o seu cliente receberá o relatório. 
-              Dica: Use quebras de linha e emojis no template para tornar a leitura mais agradável no celular!
-            </p>
           </div>
         </div>
       </form>
