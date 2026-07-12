@@ -39,7 +39,7 @@ function formatDate(date: Date) {
 function DonutChart({ data }: { data: { label: string; value: number; color: string }[] }) {
   const total = data.reduce((s, d) => s + d.value, 0)
   if (total === 0) return (
-    <div className="flex flex-col items-center justify-center h-full text-gray-600">
+    <div className="flex flex-col items-center justify-center h-full text-[#64748B]">
       <PieIcon size={32} className="mb-2 opacity-20" />
       <p className="text-[10px]">Sem dados</p>
     </div>
@@ -199,34 +199,34 @@ export default function DashboardPage() {
   }, [dataInicio, dataFim])
 
   const cards = [
-    { label: 'Clientes Ativos',     valor: stats.totalClientesAtivos, icon: Users,        cor: '#00ff88' },
-    { label: 'Campanhas Ativas',    valor: stats.campanhasAtivas,     icon: Megaphone,    cor: '#6366f1' },
-    { label: 'Relatórios Enviados', valor: stats.relatoriosEnviados,  icon: BarChart2,    cor: '#f59e0b' },
-    { label: 'Alertas Enviados',    valor: stats.alertasEnviados,     icon: Bell,         cor: '#ef4444' },
-    { label: 'Tarefas a Fazer',     valor: stats.tarefasAFazer,       icon: CheckSquare,  cor: '#3b82f6' },
-    { label: 'Checklists Pendentes',valor: stats.checklistsPendentes, icon: ListChecks,   cor: '#a855f7' },
+    { label: 'Clientes Ativos',      valor: stats.totalClientesAtivos, icon: Users,       cor: '#1A56DB' },
+    { label: 'Campanhas Ativas',     valor: stats.campanhasAtivas,     icon: Megaphone,   cor: '#16A34A' },
+    { label: 'Relatórios Enviados',  valor: stats.relatoriosEnviados,  icon: BarChart2,   cor: '#F59E0B' },
+    { label: 'Alertas Enviados',     valor: stats.alertasEnviados,     icon: Bell,        cor: '#EF4444' },
+    { label: 'Tarefas a Fazer',      valor: stats.tarefasAFazer,       icon: CheckSquare, cor: '#1A56DB' },
+    { label: 'Checklists Pendentes', valor: stats.checklistsPendentes, icon: ListChecks,  cor: '#F59E0B' },
   ]
 
   return (
-    <div className="h-[calc(100vh-100px)] flex flex-col gap-4 overflow-hidden p-1">
+    <div className="h-[calc(100vh-100px)] flex flex-col gap-4 overflow-hidden p-1 bg-[#F8FAFC]">
       
       {/* Topo: Boas-vindas e Filtros - Altura Fixa */}
       <div className="h-16 flex flex-shrink-0 items-center gap-4">
-        <div className="bg-white border border-[#E2E8F0] rounded-xl px-5 h-full flex items-center gap-4 flex-1 min-w-0">
+        <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow px-5 h-full flex items-center gap-4 flex-1 min-w-0">
           <div className="w-9 h-9 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center flex-shrink-0">
-            <span className="text-[#1A56DB] text-sm font-bold">{nome.charAt(0).toUpperCase()}</span>
+            <span className="text-[#1A56DB] text-sm font-semibold">{nome.charAt(0).toUpperCase()}</span>
           </div>
           <div className="min-w-0">
-            <h1 className="text-[#1E293B] text-base font-bold truncate">Olá, {nome}! 👋</h1>
-            <p className="text-[#64748B] text-[10px] truncate">{getFraseDoDia()}</p>
+            <h1 className="text-[#1E293B] font-semibold text-base truncate">Olá, {nome}! 👋</h1>
+            <p className="text-[#64748B] text-sm truncate">{getFraseDoDia()}</p>
           </div>
           <div className="ml-auto text-right hidden md:block flex-shrink-0">
-             <p className="text-[9px] text-[#1A56DB]/60 font-bold uppercase tracking-widest leading-none">{roleLabel}</p>
-             <p className="text-[#64748B] text-[9px] mt-1">{hoje.toLocaleDateString('pt-BR')}</p>
+            <p className="text-[9px] text-[#1A56DB] font-semibold uppercase tracking-widest leading-none">{roleLabel}</p>
+            <p className="text-[#64748B] text-sm mt-1">{hoje.toLocaleDateString('pt-BR')}</p>
           </div>
         </div>
 
-        <div className="bg-white border border-[#E2E8F0] rounded-xl px-4 h-full flex items-center gap-3 flex-shrink-0">
+        <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow px-4 h-full flex items-center gap-3 flex-shrink-0">
           <Calendar size={14} className="text-[#1A56DB]" />
           <div className="flex items-center gap-2">
             <input
@@ -254,10 +254,10 @@ export default function DashboardPage() {
           {cards.map((card) => {
             const Icon = card.icon
             return (
-              <div key={card.label} className="bg-white border border-[#E2E8F0] rounded-xl px-4 flex items-center justify-between transition-all hover:bg-[#F1F5F9] min-h-0 overflow-hidden">
+              <div key={card.label} className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow px-4 flex items-center justify-between min-h-0 overflow-hidden">
                 <div className="min-w-0">
-                  <p className="text-[#64748B] text-[9px] font-bold uppercase tracking-tight mb-0.5 truncate">{card.label}</p>
-                  <p className="text-xl font-black tracking-tighter leading-none" style={{ color: card.cor }}>
+                  <p className="text-[#64748B] text-sm font-semibold uppercase tracking-tight mb-0.5 truncate">{card.label}</p>
+                  <p className="text-xl font-semibold tracking-tighter leading-none" style={{ color: card.cor }}>
                     {loading ? '...' : card.valor}
                   </p>
                 </div>
@@ -271,15 +271,15 @@ export default function DashboardPage() {
         </div>
 
         {/* Gráficos Centrais - Ocupa 4/6 da altura */}
-        <div className="col-span-6 row-span-4 bg-white border border-[#E2E8F0] rounded-xl p-4 flex flex-col min-h-0">
+        <div className="col-span-6 row-span-4 bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col min-h-0">
           <div className="flex items-center justify-between mb-4 flex-shrink-0">
             <div className="flex items-center gap-2">
               <TrendingUp size={14} className="text-[#1A56DB]" />
-              <h2 className="text-[#1E293B] font-bold text-xs uppercase tracking-wide">Desempenho Geral</h2>
+              <h2 className="text-[#1E293B] font-semibold text-xs uppercase tracking-wide">Desempenho Geral</h2>
             </div>
             <div className="flex gap-3">
               <span className="flex items-center gap-1 text-[9px] text-[#64748B] font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#6366f1]" /> CAMPANHAS
+                <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]" /> CAMPANHAS
               </span>
               <span className="flex items-center gap-1 text-[9px] text-[#64748B] font-medium">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#1A56DB]" /> CLIENTES
@@ -293,34 +293,34 @@ export default function DashboardPage() {
             />
           </div>
           <div className="mt-3 pt-3 border-t border-[#E2E8F0] flex items-center justify-between flex-shrink-0">
-            <div className="text-[9px] text-[#64748B]">Média de crescimento: <span className="text-[#1A56DB] font-bold">+12.5%</span></div>
+            <div className="text-[9px] text-[#64748B]">Média de crescimento: <span className="text-[#1A56DB] font-semibold">+12.5%</span></div>
             <div className="text-[9px] text-[#64748B] italic">Dados consolidados</div>
           </div>
         </div>
 
         {/* Distribuição (Pizza) - Ocupa 4/6 da altura */}
-        <div className="col-span-3 row-span-4 bg-white border border-[#E2E8F0] rounded-xl p-4 flex flex-col min-h-0">
+        <div className="col-span-3 row-span-4 bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col min-h-0">
           <div className="flex items-center gap-2 mb-4 flex-shrink-0">
-            <Activity size={14} className="text-[#f59e0b]" />
-            <h2 className="text-[#1E293B] font-bold text-xs uppercase tracking-wide">Canais</h2>
+            <Activity size={14} className="text-[#F59E0B]" />
+            <h2 className="text-[#1E293B] font-semibold text-xs uppercase tracking-wide">Canais</h2>
           </div>
           <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center overflow-hidden">
             <DonutChart data={[
-              { label: 'Meta Ads', value: 45, color: '#6366f1' },
-              { label: 'Google Ads', value: 35, color: '#00ff88' },
-              { label: 'Outros', value: 20, color: '#f59e0b' },
+              { label: 'Meta Ads',    value: 45, color: '#1A56DB' },
+              { label: 'Google Ads', value: 35, color: '#16A34A' },
+              { label: 'Outros',     value: 20, color: '#F59E0B' },
             ]} />
           </div>
         </div>
 
         {/* Ranking Inferior - Ocupa 2/6 da altura */}
-        <div className="col-span-9 row-span-2 bg-white border border-[#E2E8F0] rounded-xl p-4 flex flex-col min-h-0">
+        <div className="col-span-9 row-span-2 bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col min-h-0">
           <div className="flex items-center justify-between mb-3 flex-shrink-0">
             <div className="flex items-center gap-2">
-              <Trophy size={14} className="text-[#f59e0b]" />
-              <h2 className="text-[#1E293B] font-bold text-xs uppercase tracking-wide">Top Colaboradores</h2>
+              <Trophy size={14} className="text-[#F59E0B]" />
+              <h2 className="text-[#1E293B] font-semibold text-xs uppercase tracking-wide">Top Colaboradores</h2>
             </div>
-            <span className="text-[9px] text-[#1A56DB]/60 uppercase font-black tracking-widest">RANKING MENSAL</span>
+            <span className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-[#EFF6FF] text-[#1A56DB] border border-[#BFDBFE]">RANKING MENSAL</span>
           </div>
           <div className="flex-1 min-h-0 overflow-hidden flex items-center gap-5">
             {loading ? (
@@ -334,8 +334,8 @@ export default function DashboardPage() {
                 return (
                   <div key={colab.nome} className="flex-1 min-w-0 flex flex-col justify-center">
                     <div className="flex items-center justify-between mb-1 px-0.5">
-                      <span className="text-[#1E293B] text-[10px] font-bold truncate">{i + 1}º {colab.nome}</span>
-                      <span className="text-[#1A56DB] text-[10px] font-black">{colab.concluidas}</span>
+                      <span className="text-[#1E293B] text-[10px] font-semibold truncate">{i + 1}º {colab.nome}</span>
+                      <span className="text-[#1A56DB] text-[10px] font-semibold">{colab.concluidas}</span>
                     </div>
                     <div className="h-1 bg-[#E2E8F0] rounded-full overflow-hidden">
                       <div className="h-full bg-[#1A56DB] rounded-full transition-all duration-1000"
