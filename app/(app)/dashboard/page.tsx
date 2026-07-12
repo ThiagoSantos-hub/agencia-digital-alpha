@@ -78,16 +78,16 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
           ))}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-white text-lg font-black leading-none">{total}</span>
-          <span className="text-[8px] text-gray-500 uppercase font-bold">Total</span>
+          <span className="text-[#1E293B] text-lg font-black leading-none">{total}</span>
+          <span className="text-[8px] text-[#64748B] uppercase font-bold">Total</span>
         </div>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-1 w-full max-w-[200px]">
         {slices.map((s, i) => (
           <div key={i} className="flex items-center gap-1.5 min-w-0">
             <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
-            <span className="text-gray-400 text-[9px] truncate">{s.label}</span>
-            <span className="text-white text-[9px] font-bold ml-auto">{s.pct}%</span>
+            <span className="text-[#64748B] text-[9px] truncate">{s.label}</span>
+            <span className="text-[#1E293B] text-[9px] font-bold ml-auto">{s.pct}%</span>
           </div>
         ))}
       </div>
@@ -108,7 +108,7 @@ function BarChart({ data, color }: { data: number[], color: string }) {
               className="w-full rounded-t-sm transition-all duration-500 hover:brightness-125"
               style={{ height: `${height}%`, backgroundColor: color, opacity: 0.5 + (height / 200) }}
             />
-            <div className="absolute -top-4 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] text-white font-bold bg-[#0a0f0c] px-1 rounded border border-[#1a3a24] z-10">
+            <div className="absolute -top-4 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] text-[#1E293B] font-bold bg-white px-1 rounded border border-[#E2E8F0] z-10">
               {v}
             </div>
           </div>
@@ -212,35 +212,35 @@ export default function DashboardPage() {
       
       {/* Topo: Boas-vindas e Filtros - Altura Fixa */}
       <div className="h-16 flex flex-shrink-0 items-center gap-4">
-        <div className="bg-[#0f1a14] border border-[#1a3a24] rounded-2xl px-5 h-full flex items-center gap-4 flex-1 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-[#00ff88]/10 border border-[#00ff88]/30 flex items-center justify-center flex-shrink-0">
-            <span className="text-[#00ff88] text-sm font-bold">{nome.charAt(0).toUpperCase()}</span>
+        <div className="bg-white border border-[#E2E8F0] rounded-xl px-5 h-full flex items-center gap-4 flex-1 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center flex-shrink-0">
+            <span className="text-[#1A56DB] text-sm font-bold">{nome.charAt(0).toUpperCase()}</span>
           </div>
           <div className="min-w-0">
-            <h1 className="text-white text-base font-bold truncate">Olá, {nome}! 👋</h1>
-            <p className="text-gray-500 text-[10px] truncate">{getFraseDoDia()}</p>
+            <h1 className="text-[#1E293B] text-base font-bold truncate">Olá, {nome}! 👋</h1>
+            <p className="text-[#64748B] text-[10px] truncate">{getFraseDoDia()}</p>
           </div>
           <div className="ml-auto text-right hidden md:block flex-shrink-0">
-             <p className="text-[9px] text-[#00ff88]/60 font-bold uppercase tracking-widest leading-none">{roleLabel}</p>
-             <p className="text-gray-500 text-[9px] mt-1">{hoje.toLocaleDateString('pt-BR')}</p>
+             <p className="text-[9px] text-[#1A56DB]/60 font-bold uppercase tracking-widest leading-none">{roleLabel}</p>
+             <p className="text-[#64748B] text-[9px] mt-1">{hoje.toLocaleDateString('pt-BR')}</p>
           </div>
         </div>
 
-        <div className="bg-[#0f1a14] border border-[#1a3a24] rounded-2xl px-4 h-full flex items-center gap-3 flex-shrink-0">
-          <Calendar size={14} className="text-[#00ff88]" />
+        <div className="bg-white border border-[#E2E8F0] rounded-xl px-4 h-full flex items-center gap-3 flex-shrink-0">
+          <Calendar size={14} className="text-[#1A56DB]" />
           <div className="flex items-center gap-2">
             <input
               type="date"
               value={dataInicio}
               onChange={(e) => setDataInicio(e.target.value)}
-              className="bg-[#0a0f0c] border border-[#1a3a24] rounded-lg px-2 py-1 text-white text-[10px] focus:outline-none focus:border-[#00ff88]/50 [color-scheme:dark]"
+              className="bg-white border border-[#E2E8F0] rounded-lg px-2 py-1 text-[#1E293B] text-[10px] focus:outline-none focus:border-[#1A56DB] [color-scheme:light]"
             />
-            <span className="text-gray-600 text-[10px]">~</span>
+            <span className="text-[#64748B] text-[10px]">~</span>
             <input
               type="date"
               value={dataFim}
               onChange={(e) => setDataFim(e.target.value)}
-              className="bg-[#0a0f0c] border border-[#1a3a24] rounded-lg px-2 py-1 text-white text-[10px] focus:outline-none focus:border-[#00ff88]/50 [color-scheme:dark]"
+              className="bg-white border border-[#E2E8F0] rounded-lg px-2 py-1 text-[#1E293B] text-[10px] focus:outline-none focus:border-[#1A56DB] [color-scheme:light]"
             />
           </div>
         </div>
@@ -254,9 +254,9 @@ export default function DashboardPage() {
           {cards.map((card) => {
             const Icon = card.icon
             return (
-              <div key={card.label} className="bg-[#0f1a14] border border-[#1a3a24] rounded-2xl px-4 flex items-center justify-between transition-all hover:bg-[#1a3a24]/20 min-h-0 overflow-hidden">
+              <div key={card.label} className="bg-white border border-[#E2E8F0] rounded-xl px-4 flex items-center justify-between transition-all hover:bg-[#F1F5F9] min-h-0 overflow-hidden">
                 <div className="min-w-0">
-                  <p className="text-gray-500 text-[9px] font-bold uppercase tracking-tight mb-0.5 truncate">{card.label}</p>
+                  <p className="text-[#64748B] text-[9px] font-bold uppercase tracking-tight mb-0.5 truncate">{card.label}</p>
                   <p className="text-xl font-black tracking-tighter leading-none" style={{ color: card.cor }}>
                     {loading ? '...' : card.valor}
                   </p>
@@ -271,38 +271,38 @@ export default function DashboardPage() {
         </div>
 
         {/* Gráficos Centrais - Ocupa 4/6 da altura */}
-        <div className="col-span-6 row-span-4 bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-4 flex flex-col min-h-0">
+        <div className="col-span-6 row-span-4 bg-white border border-[#E2E8F0] rounded-xl p-4 flex flex-col min-h-0">
           <div className="flex items-center justify-between mb-4 flex-shrink-0">
             <div className="flex items-center gap-2">
-              <TrendingUp size={14} className="text-[#00ff88]" />
-              <h2 className="text-white font-bold text-xs uppercase tracking-wide">Desempenho Geral</h2>
+              <TrendingUp size={14} className="text-[#1A56DB]" />
+              <h2 className="text-[#1E293B] font-bold text-xs uppercase tracking-wide">Desempenho Geral</h2>
             </div>
             <div className="flex gap-3">
-              <span className="flex items-center gap-1 text-[9px] text-gray-500 font-medium">
+              <span className="flex items-center gap-1 text-[9px] text-[#64748B] font-medium">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#6366f1]" /> CAMPANHAS
               </span>
-              <span className="flex items-center gap-1 text-[9px] text-gray-500 font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#00ff88]" /> CLIENTES
+              <span className="flex items-center gap-1 text-[9px] text-[#64748B] font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#1A56DB]" /> CLIENTES
               </span>
             </div>
           </div>
           <div className="flex-1 min-h-0 w-full overflow-hidden">
             <BarChart 
               data={[12, 19, 15, 25, 22, 30, 28, 35, 32, 40, 38, 45]} 
-              color="#00ff88" 
+              color="#1A56DB" 
             />
           </div>
-          <div className="mt-3 pt-3 border-t border-[#1a3a24] flex items-center justify-between flex-shrink-0">
-            <div className="text-[9px] text-gray-500">Média de crescimento: <span className="text-[#00ff88] font-bold">+12.5%</span></div>
-            <div className="text-[9px] text-gray-500 italic">Dados consolidados</div>
+          <div className="mt-3 pt-3 border-t border-[#E2E8F0] flex items-center justify-between flex-shrink-0">
+            <div className="text-[9px] text-[#64748B]">Média de crescimento: <span className="text-[#1A56DB] font-bold">+12.5%</span></div>
+            <div className="text-[9px] text-[#64748B] italic">Dados consolidados</div>
           </div>
         </div>
 
         {/* Distribuição (Pizza) - Ocupa 4/6 da altura */}
-        <div className="col-span-3 row-span-4 bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-4 flex flex-col min-h-0">
+        <div className="col-span-3 row-span-4 bg-white border border-[#E2E8F0] rounded-xl p-4 flex flex-col min-h-0">
           <div className="flex items-center gap-2 mb-4 flex-shrink-0">
             <Activity size={14} className="text-[#f59e0b]" />
-            <h2 className="text-white font-bold text-xs uppercase tracking-wide">Canais</h2>
+            <h2 className="text-[#1E293B] font-bold text-xs uppercase tracking-wide">Canais</h2>
           </div>
           <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center overflow-hidden">
             <DonutChart data={[
@@ -314,19 +314,19 @@ export default function DashboardPage() {
         </div>
 
         {/* Ranking Inferior - Ocupa 2/6 da altura */}
-        <div className="col-span-9 row-span-2 bg-[#0f1a14] border border-[#1a3a24] rounded-2xl p-4 flex flex-col min-h-0">
+        <div className="col-span-9 row-span-2 bg-white border border-[#E2E8F0] rounded-xl p-4 flex flex-col min-h-0">
           <div className="flex items-center justify-between mb-3 flex-shrink-0">
             <div className="flex items-center gap-2">
               <Trophy size={14} className="text-[#f59e0b]" />
-              <h2 className="text-white font-bold text-xs uppercase tracking-wide">Top Colaboradores</h2>
+              <h2 className="text-[#1E293B] font-bold text-xs uppercase tracking-wide">Top Colaboradores</h2>
             </div>
-            <span className="text-[9px] text-[#00ff88]/60 uppercase font-black tracking-widest">RANKING MENSAL</span>
+            <span className="text-[9px] text-[#1A56DB]/60 uppercase font-black tracking-widest">RANKING MENSAL</span>
           </div>
           <div className="flex-1 min-h-0 overflow-hidden flex items-center gap-5">
             {loading ? (
-              <div className="w-full flex justify-center"><div className="animate-spin h-3 w-3 border-2 border-[#00ff88] border-t-transparent rounded-full" /></div>
+              <div className="w-full flex justify-center"><div className="animate-spin h-3 w-3 border-2 border-[#1A56DB] border-t-transparent rounded-full" /></div>
             ) : stats.rankingColaboradores.length === 0 ? (
-              <p className="text-gray-600 text-[10px] italic">Aguardando atividades...</p>
+              <p className="text-[#94A3B8] text-[10px] italic">Aguardando atividades...</p>
             ) : (
               stats.rankingColaboradores.map((colab, i) => {
                 const max = stats.rankingColaboradores[0].concluidas
@@ -334,11 +334,11 @@ export default function DashboardPage() {
                 return (
                   <div key={colab.nome} className="flex-1 min-w-0 flex flex-col justify-center">
                     <div className="flex items-center justify-between mb-1 px-0.5">
-                      <span className="text-white text-[10px] font-bold truncate">{i + 1}º {colab.nome}</span>
-                      <span className="text-[#00ff88] text-[10px] font-black">{colab.concluidas}</span>
+                      <span className="text-[#1E293B] text-[10px] font-bold truncate">{i + 1}º {colab.nome}</span>
+                      <span className="text-[#1A56DB] text-[10px] font-black">{colab.concluidas}</span>
                     </div>
-                    <div className="h-1 bg-[#1a3a24] rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-[#00ff88]/50 to-[#00ff88] rounded-full transition-all duration-1000"
+                    <div className="h-1 bg-[#E2E8F0] rounded-full overflow-hidden">
+                      <div className="h-full bg-[#1A56DB] rounded-full transition-all duration-1000"
                         style={{ width: `${pct}%` }} />
                     </div>
                   </div>

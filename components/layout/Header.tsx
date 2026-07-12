@@ -1,7 +1,6 @@
 'use client'
-// components/layout/Header.tsx — v0.3.1
-// Atualização: remoção do botão sair do topo
-// Projeto: Agência Digital Alpha
+// components/layout/Header.tsx — v0.4.0
+// Redesign: Light Mode
 
 import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -9,7 +8,6 @@ import { useNotificacoes } from '@/hooks/useNotificacoes'
 import { Bell, CheckCheck, Trash2, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
-// ── Ícone por tipo de notificação ─────────────────────────────
 function iconeTipo(tipo: string) {
   switch (tipo) {
     case 'vencimento_5dias':   return '⚠️'
@@ -19,7 +17,6 @@ function iconeTipo(tipo: string) {
   }
 }
 
-// ── Formata data relativa ─────────────────────────────────────
 function tempoRelativo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
   const min  = Math.floor(diff / 60000)
@@ -47,7 +44,6 @@ export function Header() {
   const [sinoAberto, setSinoAberto] = useState(false)
   const sinoRef = useRef<HTMLDivElement>(null)
 
-  // Fecha o painel ao clicar fora
   useEffect(() => {
     function handleClickFora(e: MouseEvent) {
       if (sinoRef.current && !sinoRef.current.contains(e.target as Node)) {
@@ -63,11 +59,11 @@ export function Header() {
   const inicial   = nome.charAt(0).toUpperCase()
 
   return (
-    <header className="h-16 bg-[#0a0f0c] border-b border-[#1a3a24] flex items-center justify-between px-6 shrink-0">
+    <header className="h-16 bg-white border-b border-[#E2E8F0] flex items-center justify-between px-6 shrink-0">
       {/* Título */}
       <div>
-        <h2 className="text-white font-semibold text-sm">Painel de Controle</h2>
-        <p className="text-gray-500 text-xs">Agência Digital Alpha</p>
+        <h2 className="text-[#1E293B] font-semibold text-sm">Painel de Controle</h2>
+        <p className="text-[#64748B] text-xs">Agência Digital Alpha</p>
       </div>
 
       {/* Lado direito */}
@@ -77,16 +73,16 @@ export function Header() {
         <div ref={sinoRef} className="relative">
           <button
             onClick={() => setSinoAberto(prev => !prev)}
-            className={`relative w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-300 ${
-              naoLidas > 0 
-                ? 'text-amber-400 bg-amber-400/10 border border-amber-400/30 animate-pulse shadow-[0_0_15px_rgba(251,191,36,0.2)]' 
-                : 'text-gray-400 hover:text-white hover:bg-[#1a3a24]/40'
+            className={`relative w-9 h-9 flex items-center justify-center rounded-lg transition-all duration-300 ${
+              naoLidas > 0
+                ? 'text-amber-500 bg-amber-50 border border-amber-200 animate-pulse'
+                : 'text-[#64748B] hover:text-[#1E293B] hover:bg-[#F1F5F9]'
             }`}
             aria-label="Notificações"
           >
-            <Bell size={18} className={naoLidas > 0 ? 'fill-amber-400' : ''} />
+            <Bell size={18} className={naoLidas > 0 ? 'fill-amber-500' : ''} />
             {naoLidas > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none border-2 border-[#0a0f0c]">
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none border-2 border-white">
                 {naoLidas > 99 ? '99+' : naoLidas}
               </span>
             )}
@@ -94,13 +90,13 @@ export function Header() {
 
           {/* Painel de notificações */}
           {sinoAberto && (
-            <div className="absolute right-0 top-11 w-80 bg-[#0f1a14] border border-[#1a3a24] rounded-2xl shadow-2xl z-50 flex flex-col max-h-[480px]">
+            <div className="absolute right-0 top-11 w-80 bg-white border border-[#E2E8F0] rounded-xl shadow-lg z-50 flex flex-col max-h-[480px]">
               {/* Cabeçalho do painel */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-[#1a3a24]">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-[#E2E8F0]">
                 <div className="flex items-center gap-2">
-                  <span className="text-white font-semibold text-sm">Notificações</span>
+                  <span className="text-[#1E293B] font-semibold text-sm">Notificações</span>
                   {naoLidas > 0 && (
-                    <span className="bg-[#00ff88]/10 text-[#00ff88] text-xs font-medium px-2 py-0.5 rounded-full border border-[#00ff88]/20">
+                    <span className="bg-[#EFF6FF] text-[#1A56DB] text-xs font-medium px-2 py-0.5 rounded-full border border-[#BFDBFE]">
                       {naoLidas} nova{naoLidas !== 1 ? 's' : ''}
                     </span>
                   )}
@@ -110,7 +106,7 @@ export function Header() {
                     <button
                       onClick={marcarTodasComoLidas}
                       title="Marcar todas como lidas"
-                      className="p-1.5 rounded-lg text-gray-500 hover:text-[#00ff88] hover:bg-[#00ff88]/10 transition-colors"
+                      className="p-1.5 rounded-lg text-[#64748B] hover:text-[#1A56DB] hover:bg-[#EFF6FF] transition-colors"
                     >
                       <CheckCheck size={15} />
                     </button>
@@ -119,14 +115,14 @@ export function Header() {
                     <button
                       onClick={limparTodas}
                       title="Limpar todas"
-                      className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                      className="p-1.5 rounded-lg text-[#64748B] hover:text-red-500 hover:bg-red-50 transition-colors"
                     >
                       <Trash2 size={15} />
                     </button>
                   )}
                   <button
                     onClick={() => setSinoAberto(false)}
-                    className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-[#1a3a24]/40 transition-colors"
+                    className="p-1.5 rounded-lg text-[#64748B] hover:text-[#1E293B] hover:bg-[#F1F5F9] transition-colors"
                   >
                     <X size={15} />
                   </button>
@@ -136,42 +132,39 @@ export function Header() {
               {/* Lista */}
               <div className="flex-1 overflow-y-auto">
                 {loadingNotif ? (
-                  <div className="py-10 text-center text-gray-500 text-sm">Carregando...</div>
+                  <div className="py-10 text-center text-[#64748B] text-sm">Carregando...</div>
                 ) : notificacoes.length === 0 ? (
                   <div className="py-10 text-center">
-                    <Bell size={28} className="mx-auto text-gray-700 mb-2" />
-                    <p className="text-gray-500 text-sm">Nenhuma notificação</p>
+                    <Bell size={28} className="mx-auto text-gray-200 mb-2" />
+                    <p className="text-[#64748B] text-sm">Nenhuma notificação</p>
                   </div>
                 ) : (
                   notificacoes.map((n) => (
                     <div
                       key={n.id}
                       onClick={() => !n.lida && marcarComoLida(n.id)}
-                      className={`flex gap-3 px-4 py-3 border-b border-[#1a3a24]/50 last:border-0 transition-colors cursor-pointer
-                        ${n.lida
-                          ? 'opacity-50 hover:opacity-70'
-                          : 'hover:bg-[#1a3a24]/30'
-                        }`}
+                      className={`flex gap-3 px-4 py-3 border-b border-[#E2E8F0] last:border-0 transition-colors cursor-pointer
+                        ${n.lida ? 'opacity-50 hover:opacity-70' : 'hover:bg-[#F8FAFC]'}`}
                     >
                       {/* Ícone */}
                       <span className="text-lg flex-shrink-0 mt-0.5">{iconeTipo(n.tipo)}</span>
 
                       {/* Conteúdo */}
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium leading-snug ${n.lida ? 'text-gray-400' : 'text-white'}`}>
+                        <p className={`text-sm font-medium leading-snug ${n.lida ? 'text-[#64748B]' : 'text-[#1E293B]'}`}>
                           {n.titulo}
                         </p>
-                        <p className="text-xs text-gray-500 mt-0.5 leading-snug line-clamp-2">
+                        <p className="text-xs text-[#64748B] mt-0.5 leading-snug line-clamp-2">
                           {n.mensagem}
                         </p>
-                        <p className="text-[10px] text-gray-600 mt-1">
+                        <p className="text-[10px] text-[#94A3B8] mt-1">
                           {tempoRelativo(n.created_at)}
                         </p>
                       </div>
 
                       {/* Bolinha não lida */}
                       {!n.lida && (
-                        <span className="w-2 h-2 bg-[#00ff88] rounded-full flex-shrink-0 mt-1.5" />
+                        <span className="w-2 h-2 bg-[#1A56DB] rounded-full flex-shrink-0 mt-1.5" />
                       )}
                     </div>
                   ))
@@ -180,8 +173,8 @@ export function Header() {
 
               {/* Rodapé */}
               {notificacoes.length > 0 && (
-                <div className="px-4 py-2.5 border-t border-[#1a3a24] text-center">
-                  <p className="text-xs text-gray-600">
+                <div className="px-4 py-2.5 border-t border-[#E2E8F0] text-center">
+                  <p className="text-xs text-[#64748B]">
                     {notificacoes.length} notificação{notificacoes.length !== 1 ? 'ões' : ''} no total
                   </p>
                 </div>
@@ -192,12 +185,12 @@ export function Header() {
 
         {/* ── PERFIL DO USUÁRIO ── */}
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-[#00ff88]/10 border border-[#00ff88]/40 flex items-center justify-center">
-            <span className="text-[#00ff88] text-sm font-bold">{inicial}</span>
+          <div className="w-8 h-8 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center">
+            <span className="text-[#1A56DB] text-sm font-bold">{inicial}</span>
           </div>
           <div className="text-right">
-            <p className="text-white text-sm font-medium leading-none">{nome}</p>
-            <p className="text-gray-500 text-xs mt-0.5">{roleLabel}</p>
+            <p className="text-[#1E293B] text-sm font-medium leading-none">{nome}</p>
+            <p className="text-[#64748B] text-xs mt-0.5">{roleLabel}</p>
           </div>
         </div>
       </div>
