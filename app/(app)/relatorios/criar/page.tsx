@@ -367,7 +367,7 @@ function CreateEditReportContent() {
                   >
                     <option value="">Selecione um grupo...</option>
                     {wpGroups.map(group => (
-                      <option key={group.id} value={group.id}>{group.name}</option>
+                      <option key={group.group_id} value={group.group_id}>{group.name}</option>
                     ))}
                   </select>
                   <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" size={18} />
