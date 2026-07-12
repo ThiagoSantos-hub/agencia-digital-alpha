@@ -1,178 +1,32 @@
 'use client'
-
+import { useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
-import { useRouter, usePathname } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
-import { 
-  LayoutDashboard, 
-  Users,
-  UsersRound,
-  CheckSquare, 
-  Megaphone, 
-  Wallet, 
-  Plug, 
-  UserCircle, 
-  LogOut,
-  Bell,
-  CheckCheck,
-  X,
-  Sparkles,
-  MessageSquare,
-  BarChart2,
-  List
-} from 'lucide-react'
-import { createClient } from '@/lib/supabase'
-import { useNotificacoes } from '@/hooks/useNotificacoes'
+import { CollaboratorSidebar } from '@/components/layout/CollaboratorSidebar'
+import { CollaboratorHeader } from '@/components/layout/CollaboratorHeader'
+import { NotificationSound } from '@/components/layout/NotificationSound'
+import { AlphaWidget } from '@/components/AlphaWidget'
+import { AlphaVoiceButton } from '@/components/AlphaVoiceButton'
 
-const menuGroups = [
-  {
-    label: 'PRINCIPAL',
-    items: [
-      { label: 'Novidades',  href: '/colaborador/novidades', icon: Sparkles,      ativo: true },
-      { label: 'Feedback',   href: '/colaborador/feedbacks',  icon: MessageSquare, ativo: true },
-    ],
-  },
-  {
-    label: 'CLIENTES & CAMPANHAS',
-    items: [
-      { label: 'Meus Clientes',    href: '/colaborador/meus-clientes',    icon: Users,      ativo: true },
-      { label: 'Clientes Agência', href: '/colaborador/clientes',         icon: UsersRound, ativo: true },
-      { label: 'Campanhas',        href: '/colaborador/campanhas',        icon: Megaphone,  ativo: true  },
-      { label: 'Relatórios',       href: '/colaborador/relatorios',       icon: BarChart2,  ativo: true },
-      { label: 'Alertas',          href: '/colaborador/alertas',          icon: Bell,       ativo: true },
-    ],
-  },
-  {
-    label: 'GESTÃO',
-    items: [
-      { label: 'Tarefas',    href: '/colaborador/tarefas',    icon: CheckSquare, ativo: true },
-      { label: 'Checklists', href: '/colaborador/checklists', icon: List,        ativo: true },
-      { label: 'Financeiro', href: '/colaborador/financeiro', icon: Wallet,      ativo: true },
-    ],
-  },
-  {
-    label: 'FERRAMENTAS',
-    items: [
-      { label: 'Integrações', href: '/colaborador/integracoes', icon: Plug, ativo: true },
-    ],
-  },
-  {
-    label: 'OUTROS',
-    items: [
-      { label: 'Perfil',    href: '/colaborador/perfil',    icon: UserCircle,    ativo: true  },
-    ],
-  },
-]
-
-// ── Ícone por tipo de notificação ─────────────────────────────
-function iconeTipo(tipo: string) {
-  switch (tipo) {
-    case 'vencimento_5dias':   return '⚠️'
-    case 'vencimento_hoje':    return '🔴'
-    case 'pagamento_recebido': return '✅'
-    default:                   return '🔔'
-  }
-}
-
-// ── Formata data relativa ─────────────────────────────────────
-function tempoRelativo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime()
-  const min  = Math.floor(diff / 60000)
-  const h    = Math.floor(diff / 3600000)
-  const d    = Math.floor(diff / 86400000)
-  if (min < 1)  return 'agora'
-  if (min < 60) return `${min}min atrás`
-  if (h < 24)   return `${h}h atrás`
-  return `${d}d atrás`
-}
-
-export default function CollaboratorLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const { profile, loading, signOut } = useAuth()
+export default function CollaboratorLayout({ children }: { children: React.ReactNode }) {
+  const { user, profile, loading } = useAuth()
   const router = useRouter()
-  const pathname = usePathname()
   const didRedirect = useRef(false)
-
-  const {
-    notificacoes,
-    naoLidas,
-    loading: loadingNotif,
-    marcarComoLida,
-    marcarTodasComoLidas,
-  } = useNotificacoes()
-
-  const [sinoAberto, setSinoAberto] = useState(false)
-  const sinoRef = useRef<HTMLDivElement>(null)
-  const [temNovidade, setTemNovidade] = useState(false)
-  const supabase = createClient()
-
-  useEffect(() => {
-    if (!profile?.id) return
-
-    const checkNovidades = async () => {
-      const { data, error } = await supabase
-        .from('novidades')
-        .select('lida_por')
-
-      if (error) {
-        console.error('Erro ao verificar novidades:', error)
-        return
-      }
-
-      if (data) {
-        const naoLidas = data.some(n => !n.lida_por?.includes(profile.id))
-        setTemNovidade(naoLidas)
-      }
-    }
-
-    checkNovidades()
-
-    const channel = supabase
-      .channel('menu_novidades_changes')
-      .on(
-        'postgres_changes',
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'novidades' 
-        },
-        () => {
-          checkNovidades()
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [profile?.id])
-
-  // Fecha o painel ao clicar fora
-  useEffect(() => {
-    function handleClickFora(e: MouseEvent) {
-      if (sinoRef.current && !sinoRef.current.contains(e.target as Node)) {
-        setSinoAberto(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickFora)
-    return () => document.removeEventListener('mousedown', handleClickFora)
-  }, [])
 
   useEffect(() => {
     if (loading || didRedirect.current) return
 
-    if (!profile) {
+    if (!user) {
+      didRedirect.current = true
+      router.replace('/login')
+    } else if (!profile) {
       didRedirect.current = true
       router.replace('/login')
     } else if (profile.role !== 'collaborator') {
       didRedirect.current = true
-      router.replace('/login')
+      router.replace('/dashboard')
     }
-  }, [profile, loading, router])
+  }, [user, profile, loading, router])
 
   if (loading) {
     return (
@@ -185,7 +39,7 @@ export default function CollaboratorLayout({
     )
   }
 
-  if (!profile || profile.role !== 'collaborator') {
+  if (!user || !profile || profile.role !== 'collaborator') {
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
         <div className="text-center">
@@ -197,205 +51,17 @@ export default function CollaboratorLayout({
   }
 
   return (
-    <div className="h-screen bg-[#F8FAFC] text-[#1E293B] flex overflow-hidden">
-      {/* Sidebar */}
-      <aside className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-[#E2E8F0] flex flex-col z-40">
-        <div className="px-6 py-5 border-b border-[#E2E8F0]">
-          <div className="flex items-center gap-2">
-            <span className="text-[#1E293B] font-black text-lg tracking-tight">DIGITAL</span>
-            <span className="text-[#1A56DB] font-black text-lg tracking-tight">ALPHA</span>
-          </div>
-        </div>
-
-        <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-4">
-          {/* Dashboard isolado no topo */}
-          <div className="mb-2">
-            <Link href="/colaborador/dashboard"
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                pathname === '/colaborador/dashboard' || pathname.startsWith('/colaborador/dashboard/')
-                  ? 'bg-[#EFF6FF] text-[#1A56DB] border border-[#BFDBFE]'
-                  : 'text-[#64748B] hover:text-[#1E293B] hover:bg-[#F1F5F9]'
-              }`}>
-              <LayoutDashboard size={18} />
-              <span className="text-sm font-medium">Dashboard</span>
-            </Link>
-          </div>
-
-          {menuGroups.map((group) => (
-            <div key={group.label}>
-              <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">
-                {group.label}
-              </p>
-              <div className="space-y-0.5">
-                {group.items.map((item) => {
-                  const Icon = item.icon
-                  const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-                  
-                  const isNovidades = item.label === 'Novidades'
-                  const showPulse = isNovidades && temNovidade
-
-                  if (!item.ativo) return (
-                    <div key={item.href} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#94A3B8] cursor-not-allowed opacity-50">
-                      <Icon size={18} />
-                      <span className="text-sm">{item.label}</span>
-                      <span className="ml-auto text-[10px] bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded">Em breve</span>
-                    </div>
-                  )
-                  return (
-                    <Link key={item.href} href={item.href}
-                      prefetch={false}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                        isActive
-                          ? 'bg-[#EFF6FF] text-[#1A56DB] border border-[#BFDBFE]'
-                          : showPulse
-                            ? 'text-amber-600 bg-amber-50 border border-amber-200 animate-pulse'
-                            : 'text-[#64748B] hover:text-[#1E293B] hover:bg-[#F1F5F9]'
-                      }`}>
-                      <Icon size={18} className={showPulse ? 'text-amber-600' : ''} />
-                      <span className={`text-sm font-medium ${showPulse ? 'text-amber-600' : ''}`}>{item.label}</span>
-                    </Link>
-                  )
-                })}
-              </div>
-            </div>
-          ))}
-        </nav>
-
-        <div className="px-3 py-4 border-t border-[#E2E8F0]">
-          <button
-            onClick={() => signOut()}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors"
-          >
-            <LogOut size={18} />
-            <span className="text-sm font-medium">Sair do sistema</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <div className="flex-1 ml-64 flex flex-col h-full overflow-hidden">
-        {/* Header */}
-        <header className="h-16 border-b border-[#E2E8F0] bg-white px-8 flex items-center justify-between shrink-0">
-          <div>
-            <h2 className="text-xs font-medium text-[#64748B]">Bem-vindo de volta,</h2>
-            <p className="text-[#1E293B] font-bold">{profile.name || profile.email}</p>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {/* ── SINO DE NOTIFICAÇÕES ── */}
-            <div ref={sinoRef} className="relative">
-              <button
-                onClick={() => setSinoAberto(prev => !prev)}
-                className={`relative w-9 h-9 flex items-center justify-center rounded-lg transition-all duration-300 ${
-                  naoLidas > 0 
-                    ? 'text-amber-500 bg-amber-50 border border-amber-200 animate-pulse' 
-                    : 'text-[#64748B] hover:text-[#1E293B] hover:bg-[#F1F5F9]'
-                }`}
-                aria-label="Notificações"
-              >
-                <Bell size={18} className={naoLidas > 0 ? 'text-amber-500' : ''} />
-                {naoLidas > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none border-2 border-white">
-                    {naoLidas > 99 ? '99+' : naoLidas}
-                  </span>
-                )}
-              </button>
-
-              {/* Painel de notificações */}
-              {sinoAberto && (
-                <div className="absolute right-0 top-11 w-80 bg-white border border-[#E2E8F0] rounded-xl shadow-lg z-50 flex flex-col max-h-[480px]">
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-[#E2E8F0]">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[#1E293B] font-semibold text-sm">Notificações</span>
-                      {naoLidas > 0 && (
-                        <span className="bg-[#EFF6FF] text-[#1A56DB] text-xs font-medium px-2 py-0.5 rounded-full border border-[#BFDBFE]">
-                          {naoLidas} nova{naoLidas !== 1 ? 's' : ''}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {naoLidas > 0 && (
-                        <button
-                          onClick={marcarTodasComoLidas}
-                          title="Marcar todas como lidas"
-                          className="p-1.5 rounded-lg text-[#64748B] hover:text-[#1A56DB] hover:bg-[#EFF6FF] transition-colors"
-                        >
-                          <CheckCheck size={15} />
-                        </button>
-                      )}
-                      <button
-                        onClick={() => setSinoAberto(false)}
-                        className="p-1.5 rounded-lg text-[#64748B] hover:text-[#1E293B] hover:bg-[#F1F5F9] transition-colors"
-                      >
-                        <X size={15} />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex-1 overflow-y-auto">
-                    {loadingNotif ? (
-                      <div className="py-10 text-center text-[#64748B] text-sm">Carregando...</div>
-                    ) : notificacoes.length === 0 ? (
-                      <div className="py-10 text-center">
-                        <Bell size={28} className="mx-auto text-gray-200 mb-2" />
-                        <p className="text-[#64748B] text-sm">Nenhuma notificação</p>
-                      </div>
-                    ) : (
-                      notificacoes.map((n) => (
-                        <div
-                          key={n.id}
-                          onClick={() => !n.lida && marcarComoLida(n.id)}
-                          className={`flex gap-3 px-4 py-3 border-b border-[#E2E8F0] last:border-0 transition-colors cursor-pointer
-                            ${n.lida
-                              ? 'opacity-50 hover:opacity-70'
-                              : 'hover:bg-[#F8FAFC]'
-                            }`}
-                        >
-                          <span className="text-lg flex-shrink-0 mt-0.5">{iconeTipo(n.tipo)}</span>
-                          <div className="flex-1 min-w-0">
-                            <p className={`text-sm font-medium leading-snug ${n.lida ? 'text-[#64748B]' : 'text-[#1E293B]'}`}>
-                              {n.titulo}
-                            </p>
-                            <p className="text-xs text-[#64748B] mt-0.5 leading-snug line-clamp-2">
-                              {n.mensagem}
-                            </p>
-                            <p className="text-[10px] text-[#94A3B8] mt-1">
-                              {tempoRelativo(n.created_at)}
-                            </p>
-                          </div>
-                          {!n.lida && (
-                            <span className="w-2 h-2 bg-[#1A56DB] rounded-full flex-shrink-0 mt-1.5" />
-                          )}
-                        </div>
-                      ))
-                    )}
-                  </div>
-
-                  {/* Rodapé */}
-                  {notificacoes.length > 0 && (
-                    <div className="px-4 py-2.5 border-t border-[#E2E8F0] text-center">
-                      <p className="text-xs text-[#64748B]">
-                        {notificacoes.length} notificação{notificacoes.length !== 1 ? 'ões' : ''} no total
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center">
-                <span className="text-[#1A56DB] text-sm font-bold">{(profile.name || profile.email).charAt(0).toUpperCase()}</span>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Content Area */}
-        <main className="flex-1 overflow-y-auto p-8">
+    <div className="h-screen bg-[#F8FAFC] flex overflow-hidden">
+      <CollaboratorSidebar />
+      <div className="flex-1 flex flex-col ml-64 h-full">
+        <CollaboratorHeader />
+        <main className="flex-1 overflow-y-auto p-6 custom-scrollbar">
           {children}
         </main>
       </div>
+      <NotificationSound />
+      <AlphaWidget />
+      <AlphaVoiceButton />
     </div>
   )
 }
