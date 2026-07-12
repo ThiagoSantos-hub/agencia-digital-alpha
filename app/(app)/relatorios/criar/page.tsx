@@ -271,6 +271,30 @@ function CreateEditReportContent() {
                     </button>
                   ))}
                 </div>
+
+                {/* Calendário para período personalizado - RESTAURADO */}
+                {formData.periodo === 'personalizado' && (
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <div>
+                      <label className="text-[10px] text-[#64748B] mb-1 block font-semibold uppercase tracking-wider">Início</label>
+                      <input
+                        type="date"
+                        value={formData.data_inicio ?? ''}
+                        onChange={e => setFormData({ ...formData, data_inicio: e.target.value })}
+                        className="w-full bg-[#F8FAFC] text-[#1E293B] border border-[#E2E8F0] rounded-xl px-3 py-2 text-xs outline-none focus:border-[#1A56DB] transition-all [color-scheme:light]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-[#64748B] mb-1 block font-semibold uppercase tracking-wider">Fim</label>
+                      <input
+                        type="date"
+                        value={formData.data_fim ?? ''}
+                        onChange={e => setFormData({ ...formData, data_fim: e.target.value })}
+                        className="w-full bg-[#F8FAFC] text-[#1E293B] border border-[#E2E8F0] rounded-xl px-3 py-2 text-xs outline-none focus:border-[#1A56DB] transition-all [color-scheme:light]"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -301,7 +325,7 @@ function CreateEditReportContent() {
                   type="time"
                   value={formData.horario_envio}
                   onChange={e => setFormData({ ...formData, horario_envio: e.target.value })}
-                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-2 outline-none focus:border-[#1A56DB] text-[#1E293B] transition-all"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-2 outline-none focus:border-[#1A56DB] text-[#1E293B] transition-all [color-scheme:light]"
                 />
               </div>
             </div>
