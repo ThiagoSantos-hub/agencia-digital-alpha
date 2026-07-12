@@ -22,7 +22,7 @@ interface DashStats {
 const frases = [
   'Vamos construir algo grande hoje! 🚀',
   'Foco e consistência geram resultados! 💪',
-  'Cada cliente bem atendido é uma vitória! 🏆',
+  'Cada cliente bem atendido é uma victory! 🏆',
   'O sucesso é a soma de pequenos esforços diários! ⚡',
   'Hoje é um ótimo dia para superar metas! 🎯',
 ]
@@ -35,7 +35,7 @@ function formatDate(date: Date) {
   return date.toISOString().split('T')[0]
 }
 
-// Componente de Gráfico de Pizza Nativo (SVG) - Ajustado para o Colaborador
+// Componente de Gráfico de Pizza Nativo (SVG) - Padronizado com Admin (Light)
 function DonutChart({ data }: { data: { label: string; value: number; color: string }[] }) {
   const total = data.reduce((s, d) => s + d.value, 0)
   if (total === 0) return (
@@ -79,7 +79,7 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-[#1E293B] text-lg font-black leading-none">{total}</span>
-          <span className="text-[8px] text-[#64748B] uppercase font-bold">Demandas</span>
+          <span className="text-[8px] text-[#64748B] uppercase font-bold">Total</span>
         </div>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-1 w-full max-w-[200px]">
@@ -95,7 +95,7 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
   )
 }
 
-// Componente de Gráfico de Barras Nativo (SVG) - Ajustado para o Colaborador
+// Componente de Gráfico de Barras Nativo (SVG) - Padronizado com Admin (Light)
 function BarChart({ data, color }: { data: number[], color: string }) {
   const max = Math.max(...data, 1)
   return (
@@ -189,7 +189,7 @@ export default function CollaboratorDashboardPage() {
   ]
 
   return (
-    <div className="h-[calc(100vh-100px)] flex flex-col gap-4 overflow-hidden p-1 bg-[#F8FAFC]">
+    <div className="h-[calc(100vh-100px)] flex flex-col gap-4 overflow-hidden p-1">
       
       {/* Topo: Boas-vindas e Filtros - Altura Fixa */}
       <div className="h-16 flex flex-shrink-0 items-center gap-4">
@@ -256,7 +256,7 @@ export default function CollaboratorDashboardPage() {
           <div className="flex items-center justify-between mb-4 flex-shrink-0">
             <div className="flex items-center gap-2">
               <TrendingUp size={14} className="text-[#1A56DB]" />
-              <h2 className="text-[#1E293B] font-semibold text-xs uppercase tracking-wide">Meu Histórico</h2>
+              <h2 className="text-[#1E293B] font-semibold text-xs uppercase tracking-wide">Meu Desempenho</h2>
             </div>
             <div className="flex gap-3">
               <span className="flex items-center gap-1 text-[9px] text-[#64748B] font-medium">
@@ -284,9 +284,9 @@ export default function CollaboratorDashboardPage() {
           </div>
           <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center overflow-hidden">
             <DonutChart data={[
-              { label: 'Tarefas',    value: stats.tarefasAFazer,       color: '#16A34A' },
-              { label: 'Checklists', value: stats.checklistsPendentes, color: '#F59E0B' },
-              { label: 'Campanhas',  value: stats.campanhasAtivas,     color: '#1A56DB' },
+              { label: 'Tarefas', value: stats.tarefasAFazer, color: '#1A56DB' },
+              { label: 'Checklists', value: stats.checklistsPendentes, color: '#a855f7' },
+              { label: 'Campanhas', value: stats.campanhasAtivas, color: '#6366f1' },
             ]} />
           </div>
         </div>
@@ -295,36 +295,35 @@ export default function CollaboratorDashboardPage() {
         <div className="col-span-9 row-span-2 bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col min-h-0">
           <div className="flex items-center justify-between mb-3 flex-shrink-0">
             <div className="flex items-center gap-2">
-              <CheckCircle2 size={14} className="text-[#1A56DB]" />
+              <CheckCircle2 size={14} className="text-[#16A34A]" />
               <h2 className="text-[#1E293B] font-semibold text-xs uppercase tracking-wide">Próximas Tarefas</h2>
             </div>
-            <span className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-[#EFF6FF] text-[#1A56DB] border border-[#BFDBFE]">FILA DE TRABALHO</span>
+            <span className="text-[9px] text-[#1A56DB] font-semibold uppercase tracking-widest">Fila de Trabalho</span>
           </div>
           <div className="flex-1 min-h-0 flex items-center gap-4 overflow-hidden">
              <div className="flex-1 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-2.5 flex items-center gap-3 min-w-0">
-                <Clock size={12} className="text-[#EF4444] flex-shrink-0" />
+                <Clock size={12} className="text-amber-500 flex-shrink-0" />
                 <div className="min-w-0">
-                   <p className="text-[#1E293B] text-[9px] font-semibold truncate">Ajustar orçamentos Meta</p>
-                   <p className="text-[#64748B] text-[8px]">Prioridade Alta</p>
+                   <p className="text-[#1E293B] text-[10px] font-semibold truncate">Ajustar orçamentos Meta</p>
+                   <p className="text-[#64748B] text-[9px]">Prioridade Alta</p>
                 </div>
              </div>
              <div className="flex-1 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-2.5 flex items-center gap-3 min-w-0">
-                <Clock size={12} className="text-[#1A56DB] flex-shrink-0" />
+                <Clock size={12} className="text-blue-500 flex-shrink-0" />
                 <div className="min-w-0">
-                   <p className="text-[#1E293B] text-[9px] font-semibold truncate">Relatório Semanal Alpha</p>
-                   <p className="text-[#64748B] text-[8px]">Prioridade Média</p>
+                   <p className="text-[#1E293B] text-[10px] font-semibold truncate">Relatório Semanal Alpha</p>
+                   <p className="text-[#64748B] text-[9px]">Prioridade Média</p>
                 </div>
              </div>
              <div className="flex-1 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-2.5 flex items-center gap-3 min-w-0">
-                <Clock size={12} className="text-[#64748B] flex-shrink-0" />
+                <Clock size={12} className="text-gray-400 flex-shrink-0" />
                 <div className="min-w-0">
-                   <p className="text-[#1E293B] text-[9px] font-semibold truncate">Configurar novo Pixel</p>
-                   <p className="text-[#64748B] text-[8px]">Prioridade Baixa</p>
+                   <p className="text-[#1E293B] text-[10px] font-semibold truncate">Revisão de Criativos</p>
+                   <p className="text-[#64748B] text-[9px]">Prioridade Baixa</p>
                 </div>
              </div>
           </div>
         </div>
-
       </div>
     </div>
   )
