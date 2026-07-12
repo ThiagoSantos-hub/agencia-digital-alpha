@@ -440,57 +440,57 @@ function CreateEditReportContent() {
 
         {/* Right Side: Smartphone Preview (5 cols) */}
         <div className="lg:col-span-5 sticky top-8 space-y-6">
-          <div className="relative mx-auto w-[320px] h-[640px] bg-[#1E293B] rounded-[3rem] border-[8px] border-[#1E293B] shadow-2xl overflow-hidden ring-4 ring-[#E2E8F0]">
+          <div className="relative mx-auto w-[280px] h-[560px] bg-[#1E293B] rounded-[2.5rem] border-[6px] border-[#1E293B] shadow-2xl overflow-hidden ring-4 ring-[#E2E8F0]">
             {/* Notch */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-[#1E293B] rounded-b-2xl z-20" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-5 bg-[#1E293B] rounded-b-xl z-20" />
             
             {/* Screen Content */}
             <div className="h-full w-full bg-[#E5DDD5] flex flex-col relative">
               {/* WP Header */}
-              <div className="bg-[#075E54] p-4 pt-8 flex items-center gap-3 shadow-md">
-                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                  <Users size={16} className="text-white" />
+              <div className="bg-[#075E54] p-3 pt-6 flex items-center gap-3 shadow-md">
+                <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+                  <Users size={14} className="text-white" />
                 </div>
                 <div>
-                  <p className="text-white text-sm font-bold leading-none">Alpha Bot</p>
-                  <p className="text-white/70 text-[10px]">online</p>
+                  <p className="text-white text-xs font-bold leading-none">Alpha Bot</p>
+                  <p className="text-white/70 text-[9px]">online</p>
                 </div>
               </div>
 
               {/* Chat Area */}
-              <div className="flex-1 p-4 space-y-4 overflow-y-auto">
+              <div className="flex-1 p-3 space-y-4 overflow-y-auto">
                 <div className="bg-white rounded-2xl rounded-tl-none p-3 shadow-sm relative max-w-[90%]">
                   <div className="absolute top-0 -left-2 w-0 h-0 border-t-[10px] border-t-white border-l-[10px] border-l-transparent" />
-                  <div className="text-[13px] text-[#1E293B] whitespace-pre-wrap leading-relaxed">
+                  <div className="text-[12px] text-[#1E293B] whitespace-pre-wrap leading-relaxed">
                     {previewMessage}
                   </div>
                   <div className="mt-1 flex justify-end items-center gap-1">
-                    <span className="text-[9px] text-[#64748B]">08:00</span>
-                    <Check size={10} className="text-blue-500" />
+                    <span className="text-[8px] text-[#64748B]">08:00</span>
+                    <Check size={9} className="text-blue-500" />
                   </div>
                 </div>
               </div>
 
               {/* WP Input Bar */}
               <div className="p-2 bg-[#F0F0F0] flex items-center gap-2">
-                <div className="flex-1 bg-white rounded-full px-4 py-2 text-[12px] text-[#94A3B8]">
+                <div className="flex-1 bg-white rounded-full px-3 py-1.5 text-[10px] text-[#94A3B8]">
                   Digite uma mensagem...
                 </div>
-                <div className="w-10 h-10 rounded-full bg-[#075E54] flex items-center justify-center shadow-md">
-                  <Send size={18} className="text-white ml-0.5" />
+                <div className="w-8 h-8 rounded-full bg-[#075E54] flex items-center justify-center shadow-md">
+                  <Send size={14} className="text-white ml-0.5" />
                 </div>
               </div>
             </div>
           </div>
 
           {/* Dicas de UX */}
-          <div className="bg-[#EFF6FF] border border-[#BFDBFE] p-6 rounded-2xl space-y-3">
-            <h3 className="text-[#1A56DB] font-bold text-sm flex items-center gap-2">
-              <Info size={16} /> Dica do Especialista
+          <div className="bg-[#EFF6FF] border border-[#BFDBFE] p-5 rounded-2xl space-y-2">
+            <h3 className="text-[#1A56DB] font-bold text-xs flex items-center gap-2">
+              <Info size={14} /> Dica do Especialista
             </h3>
-            <p className="text-[#1E293B] text-xs leading-relaxed">
+            <p className="text-[#1E293B] text-[11px] leading-relaxed">
               O visual ao lado simula exatamente como o seu cliente receberá o relatório. 
-              **Dica:** Use quebras de linha e emojis no template para tornar a leitura mais agradável no celular!
+              Dica: Use quebras de linha e emojis no template para tornar a leitura mais agradável no celular!
             </p>
           </div>
         </div>
