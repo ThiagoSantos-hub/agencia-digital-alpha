@@ -4,7 +4,24 @@ import { useState, useMemo } from 'react'
 import { useClientes, Client } from '@/hooks/useClientes'
 import { useAuth } from '@/hooks/useAuth'
 import { useColaboradorFinance } from '@/hooks/useColaboradorFinance'
-import { Search, UserPlus, X, Loader2, Pencil, Clock, CheckCircle2, Ban, Target, Eye, EyeOff } from 'lucide-react'
+import { 
+  Search, 
+  UserPlus, 
+  X, 
+  Loader2, 
+  Pencil, 
+  Clock, 
+  CheckCircle2, 
+  Ban, 
+  Target, 
+  Eye, 
+  EyeOff,
+  Building2,
+  Mail,
+  Phone,
+  DollarSign,
+  ChevronRight
+} from 'lucide-react'
 
 type ClienteForm = {
   name: string
@@ -19,84 +36,87 @@ type ClienteForm = {
 }
 
 const statusConfig = {
-  ativo:     { label: 'Ativo',     className: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
-  atrasado:  { label: 'Atrasado',  className: 'text-amber-400 bg-amber-500/10 border-amber-500/30'      },
-  inativo:   { label: 'Inativo',   className: 'text-gray-400 bg-gray-500/10 border-gray-500/30'         },
+  ativo:     { label: 'Ativo',     className: 'bg-green-50 text-green-700 border-green-200', icon: CheckCircle2 },
+  atrasado:  { label: 'Atrasado',  className: 'bg-amber-50 text-amber-700 border-amber-200', icon: Clock },
+  inativo:   { label: 'Inativo',   className: 'bg-red-50 text-red-700 border-red-200', icon: Ban },
 }
 
 function FormFields({ form, set }: { form: ClienteForm; set: (f: keyof ClienteForm, v: string | boolean) => void }) {
   return (
-    <div className="space-y-3">
-      <div className="space-y-1">
-        <label className="block text-[11px] font-medium text-gray-400">Nome <span className="text-red-400">*</span></label>
+    <div className="space-y-4">
+      <div className="space-y-1.5">
+        <label className="block text-sm font-semibold text-[#64748B]">Nome Completo <span className="text-red-500">*</span></label>
         <input type="text" placeholder="Nome do responsável" value={form.name}
           onChange={(e) => set('name', e.target.value)}
-          className="w-full px-3 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+          className="w-full px-3 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#1E293B] placeholder-gray-400 focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all" />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <label className="block text-[11px] font-medium text-gray-400">Empresa</label>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <label className="block text-sm font-semibold text-[#64748B]">Empresa</label>
           <input type="text" placeholder="Nome da empresa" value={form.company}
             onChange={(e) => set('company', e.target.value)}
-            className="w-full px-3 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+            className="w-full px-3 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#1E293B] placeholder-gray-400 focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all" />
         </div>
-        <div className="space-y-1">
-          <label className="block text-[11px] font-medium text-gray-400">Telefone</label>
+        <div className="space-y-1.5">
+          <label className="block text-sm font-semibold text-[#64748B]">Telefone</label>
           <input type="tel" placeholder="(85) 99999-9999" value={form.phone}
             onChange={(e) => set('phone', e.target.value)}
-            className="w-full px-3 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+            className="w-full px-3 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#1E293B] placeholder-gray-400 focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all" />
         </div>
       </div>
 
-      <div className="space-y-1">
-        <label className="block text-[11px] font-medium text-gray-400">E-mail de contato</label>
+      <div className="space-y-1.5">
+        <label className="block text-sm font-semibold text-[#64748B]">E-mail de Contato</label>
         <input type="email" placeholder="contato@empresa.com" value={form.email}
           onChange={(e) => set('email', e.target.value)}
-          className="w-full px-3 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+          className="w-full px-3 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#1E293B] placeholder-gray-400 focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all" />
       </div>
 
-      <div className="bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg p-3 space-y-2">
-        <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+      <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-4 space-y-3">
+        <p className="text-[10px] font-bold text-[#1A56DB] uppercase tracking-wider flex items-center gap-1.5">
           <Target size={12} /> Integração Meta Ads
         </p>
         <div className="space-y-1.5">
-          <label className="block text-[10px] font-medium text-gray-500">ID da Conta (act_...)</label>
+          <label className="block text-[10px] font-medium text-[#64748B]">ID da Conta (act_...)</label>
           <input type="text" placeholder="act_123456789" value={form.meta_ad_account_id}
             onChange={(e) => set('meta_ad_account_id', e.target.value)}
-            className="w-full px-3 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs placeholder-gray-700 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+            className="w-full px-3 py-2 bg-white border border-[#E2E8F0] rounded-lg text-[#1E293B] text-xs placeholder-gray-400 focus:outline-none focus:border-[#1A56DB] transition-colors" />
         </div>
         <div className="flex items-center justify-between">
-          <label className="text-[10px] font-medium text-gray-400">Exibir em Campanhas</label>
+          <label className="text-[10px] font-medium text-[#64748B]">Exibir em Campanhas</label>
           <button 
             type="button"
             onClick={() => set('show_campaigns', !form.show_campaigns)}
-            className={`p-1.5 rounded-lg transition-colors ${form.show_campaigns ? 'bg-emerald-500/10 text-emerald-400' : 'bg-gray-500/10 text-gray-500'}`}
+            className={`p-1.5 rounded-lg transition-colors ${form.show_campaigns ? 'bg-[#EFF6FF] text-[#1A56DB]' : 'bg-gray-100 text-gray-500'}`}
           >
             {form.show_campaigns ? <Eye size={16} /> : <EyeOff size={16} />}
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <label className="block text-[11px] font-medium text-gray-400">Valor Mensal (R$)</label>
-          <input type="number" step="0.01" placeholder="0.00" value={form.monthly_fee}
-            onChange={(e) => set('monthly_fee', e.target.value)}
-            className="w-full px-3 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <label className="block text-sm font-semibold text-[#64748B]">Mensalidade (R$)</label>
+          <div className="relative">
+            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8]" size={14} />
+            <input type="number" step="0.01" placeholder="0.00" value={form.monthly_fee}
+              onChange={(e) => set('monthly_fee', e.target.value)}
+              className="w-full pl-9 pr-3 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#1E293B] focus:outline-none focus:border-[#1A56DB] transition-all" />
+          </div>
         </div>
-        <div className="space-y-1">
-          <label className="block text-[11px] font-medium text-gray-400">Dia de Pagamento</label>
+        <div className="space-y-1.5">
+          <label className="block text-sm font-semibold text-[#64748B]">Dia de Pagamento</label>
           <input type="number" min="1" max="31" placeholder="Ex: 10" value={form.payment_day}
             onChange={(e) => set('payment_day', e.target.value)}
-            className="w-full px-3 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+            className="w-full px-3 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#1E293B] focus:outline-none focus:border-[#1A56DB] transition-all" />
         </div>
       </div>
 
-      <div className="space-y-1">
-        <label className="block text-[11px] font-medium text-gray-400">Status</label>
+      <div className="space-y-1.5">
+        <label className="block text-sm font-semibold text-[#64748B]">Status do Cliente</label>
         <select value={form.status} onChange={(e) => set('status', e.target.value as ClienteForm['status'])}
-          className="w-full px-3 py-2 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-emerald-500/50 transition-colors">
+          className="w-full px-3 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#1E293B] focus:outline-none focus:border-[#1A56DB] transition-all appearance-none">
           <option value="ativo">Ativo</option>
           <option value="atrasado">Atrasado</option>
           <option value="inativo">Inativo</option>
@@ -161,26 +181,26 @@ function ModalNovoCliente({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60"
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/40 backdrop-blur-sm"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="w-full max-w-md bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-5 space-y-3 shadow-2xl">
+      <div className="w-full max-w-md bg-white border border-[#E2E8F0] rounded-2xl p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
-          <h2 className="text-white font-semibold text-base">Novo Cliente</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors p-1 rounded-lg">
-            <X size={18} />
+          <h2 className="text-[#1E293B] font-semibold text-lg">Novo Cliente</h2>
+          <button onClick={onClose} className="text-[#64748B] hover:text-[#1E293B] transition-colors p-1 rounded-lg">
+            <X size={20} />
           </button>
         </div>
         <FormFields form={form} set={set} />
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-red-400 text-sm">{error}</div>
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm font-medium">{error}</div>
         )}
-        <div className="flex gap-2 pt-1">
+        <div className="flex gap-3 pt-2">
           <button onClick={onClose} disabled={loading}
-            className="flex-1 py-2 rounded-lg text-sm font-medium text-gray-400 bg-[#0f0f0f] border border-[#2a2a2a] hover:text-white transition-colors">
+            className="flex-1 py-2.5 rounded-xl text-sm font-medium text-[#64748B] bg-white border border-[#E2E8F0] hover:bg-gray-50 transition-colors">
             Cancelar
           </button>
           <button onClick={handleSubmit} disabled={loading}
-            className="flex-1 py-2 rounded-lg text-sm font-medium bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white flex items-center justify-center gap-2 transition-colors">
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-[#1A56DB] hover:bg-[#1A56DB]/90 disabled:opacity-50 text-white flex items-center justify-center gap-2 transition-colors shadow-sm">
             {loading ? <><Loader2 size={14} className="animate-spin" /> Salvando...</> : 'Salvar Cliente'}
           </button>
         </div>
@@ -229,26 +249,26 @@ function ModalEditarCliente({ client, onClose }: { client: Client; onClose: () =
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60"
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/40 backdrop-blur-sm"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="w-full max-w-md bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-5 space-y-3 shadow-2xl">
+      <div className="w-full max-w-md bg-white border border-[#E2E8F0] rounded-2xl p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
-          <h2 className="text-white font-semibold text-base">Editar Cliente</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors p-1 rounded-lg">
-            <X size={18} />
+          <h2 className="text-[#1E293B] font-semibold text-lg">Editar Cliente</h2>
+          <button onClick={onClose} className="text-[#64748B] hover:text-[#1E293B] transition-colors p-1 rounded-lg">
+            <X size={20} />
           </button>
         </div>
         <FormFields form={form} set={set} />
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-red-400 text-sm">{error}</div>
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm font-medium">{error}</div>
         )}
-        <div className="flex gap-2 pt-1">
+        <div className="flex gap-3 pt-2">
           <button onClick={onClose} disabled={loading}
-            className="flex-1 py-2 rounded-lg text-sm font-medium text-gray-400 bg-[#0f0f0f] border border-[#2a2a2a] hover:text-white transition-colors">
+            className="flex-1 py-2.5 rounded-xl text-sm font-medium text-[#64748B] bg-white border border-[#E2E8F0] hover:bg-gray-50 transition-colors">
             Cancelar
           </button>
           <button onClick={handleSubmit} disabled={loading}
-            className="flex-1 py-2 rounded-lg text-sm font-medium bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white flex items-center justify-center gap-2 transition-colors">
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-[#1A56DB] hover:bg-[#1A56DB]/90 disabled:opacity-50 text-white flex items-center justify-center gap-2 transition-colors shadow-sm">
             {loading ? <><Loader2 size={14} className="animate-spin" /> Salvando...</> : 'Salvar Alterações'}
           </button>
         </div>
@@ -287,117 +307,166 @@ export default function MeusClientesPage() {
   }
 
   const renderTable = (list: Client[], title: string) => (
-    <div className="space-y-2">
+    <div className="space-y-4">
       <div className="flex items-center gap-2 px-1">
-        <h2 className="text-white font-bold text-sm">{title}</h2>
-        <span className="px-2 py-0.5 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] text-gray-500 text-[10px] font-bold">
+        <h2 className="text-[#1E293B] font-bold text-base">{title}</h2>
+        <span className="px-2.5 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#1A56DB] text-[10px] font-bold">
           {list.length}
         </span>
       </div>
-      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl overflow-hidden shadow-xl">
-        <table className="w-full text-left border-collapse">
+      <div className="bg-white border border-[#E2E8F0] rounded-xl overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-[#2a2a2a] bg-[#1f1f1f]/50">
-                <th className="px-3 py-2 text-gray-500 font-medium text-[11px] whitespace-nowrap">CLIENTE</th>
-                <th className="px-3 py-2 text-gray-500 font-medium text-[11px] whitespace-nowrap">CONTATO</th>
-                <th className="px-3 py-2 text-gray-500 font-medium text-[11px] whitespace-nowrap">FINANCEIRO</th>
-                <th className="px-3 py-2 text-gray-500 font-medium text-[11px] whitespace-nowrap">STATUS</th>
-                <th className="px-3 py-2 text-gray-500 font-medium text-[11px] text-right whitespace-nowrap">AÇÕES</th>
+              <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
+                <th className="px-4 py-3 text-[#64748B] font-semibold text-xs uppercase tracking-wider">Cliente</th>
+                <th className="px-4 py-3 text-[#64748B] font-semibold text-xs uppercase tracking-wider">Contato</th>
+                <th className="px-4 py-3 text-[#64748B] font-semibold text-xs uppercase tracking-wider">Financeiro</th>
+                <th className="px-4 py-3 text-[#64748B] font-semibold text-xs uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-[#64748B] font-semibold text-xs uppercase tracking-wider text-right">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#2a2a2a]/50">
+            <tbody className="divide-y divide-[#E2E8F0]">
               {list.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-3 py-6 text-center text-gray-600 text-sm">
-                    Nenhum cliente cadastrado por você.
+                  <td colSpan={5} className="px-4 py-12 text-center text-[#64748B] text-sm italic">
+                    Nenhum cliente encontrado nesta seção.
                   </td>
                 </tr>
               ) : (
-                list.map((c) => (
-                  <tr key={c.id} className="hover:bg-white/[0.02] transition-colors group">
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <span className="text-white font-bold text-xs">{c.name}</span>
-                      <span className="text-gray-500 text-[10px] ml-1.5">{c.company || '—'}</span>
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <span className="text-gray-400 text-[11px]">{c.phone || '—'}</span>
-                      <span className="text-gray-600 text-[10px] ml-1.5">{c.email || '—'}</span>
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <span className="text-white font-medium text-xs">
-                        {c.monthly_fee
-                          ? c.monthly_fee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-                          : '—'}
-                      </span>
-                      <span className="text-gray-500 text-[10px] ml-1.5">
-                        {c.payment_day ? `Dia ${c.payment_day}` : '—'}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <div className="inline-flex items-center gap-2">
-                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold border ${statusConfig[c.status].className}`}>
-                          {statusConfig[c.status].label}
-                        </span>
-                        {(c.status === 'atrasado') && ((c.dias_atraso ?? 0) > 0) && (
-                          <span className="text-amber-500 text-[10px] font-bold inline-flex items-center gap-0.5">
-                            <Clock size={9} /> {c.dias_atraso}d
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <div className="inline-flex items-center gap-1">
-                        <div className="inline-flex items-center bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg p-0.5">
-                          <button onClick={() => handleQuickStatus(c.id, 'ativo')} title="Marcar como Ativo"
-                            className={`p-1 rounded-md transition-all ${c.status === 'ativo' ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-600 hover:text-emerald-400'}`}>
-                            <CheckCircle2 size={12} />
-                          </button>
-                          <button onClick={() => handleQuickStatus(c.id, 'inativo')} title="Marcar como Inativo"
-                            className={`p-1 rounded-md transition-all ${c.status === 'inativo' ? 'bg-gray-500/20 text-gray-400' : 'text-gray-600 hover:text-white'}`}>
-                            <Ban size={12} />
-                          </button>
+                list.map((c) => {
+                  const config = statusConfig[c.status as keyof typeof statusConfig] || statusConfig.inativo
+                  const StatusIcon = config.icon
+
+                  return (
+                    <tr key={c.id} className="hover:bg-[#F8FAFC] transition-colors group">
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center text-[#1A56DB] font-bold text-xs">
+                            {c.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-[#1E293B] text-sm">{c.name}</p>
+                            <div className="flex items-center gap-1.5 text-[10px] text-[#94A3B8]">
+                              <Building2 size={10} />
+                              {c.company || '--'}
+                            </div>
+                          </div>
                         </div>
-                        <button onClick={() => setClienteEditar(c)} className="p-1 text-gray-500 hover:text-white hover:bg-white/5 rounded-lg transition-all">
-                          <Pencil size={13} />
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 text-[#64748B] text-[11px]">
+                            <Mail size={12} className="text-[#1A56DB]" />
+                            {c.email || '--'}
+                          </div>
+                          <div className="flex items-center gap-2 text-[#64748B] text-[11px]">
+                            <Phone size={12} className="text-[#16A34A]" />
+                            {c.phone || '--'}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="space-y-1">
+                          <p className="text-[#1E293B] font-bold text-xs">
+                            {c.monthly_fee ? `R$ ${c.monthly_fee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'R$ 0,00'}
+                          </p>
+                          <p className="text-[10px] text-[#64748B]">Vence dia {c.payment_day || '--'}</p>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex flex-col gap-2">
+                          <span className={`inline-flex items-center gap-1.5 w-fit px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border ${config.className}`}>
+                            <StatusIcon size={10} />
+                            {config.label}
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <button onClick={() => handleQuickStatus(c.id, 'ativo')} className="p-1 rounded-md hover:bg-green-50 text-gray-300 hover:text-green-600 transition-colors" title="Ativar">
+                              <CheckCircle2 size={14} />
+                            </button>
+                            <button onClick={() => handleQuickStatus(c.id, 'atrasado')} className="p-1 rounded-md hover:bg-amber-50 text-gray-300 hover:text-amber-600 transition-colors" title="Marcar Atraso">
+                              <Clock size={14} />
+                            </button>
+                            <button onClick={() => handleQuickStatus(c.id, 'inativo')} className="p-1 rounded-md hover:bg-red-50 text-gray-300 hover:text-red-600 transition-colors" title="Inativar">
+                              <Ban size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-right">
+                        <button 
+                          onClick={() => setClienteEditar(c)}
+                          className="p-2 text-[#94A3B8] hover:text-[#1A56DB] hover:bg-[#EFF6FF] rounded-xl transition-all"
+                        >
+                          <Pencil size={18} />
                         </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                    </tr>
+                  )
+                })
               )}
             </tbody>
           </table>
+        </div>
       </div>
     </div>
   )
 
   return (
-    <div className="p-4 space-y-3">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+    <div className="min-h-full text-[#1E293B]">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-white text-lg font-bold">Meus Clientes</h1>
-          <p className="text-gray-400 text-xs mt-0.5">Gerencie os clientes que você cadastrou pessoalmente.</p>
+          <h1 className="text-2xl font-semibold flex items-center gap-2 text-[#1E293B]">
+            <Target className="text-[#1A56DB]" />
+            Meus Clientes
+          </h1>
+          <p className="text-[#64748B] text-sm">Gerencie sua carteira de clientes e acompanhe os status financeiros.</p>
         </div>
-        <button onClick={() => setModalNovo(true)} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-emerald-500/20">
-          <UserPlus size={16} /> Novo Cliente
+        <button 
+          onClick={() => setModalNovo(true)}
+          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-[#1A56DB] hover:bg-[#1A56DB]/90 text-white font-semibold rounded-xl transition-all shadow-sm"
+        >
+          <UserPlus size={20} />
+          Novo Cliente
         </button>
       </div>
 
-      <div className="relative max-w-md">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-        <input type="text" placeholder="Buscar em meus clientes..." value={search} onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-all" />
+      {/* Search & Stats */}
+      <div className="flex flex-col md:flex-row gap-4 mb-8">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8]" size={18} />
+          <input
+            type="text"
+            placeholder="Buscar em minha carteira..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm text-[#1E293B] focus:outline-none focus:border-[#1A56DB] shadow-sm transition-all"
+          />
+        </div>
+        <div className="flex items-center gap-6 px-6 py-2.5 bg-white border border-[#E2E8F0] rounded-xl shadow-sm">
+           <div className="text-center">
+              <p className="text-[10px] font-bold text-[#64748B] uppercase">Minha Carteira</p>
+              <p className="text-lg font-bold text-[#1A56DB]">{myClients.length}</p>
+           </div>
+           <div className="w-px h-8 bg-[#E2E8F0]" />
+           <div className="text-center">
+              <p className="text-[10px] font-bold text-[#64748B] uppercase">Ativos</p>
+              <p className="text-lg font-bold text-[#16A34A]">{myClients.filter(c => c.status === 'ativo').length}</p>
+           </div>
+        </div>
       </div>
 
-      <div className="space-y-6">
+      {/* Tables */}
+      <div className="space-y-10 pb-12">
         {loading && myClients.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 gap-3">
-            <Loader2 size={24} className="animate-spin text-emerald-500" />
-            <p className="text-gray-500 text-sm">Carregando seus clientes...</p>
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <Loader2 size={32} className="animate-spin text-[#1A56DB]" />
+            <p className="text-[#64748B] text-sm font-medium">Carregando seus clientes...</p>
           </div>
         ) : (
           <>
-            {renderTable(filteredActive, 'Clientes Ativos')}
+            {renderTable(filteredActive, 'Clientes Ativos e Atrasados')}
             {renderTable(filteredInactive, 'Clientes Inativos')}
           </>
         )}

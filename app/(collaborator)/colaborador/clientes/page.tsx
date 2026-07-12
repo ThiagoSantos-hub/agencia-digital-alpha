@@ -2,131 +2,192 @@
 
 import { useState, useMemo } from 'react'
 import { useClientes, Client } from '@/hooks/useClientes'
-import { Search, Loader2, Clock } from 'lucide-react'
+import { 
+  Search, 
+  Loader2, 
+  AlertCircle, 
+  Clock, 
+  CheckCircle2, 
+  Ban, 
+  Users,
+  Filter,
+  ChevronRight,
+  Phone,
+  Mail,
+  Building2
+} from 'lucide-react'
 
 const statusConfig = {
-  ativo:     { label: 'Ativo',     className: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
-  atrasado:  { label: 'Atrasado',  className: 'text-amber-400 bg-amber-500/10 border-amber-500/30'      },
-  inativo:   { label: 'Inativo',   className: 'text-gray-400 bg-gray-500/10 border-gray-500/30'         },
+  ativo:     { label: 'Ativo',     className: 'bg-green-50 text-green-700 border-green-200', icon: CheckCircle2 },
+  atrasado:  { label: 'Atrasado',  className: 'bg-amber-50 text-amber-700 border-amber-200', icon: Clock },
+  inativo:   { label: 'Inativo',   className: 'bg-red-50 text-red-700 border-red-200', icon: Ban },
 }
 
 export default function ColaboradorClientesPage() {
   const { clients, loading } = useClientes()
-  const [search, setSearch] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'todos' | 'ativo' | 'atrasado' | 'inativo'>('todos')
 
-  const filteredActive = useMemo(() => 
-    clients.filter(c => 
-      c.status !== 'inativo' && 
-      (c.name.toLowerCase().includes(search.toLowerCase()) || 
-       (c.company ?? '').toLowerCase().includes(search.toLowerCase()) ||
-       (c.email ?? '').toLowerCase().includes(search.toLowerCase()))
-    ), [clients, search])
+  const filteredClients = useMemo(() => {
+    return clients.filter(client => {
+      const matchesSearch = 
+        client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (client.company?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+      
+      const matchesStatus = statusFilter === 'todos' || client.status === statusFilter
+      
+      return matchesSearch && matchesStatus
+    })
+  }, [clients, searchTerm, statusFilter])
 
-  const filteredInactive = useMemo(() => 
-    clients.filter(c => 
-      c.status === 'inativo' && 
-      (c.name.toLowerCase().includes(search.toLowerCase()) || 
-       (c.company ?? '').toLowerCase().includes(search.toLowerCase()) ||
-       (c.email ?? '').toLowerCase().includes(search.toLowerCase()))
-    ), [clients, search])
-
-  const renderTable = (list: Client[], title: string) => (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 px-1">
-        <h2 className="text-[#1E293B] font-semibold text-lg">{title}</h2>
-        <span className="px-2 py-0.5 rounded-full bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow text-gray-500 text-[10px] font-bold">
-          {list.length}
-        </span>
-      </div>
-      <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow rounded-2xl overflow-hidden shadow-xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left border-collapse">
-            <thead>
-              <tr className="border-b border-[#2a2a2a] bg-[#1f1f1f]/50">
-                <th className="px-5 py-3 text-gray-500 font-medium">CLIENTE / EMPRESA</th>
-                <th className="px-5 py-3 text-gray-500 font-medium">CONTATO</th>
-                <th className="px-5 py-3 text-gray-500 font-medium">STATUS</th>
-                {title.includes('Inativos') && <th className="px-5 py-3 text-gray-500 font-medium">INATIVADO EM</th>}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#2a2a2a]/50">
-              {list.length === 0 ? (
-                <tr>
-                  <td colSpan={title.includes('Inativos') ? 4 : 3} className="px-5 py-10 text-center text-gray-600">
-                    Nenhum cliente encontrado nesta seção.
-                  </td>
-                </tr>
-              ) : (
-                list.map((c) => (
-                  <tr key={c.id} className="hover:bg-white/[0.02] transition-colors group">
-                    <td className="px-5 py-4">
-                      <div className="flex flex-col">
-                        <span className="text-[#1E293B] font-semibold text-sm">{c.name}</span>
-                        <span className="text-gray-500 text-xs">{c.company || '—'}</span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-gray-400 text-xs flex items-center gap-1.5">
-                          {c.phone || '—'}
-                        </span>
-                        <span className="text-gray-600 text-[10px]">{c.email || '—'}</span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex flex-col gap-1.5">
-                        <span className={`inline-flex items-center w-fit px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${statusConfig[c.status].className}`}>
-                          {statusConfig[c.status].label}
-                        </span>
-                        {(c.status === 'atrasado') && ((c.dias_atraso ?? 0) > 0) && (
-                          <span className="text-amber-500 text-[10px] font-bold flex items-center gap-1">
-                            <Clock size={10} /> {c.dias_atraso} dias
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    {title.includes('Inativos') && (
-                      <td className="px-5 py-4 text-gray-400 text-xs">
-                        {c.inativo_em ? new Date(c.inativo_em).toLocaleDateString('pt-BR') : '—'}
-                      </td>
-                    )}
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  )
+  const stats = useMemo(() => {
+    const total = clients.length
+    const ativos = clients.filter(c => c.status === 'ativo').length
+    const pendentes = clients.filter(c => c.status === 'atrasado').length
+    return { total, ativos, pendentes }
+  }, [clients])
 
   return (
-    <div className="p-8 space-y-8 pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="min-h-full text-[#1E293B]">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-[#1E293B] text-2xl font-bold">Clientes</h1>
-          <p className="text-[#64748B] text-sm mt-1">Visualize a lista de clientes da agência e seus status.</p>
+          <h1 className="text-2xl font-semibold flex items-center gap-2 text-[#1E293B]">
+            <Users className="text-[#1A56DB]" />
+            Clientes da Agência
+          </h1>
+          <p className="text-[#64748B] text-sm">Visualize a base completa de clientes atendidos pela Alpha.</p>
         </div>
       </div>
 
-      <div className="relative max-w-md">
-        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-        <input type="text" placeholder="Buscar por nome, empresa ou e-mail..." value={search} onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-12 pr-4 py-3 bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow rounded-2xl text-[#1E293B] placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-all shadow-inner" />
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white border border-[#E2E8F0] p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+          <p className="text-[#64748B] text-sm mb-1 font-medium">Total de Clientes</p>
+          <p className="text-3xl font-semibold text-[#1E293B]">{stats.total}</p>
+        </div>
+        <div className="bg-white border border-[#E2E8F0] p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+          <p className="text-[#64748B] text-sm mb-1 font-medium">Clientes Ativos</p>
+          <p className="text-3xl font-semibold text-[#16A34A]">{stats.ativos}</p>
+        </div>
+        <div className="bg-white border border-[#E2E8F0] p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+          <p className="text-[#64748B] text-sm mb-1 font-medium">Pendências Financeiras</p>
+          <p className="text-3xl font-semibold text-amber-600">{stats.pendentes}</p>
+        </div>
       </div>
 
-      <div className="space-y-12">
-        {loading && clients.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <Loader2 size={32} className="animate-spin text-emerald-500" />
-            <p className="text-[#64748B] text-sm">Carregando base de clientes...</p>
-          </div>
-        ) : (
-          <>
-            {renderTable(filteredActive, 'Clientes Ativos e Atrasados')}
-            {renderTable(filteredInactive, 'Clientes Inativos')}
-          </>
-        )}
+      {/* Filters & Search */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8]" size={18} />
+          <input
+            type="text"
+            placeholder="Buscar por nome ou empresa..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all shadow-sm"
+          />
+        </div>
+        <div className="flex items-center gap-2 bg-white border border-[#E2E8F0] px-3 py-2 rounded-xl shadow-sm">
+          <Filter size={16} className="text-[#64748B]" />
+          <select 
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as any)}
+            className="bg-transparent outline-none text-sm text-[#1E293B] font-medium"
+          >
+            <option value="todos">Todos os Status</option>
+            <option value="ativo">Ativos</option>
+            <option value="atrasado">Atrasados</option>
+            <option value="inativo">Inativos</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm overflow-hidden">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
+              <th className="p-4 text-xs font-semibold text-[#64748B] uppercase tracking-wider">Cliente</th>
+              <th className="p-4 text-xs font-semibold text-[#64748B] uppercase tracking-wider">Empresa</th>
+              <th className="p-4 text-xs font-semibold text-[#64748B] uppercase tracking-wider">Contato</th>
+              <th className="p-4 text-xs font-semibold text-[#64748B] uppercase tracking-wider">Status</th>
+              <th className="p-4 text-xs font-semibold text-[#64748B] uppercase tracking-wider text-right">Acesso</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#E2E8F0]">
+            {loading ? (
+              [...Array(5)].map((_, i) => (
+                <tr key={i} className="animate-pulse">
+                  <td colSpan={5} className="p-4">
+                    <div className="h-12 bg-gray-100 rounded-lg w-full"></div>
+                  </td>
+                </tr>
+              ))
+            ) : filteredClients.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="p-12 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <AlertCircle size={40} className="text-gray-200" />
+                    <p className="text-[#64748B] text-sm">Nenhum cliente encontrado.</p>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              filteredClients.map((client) => {
+                const config = statusConfig[client.status as keyof typeof statusConfig] || statusConfig.inativo
+                const StatusIcon = config.icon
+
+                return (
+                  <tr key={client.id} className="hover:bg-[#F8FAFC] transition-colors group">
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center text-[#1A56DB] font-bold text-xs">
+                          {client.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-[#1E293B] text-sm">{client.name}</p>
+                          <p className="text-[10px] text-[#94A3B8] font-medium">ID: {client.id.split('-')[0]}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2 text-[#64748B] text-sm">
+                        <Building2 size={14} />
+                        {client.company || '--'}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-[#64748B] text-[11px]">
+                          <Mail size={12} className="text-[#1A56DB]" />
+                          {client.email || '--'}
+                        </div>
+                        <div className="flex items-center gap-2 text-[#64748B] text-[11px]">
+                          <Phone size={12} className="text-[#16A34A]" />
+                          {client.phone || '--'}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border ${config.className}`}>
+                        <StatusIcon size={12} />
+                        {config.label}
+                      </span>
+                    </td>
+                    <td className="p-4 text-right">
+                       <div className="flex justify-end">
+                          <div className="p-2 text-[#94A3B8] group-hover:text-[#1A56DB] transition-colors">
+                             <ChevronRight size={18} />
+                          </div>
+                       </div>
+                    </td>
+                  </tr>
+                )
+              })
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   )
