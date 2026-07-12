@@ -19,7 +19,8 @@ import {
   Facebook,
   Globe,
   ChevronRight,
-  Loader2
+  Loader2,
+  X
 } from 'lucide-react'
 import { useRelatorios, Report, ReportHistory } from '@/hooks/useRelatorios'
 
@@ -149,19 +150,19 @@ export default function ColaboradorRelatoriosPage() {
   }
 
   return (
-    <div className="min-h-full text-white">
+    <div className="min-h-full bg-[#F8FAFC] text-[#1E293B]">
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <BarChart2 className="text-[#10b981]" />
+          <h1 className="text-2xl font-semibold flex items-center gap-2 text-[#1E293B]">
+            <BarChart2 className="text-[#1A56DB]" />
             Relatórios
           </h1>
-          <p className="text-gray-400 text-sm">Gerencie seus relatórios automáticos de anúncios</p>
+          <p className="text-[#64748B] text-sm">Gerencie seus relatórios automáticos de anúncios</p>
         </div>
         <button 
           onClick={() => router.push('/colaborador/relatorios/criar')}
-          className="bg-[#10b981] hover:bg-[#059669] text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-medium"
+          className="bg-[#1A56DB] hover:bg-[#1A56DB]/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-medium shadow-sm"
         >
           <Plus size={18} />
           Criar Relatório
@@ -170,26 +171,26 @@ export default function ColaboradorRelatoriosPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-[#0a0a0f] border border-[#1a1a2e] p-6 rounded-2xl">
-          <p className="text-gray-400 text-sm mb-1">Relatórios Ativos</p>
-          <p className="text-3xl font-bold text-[#10b981]">{stats.ativos}</p>
+        <div className="bg-white border border-[#E2E8F0] p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+          <p className="text-[#64748B] text-sm mb-1">Relatórios Ativos</p>
+          <p className="text-3xl font-semibold text-[#1A56DB]">{stats.ativos}</p>
         </div>
-        <div className="bg-[#0a0a0f] border border-[#1a1a2e] p-6 rounded-2xl">
-          <p className="text-gray-400 text-sm mb-1">Total de Relatórios</p>
-          <p className="text-3xl font-bold">{stats.total}</p>
+        <div className="bg-white border border-[#E2E8F0] p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+          <p className="text-[#64748B] text-sm mb-1">Total de Relatórios</p>
+          <p className="text-3xl font-semibold text-[#1E293B]">{stats.total}</p>
         </div>
-        <div className="bg-[#0a0a0f] border border-[#1a1a2e] p-6 rounded-2xl">
-          <p className="text-gray-400 text-sm mb-1">Próximo Envio</p>
-          <p className="text-3xl font-bold text-emerald-400">{stats.proximoEnvio}</p>
+        <div className="bg-white border border-[#E2E8F0] p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+          <p className="text-[#64748B] text-sm mb-1">Próximo Envio</p>
+          <p className="text-3xl font-semibold text-[#16A34A]">{stats.proximoEnvio}</p>
         </div>
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-4 mb-6">
-        <div className="flex items-center gap-2 bg-[#0a0a0f] border border-[#1a1a2e] px-3 py-2 rounded-lg">
-          <Filter size={16} className="text-gray-400" />
+        <div className="flex items-center gap-2 bg-white border border-[#E2E8F0] px-3 py-2 rounded-lg shadow-sm">
+          <Filter size={16} className="text-[#64748B]" />
           <select 
-            className="bg-transparent outline-none text-sm text-gray-300"
+            className="bg-transparent outline-none text-sm text-[#1E293B] font-medium"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as any)}
           >
@@ -198,10 +199,10 @@ export default function ColaboradorRelatoriosPage() {
             <option value="inativo">Inativos</option>
           </select>
         </div>
-        <div className="flex items-center gap-2 bg-[#0a0a0f] border border-[#1a1a2e] px-3 py-2 rounded-lg">
-          <Globe size={16} className="text-gray-400" />
+        <div className="flex items-center gap-2 bg-white border border-[#E2E8F0] px-3 py-2 rounded-lg shadow-sm">
+          <Globe size={16} className="text-[#64748B]" />
           <select 
-            className="bg-transparent outline-none text-sm text-gray-300"
+            className="bg-transparent outline-none text-sm text-[#1E293B] font-medium"
             value={filterCanal}
             onChange={(e) => setFilterCanal(e.target.value as any)}
           >
@@ -213,24 +214,24 @@ export default function ColaboradorRelatoriosPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-[#0a0a0f] border border-[#1a1a2e] rounded-2xl overflow-hidden">
+      <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-[#1a1a2e] bg-[#0d0d14]">
-              <th className="p-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
-              <th className="p-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Nome</th>
-              <th className="p-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Canal</th>
-              <th className="p-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Frequência</th>
-              <th className="p-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Próximo Envio</th>
-              <th className="p-4 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">Ações</th>
+            <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
+              <th className="p-4 text-xs font-semibold text-[#64748B] uppercase tracking-wider">Status</th>
+              <th className="p-4 text-xs font-semibold text-[#64748B] uppercase tracking-wider">Nome</th>
+              <th className="p-4 text-xs font-semibold text-[#64748B] uppercase tracking-wider">Canal</th>
+              <th className="p-4 text-xs font-semibold text-[#64748B] uppercase tracking-wider">Frequência</th>
+              <th className="p-4 text-xs font-semibold text-[#64748B] uppercase tracking-wider">Próximo Envio</th>
+              <th className="p-4 text-xs font-semibold text-[#64748B] uppercase tracking-wider text-right">Ações</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#1a1a2e]">
+          <tbody className="divide-y divide-[#E2E8F0]">
             {loading ? (
               [...Array(5)].map((_, i) => (
                 <tr key={i} className="animate-pulse">
                   <td colSpan={6} className="p-4">
-                    <div className="h-10 bg-[#1a1a2e] rounded-lg w-full"></div>
+                    <div className="h-10 bg-gray-100 rounded-lg w-full"></div>
                   </td>
                 </tr>
               ))
@@ -238,14 +239,14 @@ export default function ColaboradorRelatoriosPage() {
               <tr>
                 <td colSpan={6} className="p-12 text-center">
                   <div className="flex flex-col items-center gap-4">
-                    <BarChart2 size={48} className="text-gray-600" />
+                    <BarChart2 size={48} className="text-gray-200" />
                     <div>
-                      <p className="text-gray-300 font-medium">Nenhum relatório criado ainda</p>
-                      <p className="text-gray-500 text-sm">Comece criando seu primeiro relatório automático.</p>
+                      <p className="text-[#1E293B] font-medium">Nenhum relatório criado ainda</p>
+                      <p className="text-[#64748B] text-sm">Comece criando seu primeiro relatório automático.</p>
                     </div>
                     <button 
                       onClick={() => router.push('/colaborador/relatorios/criar')}
-                      className="bg-[#10b981] hover:bg-[#059669] text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm"
+                      className="bg-[#1A56DB] hover:bg-[#1A56DB]/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium shadow-sm"
                     >
                       <Plus size={16} />
                       Criar primeiro relatório
@@ -255,43 +256,43 @@ export default function ColaboradorRelatoriosPage() {
               </tr>
             ) : (
               filteredReports.map((report) => (
-                <tr key={report.id} className="hover:bg-[#0d0d14] transition-colors group">
+                <tr key={report.id} className="hover:bg-[#F8FAFC] transition-colors group">
                   <td className="p-4">
                     <button 
                       onClick={() => toggleAtivo(report.id, !report.ativo)}
-                      className={`w-10 h-5 rounded-full relative transition-colors ${report.ativo ? 'bg-[#10b981]' : 'bg-gray-700'}`}
+                      className={`w-10 h-5 rounded-full relative transition-colors ${report.ativo ? 'bg-[#1A56DB]' : 'bg-gray-200'}`}
                     >
                       <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${report.ativo ? 'right-1' : 'left-1'}`} />
                     </button>
                   </td>
                   <td className="p-4">
-                    <div className="font-medium text-gray-200">{report.nome}</div>
-                    <div className="text-xs text-gray-500">Criado em {formatDate(report.created_at)}</div>
+                    <div className="font-medium text-[#1E293B]">{report.nome}</div>
+                    <div className="text-xs text-[#64748B]">Criado em {formatDate(report.created_at)}</div>
                   </td>
                   <td className="p-4">
                     {report.canal === 'meta' ? (
-                      <span className="flex items-center gap-1.5 text-blue-400 text-sm">
+                      <span className="flex items-center gap-1.5 text-blue-600 text-sm font-medium">
                         <Facebook size={14} /> Meta
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1.5 text-red-400 text-sm">
+                      <span className="flex items-center gap-1.5 text-red-600 text-sm font-medium">
                         <Globe size={14} /> Google
                       </span>
                     )}
                   </td>
                   <td className="p-4">
-                    <span className="text-sm text-gray-300 capitalize">{report.frequencia}</span>
-                    <div className="text-[10px] text-gray-500 uppercase">{report.periodo.replace('_', ' ')}</div>
+                    <span className="text-sm text-[#1E293B] font-medium capitalize">{report.frequencia}</span>
+                    <div className="text-[10px] text-[#64748B] font-semibold uppercase">{report.periodo.replace('_', ' ')}</div>
                   </td>
                   <td className="p-4">
-                    <div className="text-sm text-gray-300">
+                    <div className="text-sm text-[#1E293B] font-medium">
                       {report.proximo_envio ? formatDateTime(report.proximo_envio) : '--'}
                     </div>
                   </td>
-                  <td className="p-4 text-right">
+                  <td className="p-4 text-right relative">
                     <button 
                       onClick={() => setActionMenuId(actionMenuId === report.id ? null : report.id)}
-                      className="p-2 hover:bg-[#1a1a2e] rounded-lg text-gray-400 transition-colors"
+                      className="p-2 hover:bg-gray-100 rounded-lg text-[#64748B] transition-colors"
                     >
                       <MoreHorizontal size={18} />
                     </button>
@@ -302,14 +303,11 @@ export default function ColaboradorRelatoriosPage() {
                           className="fixed inset-0 z-10" 
                           onClick={() => setActionMenuId(null)} 
                         />
-                        <div 
-                          className="fixed right-8 w-48 bg-[#0d0d14] border border-[#1a1a2e] rounded-xl shadow-2xl z-20 overflow-hidden"
-                          style={{ top: 'auto' }}
-                        >
+                        <div className="absolute right-4 bottom-12 w-48 bg-white border border-[#E2E8F0] rounded-xl shadow-xl z-20 overflow-hidden">
                           <button
                             onClick={() => handleSendNow(report.id)}
                             disabled={sendingId === report.id}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1a2e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#1E293B] hover:bg-[#F8FAFC] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                           >
                             {sendingId === report.id ? (
                               <Loader2 className="animate-spin" size={14} />
@@ -320,25 +318,25 @@ export default function ColaboradorRelatoriosPage() {
                           </button>
                           <button 
                             onClick={() => router.push(`/colaborador/relatorios/criar?id=${report.id}`)}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1a2e] transition-colors"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#1E293B] hover:bg-[#F8FAFC] transition-colors font-medium"
                           >
                             <Edit2 size={14} /> Editar
                           </button>
                           <button 
                             onClick={() => handleDuplicate(report)}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1a2e] transition-colors"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#1E293B] hover:bg-[#F8FAFC] transition-colors font-medium"
                           >
                             <Copy size={14} /> Duplicar
                           </button>
                           <button 
                             onClick={() => handleOpenHistory(report)}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1a2e] transition-colors"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#1E293B] hover:bg-[#F8FAFC] transition-colors font-medium"
                           >
                             <Clock size={14} /> Histórico
                           </button>
                           <button 
                             onClick={() => handleDelete(report.id)}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-400/10 transition-colors"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium"
                           >
                             <Trash2 size={14} /> Excluir
                           </button>
@@ -357,51 +355,58 @@ export default function ColaboradorRelatoriosPage() {
       {historyReport && (
         <>
           <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity"
+            className="fixed inset-0 bg-black/40 z-40 transition-opacity"
             onClick={() => setHistoryReport(null)}
           />
-          <div className="fixed right-0 top-0 h-screen w-full max-w-md bg-[#050508] border-l border-[#1a1a2e] z-50 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
-            <div className="p-6 border-b border-[#1a1a2e] flex justify-between items-center">
+          <div className="fixed right-0 top-0 h-screen w-full max-w-md bg-white border-l border-[#E2E8F0] z-50 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+            <div className="p-6 border-b border-[#E2E8F0] flex justify-between items-center bg-[#F8FAFC]">
               <div>
-                <h2 className="text-lg font-bold">Histórico de Envios</h2>
-                <p className="text-xs text-gray-400">{historyReport.nome}</p>
+                <h2 className="text-lg font-semibold text-[#1E293B]">Histórico de Envios</h2>
+                <p className="text-sm text-[#64748B]">{historyReport.nome}</p>
               </div>
               <button 
                 onClick={() => setHistoryReport(null)}
-                className="p-2 hover:bg-[#1a1a2e] rounded-lg text-gray-400"
+                className="p-2 hover:bg-gray-200 rounded-lg text-[#64748B] transition-colors"
               >
-                <ChevronRight size={20} />
+                <X size={20} />
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {loadingHistory ? (
                 <div className="flex justify-center py-12">
-                  <Loader2 className="animate-spin text-[#10b981]" size={32} />
+                  <Loader2 className="animate-spin text-[#1A56DB]" size={32} />
                 </div>
               ) : historyData.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  Nenhum envio registrado ainda.
+                <div className="text-center py-12">
+                  <Clock size={48} className="text-gray-100 mx-auto mb-4" />
+                  <p className="text-[#64748B]">Nenhum envio registrado ainda.</p>
                 </div>
               ) : (
-                historyData.map((item) => (
-                  <div key={item.id} className="relative pl-6 border-l border-[#1a1a2e]">
-                    <div className={`absolute left-[-5px] top-0 w-[9px] h-[9px] rounded-full ${
-                      item.status === 'enviado' ? 'bg-[#10b981]' : 'bg-red-500'
-                    }`} />
-                    <div className="mb-1 flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-200">
-                        {item.status === 'enviado' ? 'Enviado com sucesso' : 'Falha no envio'}
-                      </span>
-                      <span className="text-[10px] text-gray-500">{formatHistoryDate(item.enviado_em)}</span>
-                    </div>
-                    {item.erro_detalhe && (
-                      <p className="text-xs text-red-400/80 bg-red-400/5 p-2 rounded border border-red-400/10 mt-2">
-                        {item.erro_detalhe}
+                <div className="space-y-4">
+                  {historyData.map((item) => (
+                    <div key={item.id} className="bg-[#F8FAFC] border border-[#E2E8F0] p-4 rounded-xl shadow-sm">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border ${
+                          item.status === 'sucesso' 
+                            ? 'bg-green-50 text-green-700 border-green-200' 
+                            : 'bg-red-50 text-red-700 border-red-200'
+                        }`}>
+                          {item.status}
+                        </span>
+                        <span className="text-xs text-[#64748B] font-medium">
+                          {formatHistoryDate(item.created_at)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-[#1E293B] font-medium">
+                        {item.status === 'sucesso' ? 'Enviado com sucesso' : 'Falha no envio'}
                       </p>
-                    )}
-                  </div>
-                ))
+                      {item.error_message && (
+                        <p className="text-xs text-red-600 mt-1 font-medium">{item.error_message}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
