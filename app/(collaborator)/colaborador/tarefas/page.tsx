@@ -160,6 +160,9 @@ export default function ColaboradorTasksPage() {
               {...column}
               userRole="collaborator"
               tasks={myTasks.filter(t => t.status === column.id)}
+              onDuplicate={() => {}}
+              onEdit={() => {}}
+              onDelete={() => {}}
               onMove={(id, status) => updateTask(id, { status })}
               onClick={(task) => { setSelectedTask(task); setIsDetailModalOpen(true); }}
             />
