@@ -20,6 +20,7 @@ import {
   Plus, Search, Pencil, Trash2, CheckCircle2,
   ChevronLeft, ChevronRight, X, AlertCircle,
   RotateCcw, User, RepeatIcon, Pin, Eye, EyeOff,
+  ChevronDown
 } from 'lucide-react'
 
 const fmtBRL = (v: number) =>
@@ -34,8 +35,8 @@ const MESES = [
 ]
 
 const PALETTE = [
-  '#00ff88','#00cc6a','#4ade80','#86efac',
-  '#f59e0b','#ef4444','#8b5cf6','#3b82f6','#06b6d4',
+  '#1A56DB','#16A34A','#F59E0B','#EF4444',
+  '#8b5cf6','#06b6d4','#10b981','#f97316','#0ea5e9',
 ]
 
 type AbaFiltro = 'todas' | 'receitas' | 'despesas'
@@ -86,8 +87,8 @@ function PieChart({ data, visiveis }: { data: { label: string; value: number; co
         {slices.map((s, i) => (
           <path key={i} d={s.d} fill={s.color} opacity={0.9} />
         ))}
-        <text x={cx} y={cy - 6} textAnchor="middle" fill="#fff" fontSize="10" fontWeight="600">Total</text>
-        <text x={cx} y={cy + 8} textAnchor="middle" fill="#00ff88" fontSize="9">
+        <text x={cx} y={cy - 6} textAnchor="middle" fill="#1E293B" fontSize="10" fontWeight="600">Total</text>
+        <text x={cx} y={cy + 8} textAnchor="middle" fill="#16A34A" fontSize="9" fontWeight="bold">
           {visiveis ? fmtBRL(total) : '••••••'}
         </text>
       </svg>
@@ -96,11 +97,11 @@ function PieChart({ data, visiveis }: { data: { label: string; value: number; co
           <div key={i} className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: s.color }} />
-              <span className="text-gray-400 truncate max-w-[110px]">{s.label}</span>
+              <span className="text-[#64748B] truncate max-w-[110px]">{s.label}</span>
             </div>
             <div className="flex items-center gap-2 text-right">
-              <span className="text-gray-500">{s.pct}%</span>
-              <span className="text-white font-medium">{visiveis ? fmtBRL(s.value) : '••••••'}</span>
+              <span className="text-[#64748B] opacity-60">{s.pct}%</span>
+              <span className="text-[#1E293B] font-medium">{visiveis ? fmtBRL(s.value) : '••••••'}</span>
             </div>
           </div>
         ))}
@@ -244,13 +245,13 @@ export default function FinanceiroPage() {
   }, [listagem])
 
   const dadosPizza = useMemo(() => {
-    const gastos = lancamentos.filter(l => l.tipo === 'gasto' || l.tipo === 'investimento')
+    const gastos = listagem.filter(l => l.tipo === 'gasto' || l.tipo === 'investimento')
     const porCat: Record<string, number> = {}
     gastos.forEach(l => { porCat[l.categoria] = (porCat[l.categoria] ?? 0) + l.valor })
     return Object.entries(porCat)
       .sort((a, b) => b[1] - a[1])
       .map(([label, value], i) => ({ label, value, color: PALETTE[i % PALETTE.length] }))
-  }, [lancamentos])
+  }, [listagem])
 
   // helper para exibir ou mascarar
   const val = (v: number) => visiveis ? fmtBRL(v) : '••••••'
@@ -311,7 +312,7 @@ export default function FinanceiroPage() {
   const categorias = CATEGORIAS[formInput.escopo]?.[formInput.tipo] ?? []
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="min-h-screen bg-[#F8FAFC] p-6 space-y-6">
 
       {/* Topo: abas escopo + botão olho */}
       <div className="flex items-center justify-between">
@@ -321,9 +322,9 @@ export default function FinanceiroPage() {
               <button
                 key={e}
                 onClick={() => setEscopoAtivo(e)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${escopoAtivo === e
-                  ? 'bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30'
-                  : 'text-gray-400 border border-[#1a3a24] hover:border-[#00ff88]/30 hover:text-white'}`}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${escopoAtivo === e
+                  ? 'bg-[#EFF6FF] text-[#1A56DB] border border-[#BFDBFE]'
+                  : 'text-[#64748B] border border-[#E2E8F0] hover:border-[#1A56DB] hover:text-[#1A56DB] bg-white'}`}
               >
                 {e === 'agencia' ? '🏢 Agência' : '👤 Pessoal'}
               </button>
@@ -332,325 +333,402 @@ export default function FinanceiroPage() {
         )}
         <button
           onClick={() => setVisiveis(v => !v)}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm border border-[#1a3a24] text-gray-400 hover:border-[#00ff88]/30 hover:text-white transition-colors ml-auto"
+          className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm border border-[#E2E8F0] text-[#64748B] hover:border-[#1A56DB] hover:text-[#1A56DB] bg-white transition-all ml-auto shadow-sm"
           title={visiveis ? 'Ocultar valores' : 'Mostrar valores'}
         >
           {visiveis ? <EyeOff size={15} /> : <Eye size={15} />}
-          <span className="text-xs">{visiveis ? 'Ocultar' : 'Mostrar'}</span>
+          <span className="text-xs font-medium">{visiveis ? 'Ocultar' : 'Mostrar'}</span>
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Card Receitas */}
-        <div className="bg-[#0d1510] border border-[#1a3a24] rounded-3xl p-6 shadow-xl">
+        <div className="bg-white border border-[#E2E8F0] rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2 text-[#00ff88]">
+            <div className="flex items-center gap-2 text-[#16A34A]">
               <TrendingUp size={18} />
-              <span className="text-sm font-medium uppercase tracking-wider">Receitas</span>
+              <span className="text-sm font-semibold uppercase tracking-wider">Receitas</span>
             </div>
           </div>
           <div className="flex items-baseline gap-2 mb-1">
-            <div className="w-10 h-10 rounded-full bg-[#00ff88]/10 border border-[#00ff88]/20 flex items-center justify-center">
-              <TrendingUp size={20} className="text-[#00ff88]" />
+            <div className="w-10 h-10 rounded-full bg-green-50 border border-green-100 flex items-center justify-center">
+              <TrendingUp size={20} className="text-[#16A34A]" />
             </div>
-            <span className="text-3xl font-bold text-white">{val(totais.receita)}</span>
+            <span className="text-3xl font-bold text-[#1E293B]">{val(totais.receita)}</span>
           </div>
-          <p className="text-gray-500 text-xs mb-6">1 de {MESES[mesAtivo]} - {ultimoDia} de {MESES[mesAtivo]}</p>
+          <p className="text-[#64748B] text-xs mb-6 font-medium">1 de {MESES[mesAtivo]} - {ultimoDia} de {MESES[mesAtivo]}</p>
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl p-4">
-              <div className="flex items-center gap-2 text-[#00ff88] mb-1">
+            <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4">
+              <div className="flex items-center gap-2 text-[#16A34A] mb-1">
                 <CheckCircle2 size={14} />
-                <span className="text-xs font-medium">Recebido</span>
+                <span className="text-xs font-semibold">Recebido</span>
               </div>
-              <p className="text-lg font-bold text-white">{val(totais.receita_paga)}</p>
+              <p className="text-lg font-bold text-[#1E293B]">{val(totais.receita_paga)}</p>
             </div>
-            <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl p-4">
-              <div className="flex items-center gap-2 text-amber-400 mb-1">
+            <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4">
+              <div className="flex items-center gap-2 text-[#F59E0B] mb-1">
                 <RotateCcw size={14} />
-                <span className="text-xs font-medium">A receber</span>
+                <span className="text-xs font-semibold">A receber</span>
               </div>
-              <p className="text-lg font-bold text-white">{val(totais.receita_pendente)}</p>
+              <p className="text-lg font-bold text-[#1E293B]">{val(totais.receita_pendente)}</p>
             </div>
           </div>
         </div>
 
         {/* Card Despesas */}
-        <div className="bg-[#0d1510] border border-[#1a3a24] rounded-3xl p-6 shadow-xl">
+        <div className="bg-white border border-[#E2E8F0] rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2 text-red-400">
+            <div className="flex items-center gap-2 text-[#EF4444]">
               <TrendingDown size={18} />
-              <span className="text-sm font-medium uppercase tracking-wider">Despesas</span>
+              <span className="text-sm font-semibold uppercase tracking-wider">Despesas</span>
             </div>
           </div>
           <div className="flex items-baseline gap-2 mb-1">
-            <div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-              <TrendingDown size={20} className="text-red-400" />
+            <div className="w-10 h-10 rounded-full bg-red-50 border border-red-100 flex items-center justify-center">
+              <TrendingDown size={20} className="text-[#EF4444]" />
             </div>
-            <span className="text-3xl font-bold text-white">{val(totais.gasto + totais.investimento)}</span>
+            <span className="text-3xl font-bold text-[#1E293B]">{val(totais.gasto + totais.investimento)}</span>
           </div>
-          <p className="text-gray-500 text-xs mb-6">1 de {MESES[mesAtivo]} - {ultimoDia} de {MESES[mesAtivo]}</p>
+          <p className="text-[#64748B] text-xs mb-6 font-medium">Previsão total de saídas</p>
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl p-4">
-              <div className="flex items-center gap-2 text-emerald-500 mb-1">
+            <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4">
+              <div className="flex items-center gap-2 text-[#EF4444] mb-1">
                 <CheckCircle2 size={14} />
-                <span className="text-xs font-medium">Pago</span>
+                <span className="text-xs font-semibold">Pago</span>
               </div>
-              <p className="text-lg font-bold text-white">{val(totais.gasto_pago)}</p>
+              <p className="text-lg font-bold text-[#1E293B]">{val(totais.gasto_pago)}</p>
             </div>
-            <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl p-4">
-              <div className="flex items-center gap-2 text-red-400 mb-1">
+            <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-4">
+              <div className="flex items-center gap-2 text-[#F59E0B] mb-1">
                 <RotateCcw size={14} />
-                <span className="text-xs font-medium">A pagar</span>
+                <span className="text-xs font-semibold">A pagar</span>
               </div>
-              <p className="text-lg font-bold text-white">{val(totais.gasto_pendente)}</p>
+              <p className="text-lg font-bold text-[#1E293B]">{val(totais.gasto_pendente)}</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex gap-6">
-        <div className="flex-1 bg-[#0d1510] border border-[#1a3a24] rounded-2xl overflow-hidden">
-
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[#1a3a24]">
-            <div className="flex items-center gap-3">
-              <button onClick={() => navMes(-1)} className="w-7 h-7 rounded-lg border border-[#1a3a24] flex items-center justify-center text-gray-400 hover:text-white hover:border-[#00ff88]/40 transition-colors">
-                <ChevronLeft size={14} />
-              </button>
-              <span className="text-white font-semibold text-sm">{MESES[mesAtivo]}</span>
-              <button onClick={() => navMes(1)} className="w-7 h-7 rounded-lg border border-[#1a3a24] flex items-center justify-center text-gray-400 hover:text-white hover:border-[#00ff88]/40 transition-colors">
-                <ChevronRight size={14} />
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <button onClick={() => abrirModalCriar('receita')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30 text-xs font-medium hover:bg-[#00ff88]/20 transition-colors">
-                <TrendingUp size={13} /> Receita
-              </button>
-              <button onClick={() => abrirModalCriar('despesa')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 text-red-400 border border-red-500/30 text-xs font-medium hover:bg-red-500/20 transition-colors">
-                <TrendingDown size={13} /> Despesa
-              </button>
-            </div>
+      {/* Barra de Ações e Filtros */}
+      <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white border border-[#E2E8F0] p-4 rounded-2xl shadow-sm">
+        <div className="flex items-center gap-2">
+          <button onClick={() => navMes(-1)} className="p-2 hover:bg-gray-100 rounded-lg text-[#64748B] transition-all"><ChevronLeft size={20} /></button>
+          <div className="flex flex-col items-center min-w-[140px]">
+            <span className="text-sm font-bold text-[#1E293B] uppercase tracking-tight">{MESES[mesAtivo]}</span>
+            <span className="text-[10px] font-semibold text-[#64748B]">{anoAtivo}</span>
           </div>
+          <button onClick={() => navMes(1)} className="p-2 hover:bg-gray-100 rounded-lg text-[#64748B] transition-all"><ChevronRight size={20} /></button>
+        </div>
 
-          <div className="flex border-b border-[#1a3a24]">
-            {([['todas', 'Todas'], ['receitas', 'Receitas'], ['despesas', 'Despesas']] as [AbaFiltro, string][]).map(([v, label]) => (
-              <button key={v} onClick={() => setAbaFiltro(v as AbaFiltro)}
-                className={`flex-1 py-2.5 text-sm font-medium transition-colors ${abaFiltro === v ? 'text-[#00ff88] border-b-2 border-[#00ff88]' : 'text-gray-500 hover:text-gray-300'}`}>
-                {label}
-              </button>
-            ))}
-          </div>
+        <div className="flex bg-[#F8FAFC] p-1 rounded-xl border border-[#E2E8F0]">
+          {(['todas', 'receitas', 'despesas'] as AbaFiltro[]).map(a => (
+            <button
+              key={a}
+              onClick={() => setAbaFiltro(a)}
+              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${abaFiltro === a
+                ? 'bg-white text-[#1A56DB] shadow-sm'
+                : 'text-[#64748B] hover:text-[#1E293B]'}`}
+            >
+              {a.charAt(0).toUpperCase() + a.slice(1)}
+            </button>
+          ))}
+        </div>
 
-          <div className="px-5 py-3 border-b border-[#1a3a24]">
-            <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
-              <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Pesquisar por descrição ou categoria..."
-                className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl pl-8 pr-4 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff88]/40" />
+        <div className="flex gap-2">
+          <button
+            onClick={() => abrirModalCriar('despesa')}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#E2E8F0] text-[#EF4444] text-sm font-semibold hover:bg-red-50 transition-all shadow-sm"
+          >
+            <TrendingDown size={16} /> Saída
+          </button>
+          <button
+            onClick={() => abrirModalCriar('receita')}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1A56DB] text-white text-sm font-semibold hover:bg-[#1A56DB]/90 transition-all shadow-sm"
+          >
+            <Plus size={16} /> Entrada
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Listagem principal */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white border border-[#E2E8F0] rounded-3xl overflow-hidden shadow-sm">
+            <div className="p-4 border-b border-[#E2E8F0] flex items-center gap-3 bg-[#F8FAFC]">
+              <Search size={18} className="text-[#64748B]" />
+              <input
+                type="text"
+                placeholder="Buscar lançamentos..."
+                value={busca}
+                onChange={e => setBusca(e.target.value)}
+                className="bg-transparent border-none outline-none text-sm text-[#1E293B] w-full placeholder-[#64748B] font-medium"
+              />
             </div>
-          </div>
 
-          <div className="divide-y divide-[#1a3a24]">
-            {loading ? (
-              <div className="py-16 text-center text-gray-600 text-sm">Carregando...</div>
-            ) : Object.keys(agrupados).length === 0 ? (
-              <div className="py-16 text-center">
-                <Wallet size={32} className="mx-auto text-gray-700 mb-3" />
-                <p className="text-gray-600 text-sm">Nenhum lançamento encontrado.</p>
-                <p className="text-gray-700 text-xs mt-1">Adicione uma receita ou despesa acima.</p>
-              </div>
-            ) : (
-              Object.entries(agrupados).map(([categoria, items]) => {
-                const totalGrupo = items.reduce((s, i) => s + i.valor, 0)
-                const pendentes = items.filter(i => i.status === 'pendente').length
-                const isReceita = items[0]?.tipo === 'receita'
-                return (
-                  <div key={categoria}>
-                    <div className="flex items-center justify-between px-5 py-3 bg-[#0a0f0c]/60">
-                      <div className="flex items-center gap-2">
-                        <span className="text-white text-sm font-semibold">{categoria}</span>
-                        <span className="text-gray-600 text-xs">({items.length})</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {pendentes > 0 && (
-                          <span className="text-xs text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20">
-                            {pendentes} pendente{pendentes > 1 ? 's' : ''}
-                          </span>
-                        )}
-                        <span className={`text-sm font-semibold ${isReceita ? 'text-[#00ff88]' : 'text-red-400'}`}>
-                          {visiveis ? `${isReceita ? '+' : '-'}${fmtBRL(totalGrupo)}` : '••••••'}
-                        </span>
-                      </div>
-                    </div>
-                    {items.map(l => (
-                      <div key={l.id} className={`flex items-center justify-between px-5 py-3.5 hover:bg-[#1a3a24]/20 transition-colors border-l-2 ${l.tipo === 'receita' ? 'border-l-[#00ff88]/40' : l.tipo === 'investimento' ? 'border-l-blue-500/40' : 'border-l-red-500/40'}`}>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-white text-sm font-medium truncate">{l.descricao}</p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            {l.client_name && <span className="text-gray-600 text-xs flex items-center gap-1"><User size={10} /> {l.client_name}</span>}
-                            {l.recorrente && <span className="text-gray-600 text-xs flex items-center gap-1"><RepeatIcon size={10} /> {l.recorrencia}</span>}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4 ml-4">
-                          <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${l.status === 'pago' ? 'text-[#00ff88] bg-[#00ff88]/10 border-[#00ff88]/20' : l.status === 'atrasado' ? 'text-red-400 bg-red-400/10 border-red-400/20' : 'text-amber-400 bg-amber-400/10 border-amber-400/20'}`}>
-                            {l.status === 'pago' ? 'Pago' : l.status === 'atrasado' ? 'Atrasado' : 'Pendente'}
-                          </span>
-                          <div className="text-right min-w-[100px]">
-                            <p className={`text-sm font-semibold ${l.tipo === 'receita' ? 'text-[#00ff88]' : 'text-red-400'}`}>
-                              {visiveis ? fmtBRL(l.valor) : '••••••'}
-                            </p>
-                            <p className="text-gray-600 text-xs">{fmtData(l.data_vencimento)}</p>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {l.status !== 'pago' && (
-                              <button onClick={() => marcarComoPago(l.id)} className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-600 hover:text-[#00ff88] hover:bg-[#00ff88]/10 transition-colors" title="Marcar como pago">
-                                <CheckCircle2 size={15} />
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
+                    <th className="px-6 py-3 text-[10px] font-semibold text-[#64748B] uppercase tracking-wider">Vencimento</th>
+                    <th className="px-6 py-3 text-[10px] font-semibold text-[#64748B] uppercase tracking-wider">Descrição</th>
+                    <th className="px-6 py-3 text-[10px] font-semibold text-[#64748B] uppercase tracking-wider">Valor</th>
+                    <th className="px-6 py-3 text-[10px] font-semibold text-[#64748B] uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-[10px] font-semibold text-[#64748B] uppercase tracking-wider text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E2E8F0]">
+                  {loading ? (
+                    <tr><td colSpan={5} className="px-6 py-12 text-center text-[#64748B] animate-pulse font-medium">Carregando dados...</td></tr>
+                  ) : listagem.length === 0 ? (
+                    <tr><td colSpan={5} className="px-6 py-12 text-center text-[#64748B] italic font-medium">Nenhum lançamento este mês.</td></tr>
+                  ) : (
+                    listagem.map(l => {
+                      const atrasado = l.status === 'pendente' && new Date(l.data_vencimento + 'T23:59:59') < hoje
+                      return (
+                        <tr key={l.id} className="hover:bg-[#F8FAFC] transition-colors group">
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col">
+                              <span className="text-sm font-semibold text-[#1E293B]">{fmtData(l.data_vencimento)}</span>
+                              {l.recorrente && <span className="text-[9px] text-[#1A56DB] font-bold flex items-center gap-0.5"><RepeatIcon size={8}/> RECORRENTE</span>}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium text-[#1E293B]">{l.descricao}</span>
+                              <span className="text-[10px] text-[#64748B] font-semibold uppercase">{l.categoria}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`text-sm font-bold ${l.tipo === 'receita' ? 'text-[#16A34A]' : 'text-[#EF4444]'}`}>
+                              {l.tipo === 'receita' ? '+' : '-'} {val(l.valor)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              {l.status === 'pago' ? (
+                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 uppercase">Pago</span>
+                              ) : atrasado ? (
+                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200 uppercase">Atrasado</span>
+                              ) : (
+                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 uppercase">Pendente</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              {l.status === 'pendente' && (
+                                <button
+                                  onClick={() => marcarComoPago(l.id)}
+                                  className="p-1.5 text-[#16A34A] hover:bg-green-50 rounded-lg transition-all"
+                                  title="Marcar como pago"
+                                >
+                                  <CheckCircle2 size={16} />
+                                </button>
+                              )}
+                              <button
+                                onClick={() => abrirModalEditar(l)}
+                                className="p-1.5 text-[#1A56DB] hover:bg-blue-50 rounded-lg transition-all"
+                                title="Editar"
+                              >
+                                <Pencil size={16} />
                               </button>
-                            )}
-                            <button onClick={() => abrirModalEditar(l)} className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-600 hover:text-white hover:bg-[#1a3a24] transition-colors">
-                              <Pencil size={13} />
-                            </button>
-                            <button onClick={() => setDeletandoId(l.id)} className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-colors">
-                              <Trash2 size={13} />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )
-              })
-            )}
+                              <button
+                                onClick={() => setDeletandoId(l.id)}
+                                className="p-1.5 text-[#EF4444] hover:bg-red-50 rounded-lg transition-all"
+                                title="Excluir"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
-        <div className="w-72 flex-shrink-0">
-          <div className="bg-[#0d1510] border border-[#1a3a24] rounded-2xl p-5 sticky top-6">
-            <h3 className="text-white text-sm font-semibold mb-1">Despesas</h3>
-            <p className="text-gray-600 text-xs mb-5">
-              {String(periodoInicio).slice(8)}/{String(mesAtivo + 1).padStart(2, '0')} — {String(periodoFim).slice(8)}/{String(mesAtivo + 1).padStart(2, '0')}
-            </p>
-            {dadosPizza.length > 0 ? <PieChart data={dadosPizza} visiveis={visiveis} /> : (
-              <div className="py-12 text-center">
-                <PiggyBank size={28} className="mx-auto text-gray-700 mb-2" />
-                <p className="text-gray-600 text-xs">Sem despesas no período</p>
+        {/* Lateral: Resumo por Categoria */}
+        <div className="space-y-6">
+          <div className="bg-white border border-[#E2E8F0] rounded-3xl p-6 shadow-sm">
+            <h3 className="text-sm font-semibold text-[#1E293B] uppercase tracking-wider mb-6 flex items-center gap-2">
+              <PiggyBank size={18} className="text-[#1A56DB]" />
+              Gastos por Categoria
+            </h3>
+            {dadosPizza.length > 0 ? (
+              <PieChart data={dadosPizza} visiveis={visiveis} />
+            ) : (
+              <div className="py-12 text-center text-[#64748B] italic text-sm font-medium">
+                Sem despesas registradas.
               </div>
             )}
+          </div>
+
+          <div className="bg-[#1A56DB] rounded-3xl p-6 text-white shadow-lg shadow-blue-200 relative overflow-hidden group">
+            <div className="absolute -right-4 -bottom-4 text-white/10 group-hover:scale-110 transition-transform duration-500">
+              <Wallet size={120} />
+            </div>
+            <h3 className="text-sm font-semibold uppercase tracking-wider mb-4 opacity-80">Saldo Projetado</h3>
+            <p className="text-3xl font-bold mb-1">{val(totais.saldo)}</p>
+            <p className="text-[10px] opacity-70 font-medium">Considerando todos os lançamentos do mês</p>
           </div>
         </div>
       </div>
 
-      {/* Modal criar/editar */}
+      {/* Modal Criar/Editar */}
       {modalAberto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setModalAberto(false)} />
-          <div className="relative w-full max-w-md bg-[#0d1510] border border-[#1a3a24] rounded-2xl shadow-2xl flex flex-col max-h-[80vh] overflow-hidden">
-            <div className={`flex-shrink-0 flex items-center justify-between px-6 py-4 border-b ${modalTipo === 'receita' ? 'border-[#00ff88]/20' : 'border-red-500/20'}`}
-              style={{ background: modalTipo === 'receita' ? 'rgba(0,255,136,0.05)' : 'rgba(239,68,68,0.05)' }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white border border-[#E2E8F0] w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
               <div className="flex items-center gap-2">
-                {modalTipo === 'receita' ? <TrendingUp size={16} className="text-[#00ff88]" /> : <TrendingDown size={16} className="text-red-400" />}
-                <h2 className="text-white font-semibold text-sm">{editando ? 'Editar' : 'Adicionar'} {modalTipo === 'receita' ? 'Receita' : 'Despesa'}</h2>
+                <div className={`p-2 rounded-xl ${modalTipo === 'receita' ? 'bg-green-50 text-[#16A34A]' : 'bg-red-50 text-[#EF4444]'}`}>
+                  {modalTipo === 'receita' ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+                </div>
+                <h3 className="text-lg font-semibold text-[#1E293B]">
+                  {editando ? 'Editar Lançamento' : `Nova ${modalTipo === 'receita' ? 'Receita' : 'Despesa'}`}
+                </h3>
               </div>
-              <button onClick={() => setModalAberto(false)} className="text-gray-500 hover:text-white transition-colors"><X size={18} /></button>
+              <button onClick={() => setModalAberto(false)} className="text-[#64748B] hover:text-[#1E293B] transition-colors">
+                <X size={20} />
+              </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5 custom-scrollbar">
+            <div className="p-6 space-y-4">
               {erroModal && (
-                <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5 text-red-400 text-sm">
-                  <AlertCircle size={15} /> {erroModal}
+                <div className="bg-red-50 border border-red-100 text-[#EF4444] px-4 py-3 rounded-xl text-xs flex items-center gap-2 font-semibold">
+                  <AlertCircle size={14} /> {erroModal}
                 </div>
               )}
-              <div>
-                <label className="text-xs font-medium text-gray-400 mb-1.5 block">Valor</label>
-                <input type="number" min="0" step="0.01" value={formInput.valor || ''} onChange={e => setFormInput(p => ({ ...p, valor: parseFloat(e.target.value) || 0 }))} placeholder="R$ 0,00"
-                  className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none focus:border-[#00ff88]/40" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-400 mb-1.5 block">Descrição</label>
-                <input value={formInput.descricao} onChange={e => setFormInput(p => ({ ...p, descricao: e.target.value }))} placeholder="Ex: Mensalidade cliente"
-                  className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none focus:border-[#00ff88]/40" />
-              </div>
-              {modalTipo === 'despesa' && (
-                <div>
-                  <label className="text-xs font-medium text-gray-400 mb-1.5 block">Tipo</label>
-                  <div className="flex gap-2">
-                    {(['gasto', 'investimento'] as TipoLancamento[]).map(t => (
-                      <button key={t} onClick={() => setFormInput(p => ({ ...p, tipo: t, categoria: '' }))}
-                        className={`flex-1 py-2 rounded-xl text-xs font-medium border transition-colors ${formInput.tipo === t ? 'border-[#00ff88]/40 text-[#00ff88] bg-[#00ff88]/10' : 'border-[#1a3a24] text-gray-500'}`}>
-                        {t === 'gasto' ? 'Gasto' : 'Investimento'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              <div>
-                <label className="text-xs font-medium text-gray-400 mb-1.5 block">Categoria</label>
-                <select value={formInput.categoria} onChange={e => setFormInput(p => ({ ...p, categoria: e.target.value }))}
-                  className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#00ff88]/40 appearance-none">
-                  <option value="">Escolha uma categoria</option>
-                  {categorias.map((c: string) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div className="flex items-center justify-between bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-3">
-                <div className="flex items-center gap-2">
-                  {modalTipo === 'receita' ? <TrendingUp size={15} className="text-gray-500" /> : <TrendingDown size={15} className="text-gray-500" />}
-                  <div>
-                    <p className="text-white text-xs font-medium">{modalTipo === 'receita' ? 'Não Foi Recebida' : 'Não Foi Paga'}</p>
-                    <p className="text-gray-600 text-xs">Status do pagamento/recebimento</p>
-                  </div>
-                </div>
-                <button onClick={() => setEditStatus(s => s === 'pendente' ? 'pago' : 'pendente')}
-                  className={`w-11 h-6 rounded-full transition-colors relative flex items-center px-1 ${editStatus === 'pago' ? 'bg-[#00ff88]' : 'bg-[#1a3a24]'}`}>
-                  <div className={`w-4 h-4 bg-white rounded-full shadow-md transition-all duration-200 transform ${editStatus === 'pago' ? 'translate-x-5' : 'translate-x-0'}`} />
-                </button>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-400 mb-1.5 block">Dia de Vencimento (1 a 31)</label>
-                <input type="number" min={1} max={31} value={formInput.dia_vencimento || ''} onChange={e => setFormInput(p => ({ ...p, dia_vencimento: Math.max(1, Math.min(31, parseInt(e.target.value) || 1)) }))} placeholder="Ex: 10"
-                  className="w-full bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none focus:border-[#00ff88]/40" />
-                <p className="text-gray-600 text-xs mt-1">A data de vencimento será calculada automaticamente para o próximo mês com esse dia.</p>
-              </div>
-              <div className="flex items-center justify-between bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <Pin size={15} className="text-gray-500" />
-                  <div>
-                    <p className="text-white text-xs font-medium">{modalTipo === 'receita' ? 'Receita Fixa' : 'Despesa Fixa'}</p>
-                    <p className="text-gray-600 text-xs">Classifica como uma {modalTipo === 'receita' ? 'receita' : 'despesa'} fixa</p>
-                  </div>
-                </div>
-                <button onClick={() => setFormInput(p => ({ ...p, recorrente: !p.recorrente }))}
-                  className={`w-11 h-6 rounded-full transition-colors relative flex items-center px-1 ${formInput.recorrente ? 'bg-[#00ff88]' : 'bg-[#1a3a24]'}`}>
-                  <div className={`w-4 h-4 bg-white rounded-full shadow-md transition-all duration-200 transform ${formInput.recorrente ? 'translate-x-5' : 'translate-x-0'}`} />
-                </button>
-              </div>
-              {formInput.recorrente && (
-                <div>
-                  <label className="text-xs font-medium text-gray-400 mb-1.5 block">Repetir</label>
-                  <div className="flex gap-2">
-                    {(['mensal', 'semanal', 'anual'] as const).map(r => (
-                      <button key={r} onClick={() => setFormInput(p => ({ ...p, recorrencia: r }))}
-                        className={`flex-1 py-2 rounded-xl text-xs font-medium border transition-colors ${formInput.recorrencia === r ? 'border-[#00ff88]/40 text-[#00ff88] bg-[#00ff88]/10' : 'border-[#1a3a24] text-gray-500'}`}>
-                        {r.charAt(0).toUpperCase() + r.slice(1)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              <div className="flex items-center gap-2 bg-[#0a0f0c] border border-[#1a3a24] rounded-xl px-4 py-3">
-                <User size={15} className="text-gray-500" />
-                <div>
-                  <p className="text-white text-xs font-medium">Pessoa Responsável</p>
-                  <p className="text-gray-600 text-xs">Thiago Santos</p>
-                </div>
-              </div>
-            </div>
 
-            <div className="flex-shrink-0 px-6 py-5 border-t border-[#1a3a24] bg-[#0d1510]/95 backdrop-blur-sm z-20">
-              <div className="flex flex-col gap-2.5">
-                <button onClick={handleSalvar} disabled={salvando}
-                  className={`w-full py-4 rounded-xl text-sm font-bold shadow-xl transition-all active:scale-[0.96] disabled:opacity-50 ${modalTipo === 'receita' ? 'bg-[#00ff88] text-[#0a0f0c] hover:bg-[#00dd77] shadow-[#00ff88]/20' : 'bg-red-500 text-white hover:bg-red-600 shadow-red-500/20'}`}>
-                  {salvando ? 'Salvando...' : `Salvar ${modalTipo === 'receita' ? 'Receita' : 'Despesa'}`}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-semibold text-[#64748B] uppercase tracking-widest">Descrição *</label>
+                <input
+                  type="text"
+                  value={formInput.descricao}
+                  onChange={e => setFormInput({ ...formInput, descricao: e.target.value })}
+                  className="w-full bg-white border border-[#E2E8F0] rounded-xl px-4 py-2.5 text-sm text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all font-medium"
+                  placeholder="Ex: Pagamento Mensalidade"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-semibold text-[#64748B] uppercase tracking-widest">Valor (R$) *</label>
+                  <input
+                    type="number"
+                    value={formInput.valor || ''}
+                    onChange={e => setFormInput({ ...formInput, valor: Number(e.target.value) })}
+                    className="w-full bg-white border border-[#E2E8F0] rounded-xl px-4 py-2.5 text-sm text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all font-bold"
+                    placeholder="0,00"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-semibold text-[#64748B] uppercase tracking-widest">Dia Vencimento *</label>
+                  <input
+                    type="number"
+                    min="1" max="31"
+                    value={formInput.dia_vencimento}
+                    onChange={e => setFormInput({ ...formInput, dia_vencimento: Number(e.target.value) })}
+                    className="w-full bg-white border border-[#E2E8F0] rounded-xl px-4 py-2.5 text-sm text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all font-medium"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-semibold text-[#64748B] uppercase tracking-widest">Categoria *</label>
+                  <div className="relative">
+                    <select
+                      value={formInput.categoria}
+                      onChange={e => setFormInput({ ...formInput, categoria: e.target.value })}
+                      className="w-full bg-white border border-[#E2E8F0] rounded-xl px-4 py-2.5 text-sm text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all appearance-none font-medium"
+                    >
+                      <option value="">Selecione...</option>
+                      {categorias.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" size={16} />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-semibold text-[#64748B] uppercase tracking-widest">Tipo</label>
+                  <div className="relative">
+                    <select
+                      value={formInput.tipo}
+                      onChange={e => setFormInput({ ...formInput, tipo: e.target.value as any })}
+                      className="w-full bg-white border border-[#E2E8F0] rounded-xl px-4 py-2.5 text-sm text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all appearance-none font-medium"
+                    >
+                      <option value="receita">Receita</option>
+                      <option value="gasto">Gasto</option>
+                      <option value="investimento">Investimento</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" size={16} />
+                  </div>
+                </div>
+              </div>
+
+              {escopoAtivo === 'agencia' && (
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-semibold text-[#64748B] uppercase tracking-widest flex items-center gap-1">
+                    <User size={10} /> Cliente Vinculado (Opcional)
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={formInput.client_id || ''}
+                      onChange={e => setFormInput({ ...formInput, client_id: e.target.value || null })}
+                      className="w-full bg-white border border-[#E2E8F0] rounded-xl px-4 py-2.5 text-sm text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all appearance-none font-medium"
+                    >
+                      <option value="">Nenhum</option>
+                      {clientes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" size={16} />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-6 py-2">
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={formInput.recorrente}
+                    onChange={e => setFormInput({ ...formInput, recorrente: e.target.checked })}
+                    className="w-4 h-4 rounded border-[#E2E8F0] text-[#1A56DB] focus:ring-[#1A56DB]"
+                  />
+                  <span className="text-xs font-semibold text-[#1E293B] group-hover:text-[#1A56DB] transition-colors flex items-center gap-1">
+                    <RepeatIcon size={12} /> Lançamento Recorrente
+                  </span>
+                </label>
+
+                {editando && (
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={editStatus === 'pago'}
+                      onChange={e => setEditStatus(e.target.checked ? 'pago' : 'pendente')}
+                      className="w-4 h-4 rounded border-[#E2E8F0] text-[#16A34A] focus:ring-[#16A34A]"
+                    />
+                    <span className="text-xs font-semibold text-[#1E293B] group-hover:text-[#16A34A] transition-colors flex items-center gap-1">
+                      <CheckCircle2 size={12} /> Já está pago
+                    </span>
+                  </label>
+                )}
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button
+                  onClick={() => setModalAberto(false)}
+                  className="flex-1 py-3 border border-[#E2E8F0] text-[#64748B] font-semibold rounded-2xl hover:bg-gray-50 transition-all"
+                >
+                  Cancelar
                 </button>
-                <button onClick={() => setModalAberto(false)} className="w-full py-2 text-xs font-semibold text-gray-500 hover:text-gray-300 uppercase tracking-widest transition-colors">
-                  Fechar Modal
+                <button
+                  onClick={handleSalvar}
+                  disabled={salvando}
+                  className={`flex-1 py-3 rounded-2xl text-white font-semibold shadow-sm transition-all flex items-center justify-center gap-2 ${modalTipo === 'receita' ? 'bg-[#16A34A] hover:bg-[#16A34A]/90' : 'bg-[#EF4444] hover:bg-[#EF4444]/90'} disabled:opacity-50`}
+                >
+                  {salvando ? 'Salvando...' : editando ? 'Salvar Alterações' : 'Criar Lançamento'}
                 </button>
               </div>
             </div>
@@ -658,19 +736,18 @@ export default function FinanceiroPage() {
         </div>
       )}
 
-      {/* Modal exclusão */}
+      {/* Modal Confirmação Delete */}
       {deletandoId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setDeletandoId(null)} />
-          <div className="relative w-full max-w-sm bg-[#0d1510] border border-red-500/30 rounded-2xl p-6 shadow-2xl">
-            <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
-              <Trash2 size={20} className="text-red-400" />
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white border border-[#E2E8F0] rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 rounded-2xl bg-red-50 text-[#EF4444] flex items-center justify-center mb-4">
+              <AlertCircle size={24} />
             </div>
-            <h3 className="text-white font-semibold text-center mb-1">Excluir lançamento?</h3>
-            <p className="text-gray-500 text-sm text-center mb-6">Esta ação não pode ser desfeita.</p>
+            <h3 className="text-lg font-semibold text-[#1E293B] mb-2">Excluir lançamento?</h3>
+            <p className="text-sm text-[#64748B] mb-6 font-medium">Esta ação não pode ser desfeita e removerá o registro permanentemente.</p>
             <div className="flex gap-3">
-              <button onClick={() => setDeletandoId(null)} className="flex-1 py-2.5 rounded-xl border border-[#1a3a24] text-gray-400 text-sm hover:text-white transition-colors">Cancelar</button>
-              <button onClick={() => handleDeletar(deletandoId)} className="flex-1 py-2.5 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 text-sm hover:bg-red-500/30 transition-colors font-medium">Excluir</button>
+              <button onClick={() => setDeletandoId(null)} className="flex-1 py-2.5 border border-[#E2E8F0] text-[#64748B] font-semibold rounded-xl hover:bg-gray-50 transition-all">Cancelar</button>
+              <button onClick={() => handleDeletar(deletandoId)} className="flex-1 py-2.5 bg-[#EF4444] text-white font-semibold rounded-xl hover:bg-[#EF4444]/90 transition-all shadow-sm">Excluir</button>
             </div>
           </div>
         </div>
