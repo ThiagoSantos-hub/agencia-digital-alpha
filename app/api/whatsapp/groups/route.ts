@@ -19,7 +19,9 @@ export async function GET(request: NextRequest) {
   let targetUserId = user.id
   let targetInstanceName = instanceName(user.id)
 
+  // Se o colaborador está tentando ver grupos da agência (source=agency)
   if (source === 'agency') {
+    // 1. Localizar o perfil admin
     const { data: adminProfile } = await supabase
       .from('profiles')
       .select('id')
@@ -29,18 +31,22 @@ export async function GET(request: NextRequest) {
     if (!adminProfile) return NextResponse.json([])
     targetUserId = adminProfile.id
     
+    // 2. Verificar se a instância do admin permite a visualização
     const { data: adminInstance } = await supabase
       .from('whatsapp_instances')
       .select('*')
       .eq('user_id', targetUserId)
       .maybeSingle()
 
+    // TRAVA DE SEGURANÇA: Se não houver instância ou a permissão for falsa, retorna lista vazia IMEDIATAMENTE
     if (!adminInstance || adminInstance.grupos_visiveis_colaboradores !== true) {
-      return NextResponse.json([])
+      return NextResponse.json([], { status: 200 })
     }
+    
     targetInstanceName = adminInstance.instance_name
   }
 
+  // Sincronização com a Evolution API
   if (EVO_URL && EVO_KEY && targetInstanceName) {
     try {
       const controller = new AbortController()
@@ -60,25 +66,16 @@ export async function GET(request: NextRequest) {
         const groups = await res.json()
 
         if (Array.isArray(groups)) {
-          // FILTRAGEM DEFINITIVA CONTRA GRUPOS FANTASMAS:
+          // FILTRAGEM CONTRA GRUPOS FANTASMAS E INVÁLIDOS
           const validGroups = groups.filter(g => {
             const name = (g.subject || g.name || '').trim()
             const id = g.id || ''
-            
-            // 1. Deve ter um nome válido e não ser vazio
             if (!name || name.length < 2) return false
-            
-            // 2. Deve ser um grupo real (@g.us) e não uma transmissão ou status
             if (!id.endsWith('@g.us')) return false
-            
-            // 3. Deve ter participantes (grupos onde você saiu costumam vir com size 0 ou sem participantes)
             const size = g.size || (g.participants ? g.participants.length : 0)
             if (size <= 0) return false
-            
-            // 4. Remover grupos de sistema ou suporte técnico
             const lowerName = name.toLowerCase()
             if (lowerName.includes('whatsapp') || lowerName.includes('broadcast') || lowerName.includes('rascunho')) return false
-            
             return true
           })
 
@@ -90,9 +87,8 @@ export async function GET(request: NextRequest) {
             updated_at: new Date().toISOString(),
           }))
 
-          // SINCRONIZAÇÃO TOTAL: 
-          // 1. Remove TODOS os grupos atuais do usuário para garantir que grupos deletados sumam
-          // 2. Insere a nova lista limpa vinda da API
+          // SINCRONIZAÇÃO NO BANCO: Apenas se for o próprio usuário ou se for admin com permissão
+          // No caso de source=agency, targetUserId é o ID do admin.
           await supabase
             .from('whatsapp_groups')
             .delete()
@@ -112,6 +108,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // Fallback para o cache do banco
   const { data: cached } = await supabase
     .from('whatsapp_groups')
     .select('group_id, name, participant_count')

@@ -82,6 +82,7 @@ function CreateEditReportContent() {
   const [diasSelecionados, setDiasSelecionados] = useState<number[]>([])
   const [agencyGroups, setAgencyGroups] = useState<{group_id: string, name: string, participant_count: number}[]>([])
   const [loadingAgencyGroups, setLoadingAgencyGroups] = useState(false)
+  const [hasAgencyPermission, setHasAgencyPermission] = useState(false)
 
   const toggleDia = (i: number) => {
     setDiasSelecionados(prev => {
@@ -149,10 +150,13 @@ function CreateEditReportContent() {
     let cancelled = false
     setLoadingAgencyGroups(true)
     fetch('/api/whatsapp/groups?source=agency')
-      .then(res => res.json())
-      .then(data => {
-        if (!cancelled && Array.isArray(data) && data.length > 0) {
-          setAgencyGroups(data)
+      .then(async res => {
+        if (res.ok) {
+          const data = await res.json()
+          if (!cancelled && Array.isArray(data)) {
+            setAgencyGroups(data)
+            setHasAgencyPermission(data.length > 0)
+          }
         }
       })
       .finally(() => { if (!cancelled) setLoadingAgencyGroups(false) })
