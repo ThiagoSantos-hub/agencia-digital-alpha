@@ -30,7 +30,7 @@ function WaveIcon() {
       {[0, 1, 2, 3, 4].map(i => (
         <span key={i} className="alpha-wave-bar" style={{
           display: 'block', width: 3, borderRadius: 2,
-          background: '#00ff88',
+          background: '#FFFFFF',
           animationName: 'alphaWave',
           animationDuration: '0.9s',
           animationTimingFunction: 'ease-in-out',
@@ -45,7 +45,7 @@ function Spinner() {
   return (
     <span style={{
       width: 20, height: 20,
-      border: '2.5px solid #00ff88',
+          border: '2.5px solid #1A56DB',
       borderTopColor: 'transparent',
       borderRadius: '50%',
       display: 'inline-block',
@@ -73,10 +73,10 @@ export function AlphaVoiceButton() {
   }
 
   const btnBg: Record<VoiceState, string> = {
-    idle:       '#0f1a14',
+    idle:       '#1A56DB',
     listening:  '#ef4444',
-    processing: '#0f1a14',
-    speaking:   '#0f1a14',
+    processing: '#1A56DB',
+    speaking:   '#1A56DB',
   }
 
   return (
@@ -90,8 +90,8 @@ export function AlphaVoiceButton() {
           to { transform: rotate(360deg); }
         }
         @keyframes alphaPulseRed {
-          0%, 100% { box-shadow: 0 0 0 0   rgba(239,68,68,0.5), 0 4px 20px rgba(0,0,0,0.4); }
-          50%       { box-shadow: 0 0 0 10px rgba(239,68,68,0),   0 4px 20px rgba(0,0,0,0.4); }
+          0%, 100% { box-shadow: 0 0 0 0   rgba(239,68,68,0.5), 0 4px 20px rgba(26,86,219,0.25); }
+          50%       { box-shadow: 0 0 0 10px rgba(239,68,68,0),   0 4px 20px rgba(26,86,219,0.25); }
         }
         .alpha-wave-bar { height: 5px; }
       `}</style>
@@ -106,10 +106,10 @@ export function AlphaVoiceButton() {
           width:          48,
           height:         48,
           borderRadius:   '50%',
-          border:         '2px solid #00ff88',
+          border:         '2px solid #1A56DB',
           cursor:         'pointer',
           background:     btnBg[voiceState],
-          color:          '#00ff88',
+          color:          '#FFFFFF',
           display:        'flex',
           alignItems:     'center',
           justifyContent: 'center',
@@ -117,7 +117,7 @@ export function AlphaVoiceButton() {
           animation:      voiceState === 'listening'
             ? 'alphaPulseRed 1.4s ease-in-out infinite'
             : 'none',
-          boxShadow:      '0 4px 20px rgba(0,0,0,0.4)',
+          boxShadow:      '0 4px 20px rgba(26,86,219,0.25)',
         }}
         onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
         onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
