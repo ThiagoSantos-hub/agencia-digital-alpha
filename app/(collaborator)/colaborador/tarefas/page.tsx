@@ -183,6 +183,9 @@ export default function ColaboradorTasksPage() {
               <TaskCard 
                 task={activeTask} 
                 userRole="collaborator"
+                onDuplicate={() => {}}
+                onEdit={() => {}}
+                onDelete={() => {}}
                 onMove={() => {}}
                 onClick={() => {}}
               />
