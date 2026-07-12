@@ -12,7 +12,8 @@ import {
   PlayCircle,
   CheckCircle2,
   PauseCircle,
-  ExternalLink
+  ExternalLink,
+  ChevronDown
 } from 'lucide-react'
 import { 
   DndContext, 
@@ -31,18 +32,18 @@ import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import dynamic from 'next/dynamic'
 
 const KanbanColumn = dynamic(() => import('@/components/tasks/KanbanColumn').then(mod => mod.KanbanColumn), {
-  loading: () => <div className="w-80 h-full bg-[#1a3a24]/10 rounded-2xl animate-pulse" />
+  loading: () => <div className="w-80 h-full bg-gray-100 rounded-2xl animate-pulse" />
 })
 
 const TaskCard = dynamic(() => import('@/components/tasks/TaskCard').then(mod => mod.TaskCard), {
-  loading: () => <div className="h-32 bg-[#1a3a24]/5 rounded-xl animate-pulse" />
+  loading: () => <div className="h-32 bg-gray-50 rounded-xl animate-pulse" />
 })
 
 const COLUMNS: { id: TaskStatus; label: string; icon: any; color: string }[] = [
   { id: 'pendente', label: 'Pendências', icon: PauseCircle, color: 'text-amber-600' },
-  { id: 'a_fazer', label: 'A Fazer', icon: Circle, color: 'text-gray-400' },
-  { id: 'em_andamento', label: 'Em Andamento', icon: PlayCircle, color: 'text-blue-400' },
-  { id: 'finalizada', label: 'Finalizadas', icon: CheckCircle2, color: 'text-emerald-400' },
+  { id: 'a_fazer', label: 'A Fazer', icon: Circle, color: 'text-[#64748B]' },
+  { id: 'em_andamento', label: 'Em Andamento', icon: PlayCircle, color: 'text-[#1A56DB]' },
+  { id: 'finalizada', label: 'Finalizadas', icon: CheckCircle2, color: 'text-[#16A34A]' },
 ]
 
 export default function AdminTasksPage() {
@@ -191,36 +192,16 @@ export default function AdminTasksPage() {
     }
   }
 
-  const getPriorityColor = (priority: TaskPriority) => {
-    switch (priority) {
-      case 'urgente': return 'text-red-600'
-      case 'alta': return 'text-red-500'
-      case 'media': return 'text-amber-500'
-      case 'baixa': return 'text-emerald-500'
-      default: return 'text-gray-500'
-    }
-  }
-
-  const getPriorityLabel = (priority: TaskPriority) => {
-    switch (priority) {
-      case 'urgente': return 'URGENTE'
-      case 'alta': return 'ALTA'
-      case 'media': return 'MÉDIA'
-      case 'baixa': return 'BAIXA'
-      default: return 'DESCONHECIDA'
-    }
-  }
-
   return (
-    <div className="space-y-4 h-[calc(100vh-100px)] flex flex-col px-2">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
+    <div className="space-y-4 h-[calc(100vh-100px)] flex flex-col px-2 bg-[#F8FAFC]">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0 pt-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Quadro Kanban</h1>
-          <p className="text-gray-400 text-sm">Gerencie suas tarefas arrastando-as entre as colunas.</p>
+          <h1 className="text-2xl font-semibold text-[#1E293B]">Quadro Kanban</h1>
+          <p className="text-[#64748B] text-sm">Gerencie suas tarefas arrastando-as entre as colunas.</p>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-[#0a0f0c] font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#1A56DB] hover:bg-[#1A56DB]/90 text-white font-semibold rounded-xl transition-all shadow-sm"
         >
           <Plus size={20} />
           Nova Tarefa
@@ -277,107 +258,127 @@ export default function AdminTasksPage() {
 
       {/* Modal de Nova Tarefa */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[95vh]">
-            <div className="px-6 py-4 border-b border-[#1a3a24] flex justify-between items-center bg-[#0f1a14] shrink-0 rounded-t-2xl">
-              <h2 className="text-white font-bold">Criar Nova Tarefa</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-500 hover:text-white text-2xl">&times;</button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[95vh]">
+            <div className="px-6 py-4 border-b border-[#E2E8F0] flex justify-between items-center bg-[#F8FAFC] shrink-0 rounded-t-2xl">
+              <h2 className="text-[#1E293B] font-semibold">Criar Nova Tarefa</h2>
+              <button onClick={() => setIsModalOpen(false)} className="text-[#64748B] hover:text-[#1E293B] transition-colors">
+                <X size={20} />
+              </button>
             </div>
             <form onSubmit={handleCreateTask} className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Título</label>
+                <label className="text-sm font-semibold text-[#64748B]">Título *</label>
                 <input 
                   required
                   type="text" 
                   value={newTask.title}
                   onChange={e => setNewTask({...newTask, title: e.target.value})}
-                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all"
                   placeholder="Ex: Criar artes para o Cliente X"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Descrição</label>
+                <label className="text-sm font-semibold text-[#64748B]">Descrição</label>
                 <textarea 
                   rows={3}
                   value={newTask.description}
                   onChange={e => setNewTask({...newTask, description: e.target.value})}
-                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50 resize-none"
+                  className="w-full bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all resize-none"
                   placeholder="Detalhes da tarefa..."
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Atribuir a</label>
-                  <select 
-                    required
-                    value={newTask.assigned_to}
-                    onChange={e => setNewTask({...newTask, assigned_to: e.target.value})}
-                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
-                  >
-                    <option value="">Selecione...</option>
-                    {allUsers.map(u => (
-                      <option key={u.id} value={u.id}>{u.role === 'admin' ? 'ADM: ' : ''}{u.name || u.email}</option>
-                    ))}
-                  </select>
+                  <label className="text-sm font-semibold text-[#64748B]">Atribuir a *</label>
+                  <div className="relative">
+                    <select 
+                      required
+                      value={newTask.assigned_to}
+                      onChange={e => setNewTask({...newTask, assigned_to: e.target.value})}
+                      className="w-full bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all appearance-none"
+                    >
+                      <option value="">Selecione...</option>
+                      {allUsers.map(u => (
+                        <option key={u.id} value={u.id}>{u.role === 'admin' ? 'ADM: ' : ''}{u.name || u.email}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" size={16} />
+                  </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Status Inicial</label>
-                  <select 
-                    value={newTask.status}
-                    onChange={e => setNewTask({...newTask, status: e.target.value as TaskStatus})}
-                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
-                  >
-                    {COLUMNS.map(col => (
-                      <option key={col.id} value={col.id}>{col.label}</option>
-                    ))}
-                  </select>
+                  <label className="text-sm font-semibold text-[#64748B]">Status Inicial</label>
+                  <div className="relative">
+                    <select 
+                      value={newTask.status}
+                      onChange={e => setNewTask({...newTask, status: e.target.value as TaskStatus})}
+                      className="w-full bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all appearance-none"
+                    >
+                      {COLUMNS.map(col => (
+                        <option key={col.id} value={col.id}>{col.label}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" size={16} />
+                  </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Prioridade</label>
-                  <select 
-                    value={newTask.priority}
-                    onChange={e => setNewTask({...newTask, priority: e.target.value as TaskPriority})}
-                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
-                  >
-                    <option value="baixa">Baixa</option>
-                    <option value="media">Média</option>
-                    <option value="alta">Alta</option>
-                    <option value="urgente">Urgente</option>
-                  </select>
+                  <label className="text-sm font-semibold text-[#64748B]">Prioridade</label>
+                  <div className="relative">
+                    <select 
+                      value={newTask.priority}
+                      onChange={e => setNewTask({...newTask, priority: e.target.value as TaskPriority})}
+                      className="w-full bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all appearance-none"
+                    >
+                      <option value="baixa">Baixa</option>
+                      <option value="media">Média</option>
+                      <option value="alta">Alta</option>
+                      <option value="urgente">Urgente</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" size={16} />
+                  </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Data de Entrega</label>
+                  <label className="text-sm font-semibold text-[#64748B]">Data de Entrega</label>
                   <input 
                     type="date" 
                     value={newTask.due_date}
                     onChange={e => setNewTask({...newTask, due_date: e.target.value})}
-                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest text-emerald-500">Link do Google Drive (Opcional)</label>
+                <label className="text-sm font-semibold text-[#1A56DB]">Link do Google Drive (Opcional)</label>
                 <input 
                   type="url" 
                   value={newTask.drive_link}
                   onChange={e => setNewTask({...newTask, drive_link: e.target.value})}
-                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all"
                   placeholder="https://drive.google.com/..."
                 />
               </div>
 
-              <button 
-                type="submit"
-                className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-[#0a0f0c] font-bold rounded-xl transition-all mt-4 shadow-lg shadow-emerald-500/20"
-              >
-                Criar Tarefa
-              </button>
+              <div className="flex gap-3 pt-4">
+                <button 
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 py-2.5 border border-[#E2E8F0] text-[#64748B] font-semibold rounded-xl hover:bg-gray-50 transition-all"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  className="flex-1 py-2.5 bg-[#1A56DB] hover:bg-[#1A56DB]/90 text-white font-semibold rounded-xl transition-all shadow-sm"
+                >
+                  Criar Tarefa
+                </button>
+              </div>
             </form>
           </div>
         </div>
@@ -385,191 +386,124 @@ export default function AdminTasksPage() {
 
       {/* Modal de Edição de Tarefa */}
       {isEditModalOpen && editingTask && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
-            <div className="px-6 py-4 border-b border-[#1a3a24] flex justify-between items-center bg-[#0f1a14]">
-              <h2 className="text-white font-bold">Editar Tarefa</h2>
-              <button onClick={() => setIsEditModalOpen(false)} className="text-gray-500 hover:text-white text-2xl">&times;</button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[95vh]">
+            <div className="px-6 py-4 border-b border-[#E2E8F0] flex justify-between items-center bg-[#F8FAFC] shrink-0 rounded-t-2xl">
+              <h2 className="text-[#1E293B] font-semibold">Editar Tarefa</h2>
+              <button onClick={() => setIsEditModalOpen(false)} className="text-[#64748B] hover:text-[#1E293B] transition-colors">
+                <X size={20} />
+              </button>
             </div>
-            <form onSubmit={handleUpdateTask} className="p-6 space-y-4">
+            <form onSubmit={handleUpdateTask} className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Título</label>
+                <label className="text-sm font-semibold text-[#64748B]">Título *</label>
                 <input 
                   required
                   type="text" 
                   value={editingTask.title}
                   onChange={e => setEditingTask({...editingTask, title: e.target.value})}
-                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Descrição</label>
+                <label className="text-sm font-semibold text-[#64748B]">Descrição</label>
                 <textarea 
                   rows={3}
                   value={editingTask.description || ''}
                   onChange={e => setEditingTask({...editingTask, description: e.target.value})}
-                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50 resize-none"
+                  className="w-full bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all resize-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Atribuir a</label>
-                  <select 
-                    required
-                    value={editingTask.assigned_to}
-                    onChange={e => setEditingTask({...editingTask, assigned_to: e.target.value})}
-                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
-                  >
-                    <option value="">Selecione...</option>
-                    {allUsers.map(u => (
-                      <option key={u.id} value={u.id}>{u.role === 'admin' ? 'ADM: ' : ''}{u.name || u.email}</option>
-                    ))}
-                  </select>
+                  <label className="text-sm font-semibold text-[#64748B]">Atribuir a *</label>
+                  <div className="relative">
+                    <select 
+                      required
+                      value={editingTask.assigned_to}
+                      onChange={e => setEditingTask({...editingTask, assigned_to: e.target.value})}
+                      className="w-full bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all appearance-none"
+                    >
+                      {allUsers.map(u => (
+                        <option key={u.id} value={u.id}>{u.role === 'admin' ? 'ADM: ' : ''}{u.name || u.email}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" size={16} />
+                  </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Status</label>
-                  <select 
-                    value={editingTask.status}
-                    onChange={e => setEditingTask({...editingTask, status: e.target.value as TaskStatus})}
-                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
-                  >
-                    {COLUMNS.map(col => (
-                      <option key={col.id} value={col.id}>{col.label}</option>
-                    ))}
-                  </select>
+                  <label className="text-sm font-semibold text-[#64748B]">Status</label>
+                  <div className="relative">
+                    <select 
+                      value={editingTask.status}
+                      onChange={e => setEditingTask({...editingTask, status: e.target.value as TaskStatus})}
+                      className="w-full bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all appearance-none"
+                    >
+                      {COLUMNS.map(col => (
+                        <option key={col.id} value={col.id}>{col.label}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" size={16} />
+                  </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Prioridade</label>
-                  <select 
-                    value={editingTask.priority}
-                    onChange={e => setEditingTask({...editingTask, priority: e.target.value as TaskPriority})}
-                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
-                  >
-                    <option value="baixa">Baixa</option>
-                    <option value="media">Média</option>
-                    <option value="alta">Alta</option>
-                    <option value="urgente">Urgente</option>
-                  </select>
+                  <label className="text-sm font-semibold text-[#64748B]">Prioridade</label>
+                  <div className="relative">
+                    <select 
+                      value={editingTask.priority}
+                      onChange={e => setEditingTask({...editingTask, priority: e.target.value as TaskPriority})}
+                      className="w-full bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all appearance-none"
+                    >
+                      <option value="baixa">Baixa</option>
+                      <option value="media">Média</option>
+                      <option value="alta">Alta</option>
+                      <option value="urgente">Urgente</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" size={16} />
+                  </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Data de Entrega</label>
+                  <label className="text-sm font-semibold text-[#64748B]">Data de Entrega</label>
                   <input 
                     type="date" 
                     value={editingTask.due_date ? editingTask.due_date.split('T')[0] : ''}
                     onChange={e => setEditingTask({...editingTask, due_date: e.target.value})}
-                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest text-emerald-500">Link do Google Drive (Opcional)</label>
+                <label className="text-sm font-semibold text-[#1A56DB]">Link do Google Drive (Opcional)</label>
                 <input 
                   type="url" 
                   value={editingTask.drive_link || ''}
                   onChange={e => setEditingTask({...editingTask, drive_link: e.target.value})}
-                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
-                  placeholder="https://drive.google.com/..."
+                  className="w-full bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] transition-all"
                 />
               </div>
 
-              <button 
-                type="submit"
-                className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-[#0a0f0c] font-bold rounded-xl transition-all mt-4 shadow-lg shadow-emerald-500/20"
-              >
-                Salvar Alterações
-              </button>
+              <div className="flex gap-3 pt-4">
+                <button 
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="flex-1 py-2.5 border border-[#E2E8F0] text-[#64748B] font-semibold rounded-xl hover:bg-gray-50 transition-all"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  className="flex-1 py-2.5 bg-[#1A56DB] hover:bg-[#1A56DB]/90 text-white font-semibold rounded-xl transition-all shadow-sm"
+                >
+                  Salvar Alterações
+                </button>
+              </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal de Detalhes da Tarefa */}
-      {isDetailModalOpen && selectedTask && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl w-full max-w-lg shadow-2xl">
-            <div className="px-4 py-3 border-b border-[#1a3a24] flex justify-between items-center">
-              <h2 className="text-white font-bold text-base">Detalhes da Tarefa</h2>
-              <button onClick={() => setIsDetailModalOpen(false)} className="text-gray-500 hover:text-white">
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="p-4 space-y-3">
-              <div>
-                <h1 className="text-lg font-bold text-white">{selectedTask.title}</h1>
-                <span className={`inline-block text-xs font-black uppercase tracking-tighter px-2 py-0.5 rounded-lg ${getPriorityColor(selectedTask.priority)} bg-[#1a3a24]/50`}>              {getPriorityLabel(selectedTask.priority)}
-                </span>
-              </div>
-
-              {selectedTask.description && (
-                <div>
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Descrição</h3>
-                  <div className="text-gray-300 text-sm leading-relaxed bg-[#1a3a24]/30 p-3 rounded-lg border border-[#1a3a24] whitespace-pre-wrap overflow-y-auto max-h-48 custom-scrollbar">
-                    {selectedTask.description}
-                  </div>
-                </div>
-              )}
-
-              {selectedTask.drive_link && (
-                <div>
-                  <a 
-                    href={selectedTask.drive_link} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 w-full py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 rounded-lg font-bold transition-all text-sm"
-                  >
-                    <ExternalLink size={16} />
-                    Abrir Google Drive
-                  </a>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Status</h3>
-                  <div className="bg-[#1a3a24]/30 p-2 rounded-lg border border-[#1a3a24]">
-                    <p className="text-sm text-white font-medium capitalize">
-                      {COLUMNS.find(c => c.id === selectedTask.status)?.label}
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Atribuído a</h3>
-                  <div className="bg-[#1a3a24]/30 p-2 rounded-lg border border-[#1a3a24]">
-                    <p className="text-sm text-white font-medium">
-                      {selectedTask.assignee?.name || selectedTask.assignee?.email || 'Não atribuído'}
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Data de Entrega</h3>
-                  <div className="flex items-center gap-2 bg-[#1a3a24]/30 p-2 rounded-lg border border-[#1a3a24]">
-                    <Calendar size={14} className="text-[#00ff88]" />
-                    <p className="text-sm text-white font-medium">
-                      {selectedTask.due_date ? new Date(selectedTask.due_date).toLocaleDateString('pt-BR') : 'Sem prazo'}
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Criado em</h3>
-                  <div className="flex items-center gap-2 bg-[#1a3a24]/30 p-2 rounded-lg border border-[#1a3a24]">
-                    <Clock size={14} className="text-gray-500" />
-                    <p className="text-sm text-gray-400 font-medium">
-                      {new Date(selectedTask.created_at).toLocaleDateString('pt-BR')}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       )}
