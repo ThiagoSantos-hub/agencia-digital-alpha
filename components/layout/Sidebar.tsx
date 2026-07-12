@@ -44,7 +44,7 @@ const menuGroups = [
   {
     label: 'OUTROS',
     items: [
-      { label: 'Perfil',    href: '/perfil',    icon: UserCircle,   ativo: true  },
+      { label: 'Perfil', href: '/perfil', icon: UserCircle, ativo: true },
     ],
   },
 ]
@@ -54,22 +54,22 @@ export function Sidebar() {
   const { signOut } = useAuth()
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-[#0a0f0c] border-r border-[#1a3a24] flex flex-col">
-      <div className="px-6 py-5 border-b border-[#1a3a24]">
+    <aside className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-[#E2E8F0] flex flex-col">
+      <div className="px-6 py-5 border-b border-[#E2E8F0]">
         <div className="flex items-center gap-2">
-          <span className="text-white font-black text-lg tracking-tight">DIGITAL</span>
-          <span className="text-[#00ff88] font-black text-lg tracking-tight">ALPHA</span>
+          <span className="text-[#1E293B] font-black text-lg tracking-tight">DIGITAL</span>
+          <span className="text-[#1A56DB] font-black text-lg tracking-tight">ALPHA</span>
         </div>
       </div>
 
-      <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-4 custom-scrollbar">
+      <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-4">
         {/* Dashboard isolado no topo */}
         <div className="mb-2">
           <Link href="/dashboard"
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
               pathname === '/dashboard' || pathname.startsWith('/dashboard/')
-                ? 'bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30'
-                : 'text-gray-400 hover:text-white hover:bg-[#1a3a24]/40'
+                ? 'bg-[#EFF6FF] text-[#1A56DB] border border-[#BFDBFE]'
+                : 'text-[#64748B] hover:text-[#1E293B] hover:bg-[#F1F5F9]'
             }`}>
             <LayoutDashboard size={18} />
             <span className="text-sm">Dashboard</span>
@@ -78,7 +78,7 @@ export function Sidebar() {
 
         {menuGroups.map((group) => (
           <div key={group.label}>
-            <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-600">
+            <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">
               {group.label}
             </p>
             <div className="space-y-0.5">
@@ -86,18 +86,18 @@ export function Sidebar() {
                 const Icon = item.icon
                 const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
                 if (!item.ativo) return (
-                  <div key={item.href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 cursor-not-allowed opacity-50">
+                  <div key={item.href} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#94A3B8] cursor-not-allowed opacity-50">
                     <Icon size={18} />
                     <span className="text-sm">{item.label}</span>
-                    <span className="ml-auto text-xs bg-[#1a3a24]/50 text-gray-500 px-1.5 py-0.5 rounded-md">Em breve</span>
+                    <span className="ml-auto text-[10px] bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded">Em breve</span>
                   </div>
                 )
                 return (
                   <Link key={item.href} href={item.href}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                       isActive
-                        ? 'bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30'
-                        : 'text-gray-400 hover:text-white hover:bg-[#1a3a24]/40'
+                        ? 'bg-[#EFF6FF] text-[#1A56DB] border border-[#BFDBFE]'
+                        : 'text-[#64748B] hover:text-[#1E293B] hover:bg-[#F1F5F9]'
                     }`}>
                     <Icon size={18} />
                     <span className="text-sm">{item.label}</span>
@@ -109,9 +109,9 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="px-3 py-4 border-t border-[#1a3a24]">
+      <div className="px-3 py-4 border-t border-[#E2E8F0]">
         <button onClick={() => signOut()}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors">
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors">
           <LogOut size={18} />
           <span className="text-sm font-medium">Sair do sistema</span>
         </button>
