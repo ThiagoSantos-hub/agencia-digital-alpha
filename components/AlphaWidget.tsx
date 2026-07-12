@@ -81,12 +81,12 @@ function AlphaButton({ userName }: { userName: string }) {
   return (
     <div className="fixed bottom-6 right-6 z-[60] flex flex-col items-end gap-3 pointer-events-none">
       {active && (
-        <div className="bg-[#0f1a14] border border-[#00ff88]/30 rounded-2xl p-4 shadow-2xl w-48 pointer-events-auto">
+        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-2xl w-48 pointer-events-auto">
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-2 h-2 rounded-full bg-[#00ff88] animate-pulse" />
-            <span className="text-[#00ff88] text-sm font-semibold">Alpha ativa</span>
+            <div className="w-2 h-2 rounded-full bg-[#1A56DB] animate-pulse" />
+            <span className="text-[#1A56DB] text-sm font-semibold">Alpha ativa</span>
           </div>
-          <p className="text-gray-400 text-xs">Pode falar!</p>
+          <p className="text-[#64748B] text-xs">Pode falar!</p>
         </div>
       )}
       <button
@@ -94,16 +94,16 @@ function AlphaButton({ userName }: { userName: string }) {
         disabled={loading}
         className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all disabled:opacity-50 pointer-events-auto hover:scale-110 active:scale-95"
         style={{
-          backgroundColor: active ? '#0f1a14' : '#00ff88',
-          border: '2px solid #00ff88',
-          boxShadow: active ? '0 0 20px rgba(0,255,136,0.4)' : '0 0 10px rgba(0,255,136,0.2)',
+          backgroundColor: active ? '#1A56DB' : '#1A56DB',
+          border: '2px solid #1A56DB',
+          boxShadow: active ? '0 0 20px rgba(26,86,219,0.4)' : '0 0 10px rgba(26,86,219,0.2)',
         }}
       >
         {loading
-          ? <div className="w-5 h-5 border-2 border-[#00ff88] border-t-transparent rounded-full animate-spin" />
+          ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
           : active
-            ? <MicOff size={22} color="#00ff88" />
-            : <Mic size={22} color="#0a0f0c" />
+            ? <MicOff size={22} color="#FFFFFF" />
+            : <Mic size={22} color="#FFFFFF" />
         }
       </button>
     </div>
