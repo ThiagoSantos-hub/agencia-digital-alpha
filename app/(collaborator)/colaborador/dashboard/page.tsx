@@ -311,14 +311,14 @@ export default function CollaboratorDashboardPage() {
              <div className="flex-1 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-2.5 flex items-center gap-3 min-w-0">
                 <Clock size={12} className="text-blue-500 flex-shrink-0" />
                 <div className="min-w-0">
-                   <p className-[#1E293B] text-[9px] font-bold truncate">Relatório Semanal Alpha</p>
+                   <p className="text-[#1E293B] text-[9px] font-bold truncate">Relatório Semanal Alpha</p>
                    <p className="text-[#64748B] text-[8px]">Prioridade Média</p>
                 </div>
              </div>
              <div className="flex-1 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-2.5 flex items-center gap-3 min-w-0">
                 <Clock size={12} className="text-[#64748B] flex-shrink-0" />
                 <div className="min-w-0">
-                   <p className-[#1E293B] text-[9px] font-bold truncate">Configurar novo Pixel</p>
+                   <p className="text-[#1E293B] text-[9px] font-bold truncate">Configurar novo Pixel</p>
                    <p className="text-[#64748B] text-[8px]">Prioridade Baixa</p>
                 </div>
              </div>
