@@ -32,10 +32,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   // Loading — query ao Supabase ainda não retornou
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0f0c] flex items-center justify-center">
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-emerald-500 mx-auto mb-3"></div>
-          <p className="text-gray-400 text-sm">Carregando...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-[#1A56DB] mx-auto mb-3"></div>
+          <p className="text-[#64748B] text-sm">Carregando...</p>
         </div>
       </div>
     )
@@ -44,10 +44,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   // User não autenticado — não renderiza nada, o useEffect já redireciona
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#0a0f0c] flex items-center justify-center">
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-emerald-500 mx-auto mb-3"></div>
-          <p className="text-gray-400 text-sm">Verificando sessão...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-[#1A56DB] mx-auto mb-3"></div>
+          <p className="text-[#64748B] text-sm">Verificando sessão...</p>
         </div>
       </div>
     )
@@ -56,10 +56,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   // User existe mas profile não existe — não renderiza nada, o useEffect redireciona
   if (!profile) {
     return (
-      <div className="min-h-screen bg-[#0a0f0c] flex items-center justify-center">
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-emerald-500 mx-auto mb-3"></div>
-          <p className="text-gray-400 text-sm">Verificando perfil...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-[#1A56DB] mx-auto mb-3"></div>
+          <p className="text-[#64748B] text-sm">Verificando perfil...</p>
         </div>
       </div>
     )
@@ -68,17 +68,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   // Colaborador tentando acessar admin — redireciona
   if (profile.role === 'collaborator') {
     return (
-      <div className="min-h-screen bg-[#0a0f0c] flex items-center justify-center">
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-emerald-500 mx-auto mb-3"></div>
-          <p className="text-gray-400 text-sm">Redirecionando para seu painel...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-[#1A56DB] mx-auto mb-3"></div>
+          <p className="text-[#64748B] text-sm">Redirecionando para seu painel...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="h-screen bg-[#0a0f0c] flex overflow-hidden">
+    <div className="h-screen bg-[#F8FAFC] flex overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col ml-64 h-full">
         <Header />
