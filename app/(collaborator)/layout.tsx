@@ -125,14 +125,12 @@ export default function CollaboratorLayout({
 
       if (data) {
         const naoLidas = data.some(n => !n.lida_por?.includes(profile.id))
-        console.log('Verificação de novidades:', { total: data.length, temNaoLidas: naoLidas })
         setTemNovidade(naoLidas)
       }
     }
 
     checkNovidades()
 
-    // Assinar em tempo real para novas novidades
     const channel = supabase
       .channel('menu_novidades_changes')
       .on(
@@ -142,14 +140,11 @@ export default function CollaboratorLayout({
           schema: 'public', 
           table: 'novidades' 
         },
-        (payload) => {
-          console.log('Novidade detectada em tempo real:', payload)
+        () => {
           checkNovidades()
         }
       )
-      .subscribe((status) => {
-        console.log('Status do canal de novidades:', status)
-      })
+      .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
@@ -183,7 +178,7 @@ export default function CollaboratorLayout({
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary mx-auto mb-3"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-[#1A56DB] mx-auto mb-3"></div>
           <p className="text-[#64748B] text-sm">Carregando painel...</p>
         </div>
       </div>
@@ -194,7 +189,7 @@ export default function CollaboratorLayout({
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary mx-auto mb-3"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-[#1A56DB] mx-auto mb-3"></div>
           <p className="text-[#64748B] text-sm">Verificando acesso...</p>
         </div>
       </div>
@@ -222,7 +217,7 @@ export default function CollaboratorLayout({
                   : 'text-[#64748B] hover:text-[#1E293B] hover:bg-[#F1F5F9]'
               }`}>
               <LayoutDashboard size={18} />
-              <span className="text-sm">Dashboard</span>
+              <span className="text-sm font-medium">Dashboard</span>
             </Link>
           </div>
 
