@@ -29,16 +29,15 @@ export function Table<T>({
   onRowClick,
 }: TableProps<T>) {
   return (
-    <div className="w-full overflow-x-auto rounded-2xl border border-[#2a2a2a]">
+    <div className="w-full overflow-x-auto rounded-xl border border-[#E2E8F0]">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-[#2a2a2a]">
+          <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
             {columns.map((col) => (
               <th
                 key={col.key}
                 className={`
-                  px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
-                  bg-[#111] first:rounded-tl-2xl last:rounded-tr-2xl
+                  px-4 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wider
                   ${col.className ?? ''}
                 `}
               >
@@ -52,14 +51,14 @@ export function Table<T>({
           {loading ? (
             <tr>
               <td colSpan={columns.length} className="px-4 py-8 text-center">
-                <span className="text-gray-500 text-sm">Carregando...</span>
+                <span className="text-[#64748B] text-sm">Carregando...</span>
               </td>
             </tr>
           ) : data.length === 0 ? (
             <tr>
               <td colSpan={columns.length} className="px-4 py-10 text-center">
                 {empty ?? (
-                  <span className="text-gray-500 text-sm">
+                  <span className="text-[#64748B] text-sm">
                     Nenhum item encontrado.
                   </span>
                 )}
@@ -71,15 +70,15 @@ export function Table<T>({
                 key={keyExtractor(row)}
                 onClick={() => onRowClick?.(row)}
                 className={`
-                  border-b border-[#1f1f1f] last:border-0 bg-[#1a1a1a]
+                  border-b border-[#E2E8F0] last:border-0 bg-white
                   transition-colors
-                  ${onRowClick ? 'cursor-pointer hover:bg-[#222]' : ''}
+                  ${onRowClick ? 'cursor-pointer hover:bg-[#F8FAFC]' : ''}
                 `}
               >
                 {columns.map((col) => (
                   <td
                     key={col.key}
-                    className={`px-4 py-3 text-gray-300 ${col.className ?? ''}`}
+                    className={`px-4 py-3 text-[#1E293B] text-sm ${col.className ?? ''}`}
                   >
                     {col.render
                       ? col.render(row)

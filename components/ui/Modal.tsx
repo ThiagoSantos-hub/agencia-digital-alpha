@@ -49,7 +49,7 @@ export function Modal({
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       {/* Overlay */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/40"
         onClick={onClose}
       />
 
@@ -57,21 +57,21 @@ export function Modal({
       <div
         className={`
           relative w-full ${sizeStyles[size]}
-          bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl shadow-2xl
+          bg-white border border-[#E2E8F0] rounded-xl shadow-lg
           flex flex-col max-h-[90vh]
         `}
       >
         {/* Header */}
-        <div className="flex items-start justify-between p-6 border-b border-[#2a2a2a]">
+        <div className="flex items-start justify-between p-6 border-b border-[#E2E8F0]">
           <div>
-            <h2 className="text-white font-semibold text-base">{title}</h2>
+            <h2 className="text-[#1E293B] font-semibold text-base">{title}</h2>
             {description && (
-              <p className="text-gray-500 text-sm mt-0.5">{description}</p>
+              <p className="text-[#64748B] text-sm mt-0.5">{description}</p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-white transition-colors ml-4 mt-0.5"
+            className="text-[#64748B] hover:text-[#1E293B] transition-colors ml-4 mt-0.5"
             aria-label="Fechar"
           >
             <X size={18} />
@@ -83,7 +83,7 @@ export function Modal({
 
         {/* Footer opcional */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 p-6 border-t border-[#2a2a2a]">
+          <div className="flex items-center justify-end gap-3 p-6 border-t border-[#E2E8F0]">
             {footer}
           </div>
         )}
