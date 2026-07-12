@@ -18,30 +18,30 @@ export function AlphaChatMessage({ message }: AlphaChatMessageProps) {
     <div className={`flex w-full mb-4 ${isUser ? 'justify-end' : 'justify-start'}`}>
       {/* Avatar Alpha */}
       {!isUser && (
-        <div className="w-8 h-8 rounded-full bg-[#00ff88]/10 border border-[#00ff88]/30 flex items-center justify-center text-sm mr-2 flex-shrink-0 mt-1">
+        <div className="w-8 h-8 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center text-sm mr-2 flex-shrink-0 mt-1 text-[#1A56DB] font-bold">
           α
         </div>
       )}
 
       <div className={`max-w-[80%] flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
         {/* Bolha */}
-        <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+        <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap shadow-sm ${
           isUser
-            ? 'bg-[#00ff88] text-[#0a0f0c] rounded-br-sm font-medium'
-            : 'bg-[#0f1a14] border border-[#1a3a24] text-gray-100 rounded-bl-sm'
+            ? 'bg-[#1A56DB] text-white rounded-br-sm font-medium'
+            : 'bg-white border border-[#E2E8F0] text-[#1E293B] rounded-bl-sm'
         }`}>
           {message.content}
         </div>
 
         {/* Horário */}
-        <span className="text-gray-600 text-xs mt-1 px-1">
+        <span className="text-[#94A3B8] text-xs mt-1 px-1">
           {formatTime(message.createdAt)}
         </span>
       </div>
 
       {/* Avatar usuário */}
       {isUser && (
-        <div className="w-8 h-8 rounded-full bg-[#1a3a24] border border-[#1a3a24] flex items-center justify-center text-sm ml-2 flex-shrink-0 mt-1 text-gray-300">
+        <div className="w-8 h-8 rounded-full bg-[#F1F5F9] border border-[#E2E8F0] flex items-center justify-center text-sm ml-2 flex-shrink-0 mt-1 text-[#64748B] font-bold">
           U
         </div>
       )}
