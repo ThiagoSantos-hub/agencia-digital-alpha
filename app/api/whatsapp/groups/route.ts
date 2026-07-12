@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
             // 2. Deve ser um grupo real (@g.us) e não uma transmissão ou status
             if (!id.endsWith('@g.us')) return false
             
-            // 3. Deve ter participantes
+            // 3. Deve ter participantes (grupos onde você saiu costumam vir com size 0 ou sem participantes)
             const size = g.size || (g.participants ? g.participants.length : 0)
             if (size <= 0) return false
             
@@ -90,21 +90,18 @@ export async function GET(request: NextRequest) {
             updated_at: new Date().toISOString(),
           }))
 
-          const currentGroupIds = rows.map(r => r.group_id)
-          if (currentGroupIds.length > 0) {
-            await supabase
-              .from('whatsapp_groups')
-              .delete()
-              .eq('user_id', targetUserId)
-              .not('group_id', 'in', `(${currentGroupIds.map(id => `'${id}'`).join(',')})`)
-          } else {
-            await supabase.from('whatsapp_groups').delete().eq('user_id', targetUserId)
-          }
+          // SINCRONIZAÇÃO TOTAL: 
+          // 1. Remove TODOS os grupos atuais do usuário para garantir que grupos deletados sumam
+          // 2. Insere a nova lista limpa vinda da API
+          await supabase
+            .from('whatsapp_groups')
+            .delete()
+            .eq('user_id', targetUserId)
 
           if (rows.length > 0) {
             await supabase
               .from('whatsapp_groups')
-              .upsert(rows, { onConflict: 'user_id,group_id' })
+              .insert(rows)
           }
 
           return NextResponse.json(rows.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')))
