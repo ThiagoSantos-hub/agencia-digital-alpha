@@ -110,15 +110,15 @@ export function SortableChecklistCard({
     <div 
       ref={setNodeRef}
       style={style}
-      className={`bg-[#111] border rounded-2xl overflow-hidden transition-transform duration-300 flex flex-col w-full max-w-[260px] ${
+      className={`bg-white border rounded-2xl overflow-hidden transition-transform duration-300 flex flex-col w-full max-w-[260px] ${
         list.status === 'completed' 
-          ? 'border-[#00ff88]/10 opacity-50' 
-          : 'border-[#2a2a2a] hover:border-[#3a3a3a]'
+          ? 'border-[#1A56DB]/10 opacity-50' 
+          : 'border-[#E2E8F0] hover:border-[#CBD5E1]'
       }`}
     >
-      <div className="h-0.5 bg-[#2a2a2a] w-full">
+      <div className="h-0.5 bg-[#E2E8F0] w-full">
         <div 
-          className="h-full bg-[#00ff88] transition-all duration-500" 
+          className="h-full bg-[#1A56DB] transition-all duration-500" 
           style={{ width: `${progress}%` }} 
         />
       </div>
@@ -128,33 +128,33 @@ export function SortableChecklistCard({
           <button
             {...attributes}
             {...listeners}
-            className="p-1 text-gray-700 hover:text-gray-500 cursor-grab active:cursor-grabbing touch-none"
+            className="p-1 text-[#64748B] hover:text-[#475569] cursor-grab active:cursor-grabbing touch-none"
           >
             <GripHorizontal size={14} />
           </button>
           
           <div className="flex gap-0.5">
-            <button onClick={() => setIsEditing(true)} className="p-1 text-gray-700 hover:text-amber-400">
+            <button onClick={() => setIsEditing(true)} className="p-1 text-[#64748B] hover:text-[#1A56DB]">
               <Edit2 size={12} />
             </button>
             {duplicateChecklist && (
-              <button onClick={() => duplicateChecklist(list.id)} className="p-1 text-gray-700 hover:text-emerald-400" title="Duplicar checklist">
+              <button onClick={() => duplicateChecklist(list.id)} className="p-1 text-[#64748B] hover:text-[#1A56DB]" title="Duplicar checklist">
                 <Copy size={12} />
               </button>
             )}
-            <button onClick={() => deleteChecklist(list.id)} className="p-1 text-gray-700 hover:text-red-500">
+            <button onClick={() => deleteChecklist(list.id)} className="p-1 text-[#64748B] hover:text-red-500">
               <Trash2 size={12} />
             </button>
           </div>
         </div>
 
         {isEditing ? (
-          <div className="space-y-2 mb-3 bg-[#0a0f0c] p-2 rounded-xl border border-[#00ff88]/20 overflow-hidden max-w-[220px]">
+          <div className="space-y-2 mb-3 bg-[#F8FAFC] p-2 rounded-xl border border-[#E2E8F0] overflow-hidden max-w-[220px]">
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full bg-[#111] border border-[#2a2a2a] rounded-lg px-2 py-1 text-[10px] text-white focus:outline-none focus:border-[#00ff88] truncate"
+              className="w-full bg-white border border-[#E2E8F0] rounded-lg px-2 py-1 text-[10px] text-[#1E293B] focus:outline-none focus:border-[#1A56DB] truncate"
               autoFocus
             />
             <div className="flex flex-wrap gap-0.5">
@@ -166,7 +166,7 @@ export function SortableChecklistCard({
                     else setDays([...days, day.id].sort())
                   }}
                   className={`w-5 h-5 rounded-lg text-[8px] font-black border transition-all ${
-                    days.includes(day.id) ? 'bg-[#00ff88] text-[#0a0f0c] border-[#00ff88]' : 'bg-[#111] text-gray-600 border-[#2a2a2a]'
+                    days.includes(day.id) ? 'bg-[#1A56DB] text-white border-[#1A56DB]' : 'bg-white text-[#64748B] border-[#E2E8F0]'
                   }`}
                 >
                   {day.label}
@@ -179,24 +179,24 @@ export function SortableChecklistCard({
                   await updateChecklist(list.id, { title, recurrence_days: days, recurrence: days.length > 0 ? 'daily' : 'once' });
                   setIsEditing(false);
                 }} 
-                className="flex-1 py-1 bg-[#00ff88] text-[#0a0f0c] text-[8px] font-black uppercase rounded-lg"
+                className="flex-1 py-1 bg-[#1A56DB] text-white text-[8px] font-black uppercase rounded-lg"
               >
                 Salvar
               </button>
-              <button onClick={() => setIsEditing(false)} className="flex-1 py-1 bg-white/5 text-gray-400 text-[8px] font-black uppercase rounded-lg">Sair</button>
+              <button onClick={() => setIsEditing(false)} className="flex-1 py-1 bg-[#F1F5F9] text-[#64748B] text-[8px] font-black uppercase rounded-lg">Sair</button>
             </div>
           </div>
         ) : (
           <div className="mb-4">
-            <h3 className="text-white font-bold text-sm leading-tight mb-1.5 line-clamp-2">{list.title}</h3>
+            <h3 className="text-[#1E293B] font-bold text-sm leading-tight mb-1.5 line-clamp-2">{list.title}</h3>
             <div className="flex flex-wrap gap-1">
               {list.recurrence_days?.map(dayId => (
-                <span key={dayId} className="px-1.5 py-0.5 bg-[#00ff88]/10 text-[#00ff88] text-[8px] font-black rounded-md uppercase border border-[#00ff88]/10">
+                <span key={dayId} className="px-1.5 py-0.5 bg-[#1A56DB]/10 text-[#1A56DB] text-[8px] font-black rounded-md uppercase border border-[#1A56DB]/10">
                   {DIAS_SEMANA[dayId].label}
                 </span>
               ))}
               {(!list.recurrence_days || list.recurrence_days.length === 0) && (
-                <span className="px-1.5 py-0.5 bg-white/5 text-gray-500 text-[8px] font-black rounded-md uppercase border border-white/5">Única</span>
+                <span className="px-1.5 py-0.5 bg-[#F1F5F9] text-[#64748B] text-[8px] font-black rounded-md uppercase border border-[#E2E8F0]">Única</span>
               )}
             </div>
           </div>
@@ -210,11 +210,11 @@ export function SortableChecklistCard({
               onChange={(e) => setNewItemText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && (addItem(list.id, newItemText), setNewItemText(''))}
               placeholder="Adicionar tarefa..."
-              className="w-full bg-[#0a0f0c] border border-[#2a2a2a] rounded-xl pl-3 pr-8 py-2 text-[11px] text-white focus:outline-none focus:border-[#00ff88]"
+              className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl pl-3 pr-8 py-2 text-[11px] text-[#1E293B] focus:outline-none focus:border-[#1A56DB]"
             />
             <button 
               onClick={() => { addItem(list.id, newItemText); setNewItemText(''); }}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 text-[#00ff88] hover:bg-[#00ff88]/10 rounded-lg transition-all"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 text-[#1A56DB] hover:bg-[#1A56DB]/10 rounded-lg transition-all"
             >
               <Plus size={14} />
             </button>
@@ -249,9 +249,9 @@ export function SortableChecklistCard({
           </DndContext>
         </div>
 
-        <div className="mt-6 pt-4 border-t border-[#2a2a2a] flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-gray-500">
+        <div className="mt-6 pt-4 border-t border-[#E2E8F0] flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-[#64748B]">
           <span>{completedCount}/{items.length} Concluído</span>
-          <span className="text-[#00ff88]">{Math.round(progress)}%</span>
+          <span className="text-[#1A56DB]">{Math.round(progress)}%</span>
         </div>
       </div>
     </div>
