@@ -103,7 +103,7 @@ export default function AlertasPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050508] text-white p-8">
+    <div className="min-h-screen bg-[#F8FAFC] bg-[#050508] text-[#1E293B] p-8">
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
@@ -111,11 +111,11 @@ export default function AlertasPage() {
             <Bell className="text-[#6366f1]" />
             Alertas
           </h1>
-          <p className="text-gray-400 text-sm">Configure notificações automáticas para suas contas</p>
+          <p className="text-[#64748B] text-sm">Configure notificações automáticas para suas contas</p>
         </div>
         <button 
           onClick={() => handleOpenModal()}
-          className="bg-[#6366f1] hover:bg-[#4f46e5] text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-medium"
+          className="bg-[#6366f1] hover:bg-[#4f46e5] text-[#1E293B] px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-medium"
         >
           <Plus size={18} />
           Criar Alerta
@@ -126,11 +126,11 @@ export default function AlertasPage() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-[#0a0a0f] border border-[#1a1a2e] h-48 rounded-2xl animate-pulse" />
+            <div key={i} className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow h-48 rounded-2xl animate-pulse" />
           ))}
         </div>
       ) : alerts.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-[#0a0a0f] border border-[#1a1a2e] rounded-2xl">
+        <div className="flex flex-col items-center justify-center py-20 bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow rounded-2xl">
           <Bell size={48} className="text-gray-600 mb-4" />
           <p className="text-gray-300 font-medium">Nenhum alerta criado ainda</p>
           <button 
@@ -143,7 +143,7 @@ export default function AlertasPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {alerts.map((alert) => (
-            <div key={alert.id} className="bg-[#0a0a0f] border border-[#1a1a2e] p-6 rounded-2xl flex flex-col justify-between hover:border-[#6366f1]/50 transition-colors group">
+            <div key={alert.id} className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 rounded-2xl flex flex-col justify-between hover:border-[#6366f1]/50 transition-colors group">
               <div>
                 <div className="flex justify-between items-start mb-4">
                   <h3 className="font-bold text-lg text-gray-100">{alert.nome}</h3>
@@ -183,10 +183,10 @@ export default function AlertasPage() {
                 </button>
 
                 <div className="flex items-center gap-3">
-                  <button onClick={() => handleOpenModal(alert)} className="p-1.5 hover:bg-[#1a1a2e] rounded-lg text-gray-400 hover:text-white transition-colors">
+                  <button onClick={() => handleOpenModal(alert)} className="p-1.5 hover:bg-[#1a1a2e] rounded-lg text-gray-400 hover:text-[#1E293B] transition-colors">
                     <Edit2 size={16} />
                   </button>
-                  <button onClick={() => handleDuplicate(alert)} className="p-1.5 hover:bg-[#1a1a2e] rounded-lg text-gray-400 hover:text-white transition-colors">
+                  <button onClick={() => handleDuplicate(alert)} className="p-1.5 hover:bg-[#1a1a2e] rounded-lg text-gray-400 hover:text-[#1E293B] transition-colors">
                     <Copy size={16} />
                   </button>
                   <button onClick={() => handleDelete(alert.id)} className="p-1.5 hover:bg-red-500/10 rounded-lg text-gray-400 hover:text-red-500 transition-colors">
@@ -204,7 +204,7 @@ export default function AlertasPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
           
-          <div className="relative bg-[#0a0a0f] border border-[#1a1a2e] w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="relative bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-[#1a1a2e] flex justify-between items-center">
               <h2 className="text-xl font-bold">{editingAlert ? 'Editar Alerta' : 'Criar Alerta'}</h2>
               <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-[#1a1a2e] rounded-lg text-gray-400">
@@ -345,11 +345,11 @@ export default function AlertasPage() {
                   <div className="flex gap-1">
                     {formData.tipo === 'saldo_minimo' ? (
                       ['<CA>', '<SALDO>', '<TARGET>'].map(v => (
-                        <button key={v} type="button" onClick={() => insertVariable(v)} className="text-[9px] bg-[#1a1a2e] px-1.5 py-0.5 rounded text-gray-400 hover:text-white">{v}</button>
+                        <button key={v} type="button" onClick={() => insertVariable(v)} className="text-[9px] bg-[#1a1a2e] px-1.5 py-0.5 rounded text-gray-400 hover:text-[#1E293B]">{v}</button>
                       ))
                     ) : (
                       ['<CA>', '<ACT_STATUS>', '<STATUS_DESCRIPTION>'].map(v => (
-                        <button key={v} type="button" onClick={() => insertVariable(v)} className="text-[9px] bg-[#1a1a2e] px-1.5 py-0.5 rounded text-gray-400 hover:text-white">{v}</button>
+                        <button key={v} type="button" onClick={() => insertVariable(v)} className="text-[9px] bg-[#1a1a2e] px-1.5 py-0.5 rounded text-gray-400 hover:text-[#1E293B]">{v}</button>
                       ))
                     )}
                   </div>
@@ -374,7 +374,7 @@ export default function AlertasPage() {
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="flex-1 bg-[#6366f1] hover:bg-[#4f46e5] text-white py-2.5 rounded-xl transition-colors text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="flex-1 bg-[#6366f1] hover:bg-[#4f46e5] text-[#1E293B] py-2.5 rounded-xl transition-colors text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
                   Salvar Alerta

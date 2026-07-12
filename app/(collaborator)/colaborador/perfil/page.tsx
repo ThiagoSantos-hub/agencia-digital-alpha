@@ -117,7 +117,7 @@ export default function PerfilColaboradorPage() {
           <UserCircle size={20} className="text-[#00ff88]" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-white">Meu Perfil</h1>
+          <h1 className="text-xl font-bold text-[#1E293B]">Meu Perfil</h1>
           <p className="text-gray-400 text-xs">Gerencie suas informações e segurança da conta.</p>
         </div>
       </div>
@@ -136,12 +136,12 @@ export default function PerfilColaboradorPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Dados Pessoais */}
-        <section className="bg-[#0a0f0c] border border-[#1a3a24] p-5 rounded-2xl">
+        <section className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow p-5 rounded-2xl">
           <div className="flex items-center gap-2.5 mb-4">
             <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
               <User size={16} />
             </div>
-            <h2 className="text-base font-bold text-white">Dados Pessoais</h2>
+            <h2 className="text-base font-bold text-[#1E293B]">Dados Pessoais</h2>
           </div>
 
           <form onSubmit={handleUpdateName} className="space-y-3">
@@ -169,7 +169,7 @@ export default function PerfilColaboradorPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Seu nome"
-                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                  className="w-full bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] rounded-xl pl-9 pr-3 py-2 text-sm text-[#1E293B] focus:outline-none focus:border-emerald-500/50 transition-all"
                 />
               </div>
             </div>
@@ -193,12 +193,12 @@ export default function PerfilColaboradorPage() {
         </section>
 
         {/* Segurança / Senha */}
-        <section className="bg-[#0a0f0c] border border-[#1a3a24] p-5 rounded-2xl">
+        <section className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow p-5 rounded-2xl">
           <div className="flex items-center gap-2.5 mb-4">
             <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
               <Lock size={16} />
             </div>
-            <h2 className="text-base font-bold text-white">Segurança</h2>
+            <h2 className="text-base font-bold text-[#1E293B]">Segurança</h2>
           </div>
 
           <form onSubmit={handleUpdatePassword} className="space-y-3">
@@ -212,12 +212,12 @@ export default function PerfilColaboradorPage() {
                   value={passwordData.newPassword}
                   onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
                   placeholder="Mínimo 6 caracteres"
-                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl pl-9 pr-10 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                  className="w-full bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] rounded-xl pl-9 pr-10 py-2 text-sm text-[#1E293B] focus:outline-none focus:border-emerald-500/50 transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#1E293B] transition-colors"
                 >
                   {showPassword ? <AlertCircle size={14} className="rotate-45" /> : <KeyRound size={14} />}
                 </button>
@@ -234,12 +234,12 @@ export default function PerfilColaboradorPage() {
                   value={passwordData.confirmNewPassword}
                   onChange={(e) => setPasswordData({...passwordData, confirmNewPassword: e.target.value})}
                   placeholder="Repita a nova senha"
-                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl pl-9 pr-10 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                  className="w-full bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] rounded-xl pl-9 pr-10 py-2 text-sm text-[#1E293B] focus:outline-none focus:border-emerald-500/50 transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#1E293B] transition-colors"
                 >
                   {showConfirm ? <AlertCircle size={14} className="rotate-45" /> : <KeyRound size={14} />}
                 </button>

@@ -143,7 +143,7 @@ export default function ChecklistsPage() {
     <div className="p-8 min-h-screen bg-[#0a0f0c] text-gray-100 selection:bg-[#00ff88]/30">
       {/* HEADER MINIMALISTA */}
       <div className="flex justify-between items-center mb-10">
-        <h1 className="text-xl font-bold text-white uppercase tracking-wider">Checklists</h1>
+        <h1 className="text-xl font-bold text-[#1E293B] uppercase tracking-wider">Checklists</h1>
         
         {!isCreating && (
           <button 
@@ -160,8 +160,8 @@ export default function ChecklistsPage() {
       {isCreating && (
         <div className="mb-6 bg-[#111] border border-[#2a2a2a] rounded-2xl p-4 animate-in fade-in duration-300">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xs font-bold text-white uppercase tracking-wider">Novo Checklist</h2>
-            <button onClick={resetCreateForm} className="text-gray-500 hover:text-white transition-all"><X size={16} /></button>
+            <h2 className="text-xs font-bold text-[#1E293B] uppercase tracking-wider">Novo Checklist</h2>
+            <button onClick={resetCreateForm} className="text-gray-500 hover:text-[#1E293B] transition-all"><X size={16} /></button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -228,7 +228,7 @@ export default function ChecklistsPage() {
           </div>
 
           <div className="mt-4 flex justify-end gap-3 pt-4 border-t border-[#2a2a2a]">
-            <button onClick={resetCreateForm} className="text-[9px] font-bold text-gray-500 hover:text-white uppercase tracking-wider transition-colors">Cancelar</button>
+            <button onClick={resetCreateForm} className="text-[9px] font-bold text-gray-500 hover:text-[#1E293B] uppercase tracking-wider transition-colors">Cancelar</button>
             <button 
               onClick={handleCreateList}
               disabled={!newListTitle.trim() || newListItems.length === 0}
@@ -247,7 +247,7 @@ export default function ChecklistsPage() {
           <div className="flex items-center justify-between mb-6 px-2">
             <div className="flex items-center gap-4">
               <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]" />
-              <h2 className="text-base font-bold text-white uppercase tracking-wider">Rotinas Pendentes</h2>
+              <h2 className="text-base font-bold text-[#1E293B] uppercase tracking-wider">Rotinas Pendentes</h2>
             </div>
             <span className="text-[10px] font-bold text-amber-500/40 uppercase tracking-widest">{pendingLists.length} Ativas</span>
           </div>
@@ -317,7 +317,7 @@ export default function ChecklistsPage() {
           <div className="flex items-center justify-between mb-6 px-2">
             <div className="flex items-center gap-4">
               <div className="w-2 h-2 rounded-full bg-[#00ff88] shadow-[0_0_8px_rgba(0,255,136,0.4)]" />
-              <h2 className="text-base font-bold text-white uppercase tracking-wider">Concluídas</h2>
+              <h2 className="text-base font-bold text-[#1E293B] uppercase tracking-wider">Concluídas</h2>
             </div>
             <span className="text-[10px] font-bold text-[#00ff88]/30 uppercase tracking-widest">{completedLists.length} Feitas</span>
           </div>
@@ -393,7 +393,7 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full bg-[#0a0f0c] border border-[#00ff88]/40 rounded-xl px-4 py-2 text-sm text-white focus:outline-none"
+                  className="w-full bg-[#0a0f0c] border border-[#00ff88]/40 rounded-xl px-4 py-2 text-sm text-[#1E293B] focus:outline-none"
                   autoFocus
                 />
                 <div className="flex flex-wrap gap-1">
@@ -428,7 +428,7 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
             ) : (
               <div className="space-y-2">
                 <div className="flex items-center gap-2 group/title">
-                  <h3 className="font-bold text-white text-sm tracking-tight truncate uppercase">{list.title}</h3>
+                  <h3 className="font-bold text-[#1E293B] text-sm tracking-tight truncate uppercase">{list.title}</h3>
                   <button onClick={() => setIsEditing(true)} className="opacity-0 group-hover/title:opacity-100 text-gray-600 hover:text-[#00ff88] transition-all">
                     <Edit2 size={12} />
                   </button>
@@ -479,7 +479,7 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
                     type="text"
                     value={editingItemText}
                     onChange={(e) => setEditingItemText(e.target.value)}
-                    className="flex-1 bg-[#0a0f0c] border border-[#00ff88]/30 rounded-lg px-3 py-1 text-xs text-white outline-none"
+                    className="flex-1 bg-[#0a0f0c] border border-[#00ff88]/30 rounded-lg px-3 py-1 text-xs text-[#1E293B] outline-none"
                     autoFocus
                     onBlur={() => setEditingItemId(null)}
                     onKeyDown={(e) => {
@@ -495,7 +495,7 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
                   <span 
                     onClick={() => { setEditingItemId(item.id); setEditingItemText(item.text); }}
                     className={`text-[11px] font-medium cursor-pointer transition-all truncate pr-2 ${
-                      item.completed ? 'text-gray-700 line-through' : 'text-gray-400 hover:text-white'
+                      item.completed ? 'text-gray-700 line-through' : 'text-gray-400 hover:text-[#1E293B]'
                     }`}
                   >
                     {item.text}

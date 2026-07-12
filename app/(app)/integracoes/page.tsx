@@ -93,7 +93,7 @@ function ElevenLabsCard({
             <IntegrationIcon type="elevenlabs" />
           </div>
           <div>
-            <p className="text-white text-sm font-medium">{integration.label}</p>
+            <p className="text-[#1E293B] text-sm font-medium">{integration.label}</p>
             <p className="text-xs" style={{ color: integration.status === 'connected' ? '#00ff88' : '#4a7a5a' }}>
               {integration.status === 'connected' ? 'Conectado' : 'Desconectado'}
             </p>
@@ -140,7 +140,7 @@ function ElevenLabsCard({
       ) : (
         <div className="space-y-2">
           <p className="text-xs" style={{ color: '#4a7a5a' }}>
-            Agent ID: <span className="text-white">{integration.config?.agent_id}</span>
+            Agent ID: <span className="text-[#1E293B]">{integration.config?.agent_id}</span>
           </p>
           <div className="flex items-center gap-2">
             <input
@@ -297,7 +297,7 @@ export default function IntegracoesPage() {
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-8">
       <div>
-        <h1 className="text-white text-2xl font-bold">Integrações</h1>
+        <h1 className="text-[#1E293B] text-2xl font-bold">Integrações</h1>
         <p className="text-sm mt-1" style={{ color: '#4a7a5a' }}>
           Conecte suas ferramentas e automatize sua agência
         </p>
@@ -315,7 +315,7 @@ export default function IntegracoesPage() {
       )}
 
       <section>
-        <h2 className="text-white text-lg font-semibold mb-4">Conexões OAuth</h2>
+        <h2 className="text-[#1E293B] text-lg font-semibold mb-4">Conexões OAuth</h2>
         <p className="text-xs mb-4" style={{ color: '#4a7a5a' }}>
           Cada serviço do Google pode ser conectado com uma conta diferente. Ao clicar em "Conectar", o Google vai pedir para você escolher a conta.
         </p>
@@ -333,7 +333,7 @@ export default function IntegracoesPage() {
                     <IntegrationIcon type={integration.type} />
                   </div>
                   <div>
-                    <p className="text-white text-sm font-medium">{integration.label}</p>
+                    <p className="text-[#1E293B] text-sm font-medium">{integration.label}</p>
                     <p className="text-xs mt-0.5" style={{ color: integration.status === 'connected' ? '#00ff88' : '#4a7a5a' }}>
                       {integration.status === 'connected'
                         ? `Conectado${integration.connected_at ? ' em ' + new Date(integration.connected_at).toLocaleDateString('pt-BR') : ''}`
@@ -373,7 +373,7 @@ export default function IntegracoesPage() {
       </section>
 
       <section>
-        <h2 className="text-white text-lg font-semibold mb-4">Chaves de API</h2>
+        <h2 className="text-[#1E293B] text-lg font-semibold mb-4">Chaves de API</h2>
         <div className="space-y-3">
           {integrations
             .filter(i => i.type === 'elevenlabs')
@@ -400,7 +400,7 @@ export default function IntegracoesPage() {
                       <IntegrationIcon type={integration.type} />
                     </div>
                     <div>
-                      <p className="text-white text-sm font-medium">{integration.label}</p>
+                      <p className="text-[#1E293B] text-sm font-medium">{integration.label}</p>
                       <p className="text-xs" style={{ color: integration.status === 'connected' ? '#00ff88' : '#4a7a5a' }}>
                         {integration.status === 'connected' ? 'Conectado' : 'Desconectado'}
                       </p>
@@ -442,7 +442,7 @@ export default function IntegracoesPage() {
       </section>
 
       <section>
-  <h2 className="text-white text-lg font-semibold mb-1">WhatsApp</h2>
+  <h2 className="text-[#1E293B] text-lg font-semibold mb-1">WhatsApp</h2>
   <p className="text-xs mb-4" style={{ color: '#4a7a5a' }}>
     Conecte seu WhatsApp para enviar relatórios automáticos para contatos e grupos.
   </p>
@@ -450,7 +450,7 @@ export default function IntegracoesPage() {
 </section>
 
       <section>
-        <h2 className="text-white text-lg font-semibold mb-4">Webhooks</h2>
+        <h2 className="text-[#1E293B] text-lg font-semibold mb-4">Webhooks</h2>
         <div className="space-y-3">
           {webhooks.map(webhook => (
             <div
@@ -459,7 +459,7 @@ export default function IntegracoesPage() {
               style={{ backgroundColor: '#0f1f14', border: '1px solid #1a3a24' }}
             >
               <div className="flex items-center justify-between mb-3">
-                <p className="text-white text-sm font-medium">Slot {webhook.slot}</p>
+                <p className="text-[#1E293B] text-sm font-medium">Slot {webhook.slot}</p>
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <span className="text-xs" style={{ color: '#4a7a5a' }}>Ativo</span>

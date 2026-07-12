@@ -85,21 +85,21 @@ export default function NovidadesCollaboratorPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-white text-3xl font-bold tracking-tight">Novidades</h1>
-        <p className="text-gray-400 text-sm mt-1">Fique por dentro das últimas atualizações do sistema.</p>
+        <h1 className="text-[#1E293B] text-3xl font-bold tracking-tight">Novidades</h1>
+        <p className="text-[#64748B] text-sm mt-1">Fique por dentro das últimas atualizações do sistema.</p>
       </div>
 
       <div className="space-y-4">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <RefreshCw size={32} className="animate-spin text-emerald-500" />
-            <p className="text-gray-500 text-sm">Carregando novidades...</p>
+            <p className="text-[#64748B] text-sm">Carregando novidades...</p>
           </div>
         ) : novidades.length === 0 ? (
-          <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-3xl p-20 text-center">
+          <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow rounded-3xl p-20 text-center">
             <Sparkles size={48} className="text-gray-700 mx-auto mb-4" />
-            <h3 className="text-white font-medium text-lg">Nenhuma novidade no momento</h3>
-            <p className="text-gray-500 text-sm mt-1">Volte em breve para conferir as atualizações.</p>
+            <h3 className="text-[#1E293B] font-medium text-lg">Nenhuma novidade no momento</h3>
+            <p className="text-[#64748B] text-sm mt-1">Volte em breve para conferir as atualizações.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4">
@@ -127,7 +127,7 @@ export default function NovidadesCollaboratorPage() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-bold text-base text-white">{n.titulo}</h3>
+                        <h3 className="font-bold text-base text-[#1E293B]">{n.titulo}</h3>
                         <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-medium">
                           <Calendar size={12} />
                           {new Date(n.created_at).toLocaleDateString('pt-BR')}
@@ -156,7 +156,7 @@ export default function NovidadesCollaboratorPage() {
                   <Sparkles size={20} />
                 </div>
                 <div>
-                  <h2 className="text-white font-bold text-lg">{selectedNovidade.titulo}</h2>
+                  <h2 className="text-[#1E293B] font-semibold text-lg">{selectedNovidade.titulo}</h2>
                   <p className="text-emerald-400 text-xs font-medium">
                     Publicado em {new Date(selectedNovidade.created_at).toLocaleDateString('pt-BR')}
                   </p>
@@ -164,7 +164,7 @@ export default function NovidadesCollaboratorPage() {
               </div>
               <button 
                 onClick={() => setSelectedNovidade(null)}
-                className="p-2 rounded-xl text-gray-500 hover:text-white hover:bg-white/5 transition-all"
+                className="p-2 rounded-xl text-gray-500 hover:text-[#1E293B] hover:bg-white/5 transition-all"
               >
                 <X size={20} />
               </button>
@@ -179,7 +179,7 @@ export default function NovidadesCollaboratorPage() {
             <div className="px-8 py-6 border-t border-emerald-500/10 flex justify-end">
               <button
                 onClick={() => setSelectedNovidade(null)}
-                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-900/20"
+                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-[#1E293B] font-semibold rounded-xl transition-all shadow-lg shadow-emerald-900/20"
               >
                 Entendido
               </button>

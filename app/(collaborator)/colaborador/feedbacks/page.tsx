@@ -127,21 +127,21 @@ export default function FeedbacksCollaboratorPage() {
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
       <div>
-        <h1 className="text-white text-3xl font-bold tracking-tight">Central de Feedback</h1>
-        <p className="text-gray-400 text-sm mt-1">Sua opinião é fundamental para melhorarmos a plataforma.</p>
+        <h1 className="text-[#1E293B] text-3xl font-bold tracking-tight">Central de Feedback</h1>
+        <p className="text-[#64748B] text-sm mt-1">Sua opinião é fundamental para melhorarmos a plataforma.</p>
       </div>
 
       {/* Formulário de Envio */}
-      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-3xl p-8 shadow-2xl">
+      <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow rounded-3xl p-8 shadow-2xl">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Toggle Tipo */}
-          <div className="flex p-1 bg-[#0f0f0f] border border-[#2a2a2a] rounded-2xl w-fit">
+          <div className="flex p-1 bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] rounded-2xl w-fit">
             <button
               type="button"
               onClick={() => setTipo('sugestao')}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${
                 tipo === 'sugestao' 
-                  ? 'bg-emerald-600 text-white shadow-lg' 
+                  ? 'bg-emerald-600 text-[#1E293B] shadow-lg' 
                   : 'text-gray-500 hover:text-gray-300'
               }`}
             >
@@ -153,7 +153,7 @@ export default function FeedbacksCollaboratorPage() {
               onClick={() => setTipo('bug')}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${
                 tipo === 'bug' 
-                  ? 'bg-red-600 text-white shadow-lg' 
+                  ? 'bg-red-600 text-[#1E293B] shadow-lg' 
                   : 'text-gray-500 hover:text-gray-300'
               }`}
             >
@@ -170,7 +170,7 @@ export default function FeedbacksCollaboratorPage() {
                 value={titulo}
                 onChange={(e) => setTitulo(e.target.value)}
                 placeholder={tipo === 'bug' ? "Onde o erro aconteceu?" : "Qual a sua ideia?"}
-                className="w-full bg-[#0f0f0f] border border-[#2a2a2a] rounded-2xl px-5 py-4 text-white text-sm focus:outline-none focus:border-emerald-500/50 transition-all shadow-inner"
+                className="w-full bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] rounded-2xl px-5 py-4 text-[#1E293B] text-sm focus:outline-none focus:border-emerald-500/50 transition-all shadow-inner"
                 required
               />
             </div>
@@ -182,7 +182,7 @@ export default function FeedbacksCollaboratorPage() {
                 onChange={(e) => setDescricao(e.target.value)}
                 placeholder={tipo === 'bug' ? "Descreva o que aconteceu e como podemos reproduzir o erro..." : "Explique como sua sugestão pode ajudar no dia a dia..."}
                 rows={5}
-                className="w-full bg-[#0f0f0f] border border-[#2a2a2a] rounded-2xl px-5 py-4 text-white text-sm focus:outline-none focus:border-emerald-500/50 transition-all resize-none shadow-inner"
+                className="w-full bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] rounded-2xl px-5 py-4 text-[#1E293B] text-sm focus:outline-none focus:border-emerald-500/50 transition-all resize-none shadow-inner"
                 required
               />
             </div>
@@ -206,7 +206,7 @@ export default function FeedbacksCollaboratorPage() {
                       <button 
                         type="button"
                         onClick={removeFile}
-                        className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all shadow-xl"
+                        className="p-2 bg-red-500 text-[#1E293B] rounded-full hover:bg-red-600 transition-all shadow-xl"
                       >
                         <X size={20} />
                       </button>
@@ -220,7 +220,7 @@ export default function FeedbacksCollaboratorPage() {
           <button
             type="submit"
             disabled={sending}
-            className={`w-full py-4 rounded-2xl font-bold text-white shadow-xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 ${
+            className={`w-full py-4 rounded-2xl font-bold text-[#1E293B] shadow-xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 ${
               tipo === 'bug' ? 'bg-red-600 hover:bg-red-700 shadow-red-900/20' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-900/20'
             }`}
           >
@@ -241,13 +241,13 @@ export default function FeedbacksCollaboratorPage() {
             <RefreshCw size={24} className="animate-spin text-emerald-500" />
           </div>
         ) : feedbacks.length === 0 ? (
-          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-10 text-center opacity-50">
-            <p className="text-gray-500 text-sm">Você ainda não enviou nenhum feedback.</p>
+          <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow rounded-2xl p-10 text-center opacity-50">
+            <p className="text-[#64748B] text-sm">Você ainda não enviou nenhum feedback.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3">
             {feedbacks.map((f) => (
-              <div key={f.id} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-5 flex items-center justify-between group hover:border-emerald-500/20 transition-all">
+              <div key={f.id} className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow rounded-2xl p-5 flex items-center justify-between group hover:border-emerald-500/20 transition-all">
                 <div className="flex items-center gap-4">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                     f.tipo === 'bug' ? 'bg-red-500/10 text-red-500' : 'bg-emerald-500/10 text-emerald-500'
@@ -255,7 +255,7 @@ export default function FeedbacksCollaboratorPage() {
                     {f.tipo === 'bug' ? <Bug size={18} /> : <MessageSquare size={18} />}
                   </div>
                   <div>
-                    <h4 className="text-white font-bold text-sm">{f.titulo}</h4>
+                    <h4 className="text-[#1E293B] font-semibold text-sm">{f.titulo}</h4>
                     <div className="flex items-center gap-3 mt-1">
                       <span className={`text-[10px] font-bold uppercase tracking-tighter ${f.tipo === 'bug' ? 'text-red-400' : 'text-emerald-400'}`}>
                         {f.tipo === 'bug' ? 'Bug' : 'Sugestão'}
