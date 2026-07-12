@@ -463,13 +463,12 @@ function CreateEditReportContent() {
 
         {/* Right Side: Smartphone Preview (5 cols) */}
         <div className="lg:col-span-5 sticky top-8 space-y-6">
-          {/* Smartphone Frame - Light Mode Specs */}
-          <div className="relative mx-auto w-[280px] h-[560px] bg-white rounded-[2.5rem] border-[6px] border-[#E2E8F0] shadow-2xl overflow-hidden ring-4 ring-[#F8FAFC]">
+          <div className="relative mx-auto w-[280px] h-[560px] bg-[#1E293B] rounded-[2.5rem] border-[6px] border-[#1E293B] shadow-2xl overflow-hidden ring-4 ring-[#E2E8F0]">
             {/* Notch */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-5 bg-[#E2E8F0] rounded-b-xl z-20" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-5 bg-[#1E293B] rounded-b-xl z-20" />
             
             {/* Screen Content */}
-            <div className="h-full w-full bg-[#F8FAFC] flex flex-col relative">
+            <div className="h-full w-full bg-[#E5DDD5] flex flex-col relative">
               {/* WP Header */}
               <div className="bg-[#075E54] p-3 pt-6 flex items-center gap-3 shadow-md">
                 <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
@@ -481,16 +480,16 @@ function CreateEditReportContent() {
                 </div>
               </div>
 
-              {/* Chat Area - Textura sutil light */}
-              <div className="flex-1 p-3 space-y-4 overflow-y-auto bg-[#E5DDD5]/30">
-                <div className="bg-[#25D366] rounded-2xl rounded-tl-none p-3 shadow-sm relative max-w-[90%]">
-                  <div className="absolute top-0 -left-2 w-0 h-0 border-t-[10px] border-t-[#25D366] border-l-[10px] border-l-transparent" />
-                  <div className="text-[12px] text-white whitespace-pre-wrap leading-relaxed font-medium">
+              {/* Chat Area */}
+              <div className="flex-1 p-3 space-y-4 overflow-y-auto">
+                <div className="bg-white rounded-2xl rounded-tl-none p-3 shadow-sm relative max-w-[90%]">
+                  <div className="absolute top-0 -left-2 w-0 h-0 border-t-[10px] border-t-white border-l-[10px] border-l-transparent" />
+                  <div className="text-[12px] text-[#1E293B] whitespace-pre-wrap leading-relaxed">
                     {previewMessage}
                   </div>
                   <div className="mt-1 flex justify-end items-center gap-1">
-                    <span className="text-[8px] text-white/80 font-bold uppercase tracking-wider">08:00</span>
-                    <Check size={9} className="text-white" />
+                    <span className="text-[8px] text-[#64748B]">08:00</span>
+                    <Check size={9} className="text-blue-500" />
                   </div>
                 </div>
               </div>
@@ -507,43 +506,15 @@ function CreateEditReportContent() {
             </div>
           </div>
 
-          {/* Dicas Explicativas de Cores - RESTAURADAS */}
-          <div className="bg-white border border-[#E2E8F0] p-6 rounded-2xl space-y-4 shadow-sm">
-            <h3 className="text-[#1E293B] font-bold text-sm flex items-center gap-2">
-              <Info size={16} className="text-[#1A56DB]" /> Guia de Identidade Visual
+          {/* Dicas de UX */}
+          <div className="bg-[#EFF6FF] border border-[#BFDBFE] p-5 rounded-2xl space-y-2">
+            <h3 className="text-[#1A56DB] font-bold text-xs flex items-center gap-2">
+              <Info size={14} /> Dica do Especialista
             </h3>
-            
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <div className="w-4 h-4 rounded bg-[#25D366] mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-[#1E293B] text-[11px] font-bold">WhatsApp Verde (#25D366)</p>
-                  <p className="text-[#64748B] text-[10px]">Identidade oficial do aplicativo para os balões de mensagem.</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <div className="w-4 h-4 rounded bg-[#1A56DB] mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-[#1E293B] text-[11px] font-bold">Acento Alpha (#1A56DB)</p>
-                  <p className="text-[#64748B] text-[10px]">Cor primária do painel para botões e elementos de destaque.</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="w-4 h-4 rounded bg-[#F8FAFC] border border-[#E2E8F0] mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-[#1E293B] text-[11px] font-bold">Base Light (#F8FAFC)</p>
-                  <p className="text-[#64748B] text-[10px]">Fundo suave para garantir conforto visual e leitura limpa.</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-[#F1F5F9]">
-              <p className="text-[#64748B] text-[11px] leading-relaxed italic">
-                O simulador acima reflete exatamente a experiência do seu cliente ao receber o relatório automático.
-              </p>
-            </div>
+            <p className="text-[#1E293B] text-[11px] leading-relaxed">
+              O visual ao lado simula exatamente como o seu cliente receberá o relatório. 
+              Dica: Use quebras de linha e emojis no template para tornar a leitura mais agradável no celular!
+            </p>
           </div>
         </div>
       </form>
