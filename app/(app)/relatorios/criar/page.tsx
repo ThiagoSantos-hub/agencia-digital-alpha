@@ -12,7 +12,9 @@ import {
   X,
   Info,
   ChevronDown,
-  Loader2
+  Loader2,
+  Check,
+  Send
 } from 'lucide-react'
 import { useRelatorios, ReportInput } from '@/hooks/useRelatorios'
 import { useWhatsApp } from '@/hooks/useWhatsApp'
@@ -189,7 +191,7 @@ function CreateEditReportContent() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#1E293B] p-8">
       {/* Header */}
-      <div className="max-w-6xl mx-auto flex justify-between items-center mb-8">
+      <div className="max-w-7xl mx-auto flex justify-between items-center mb-8">
         <div className="flex items-center gap-4">
           <button 
             onClick={() => router.push('/relatorios')}
@@ -197,112 +199,95 @@ function CreateEditReportContent() {
           >
             <ArrowLeft size={20} />
           </button>
-          <h1 className="text-2xl font-semibold text-[#1E293B]">{id ? 'Editar Relatório' : 'Criar Relatório'}</h1>
+          <div>
+            <h1 className="text-2xl font-semibold text-[#1E293B]">{id ? 'Editar Relatório' : 'Criar Relatório'}</h1>
+            <p className="text-[#64748B] text-sm">Configure o envio automático de métricas via WhatsApp</p>
+          </div>
         </div>
       </div>
 
-      <form onSubmit={handleSave} className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left Side: Form */}
-        <div className="space-y-6 bg-white border border-[#E2E8F0] p-8 rounded-2xl shadow-sm">
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-[#64748B]">Nome do Relatório *</label>
-            <input 
-              required
-              type="text"
-              value={formData.nome}
-              onChange={e => setFormData({ ...formData, nome: e.target.value })}
-              placeholder="Ex: Relatório Diário - Cliente X"
-              className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-3 outline-none focus:border-[#1A56DB] text-[#1E293B] transition-all placeholder:text-[#94A3B8]"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+      <form onSubmit={handleSave} className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Side: Form (7 cols) */}
+        <div className="lg:col-span-7 space-y-6">
+          <div className="bg-white border border-[#E2E8F0] p-8 rounded-2xl shadow-sm space-y-6">
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-[#64748B]">Canal</label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, canal: 'meta' })}
-                  className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border font-semibold transition-all ${
-                    formData.canal === 'meta' ? 'bg-[#1A56DB]/10 border-[#1A56DB] text-[#1A56DB]' : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:border-[#1A56DB] hover:text-[#1A56DB]'
-                  }`}
-                >
-                  <Facebook size={16} /> Meta
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, canal: 'google' })}
-                  className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border font-semibold transition-all ${
-                    formData.canal === 'google' ? 'bg-[#1A56DB]/10 border-[#1A56DB] text-[#1A56DB]' : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:border-[#1A56DB] hover:text-[#1A56DB]'
-                  }`}
-                >
-                  <Globe size={16} /> Google
-                </button>
+              <label className="text-sm font-semibold text-[#64748B]">Nome do Relatório *</label>
+              <input 
+                required
+                type="text"
+                value={formData.nome}
+                onChange={e => setFormData({ ...formData, nome: e.target.value })}
+                placeholder="Ex: Relatório Diário - Cliente X"
+                className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-3 outline-none focus:border-[#1A56DB] text-[#1E293B] transition-all placeholder:text-[#94A3B8]"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-[#64748B]">Canal</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, canal: 'meta' })}
+                    className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border font-semibold transition-all ${
+                      formData.canal === 'meta' ? 'bg-[#1A56DB]/10 border-[#1A56DB] text-[#1A56DB]' : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:border-[#1A56DB] hover:text-[#1A56DB]'
+                    }`}
+                  >
+                    <Facebook size={16} /> Meta
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, canal: 'google' })}
+                    className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border font-semibold transition-all ${
+                      formData.canal === 'google' ? 'bg-[#1A56DB]/10 border-[#1A56DB] text-[#1A56DB]' : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:border-[#1A56DB] hover:text-[#1A56DB]'
+                    }`}
+                  >
+                    <Globe size={16} /> Google
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-[#64748B]">Período</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { value: 'ontem', label: 'Ontem' },
+                    { value: 'ultimos_3_dias', label: 'Últ. 3 dias' },
+                    { value: 'ultimos_7_dias', label: 'Últ. 7 dias' },
+                    { value: 'ultimos_30_dias', label: 'Últ. 30 dias' },
+                    { value: 'personalizado', label: '📅 Custom' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, periodo: opt.value as any })}
+                      className={`py-2.5 rounded-xl border text-[10px] font-bold uppercase transition-all ${
+                        formData.periodo === opt.value
+                          ? 'bg-[#1A56DB]/10 border-[#1A56DB] text-[#1A56DB]'
+                          : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:border-[#1A56DB] hover:text-[#1A56DB]'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-[#64748B]">Período</label>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { value: 'ontem', label: 'Ontem' },
-                  { value: 'ultimos_3_dias', label: 'Últ. 3 dias' },
-                  { value: 'ultimos_7_dias', label: 'Últ. 7 dias' },
-                  { value: 'ultimos_30_dias', label: 'Últ. 30 dias' },
-                  { value: 'personalizado', label: '📅 Custom' },
-                ].map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, periodo: opt.value as any })}
-                    className={`py-2.5 rounded-xl border text-[10px] font-bold uppercase transition-all ${
-                      formData.periodo === opt.value
-                        ? 'bg-[#1A56DB]/10 border-[#1A56DB] text-[#1A56DB]'
-                        : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:border-[#1A56DB] hover:text-[#1A56DB]'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Calendário para período personalizado */}
-              {formData.periodo === 'personalizado' && (
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  <div>
-                    <label className="text-xs text-[#64748B] mb-1 block font-semibold">Data início</label>
-                    <input
-                      type="date"
-                      value={formData.data_inicio ?? ''}
-                      onChange={e => setFormData({ ...formData, data_inicio: e.target.value })}
-                      className="w-full bg-[#F8FAFC] text-[#1E293B] border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#1A56DB] transition-all"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-[#64748B] mb-1 block font-semibold">Data fim</label>
-                    <input
-                      type="date"
-                      value={formData.data_fim ?? ''}
-                      onChange={e => setFormData({ ...formData, data_fim: e.target.value })}
-                      className="w-full bg-[#F8FAFC] text-[#1E293B] border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#1A56DB] transition-all"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Dias de envio — múltipla seleção — sempre visível */}
-              <div className="mt-2">
-                <label className="text-xs text-[#64748B] mb-1 block font-semibold">Dias de envio (selecione um ou mais)</label>
+            {/* Configurações de Envio */}
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[#F1F5F9]">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-[#64748B]">Dias de Envio</label>
                 <div className="grid grid-cols-7 gap-1">
-                  {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((dia, i) => (
+                  {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((dia, i) => (
                     <button
                       key={i}
                       type="button"
                       onClick={() => toggleDia(i)}
-                      className={`py-1.5 rounded-lg border text-[10px] font-bold transition-all ${
+                      className={`h-8 rounded-lg border text-[10px] font-bold transition-all ${
                         diasSelecionados.includes(i)
                           ? 'bg-[#1A56DB] text-white border-[#1A56DB]'
-                          : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:border-[#1A56DB] hover:text-[#1A56DB]'
+                          : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:border-[#1A56DB]'
                       }`}
                     >
                       {dia}
@@ -310,129 +295,121 @@ function CreateEditReportContent() {
                   ))}
                 </div>
               </div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-[#64748B]">Recebedor</label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, recebedor_tipo: 'privado', recebedor_numero: '' })}
-                  className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border font-semibold transition-all ${
-                    formData.recebedor_tipo === 'privado' ? 'bg-[#1A56DB]/10 border-[#1A56DB] text-[#1A56DB]' : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:border-[#1A56DB] hover:text-[#1A56DB]'
-                  }`}
-                >
-                  <Smartphone size={16} /> Privado
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFormData({ ...formData, recebedor_tipo: 'grupo', recebedor_numero: '' })
-                    if (wpInstance.status === 'connected' && wpGroups.length === 0) wpFetchGroups()
-                  }}
-                  className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border font-semibold transition-all ${
-                    formData.recebedor_tipo === 'grupo' ? 'bg-[#1A56DB]/10 border-[#1A56DB] text-[#1A56DB]' : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:border-[#1A56DB] hover:text-[#1A56DB]'
-                  }`}
-                >
-                  <Users size={16} /> Grupo
-                </button>
-              </div>
-            </div>
-
-            {formData.recebedor_tipo === 'privado' ? (
               <div className="space-y-2">
-                <label className="text-xs text-[#64748B] font-semibold">Número do WhatsApp (com DDI + DDD)</label>
+                <label className="text-sm font-semibold text-[#64748B]">Horário de Envio</label>
                 <input 
-                  type="text"
-                  value={formData.recebedor_numero}
-                  onChange={e => setFormData({ ...formData, recebedor_numero: e.target.value.replace(/\D/g, '') })}
-                  placeholder="Ex: 5511999999999"
-                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-3 outline-none focus:border-[#1A56DB] text-[#1E293B] transition-all placeholder:text-[#94A3B8]"
+                  type="time"
+                  value={formData.horario_envio}
+                  onChange={e => setFormData({ ...formData, horario_envio: e.target.value })}
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-2 outline-none focus:border-[#1A56DB] text-[#1E293B] transition-all"
                 />
               </div>
-            ) : (
+            </div>
+
+            <div className="space-y-4 pt-4 border-t border-[#F1F5F9]">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-[#64748B]">Recebedor</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, recebedor_tipo: 'privado', recebedor_numero: '' })}
+                      className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border font-semibold transition-all ${
+                        formData.recebedor_tipo === 'privado' ? 'bg-[#1A56DB]/10 border-[#1A56DB] text-[#1A56DB]' : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:border-[#1A56DB]'
+                      }`}
+                    >
+                      <Smartphone size={16} /> Privado
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData({ ...formData, recebedor_tipo: 'grupo', recebedor_numero: '' })
+                        if (wpInstance.status === 'connected' && wpGroups.length === 0) wpFetchGroups()
+                      }}
+                      className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border font-semibold transition-all ${
+                        formData.recebedor_tipo === 'grupo' ? 'bg-[#1A56DB]/10 border-[#1A56DB] text-[#1A56DB]' : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:border-[#1A56DB]'
+                      }`}
+                    >
+                      <Users size={16} /> Grupo
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-[#64748B]">WhatsApp / Grupo</label>
+                  {formData.recebedor_tipo === 'privado' ? (
+                    <input 
+                      type="text"
+                      value={formData.recebedor_numero}
+                      onChange={e => setFormData({ ...formData, recebedor_numero: e.target.value.replace(/\D/g, '') })}
+                      placeholder="5511999999999"
+                      className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-2.5 outline-none focus:border-[#1A56DB] text-[#1E293B] transition-all placeholder:text-[#94A3B8]"
+                    />
+                  ) : (
+                    <div className="relative">
+                      <select
+                        value={formData.recebedor_numero}
+                        onChange={e => setFormData({ ...formData, recebedor_numero: e.target.value })}
+                        className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-2.5 outline-none focus:border-[#1A56DB] text-[#1E293B] transition-all appearance-none"
+                      >
+                        <option value="">Selecione um grupo...</option>
+                        {wpGroups.map(g => (
+                          <option key={g.group_id} value={g.group_id}>{g.name}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" size={16} />
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <label className="text-xs text-[#64748B] font-semibold">Selecionar Grupo</label>
+                <label className="text-sm font-semibold text-[#64748B]">Vincular Cliente</label>
                 <div className="relative">
                   <select
-                    value={formData.recebedor_numero}
-                    onChange={e => setFormData({ ...formData, recebedor_numero: e.target.value })}
-                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-3 outline-none focus:border-[#1A56DB] text-[#1E293B] transition-all appearance-none"
+                    value={formData.client_id || ''}
+                    onChange={e => setFormData({ ...formData, client_id: e.target.value || null })}
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-2.5 outline-none focus:border-[#1A56DB] text-[#1E293B] transition-all appearance-none"
                   >
-                    <option value="">Selecione um grupo...</option>
-                    {wpGroups.map(g => (
-                      <option key={g.group_id} value={g.group_id}>{g.name}</option>
+                    <option value="">Selecione um cliente (opcional)</option>
+                    {clients.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
                   <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" size={16} />
                 </div>
-                {wpLoadingGroups && <p className="text-[10px] text-[#1A56DB] animate-pulse">Carregando grupos do WhatsApp...</p>}
               </div>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-[#64748B]">Vincular ao Cliente (Opcional)</label>
-            <div className="relative">
-              <select
-                value={formData.client_id || ''}
-                onChange={e => setFormData({ ...formData, client_id: e.target.value || null })}
-                className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-3 outline-none focus:border-[#1A56DB] text-[#1E293B] transition-all appearance-none"
-              >
-                <option value="">Nenhum cliente selecionado</option>
-                {clients.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" size={16} />
             </div>
-            <p className="text-[10px] text-[#64748B]">Ao vincular um cliente, você poderá usar variáveis específicas de suas campanhas ativas.</p>
           </div>
 
-          <div className="pt-4">
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#1A56DB] hover:bg-[#1E40AF] disabled:opacity-50 text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm"
-            >
-              {loading ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-              {id ? 'Salvar Alterações' : 'Criar Relatório Automático'}
-            </button>
-          </div>
-        </div>
-
-        {/* Right Side: Template & Preview */}
-        <div className="space-y-6">
-          <div className="bg-white border border-[#E2E8F0] p-8 rounded-2xl shadow-sm">
-            <div className="flex justify-between items-center mb-4">
-              <label className="text-sm font-semibold text-[#64748B]">Template da Mensagem</label>
-              <div className="flex items-center gap-2 text-[#64748B]">
+          {/* Template Editor */}
+          <div className="bg-white border border-[#E2E8F0] p-8 rounded-2xl shadow-sm space-y-4">
+            <div className="flex justify-between items-center">
+              <label className="text-sm font-semibold text-[#64748B]">Corpo da Mensagem</label>
+              <div className="flex items-center gap-2 text-[#1A56DB] bg-[#EFF6FF] px-2 py-1 rounded-lg">
                 <Info size={14} />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Use as variáveis abaixo</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider">Clique nas variáveis abaixo para inserir</span>
               </div>
             </div>
             
             <textarea
               ref={textareaRef}
               required
-              rows={10}
+              rows={8}
               value={formData.mensagem_template}
               onChange={e => setFormData({ ...formData, mensagem_template: e.target.value })}
               className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-4 outline-none focus:border-[#1A56DB] text-[#1E293B] transition-all text-sm resize-none placeholder:text-[#94A3B8]"
             />
 
-            <div className="mt-6">
-              <p className="text-xs font-bold text-[#64748B] uppercase mb-3 tracking-widest">Variáveis Disponíveis</p>
-              <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-3">
+              <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Variáveis de Métricas</p>
+              <div className="flex flex-wrap gap-2">
                 {variables.map(v => (
                   <button
                     key={v.key}
                     type="button"
                     onClick={() => insertVariable(v.key)}
-                    className="px-2.5 py-1.5 bg-[#F8FAFC] hover:bg-[#F1F5F9] border border-[#E2E8F0] rounded-lg text-[10px] text-[#1E293B] font-semibold transition-all hover:border-[#1A56DB]"
-                    title={`Exemplo: ${v.example}`}
+                    className="px-2.5 py-1.5 bg-white hover:bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[10px] text-[#1E293B] font-semibold transition-all hover:border-[#1A56DB]"
                   >
                     {v.label}
                   </button>
@@ -442,8 +419,7 @@ function CreateEditReportContent() {
                     key={`camp-${idx}`}
                     type="button"
                     onClick={() => insertVariable(`<CAMP_${idx + 1}>`)}
-                    className="px-2.5 py-1.5 bg-[#EFF6FF] hover:bg-[#DBEAFE] border border-[#BFDBFE] rounded-lg text-[10px] text-[#1A56DB] font-semibold transition-all"
-                    title={`Conversas da campanha: ${camp.name}`}
+                    className="px-2.5 py-1.5 bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg text-[10px] text-[#1A56DB] font-semibold hover:bg-[#DBEAFE] transition-all"
                   >
                     {camp.name.substring(0, 15)}...
                   </button>
@@ -452,19 +428,70 @@ function CreateEditReportContent() {
             </div>
           </div>
 
-          <div className="bg-white border border-[#E2E8F0] p-8 rounded-2xl shadow-sm">
-            <p className="text-xs font-bold text-[#64748B] uppercase mb-4 tracking-widest flex items-center gap-2">
-              <Smartphone size={14} /> Pré-visualização no WhatsApp
-            </p>
-            <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-6 relative">
-              <div className="absolute top-0 left-6 -translate-y-1/2 w-3 h-3 bg-[#F8FAFC] border-l border-t border-[#E2E8F0] rotate-45" />
-              <div className="text-sm text-[#1E293B] whitespace-pre-wrap font-medium leading-relaxed">
-                {previewMessage}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-[#1A56DB] hover:bg-[#1E40AF] disabled:opacity-50 text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#1A56DB]/20"
+          >
+            {loading ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+            {id ? 'Salvar Alterações' : 'Agendar Relatório Automático'}
+          </button>
+        </div>
+
+        {/* Right Side: Smartphone Preview (5 cols) */}
+        <div className="lg:col-span-5 sticky top-8 space-y-6">
+          <div className="relative mx-auto w-[320px] h-[640px] bg-[#1E293B] rounded-[3rem] border-[8px] border-[#1E293B] shadow-2xl overflow-hidden ring-4 ring-[#E2E8F0]">
+            {/* Notch */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-[#1E293B] rounded-b-2xl z-20" />
+            
+            {/* Screen Content */}
+            <div className="h-full w-full bg-[#E5DDD5] flex flex-col relative">
+              {/* WP Header */}
+              <div className="bg-[#075E54] p-4 pt-8 flex items-center gap-3 shadow-md">
+                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                  <Users size={16} className="text-white" />
+                </div>
+                <div>
+                  <p className="text-white text-sm font-bold leading-none">Alpha Bot</p>
+                  <p className="text-white/70 text-[10px]">online</p>
+                </div>
               </div>
-              <div className="mt-3 flex justify-end">
-                <span className="text-[10px] text-[#64748B]">08:00 ✓✓</span>
+
+              {/* Chat Area */}
+              <div className="flex-1 p-4 space-y-4 overflow-y-auto">
+                <div className="bg-white rounded-2xl rounded-tl-none p-3 shadow-sm relative max-w-[90%]">
+                  <div className="absolute top-0 -left-2 w-0 h-0 border-t-[10px] border-t-white border-l-[10px] border-l-transparent" />
+                  <div className="text-[13px] text-[#1E293B] whitespace-pre-wrap leading-relaxed">
+                    {previewMessage}
+                  </div>
+                  <div className="mt-1 flex justify-end items-center gap-1">
+                    <span className="text-[9px] text-[#64748B]">08:00</span>
+                    <Check size={10} className="text-blue-500" />
+                  </div>
+                </div>
+              </div>
+
+              {/* WP Input Bar */}
+              <div className="p-2 bg-[#F0F0F0] flex items-center gap-2">
+                <div className="flex-1 bg-white rounded-full px-4 py-2 text-[12px] text-[#94A3B8]">
+                  Digite uma mensagem...
+                </div>
+                <div className="w-10 h-10 rounded-full bg-[#075E54] flex items-center justify-center shadow-md">
+                  <Send size={18} className="text-white ml-0.5" />
+                </div>
               </div>
             </div>
+          </div>
+
+          {/* Dicas de UX */}
+          <div className="bg-[#EFF6FF] border border-[#BFDBFE] p-6 rounded-2xl space-y-3">
+            <h3 className="text-[#1A56DB] font-bold text-sm flex items-center gap-2">
+              <Info size={16} /> Dica do Especialista
+            </h3>
+            <p className="text-[#1E293B] text-xs leading-relaxed">
+              O visual ao lado simula exatamente como o seu cliente receberá o relatório. 
+              **Dica:** Use quebras de linha e emojis no template para tornar a leitura mais agradável no celular!
+            </p>
           </div>
         </div>
       </form>
