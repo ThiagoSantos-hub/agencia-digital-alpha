@@ -388,21 +388,21 @@ export default function RelatoriosPage() {
                     <div key={item.id} className="bg-[#F8FAFC] border border-[#E2E8F0] p-4 rounded-xl shadow-sm">
                       <div className="flex justify-between items-start mb-2">
                         <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border ${
-                          item.status === 'sucesso' 
+                          item.status === 'enviado' 
                             ? 'bg-green-50 text-green-700 border-green-200' 
                             : 'bg-red-50 text-red-700 border-red-200'
                         }`}>
                           {item.status}
                         </span>
                         <span className="text-xs text-[#64748B] font-medium">
-                          {formatHistoryDate(item.created_at)}
+                          {formatHistoryDate(item.enviado_em)}
                         </span>
                       </div>
                       <p className="text-sm text-[#1E293B] font-medium">
-                        {item.status === 'sucesso' ? 'Enviado com sucesso' : 'Falha no envio'}
+                        {item.status === 'enviado' ? 'Enviado com sucesso' : 'Falha no envio'}
                       </p>
-                      {item.error_message && (
-                        <p className="text-xs text-red-600 mt-1 font-medium">{item.error_message}</p>
+                      {item.erro_detalhe && (
+                        <p className="text-xs text-red-600 mt-1 font-medium">{item.erro_detalhe}</p>
                       )}
                     </div>
                   ))}
