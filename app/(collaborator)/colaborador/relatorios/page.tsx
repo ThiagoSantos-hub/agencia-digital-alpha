@@ -127,30 +127,30 @@ export default function ColaboradorRelatoriosPage() {
     }
   }
 
-  const handleSendNow = async (reportId: string) => {
-    setSendingId(reportId)
+  const handleSendNow = async (report: Report) => {
+    setSendingId(report.id)
     setActionMenuId(null)
     try {
-      const res = await fetch('/api/reports/send', {
+      const response = await fetch('/api/reports/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ report_id: reportId }),
+        body: JSON.stringify({ report_id: report.id })
       })
-      const data = await res.json()
-      if (!res.ok) {
-        alert(data.error || 'Erro ao enviar relatório.')
+      const data = await response.json()
+      if (response.ok) {
+        alert(`✅ Relatório "${report.nome}" enviado com sucesso!`)
       } else {
-        alert('Relatório enviado com sucesso!')
+        alert(`❌ Erro ao enviar: ${data.error || 'Erro desconhecido'}`)
       }
-    } catch {
-      alert('Erro ao enviar relatório.')
+    } catch (error: any) {
+      alert(`❌ Erro ao enviar: ${error.message}`)
     } finally {
       setSendingId(null)
     }
   }
 
   return (
-    <div className="min-h-full bg-[#F8FAFC] text-[#1E293B]">
+    <div className="min-h-full text-[#1E293B]">
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
@@ -304,8 +304,8 @@ export default function ColaboradorRelatoriosPage() {
                           onClick={() => setActionMenuId(null)} 
                         />
                         <div className="absolute right-4 bottom-12 w-48 bg-white border border-[#E2E8F0] rounded-xl shadow-xl z-20 overflow-hidden">
-                          <button
-                            onClick={() => handleSendNow(report.id)}
+                          <button 
+                            onClick={() => handleSendNow(report)}
                             disabled={sendingId === report.id}
                             className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#1E293B] hover:bg-[#F8FAFC] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                           >
@@ -355,58 +355,57 @@ export default function ColaboradorRelatoriosPage() {
       {historyReport && (
         <>
           <div 
-            className="fixed inset-0 bg-black/40 z-40 transition-opacity"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity"
             onClick={() => setHistoryReport(null)}
           />
           <div className="fixed right-0 top-0 h-screen w-full max-w-md bg-white border-l border-[#E2E8F0] z-50 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
-            <div className="p-6 border-b border-[#E2E8F0] flex justify-between items-center bg-[#F8FAFC]">
+            <div className="p-6 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
               <div>
                 <h2 className="text-lg font-semibold text-[#1E293B]">Histórico de Envios</h2>
-                <p className="text-sm text-[#64748B]">{historyReport.nome}</p>
+                <p className="text-xs text-[#64748B] mt-1">{historyReport.nome}</p>
               </div>
               <button 
                 onClick={() => setHistoryReport(null)}
-                className="p-2 hover:bg-gray-200 rounded-lg text-[#64748B] transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-lg text-[#64748B] transition-colors"
               >
                 <X size={20} />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
               {loadingHistory ? (
-                <div className="flex justify-center py-12">
-                  <Loader2 className="animate-spin text-[#1A56DB]" size={32} />
+                <div className="flex flex-col items-center justify-center py-20 gap-3">
+                  <Loader2 className="w-8 h-8 text-[#1A56DB] animate-spin" />
+                  <p className="text-[#64748B] text-sm">Buscando histórico...</p>
                 </div>
               ) : historyData.length === 0 ? (
-                <div className="text-center py-12">
-                  <Clock size={48} className="text-gray-100 mx-auto mb-4" />
-                  <p className="text-[#64748B]">Nenhum envio registrado ainda.</p>
+                <div className="text-center py-20">
+                  <Clock size={40} className="mx-auto text-gray-200 mb-3" />
+                  <p className="text-[#64748B] text-sm">Nenhum envio registrado ainda.</p>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {historyData.map((item) => (
-                    <div key={item.id} className="bg-[#F8FAFC] border border-[#E2E8F0] p-4 rounded-xl shadow-sm">
-                      <div className="flex justify-between items-start mb-2">
-                        <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border ${
-                          item.status === 'enviado' 
-                            ? 'bg-green-50 text-green-700 border-green-200' 
-                            : 'bg-red-50 text-red-700 border-red-200'
-                        }`}>
-                          {item.status}
-                        </span>
-                        <span className="text-xs text-[#64748B] font-medium">
-                          {formatHistoryDate(item.enviado_em)}
-                        </span>
-                      </div>
-                      <p className="text-sm text-[#1E293B] font-medium">
-                        {item.status === 'enviado' ? 'Enviado com sucesso' : 'Falha no envio'}
-                      </p>
-                      {item.erro_detalhe && (
-                        <p className="text-xs text-red-600 mt-1 font-medium">{item.erro_detalhe}</p>
-                      )}
+                historyData.map((item) => (
+                  <div key={item.id} className="bg-white border border-[#E2E8F0] rounded-xl p-4 shadow-sm">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                        item.status === 'enviado' 
+                          ? 'text-green-700 bg-green-50 border-green-200' 
+                          : 'text-red-700 bg-red-50 border-red-200'
+                      }`}>
+                        {item.status.toUpperCase()}
+                      </span>
+                      <span className="text-[10px] text-[#94A3B8] font-medium">{formatHistoryDate(item.enviado_em)}</span>
                     </div>
-                  ))}
-                </div>
+                    {item.erro && (
+                      <p className="text-xs text-red-600 bg-red-50 p-2 rounded-lg border border-red-100 mt-2">
+                        {item.erro}
+                      </p>
+                    )}
+                    <div className="mt-3 flex items-center gap-2 text-[10px] text-[#64748B] font-medium">
+                      <Send size={10} /> Enviado via WhatsApp
+                    </div>
+                  </div>
+                ))
               )}
             </div>
           </div>
