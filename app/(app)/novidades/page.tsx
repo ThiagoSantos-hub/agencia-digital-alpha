@@ -15,6 +15,7 @@ export default function NovidadesAdminPage() {
   const [novidades, setNovidades] = useState<Novidade[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [selectedNovidade, setSelectedNovidade] = useState<Novidade | null>(null)
   
   // Estados para Cadastro/Edição
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -40,7 +41,7 @@ export default function NovidadesAdminPage() {
     fetchNovidades()
   }, [])
 
-  const handleSalvar = async (e: React.FormEvent) => {
+  const handleSalvar = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!titulo || !descricao) return
 
@@ -138,7 +139,7 @@ export default function NovidadesAdminPage() {
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
               placeholder="Ex: Novo módulo de relatórios disponível"
-              className="w-full bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] rounded-xl px-4 py-3 text-[#1E293B] text-sm focus:outline-none focus:border-emerald-500/50 transition-all"
+              className="w-full bg-white border border-[#E2E8F0] rounded-xl px-4 py-3 text-[#1E293B] text-sm focus:outline-none focus:border-emerald-500/50 transition-all"
               required
             />
           </div>
@@ -149,7 +150,7 @@ export default function NovidadesAdminPage() {
               onChange={(e) => setDescricao(e.target.value)}
               placeholder="Descreva os detalhes da novidade..."
               rows={4}
-              className="w-full bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-[#1E293B] focus:outline-none focus:border-[#1A56DB] focus:ring-1 focus:ring-[#1A56DB] rounded-xl px-4 py-3 text-[#1E293B] text-sm focus:outline-none focus:border-emerald-500/50 transition-all resize-none"
+              className="w-full bg-white border border-[#E2E8F0] rounded-xl px-4 py-3 text-[#1E293B] text-sm focus:outline-none focus:border-emerald-500/50 transition-all resize-none"
               required
             />
           </div>
@@ -157,7 +158,7 @@ export default function NovidadesAdminPage() {
             <button
               type="submit"
               disabled={saving}
-              className={`flex-1 font-bold py-3 px-6 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 ${editingId ? 'bg-[#1A56DB] hover:bg-[#1E40AF] text-[#1E293B]' : 'bg-[#16A34A] hover:bg-[#15803D] text-[#1E293B]'}`}
+              className={`flex-1 font-bold py-3 px-6 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 ${editingId ? 'bg-[#1A56DB] hover:bg-[#1E40AF] text-white' : 'bg-[#16A34A] hover:bg-[#15803D] text-white'}`}
             >
               {saving ? <RefreshCw size={18} className="animate-spin" /> : editingId ? <Check size={18} /> : <Sparkles size={18} />}
               {saving ? 'Salvando...' : editingId ? 'Salvar Alteração' : 'Publicar Novidade'}
@@ -188,7 +189,7 @@ export default function NovidadesAdminPage() {
             <p className="text-[#64748B] text-sm">Carregando novidades...</p>
           </div>
         ) : novidades.length === 0 ? (
-          <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow rounded-3xl p-20 text-center">
+          <div className="bg-white border border-[#E2E8F0] rounded-3xl shadow-sm hover:shadow-md transition-shadow p-20 text-center">
             <Sparkles size={48} className="text-gray-700 mx-auto mb-4" />
             <h3 className="text-[#1E293B] font-medium text-lg">Nenhuma novidade cadastrada</h3>
             <p className="text-[#64748B] text-sm mt-1">Publique sua primeira atualização acima.</p>
@@ -196,7 +197,11 @@ export default function NovidadesAdminPage() {
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {novidades.map((n) => (
-              <div key={n.id} className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm hover:shadow-md transition-shadow rounded-2xl p-6 hover:border-emerald-500/30 transition-all group shadow-lg">
+              <div
+                key={n.id}
+                onClick={() => setSelectedNovidade(n)}
+                className="bg-white border border-[#E2E8F0] rounded-2xl p-6 hover:shadow-md hover:border-emerald-500/30 transition-all shadow-lg cursor-pointer"
+              >
                 <div className="flex flex-col gap-4">
                   <div>
                     <div className="flex items-center gap-3 mb-1">
@@ -205,20 +210,25 @@ export default function NovidadesAdminPage() {
                         {new Date(n.created_at).toLocaleDateString('pt-BR')}
                       </span>
                     </div>
-                    <p className="text-[#64748B] text-sm leading-relaxed whitespace-pre-wrap">{n.descricao}</p>
                   </div>
                   
-                  {/* Botões de Ação no Lado Esquerdo */}
+                  {/* Botões de Ação */}
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => handleEditar(n)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleEditar(n)
+                      }}
                       className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[#1A56DB] hover:bg-[#EFF6FF] border border-[#BFDBFE] transition-all text-xs font-bold"
                     >
                       <Pencil size={14} />
                       Editar
                     </button>
                     <button
-                      onClick={() => handleExcluir(n.id)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleExcluir(n.id)
+                      }}
                       className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-red-400 hover:bg-red-400/10 border border-red-400/20 transition-all text-xs font-bold"
                     >
                       <Trash2 size={14} />
@@ -231,6 +241,48 @@ export default function NovidadesAdminPage() {
           </div>
         )}
       </div>
+
+      {/* Modal de Detalhes */}
+      {selectedNovidade && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setSelectedNovidade(null)}
+          />
+          <div className="relative w-full max-w-2xl bg-white border border-[#E2E8F0] rounded-xl shadow-lg flex flex-col max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-6 border-b border-[#E2E8F0]">
+              <div>
+                <h2 className="text-[#1E293B] font-semibold text-base">{selectedNovidade.titulo}</h2>
+                <p className="text-[#64748B] text-sm mt-0.5">
+                  Publicado em {new Date(selectedNovidade.created_at).toLocaleDateString('pt-BR')}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedNovidade(null)}
+                className="text-[#64748B] hover:text-[#1E293B] transition-colors"
+                aria-label="Fechar"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6">
+              <p className="text-[#1E293B] text-sm leading-relaxed whitespace-pre-wrap">
+                {selectedNovidade.descricao}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-[#E2E8F0]">
+              <button
+                onClick={() => setSelectedNovidade(null)}
+                className="px-6 py-2 bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#64748B] font-bold rounded-lg transition-all"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
