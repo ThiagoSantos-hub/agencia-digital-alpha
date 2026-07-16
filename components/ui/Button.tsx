@@ -14,13 +14,13 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<Variant, string> = {
   primary:
-    'bg-indigo-600 hover:bg-indigo-500 text-white border border-indigo-500 shadow-lg shadow-indigo-600/10',
+    'bg-primary hover:bg-primary-hover text-white border border-primary shadow-sm',
   secondary:
-    'bg-[#2a2a2a] hover:bg-[#333] text-gray-200 border border-[#3a3a3a]',
+    'bg-hover-bg hover:bg-border text-text-main border border-border',
   ghost:
-    'bg-transparent hover:bg-[#2a2a2a] text-gray-400 hover:text-white border border-transparent',
+    'bg-transparent hover:bg-hover-bg text-text-muted hover:text-text-main border border-transparent',
   danger:
-    'bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-600/30',
+    'bg-red-50 hover:bg-red-100 text-red-600 border border-red-200',
 }
 
 const sizeStyles: Record<Size, string> = {
@@ -45,7 +45,7 @@ export function Button({
     <button
       disabled={isDisabled}
       className={`
-        inline-flex items-center justify-center font-medium transition-all
+        inline-flex items-center justify-center font-bold transition-all
         disabled:opacity-50 disabled:cursor-not-allowed
         ${variantStyles[variant]}
         ${sizeStyles[size]}

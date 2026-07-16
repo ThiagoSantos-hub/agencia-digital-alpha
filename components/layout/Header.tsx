@@ -63,11 +63,11 @@ export function Header() {
   const inicial   = nome.charAt(0).toUpperCase()
 
   return (
-    <header className="h-16 bg-[#0a0f0c] border-b border-[#1a3a24] flex items-center justify-between px-6 shrink-0">
+    <header className="h-16 bg-surface border-b border-border flex items-center justify-between px-6 shrink-0 shadow-sm">
       {/* Título */}
       <div>
-        <h2 className="text-white font-semibold text-sm">Painel de Controle</h2>
-        <p className="text-gray-500 text-xs">Agência Digital Alpha</p>
+        <h2 className="text-text-main font-bold text-sm">Painel de Controle</h2>
+        <p className="text-text-muted text-[10px] font-bold uppercase tracking-wider">Agência Digital Alpha</p>
       </div>
 
       {/* Lado direito */}
@@ -79,14 +79,14 @@ export function Header() {
             onClick={() => setSinoAberto(prev => !prev)}
             className={`relative w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-300 ${
               naoLidas > 0 
-                ? 'text-amber-400 bg-amber-400/10 border border-amber-400/30 animate-pulse shadow-[0_0_15px_rgba(251,191,36,0.2)]' 
-                : 'text-gray-400 hover:text-white hover:bg-[#1a3a24]/40'
+                ? 'text-amber-600 bg-amber-50 border border-amber-200 shadow-sm' 
+                : 'text-text-muted hover:text-text-main hover:bg-hover-bg'
             }`}
             aria-label="Notificações"
           >
-            <Bell size={18} className={naoLidas > 0 ? 'fill-amber-400' : ''} />
+            <Bell size={18} className={naoLidas > 0 ? 'fill-amber-600' : ''} />
             {naoLidas > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none border-2 border-[#0a0f0c]">
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none border-2 border-surface">
                 {naoLidas > 99 ? '99+' : naoLidas}
               </span>
             )}
@@ -94,13 +94,13 @@ export function Header() {
 
           {/* Painel de notificações */}
           {sinoAberto && (
-            <div className="absolute right-0 top-11 w-80 bg-[#0f1a14] border border-[#1a3a24] rounded-2xl shadow-2xl z-50 flex flex-col max-h-[480px]">
+            <div className="absolute right-0 top-11 w-80 bg-surface border border-border rounded-2xl shadow-2xl z-50 flex flex-col max-h-[480px]">
               {/* Cabeçalho do painel */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-[#1a3a24]">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                 <div className="flex items-center gap-2">
-                  <span className="text-white font-semibold text-sm">Notificações</span>
+                  <span className="text-text-main font-bold text-sm">Notificações</span>
                   {naoLidas > 0 && (
-                    <span className="bg-[#00ff88]/10 text-[#00ff88] text-xs font-medium px-2 py-0.5 rounded-full border border-[#00ff88]/20">
+                    <span className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary/20">
                       {naoLidas} nova{naoLidas !== 1 ? 's' : ''}
                     </span>
                   )}
@@ -110,7 +110,7 @@ export function Header() {
                     <button
                       onClick={marcarTodasComoLidas}
                       title="Marcar todas como lidas"
-                      className="p-1.5 rounded-lg text-gray-500 hover:text-[#00ff88] hover:bg-[#00ff88]/10 transition-colors"
+                      className="p-1.5 rounded-lg text-text-muted hover:text-primary hover:bg-primary/5 transition-colors"
                     >
                       <CheckCheck size={15} />
                     </button>
@@ -119,14 +119,14 @@ export function Header() {
                     <button
                       onClick={limparTodas}
                       title="Limpar todas"
-                      className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                      className="p-1.5 rounded-lg text-text-muted hover:text-red-600 hover:bg-red-50 transition-colors"
                     >
                       <Trash2 size={15} />
                     </button>
                   )}
                   <button
                     onClick={() => setSinoAberto(false)}
-                    className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-[#1a3a24]/40 transition-colors"
+                    className="p-1.5 rounded-lg text-text-muted hover:text-text-main hover:bg-hover-bg transition-colors"
                   >
                     <X size={15} />
                   </button>
@@ -134,23 +134,23 @@ export function Header() {
               </div>
 
               {/* Lista */}
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto custom-scrollbar">
                 {loadingNotif ? (
-                  <div className="py-10 text-center text-gray-500 text-sm">Carregando...</div>
+                  <div className="py-10 text-center text-text-muted text-sm">Carregando...</div>
                 ) : notificacoes.length === 0 ? (
                   <div className="py-10 text-center">
-                    <Bell size={28} className="mx-auto text-gray-700 mb-2" />
-                    <p className="text-gray-500 text-sm">Nenhuma notificação</p>
+                    <Bell size={28} className="mx-auto text-text-disabled mb-2" />
+                    <p className="text-text-muted text-sm">Nenhuma notificação</p>
                   </div>
                 ) : (
                   notificacoes.map((n) => (
                     <div
                       key={n.id}
                       onClick={() => !n.lida && marcarComoLida(n.id)}
-                      className={`flex gap-3 px-4 py-3 border-b border-[#1a3a24]/50 last:border-0 transition-colors cursor-pointer
+                      className={`flex gap-3 px-4 py-3 border-b border-border/50 last:border-0 transition-colors cursor-pointer
                         ${n.lida
                           ? 'opacity-50 hover:opacity-70'
-                          : 'hover:bg-[#1a3a24]/30'
+                          : 'hover:bg-hover-bg'
                         }`}
                     >
                       {/* Ícone */}
@@ -158,20 +158,20 @@ export function Header() {
 
                       {/* Conteúdo */}
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium leading-snug ${n.lida ? 'text-gray-400' : 'text-white'}`}>
+                        <p className={`text-sm font-bold leading-snug ${n.lida ? 'text-text-muted' : 'text-text-main'}`}>
                           {n.titulo}
                         </p>
-                        <p className="text-xs text-gray-500 mt-0.5 leading-snug line-clamp-2">
+                        <p className="text-xs text-text-muted mt-0.5 leading-snug line-clamp-2">
                           {n.mensagem}
                         </p>
-                        <p className="text-[10px] text-gray-600 mt-1">
+                        <p className="text-[10px] text-text-disabled mt-1 font-medium">
                           {tempoRelativo(n.created_at)}
                         </p>
                       </div>
 
                       {/* Bolinha não lida */}
                       {!n.lida && (
-                        <span className="w-2 h-2 bg-[#00ff88] rounded-full flex-shrink-0 mt-1.5" />
+                        <span className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1.5 shadow-sm shadow-primary/30" />
                       )}
                     </div>
                   ))
@@ -180,8 +180,8 @@ export function Header() {
 
               {/* Rodapé */}
               {notificacoes.length > 0 && (
-                <div className="px-4 py-2.5 border-t border-[#1a3a24] text-center">
-                  <p className="text-xs text-gray-600">
+                <div className="px-4 py-2.5 border-t border-border text-center">
+                  <p className="text-[10px] text-text-disabled font-bold uppercase tracking-widest">
                     {notificacoes.length} notificação{notificacoes.length !== 1 ? 'ões' : ''} no total
                   </p>
                 </div>
@@ -191,13 +191,13 @@ export function Header() {
         </div>
 
         {/* ── PERFIL DO USUÁRIO ── */}
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-[#00ff88]/10 border border-[#00ff88]/40 flex items-center justify-center">
-            <span className="text-[#00ff88] text-sm font-bold">{inicial}</span>
+        <div className="flex items-center gap-2.5 pl-2 border-l border-border">
+          <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
+            <span className="text-primary text-xs font-black">{inicial}</span>
           </div>
-          <div className="text-right">
-            <p className="text-white text-sm font-medium leading-none">{nome}</p>
-            <p className="text-gray-500 text-xs mt-0.5">{roleLabel}</p>
+          <div className="text-right hidden sm:block">
+            <p className="text-text-main text-sm font-bold leading-none">{nome}</p>
+            <p className="text-text-disabled text-[10px] font-bold uppercase tracking-wider mt-1">{roleLabel}</p>
           </div>
         </div>
       </div>
