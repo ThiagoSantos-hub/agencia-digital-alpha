@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
-import { Sparkles, Trash2, Plus, RefreshCw, Pencil, Check, X } from 'lucide-react'
+import { Sparkles, Trash2, Plus, RefreshCw, Pencil, Check, X, ChevronDown } from 'lucide-react'
 
 interface Novidade {
   id: string
@@ -15,6 +15,7 @@ export default function NovidadesAdminPage() {
   const [novidades, setNovidades] = useState<Novidade[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
   
   // Estados para Cadastro/Edição
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -40,7 +41,11 @@ export default function NovidadesAdminPage() {
     fetchNovidades()
   }, [])
 
-  const handleSalvar = async (e: React.FormEvent) => {
+  const toggleExpand = (id: string) => {
+    setExpandedId(prev => prev === id ? null : id)
+  }
+
+  const handleSalvar = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!titulo || !descricao) return
 
@@ -55,6 +60,7 @@ export default function NovidadesAdminPage() {
 
       if (!error) {
         alert('Novidade atualizada com sucesso!')
+        setExpandedId(null)
         setEditingId(null)
         setTitulo('')
         setDescricao('')
@@ -81,6 +87,7 @@ export default function NovidadesAdminPage() {
   }
 
   const handleEditar = (n: Novidade) => {
+    setExpandedId(null)
     setEditingId(n.id)
     setTitulo(n.titulo)
     setDescricao(n.descricao)
@@ -102,54 +109,57 @@ export default function NovidadesAdminPage() {
       .eq('id', id)
 
     if (!error) {
+      if (expandedId === id) setExpandedId(null)
       setNovidades(novidades.filter(n => n.id !== id))
     } else {
       alert('Erro ao excluir novidade.')
     }
   }
 
+  const isOpen = (id: string) => expandedId === id
+
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-white text-3xl font-bold tracking-tight">Novidades do Sistema</h1>
-        <p className="text-gray-400 text-sm mt-1">Gerencie as atualizações que aparecem para os colaboradores.</p>
+        <h1 className="text-text-main text-3xl font-bold tracking-tight">Novidades do Sistema</h1>
+        <p className="text-text-muted text-sm mt-1">Gerencie as atualizações que aparecem para os colaboradores.</p>
       </div>
 
       {/* Formulário de Cadastro/Edição */}
-      <div className={`bg-[#1a1a1a] border rounded-2xl p-6 shadow-xl transition-all ${editingId ? 'border-blue-500/50' : 'border-[#2a2a2a]'}`}>
-        <h2 className="text-white font-bold text-lg mb-4 flex items-center gap-2">
+      <div className={`bg-surface border rounded-xl p-5 transition-all ${editingId ? 'border-primary' : 'border-border'}`}>
+        <h2 className="text-text-main font-semibold text-lg mb-4 flex items-center gap-2">
           {editingId ? (
             <>
-              <Pencil size={20} className="text-blue-500" />
+              <Pencil size={20} className="text-primary" />
               Editar Novidade
             </>
           ) : (
             <>
-              <Plus size={20} className="text-emerald-500" />
+              <Plus size={20} className="text-cta" />
               Publicar Nova Atualização
             </>
           )}
         </h2>
         <form onSubmit={handleSalvar} className="space-y-4">
           <div>
-            <label className="block text-gray-400 text-xs font-bold uppercase tracking-wider mb-1.5">Título</label>
+            <label className="block text-text-muted text-xs font-bold uppercase tracking-wider mb-1.5">Título</label>
             <input
               type="text"
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
               placeholder="Ex: Novo módulo de relatórios disponível"
-              className="w-full bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-emerald-500/50 transition-all"
+              className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-text-main text-sm focus:outline-none focus:border-primary transition-all"
               required
             />
           </div>
           <div>
-            <label className="block text-gray-400 text-xs font-bold uppercase tracking-wider mb-1.5">Descrição</label>
+            <label className="block text-text-muted text-xs font-bold uppercase tracking-wider mb-1.5">Descrição</label>
             <textarea
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
               placeholder="Descreva os detalhes da novidade..."
               rows={4}
-              className="w-full bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-emerald-500/50 transition-all resize-none"
+              className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-text-main text-sm focus:outline-none focus:border-primary transition-all resize-none"
               required
             />
           </div>
@@ -157,7 +167,7 @@ export default function NovidadesAdminPage() {
             <button
               type="submit"
               disabled={saving}
-              className={`flex-1 font-bold py-3 px-6 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 ${editingId ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}`}
+              className={`flex-1 font-bold py-3 px-6 rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-white ${editingId ? 'bg-primary hover:bg-primary-hover' : 'bg-cta hover:bg-cta-hover'}`}
             >
               {saving ? <RefreshCw size={18} className="animate-spin" /> : editingId ? <Check size={18} /> : <Sparkles size={18} />}
               {saving ? 'Salvando...' : editingId ? 'Salvar Alteração' : 'Publicar Novidade'}
@@ -166,7 +176,7 @@ export default function NovidadesAdminPage() {
               <button
                 type="button"
                 onClick={handleCancelarEdicao}
-                className="px-6 py-3 bg-[#2a2a2a] hover:bg-[#3a3a3a] text-gray-300 font-bold rounded-xl transition-all flex items-center gap-2"
+                className="px-6 py-3 bg-hover-bg hover:bg-border text-text-muted font-bold rounded-lg transition-all flex items-center gap-2"
               >
                 <X size={18} />
                 Cancelar
@@ -178,54 +188,89 @@ export default function NovidadesAdminPage() {
 
       {/* Listagem */}
       <div className="space-y-4">
-        <h2 className="text-gray-400 text-xs font-black uppercase tracking-[0.2em] flex items-center gap-2">
+        <h2 className="text-text-muted text-xs font-black uppercase tracking-[0.2em] flex items-center gap-2">
           <span className="text-[8px]">●</span> Histórico de Novidades
         </h2>
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <RefreshCw size={32} className="animate-spin text-emerald-500" />
-            <p className="text-gray-500 text-sm">Carregando novidades...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary" />
+            <p className="text-text-muted text-sm">Carregando novidades...</p>
           </div>
         ) : novidades.length === 0 ? (
-          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-3xl p-20 text-center">
-            <Sparkles size={48} className="text-gray-700 mx-auto mb-4" />
-            <h3 className="text-white font-medium text-lg">Nenhuma novidade cadastrada</h3>
-            <p className="text-gray-500 text-sm mt-1">Publique sua primeira atualização acima.</p>
+          <div className="bg-surface border border-border rounded-xl shadow-sm hover:shadow-md transition-shadow p-20 text-center">
+            <Sparkles size={48} className="text-text-disabled mx-auto mb-4" />
+            <h3 className="text-text-main font-medium text-lg">Nenhuma novidade cadastrada</h3>
+            <p className="text-text-muted text-sm mt-1">Publique sua primeira atualização acima.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {novidades.map((n) => (
-              <div key={n.id} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-6 hover:border-emerald-500/30 transition-all group shadow-lg">
-                <div className="flex flex-col gap-4">
-                  <div>
-                    <div className="flex items-center gap-3 mb-1">
-                      <h3 className="text-white font-bold text-lg">{n.titulo}</h3>
-                      <span className="text-gray-600 text-xs font-medium">
-                        {new Date(n.created_at).toLocaleDateString('pt-BR')}
-                      </span>
+              <div
+                key={n.id}
+                className={`bg-surface border rounded-xl overflow-hidden transition-all ${
+                  isOpen(n.id)
+                    ? 'border-primary shadow-sm'
+                    : 'border-border hover:border-active-border'
+                }`}
+              >
+                {/* Cabeçalho clicável */}
+                <button
+                  onClick={() => toggleExpand(n.id)}
+                  className="w-full text-left px-5 py-4 flex items-center gap-3 hover:bg-hover-bg transition-colors"
+                >
+                  <Sparkles
+                    size={18}
+                    className={`flex-shrink-0 transition-colors ${
+                      isOpen(n.id) ? 'text-primary' : 'text-text-disabled'
+                    }`}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-text-main font-semibold text-sm truncate">{n.titulo}</h3>
+                  </div>
+                  <span className="text-text-disabled text-xs flex-shrink-0">
+                    {new Date(n.created_at).toLocaleDateString('pt-BR')}
+                  </span>
+                  <ChevronDown
+                    size={18}
+                    className={`text-text-muted flex-shrink-0 transition-transform duration-200 ${
+                      isOpen(n.id) ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+
+                {/* Conteúdo expandido */}
+                {isOpen(n.id) && (
+                  <div className="border-t border-border px-5 pb-4 pt-4 space-y-4">
+                    <p className="text-text-muted text-sm leading-relaxed whitespace-pre-wrap">
+                      {n.descricao}
+                    </p>
+                    
+                    {/* Botões de Ação */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleEditar(n)
+                        }}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-primary hover:bg-active-bg border border-active-border transition-all text-xs font-bold"
+                      >
+                        <Pencil size={14} />
+                        Editar
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleExcluir(n.id)
+                        }}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-red-500 hover:bg-red-50 border border-red-200 transition-all text-xs font-bold"
+                      >
+                        <Trash2 size={14} />
+                        Excluir
+                      </button>
                     </div>
-                    <p className="text-gray-400 text-sm leading-relaxed whitespace-pre-wrap">{n.descricao}</p>
                   </div>
-                  
-                  {/* Botões de Ação no Lado Esquerdo */}
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleEditar(n)}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-blue-400 hover:bg-blue-400/10 border border-blue-400/20 transition-all text-xs font-bold"
-                    >
-                      <Pencil size={14} />
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleExcluir(n.id)}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-red-400 hover:bg-red-400/10 border border-red-400/20 transition-all text-xs font-bold"
-                    >
-                      <Trash2 size={14} />
-                      Excluir
-                    </button>
-                  </div>
-                </div>
+                )}
               </div>
             ))}
           </div>
