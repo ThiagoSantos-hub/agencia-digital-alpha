@@ -189,7 +189,7 @@ export default function ColaboradoresPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 p-6">
+    <div className="min-h-screen bg-gray-950 text-text-main p-6">
       {/* Toast Notification */}
       {toast && (
         <div className={`fixed top-6 right-6 z-[60] px-6 py-3 rounded-xl shadow-2xl border transition-all animate-in slide-in-from-right ${
@@ -204,8 +204,8 @@ export default function ColaboradoresPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">Colaboradores</h1>
-          <p className="text-gray-400 text-sm mt-1">
+          <h1 className="text-2xl font-bold text-text-main">Colaboradores</h1>
+          <p className="text-text-muted text-sm mt-1">
             Gerencie a equipe da agência
           </p>
         </div>
@@ -224,12 +224,12 @@ export default function ColaboradoresPage() {
           placeholder="Buscar por nome ou cargo..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+          className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-sm text-text-main placeholder-gray-500 focus:outline-none focus:border-emerald-500"
         />
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
-          className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+          className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-sm text-text-main focus:outline-none focus:border-emerald-500"
         >
           <option value="todos">Todos os status</option>
           <option value="ativo">Ativos</option>
@@ -240,9 +240,9 @@ export default function ColaboradoresPage() {
       {/* Tabela */}
       <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
         {loading ? (
-          <div className="p-12 text-center text-gray-500">Carregando...</div>
+          <div className="p-12 text-center text-text-muted">Carregando...</div>
         ) : filtered.length === 0 ? (
-          <div className="p-12 text-center text-gray-500">
+          <div className="p-12 text-center text-text-muted">
             {search || filterStatus !== 'todos'
               ? 'Nenhum colaborador encontrado.'
               : 'Nenhum colaborador cadastrado ainda.'}
@@ -251,24 +251,24 @@ export default function ColaboradoresPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-800 text-left">
-                <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Nome</th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Cargo</th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">E-mail</th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Telefone</th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">Ações</th>
+                <th className="px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Nome</th>
+                <th className="px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Cargo</th>
+                <th className="px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider hidden md:table-cell">E-mail</th>
+                <th className="px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider hidden md:table-cell">Telefone</th>
+                <th className="px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
               {filtered.map((c) => (
                 <tr key={c.id} className="hover:bg-gray-800/50 transition-colors">
-                  <td className="px-6 py-4 font-medium text-white">{c.name}</td>
-                  <td className="px-6 py-4 text-gray-300">{c.role}</td>
-                  <td className="px-6 py-4 text-gray-400 hidden md:table-cell">
-                    {c.email || <span className="text-gray-600">—</span>}
+                  <td className="px-6 py-4 font-medium text-text-main">{c.name}</td>
+                  <td className="px-6 py-4 text-text-main">{c.role}</td>
+                  <td className="px-6 py-4 text-text-muted hidden md:table-cell">
+                    {c.email || <span className="text-text-disabled">—</span>}
                   </td>
-                  <td className="px-6 py-4 text-gray-400 hidden md:table-cell">
-                    {c.phone || <span className="text-gray-600">—</span>}
+                  <td className="px-6 py-4 text-text-muted hidden md:table-cell">
+                    {c.phone || <span className="text-text-disabled">—</span>}
                   </td>
                   <td className="px-6 py-4">
                     <button
@@ -276,7 +276,7 @@ export default function ColaboradoresPage() {
                       className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${
                         c.status === 'ativo'
                           ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
-                          : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                          : 'bg-gray-700 text-text-muted hover:bg-gray-600'
                       }`}
                     >
                       {c.status === 'ativo' ? 'Ativo' : 'Inativo'}
@@ -286,7 +286,7 @@ export default function ColaboradoresPage() {
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => openEdit(c)}
-                        className="text-xs text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 px-3 py-1.5 rounded-lg transition-colors"
+                        className="text-xs text-text-muted hover:text-text-main border border-gray-700 hover:border-gray-500 px-3 py-1.5 rounded-lg transition-colors"
                       >
                         Editar
                       </button>
@@ -307,7 +307,7 @@ export default function ColaboradoresPage() {
 
       {/* Counter */}
       {!loading && (
-        <p className="text-xs text-gray-600 mt-3">
+        <p className="text-xs text-text-disabled mt-3">
           {filtered.length} colaborador{filtered.length !== 1 ? 'es' : ''} exibido{filtered.length !== 1 ? 's' : ''}
         </p>
       )}
@@ -315,15 +315,15 @@ export default function ColaboradoresPage() {
       {/* Modal Criar/Editar */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]">
+          <div className="bg-gray-900 border border-gray-700 rounded-xl w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]">
             <div className="p-6 border-b border-gray-800">
-              <h2 className="text-lg font-bold text-white">
+              <h2 className="text-lg font-bold text-text-main">
                 {editingId ? 'Editar Colaborador' : 'Novo Colaborador'}
               </h2>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                <label className="block text-sm font-medium text-text-main mb-1.5">
                   Nome <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -331,11 +331,11 @@ export default function ColaboradoresPage() {
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   placeholder="Ex: Maria Silva"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-text-main placeholder-gray-500 focus:outline-none focus:border-emerald-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                <label className="block text-sm font-medium text-text-main mb-1.5">
                   Cargo <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -343,11 +343,11 @@ export default function ColaboradoresPage() {
                   value={form.role}
                   onChange={(e) => setForm({ ...form, role: e.target.value })}
                   placeholder="Ex: Designer, Copywriter, Gestor de Tráfego"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-text-main placeholder-gray-500 focus:outline-none focus:border-emerald-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                <label className="block text-sm font-medium text-text-main mb-1.5">
                   E-mail
                 </label>
                 <input
@@ -355,13 +355,13 @@ export default function ColaboradoresPage() {
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   placeholder="Ex: maria@agencia.com"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-text-main placeholder-gray-500 focus:outline-none focus:border-emerald-500"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                  Senha {editingId ? <span className="text-gray-500">(deixe em branco para manter a atual)</span> : <span className="text-red-400">*</span>}
+                <label className="block text-sm font-medium text-text-main mb-1.5">
+                  Senha {editingId ? <span className="text-text-muted">(deixe em branco para manter a atual)</span> : <span className="text-red-400">*</span>}
                 </label>
                 <div className="relative">
                   <input
@@ -369,12 +369,12 @@ export default function ColaboradoresPage() {
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
                     placeholder={editingId ? "Nova senha (opcional)" : "Defina uma senha de acesso"}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg pl-4 pr-10 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg pl-4 pr-10 py-2.5 text-sm text-text-main placeholder-gray-500 focus:outline-none focus:border-emerald-500"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition-colors"
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
@@ -382,7 +382,7 @@ export default function ColaboradoresPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                <label className="block text-sm font-medium text-text-main mb-1.5">
                   Telefone
                 </label>
                 <input
@@ -390,7 +390,7 @@ export default function ColaboradoresPage() {
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   placeholder="Ex: (85) 99999-0000"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-text-main placeholder-gray-500 focus:outline-none focus:border-emerald-500"
                 />
               </div>
 
@@ -398,7 +398,7 @@ export default function ColaboradoresPage() {
               <div className="pt-4 border-t border-gray-800 space-y-4">
                 <h3 className="text-sm font-semibold text-emerald-400 uppercase tracking-wider">Informações Financeiras</h3>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                  <label className="block text-sm font-medium text-text-main mb-1.5">
                     Salário
                   </label>
                   <input
@@ -406,17 +406,17 @@ export default function ColaboradoresPage() {
                     value={form.salary || ''}
                     onChange={(e) => setForm({ ...form, salary: e.target.value ? Number(e.target.value) : undefined })}
                     placeholder="Ex: 2500.00"
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-text-main placeholder-gray-500 focus:outline-none focus:border-emerald-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                  <label className="block text-sm font-medium text-text-main mb-1.5">
                     Frequência
                   </label>
                   <select
                     value={form.salary_frequency || ''}
                     onChange={(e) => setForm({ ...form, salary_frequency: (e.target.value as any) || undefined })}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500"
                   >
                     <option value="">Selecione...</option>
                     <option value="mensal">Mensal</option>
@@ -425,7 +425,7 @@ export default function ColaboradoresPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                  <label className="block text-sm font-medium text-text-main mb-1.5">
                     Dia de pagamento
                   </label>
                   <input
@@ -435,18 +435,18 @@ export default function ColaboradoresPage() {
                     value={form.salary_day || ''}
                     onChange={(e) => setForm({ ...form, salary_day: e.target.value ? Number(e.target.value) : undefined })}
                     placeholder="Ex: 5"
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-text-main placeholder-gray-500 focus:outline-none focus:border-emerald-500"
                   />
                 </div>
               </div>
 
               {editingId && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Status</label>
+                  <label className="block text-sm font-medium text-text-main mb-1.5">Status</label>
                   <select
                     value={form.status}
                     onChange={(e) => setForm({ ...form, status: e.target.value as 'ativo' | 'inativo' })}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500"
                   >
                     <option value="ativo">Ativo</option>
                     <option value="inativo">Inativo</option>
@@ -462,7 +462,7 @@ export default function ColaboradoresPage() {
             <div className="p-6 border-t border-gray-800 flex justify-end gap-3">
               <button
                 onClick={() => setModalOpen(false)}
-                className="px-4 py-2 text-sm text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm text-text-muted hover:text-text-main border border-gray-700 hover:border-gray-500 rounded-lg transition-colors"
               >
                 Cancelar
               </button>
@@ -481,21 +481,21 @@ export default function ColaboradoresPage() {
       {/* Modal Confirmação de Exclusão */}
       {deleteConfirmId && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-sm shadow-2xl p-6">
-            <h2 className="text-lg font-bold text-white mb-2">Excluir colaborador?</h2>
-            <p className="text-sm text-gray-400 mb-6">
+          <div className="bg-gray-900 border border-gray-700 rounded-xl w-full max-w-sm shadow-2xl p-6">
+            <h2 className="text-lg font-bold text-text-main mb-2">Excluir colaborador?</h2>
+            <p className="text-sm text-text-muted mb-6">
               Esta ação não pode ser desfeita. O colaborador será removido permanentemente.
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setDeleteConfirmId(null)}
-                className="px-4 py-2 text-sm text-gray-400 hover:text-white border border-gray-700 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm text-text-muted hover:text-text-main border border-gray-700 rounded-lg transition-colors"
               >
                 Cancelar
               </button>
               <button
                 onClick={() => handleDelete(deleteConfirmId)}
-                className="px-4 py-2 text-sm font-semibold bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-semibold bg-red-600 hover:bg-red-500 text-text-main rounded-lg transition-colors"
               >
                 Sim, excluir
               </button>

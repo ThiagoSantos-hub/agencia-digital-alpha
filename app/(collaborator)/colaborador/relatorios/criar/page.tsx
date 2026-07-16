@@ -208,13 +208,13 @@ function CreateEditReportContent() {
   }, [formData.mensagem_template])
 
   return (
-    <div className="min-h-full text-white">
+    <div className="min-h-full text-text-main">
       {/* Header */}
       <div className="max-w-6xl mx-auto flex justify-between items-center mb-8">
         <div className="flex items-center gap-4">
           <button 
             onClick={() => router.push('/colaborador/relatorios')}
-            className="p-2 hover:bg-[#1a1a2e] rounded-lg text-gray-400 transition-colors"
+            className="p-2 hover:bg-[#1a1a2e] rounded-lg text-text-muted transition-colors"
           >
             <ArrowLeft size={20} />
           </button>
@@ -224,9 +224,9 @@ function CreateEditReportContent() {
 
       <form onSubmit={handleSave} className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Left Side: Form */}
-        <div className="space-y-6 bg-[#0a0a0f] border border-[#1a1a2e] p-8 rounded-2xl shadow-xl">
+        <div className="space-y-6 bg-[#0a0a0f] border border-[#1a1a2e] p-8 rounded-xl shadow-xl">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-400">Nome do Relatório *</label>
+            <label className="text-sm font-medium text-text-muted">Nome do Relatório *</label>
             <input 
               required
               type="text"
@@ -239,13 +239,13 @@ function CreateEditReportContent() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-400">Canal</label>
+              <label className="text-sm font-medium text-text-muted">Canal</label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, canal: 'meta' })}
                   className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border transition-all ${
-                    formData.canal === 'meta' ? 'bg-[#10b981]/10 border-[#10b981] text-[#10b981]' : 'bg-[#050508] border-[#1a1a2e] text-gray-500 hover:border-gray-700'
+                    formData.canal === 'meta' ? 'bg-[#10b981]/10 border-[#10b981] text-[#10b981]' : 'bg-[#050508] border-[#1a1a2e] text-text-muted hover:border-gray-700'
                   }`}
                 >
                   <Facebook size={16} /> Meta
@@ -254,7 +254,7 @@ function CreateEditReportContent() {
                   type="button"
                   onClick={() => setFormData({ ...formData, canal: 'google' })}
                   className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border transition-all ${
-                    formData.canal === 'google' ? 'bg-[#10b981]/10 border-[#10b981] text-[#10b981]' : 'bg-[#050508] border-[#1a1a2e] text-gray-500 hover:border-gray-700'
+                    formData.canal === 'google' ? 'bg-[#10b981]/10 border-[#10b981] text-[#10b981]' : 'bg-[#050508] border-[#1a1a2e] text-text-muted hover:border-gray-700'
                   }`}
                 >
                   <Globe size={16} /> Google
@@ -263,7 +263,7 @@ function CreateEditReportContent() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-400">Período</label>
+              <label className="text-sm font-medium text-text-muted">Período</label>
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { value: 'ontem', label: 'Ontem' },
@@ -279,7 +279,7 @@ function CreateEditReportContent() {
                     className={`py-2.5 rounded-xl border text-xs font-bold uppercase transition-all ${
                       formData.periodo === opt.value
                         ? 'bg-[#10b981]/10 border-[#10b981] text-[#10b981]'
-                        : 'bg-[#050508] border-[#1a1a2e] text-gray-500 hover:border-gray-700'
+                        : 'bg-[#050508] border-[#1a1a2e] text-text-muted hover:border-gray-700'
                     }`}
                   >
                     {opt.label}
@@ -291,7 +291,7 @@ function CreateEditReportContent() {
               {formData.periodo === 'personalizado' && (
                 <div className="grid grid-cols-2 gap-2 mt-2">
                   <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Data início</label>
+                    <label className="text-xs text-text-muted mb-1 block">Data início</label>
                     <input
                       type="date"
                       value={formData.data_inicio ?? ''}
@@ -300,7 +300,7 @@ function CreateEditReportContent() {
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Data fim</label>
+                    <label className="text-xs text-text-muted mb-1 block">Data fim</label>
                     <input
                       type="date"
                       value={formData.data_fim ?? ''}
@@ -313,7 +313,7 @@ function CreateEditReportContent() {
 
               {/* Dias de envio — múltipla seleção — sempre visível */}
               <div className="mt-2">
-                <label className="text-xs text-gray-500 mb-1 block">Dias de envio (selecione um ou mais)</label>
+                <label className="text-xs text-text-muted mb-1 block">Dias de envio (selecione um ou mais)</label>
                 <div className="grid grid-cols-7 gap-1">
                   {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((dia, i) => (
                     <button
@@ -323,7 +323,7 @@ function CreateEditReportContent() {
                       className={`py-1.5 rounded-lg border text-[10px] font-bold transition-all ${
                         diasSelecionados.includes(i)
                           ? 'bg-[#10b981]/10 border-[#10b981] text-[#10b981]'
-                          : 'bg-[#050508] border-[#1a1a2e] text-gray-500 hover:border-gray-700'
+                          : 'bg-[#050508] border-[#1a1a2e] text-text-muted hover:border-gray-700'
                       }`}
                     >
                       {dia}
@@ -336,13 +336,13 @@ function CreateEditReportContent() {
 
           <div className="space-y-3">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-400">Recebedor</label>
+              <label className="text-sm font-medium text-text-muted">Recebedor</label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, recebedor_tipo: 'privado', recebedor_numero: '' })}
                   className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border transition-all ${
-                    formData.recebedor_tipo === 'privado' ? 'bg-[#10b981]/10 border-[#10b981] text-[#10b981]' : 'bg-[#050508] border-[#1a1a2e] text-gray-500 hover:border-gray-700'
+                    formData.recebedor_tipo === 'privado' ? 'bg-[#10b981]/10 border-[#10b981] text-[#10b981]' : 'bg-[#050508] border-[#1a1a2e] text-text-muted hover:border-gray-700'
                   }`}
                 >
                   <Smartphone size={16} /> Privado
@@ -354,7 +354,7 @@ function CreateEditReportContent() {
                     if (wpInstance.status === 'connected' && wpGroups.length === 0) wpFetchGroups()
                   }}
                   className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border transition-all ${
-                    formData.recebedor_tipo === 'grupo' ? 'bg-[#10b981]/10 border-[#10b981] text-[#10b981]' : 'bg-[#050508] border-[#1a1a2e] text-gray-500 hover:border-gray-700'
+                    formData.recebedor_tipo === 'grupo' ? 'bg-[#10b981]/10 border-[#10b981] text-[#10b981]' : 'bg-[#050508] border-[#1a1a2e] text-text-muted hover:border-gray-700'
                   }`}
                 >
                   <Users size={16} /> Grupo
@@ -364,7 +364,7 @@ function CreateEditReportContent() {
 
             {formData.recebedor_tipo === 'privado' && (
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-400">WhatsApp (com DDI) *</label>
+                <label className="text-sm font-medium text-text-muted">WhatsApp (com DDI) *</label>
                 <input 
                   type="text"
                   value={formData.recebedor_numero}
@@ -377,13 +377,13 @@ function CreateEditReportContent() {
 
             {formData.recebedor_tipo === 'grupo' && (
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-400">Grupo do WhatsApp *</label>
+                <label className="text-sm font-medium text-text-muted">Grupo do WhatsApp *</label>
 
                 {/* Loading state */}
                 {(wpInstance.status === 'loading' || loadingAgencyGroups) && (
                   <div className="flex items-center gap-2 py-2">
-                    <Loader2 size={14} className="animate-spin text-gray-500" />
-                    <span className="text-xs text-gray-500">Carregando grupos...</span>
+                    <Loader2 size={14} className="animate-spin text-text-muted" />
+                    <span className="text-xs text-text-muted">Carregando grupos...</span>
                   </div>
                 )}
 
@@ -446,7 +446,7 @@ function CreateEditReportContent() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-400">Horário de Envio</label>
+              <label className="text-sm font-medium text-text-muted">Horário de Envio</label>
               <input 
                 type="time"
                 value={formData.horario_envio}
@@ -457,7 +457,7 @@ function CreateEditReportContent() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-400">Cliente Vinculado (Opcional)</label>
+            <label className="text-sm font-medium text-text-muted">Cliente Vinculado (Opcional)</label>
             <select 
               value={formData.client_id || ''}
               onChange={e => setFormData({ ...formData, client_id: e.target.value || null })}
@@ -476,9 +476,9 @@ function CreateEditReportContent() {
                 📋 Campanhas deste cliente (referência — não vai no WhatsApp):
               </p>
               {campanhasDoCliente.map((c, i) => (
-                <p key={i} className="text-xs text-gray-300 py-0.5">
+                <p key={i} className="text-xs text-text-main py-0.5">
                   <span className="text-indigo-400 font-mono font-bold">&lt;CAMP_{i + 1}&gt;</span>
-                  <span className="text-gray-500"> → </span>
+                  <span className="text-text-muted"> → </span>
                   {c.name}
                 </p>
               ))}
@@ -489,14 +489,14 @@ function CreateEditReportContent() {
             <button
               type="button"
               onClick={() => router.push('/colaborador/relatorios')}
-              className="flex-1 bg-transparent border border-[#1a1a2e] hover:bg-[#1a1a2e] text-gray-400 py-3 rounded-xl transition-colors font-medium"
+              className="flex-1 bg-transparent border border-[#1a1a2e] hover:bg-[#1a1a2e] text-text-muted py-3 rounded-xl transition-colors font-medium"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-2 bg-[#10b981] hover:bg-[#059669] text-white py-3 px-8 rounded-xl transition-colors font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-2 bg-[#10b981] hover:bg-[#059669] text-text-main py-3 px-8 rounded-xl transition-colors font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
               Salvar Relatório
@@ -506,10 +506,10 @@ function CreateEditReportContent() {
 
         {/* Right Side: Message Editor & Preview */}
         <div className="space-y-6">
-          <div className="bg-[#0a0a0f] border border-[#1a1a2e] p-8 rounded-2xl shadow-xl flex flex-col h-full">
+          <div className="bg-[#0a0a0f] border border-[#1a1a2e] p-8 rounded-xl shadow-xl flex flex-col h-full">
             <div className="flex justify-between items-center mb-4">
-              <label className="text-sm font-medium text-gray-400">Template da Mensagem</label>
-              <div className="flex items-center gap-1 text-[10px] text-gray-500 bg-[#050508] px-2 py-1 rounded-md">
+              <label className="text-sm font-medium text-text-muted">Template da Mensagem</label>
+              <div className="flex items-center gap-1 text-[10px] text-text-muted bg-[#050508] px-2 py-1 rounded-md">
                 <Info size={12} />
                 Clique nas variáveis abaixo para inserir
               </div>
@@ -529,7 +529,7 @@ function CreateEditReportContent() {
                   key={v.key}
                   type="button"
                   onClick={() => insertVariable(v.key)}
-                  className="px-2 py-1.5 bg-[#050508] border border-[#1a1a2e] hover:border-[#10b981] hover:text-[#10b981] rounded-lg text-[10px] font-bold text-gray-400 transition-all"
+                  className="px-2 py-1.5 bg-[#050508] border border-[#1a1a2e] hover:border-[#10b981] hover:text-[#10b981] rounded-lg text-[10px] font-bold text-text-muted transition-all"
                 >
                   {v.key}
                 </button>
@@ -537,14 +537,14 @@ function CreateEditReportContent() {
             </div>
 
             <div className="mt-8">
-              <label className="text-sm font-medium text-gray-400 mb-4 block">Preview WhatsApp</label>
-              <div className="bg-[#0d141b] rounded-2xl p-6 relative overflow-hidden">
+              <label className="text-sm font-medium text-text-muted mb-4 block">Preview WhatsApp</label>
+              <div className="bg-[#0d141b] rounded-xl p-6 relative overflow-hidden">
                 <div className="relative z-10 flex flex-col items-end">
-                  <div className="bg-[#075e54] text-white p-4 rounded-2xl rounded-tr-none shadow-lg max-w-[85%] relative">
+                  <div className="bg-[#075e54] text-text-main p-4 rounded-xl rounded-tr-none shadow-lg max-w-[85%] relative">
                     <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
                       {previewMessage}
                     </pre>
-                    <div className="text-[10px] text-gray-300 text-right mt-1">
+                    <div className="text-[10px] text-text-main text-right mt-1">
                       {new Date().getHours()}:{new Date().getMinutes().toString().padStart(2, '0')}
                     </div>
                   </div>

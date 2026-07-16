@@ -81,12 +81,12 @@ function AlphaButton({ userName }: { userName: string }) {
   return (
     <div className="fixed bottom-6 right-6 z-[60] flex flex-col items-end gap-3 pointer-events-none">
       {active && (
-        <div className="bg-[#0f1a14] border border-[#00ff88]/30 rounded-2xl p-4 shadow-2xl w-48 pointer-events-auto">
+        <div className="bg-surface border border-[#00ff88]/30 rounded-xl p-4 shadow-2xl w-48 pointer-events-auto">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-2 h-2 rounded-full bg-[#00ff88] animate-pulse" />
             <span className="text-[#00ff88] text-sm font-semibold">Alpha ativa</span>
           </div>
-          <p className="text-gray-400 text-xs">Pode falar!</p>
+          <p className="text-text-muted text-xs">Pode falar!</p>
         </div>
       )}
       <button

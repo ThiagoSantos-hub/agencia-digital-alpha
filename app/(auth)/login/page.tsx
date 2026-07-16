@@ -91,19 +91,19 @@ export default function LoginPage() {
         {/* Lado esquerdo — branding */}
         <div className="hidden lg:block">
           <div className="flex items-center gap-3 mb-8">
-            <h2 className="text-2xl font-bold text-white">
+            <h2 className="text-2xl font-bold text-text-main">
               DIGITAL <span className="text-emerald-400">ALPHA</span>
             </h2>
           </div>
 
-          <p className="text-gray-400 text-sm font-medium tracking-wide mb-1">
+          <p className="text-text-muted text-sm font-medium tracking-wide mb-1">
             PLATAFORMA INTELIGENTE PARA
           </p>
           <p className="text-emerald-400 text-lg font-bold tracking-wide mb-6">
             GESTÃO DE AGÊNCIAS
           </p>
 
-          <p className="text-gray-400 leading-relaxed mb-8 max-w-md">
+          <p className="text-text-muted leading-relaxed mb-8 max-w-md">
             A tecnologia completa que sua agência precisa para atrair, converter, gerir e escalar resultados com inteligência.
           </p>
 
@@ -118,8 +118,8 @@ export default function LoginPage() {
                     <Icon size={18} className="text-emerald-400" />
                   </div>
                   <div>
-                    <p className="text-white font-semibold text-sm">{f.title}</p>
-                    <p className="text-gray-500 text-sm">{f.desc}</p>
+                    <p className="text-text-main font-semibold text-sm">{f.title}</p>
+                    <p className="text-text-muted text-sm">{f.desc}</p>
                   </div>
                 </div>
               )
@@ -129,18 +129,18 @@ export default function LoginPage() {
 
         {/* Lado direito — formulário */}
         <div className="w-full max-w-md mx-auto">
-          <div className="bg-[#0d1310]/80 backdrop-blur-xl border border-emerald-500/20 rounded-3xl p-8 shadow-2xl shadow-emerald-500/5">
+          <div className="bg-[#0d1310]/80 backdrop-blur-xl border border-emerald-500/20 rounded-xl p-8 shadow-2xl shadow-emerald-500/5">
             <div className="flex flex-col items-center text-center mb-6">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={LOGO_URL} alt="Digital Alpha" className="h-14 object-contain mb-3" />
-              <h1 className="text-white text-2xl font-bold">Bem-vindo de volta</h1>
+              <h1 className="text-text-main text-2xl font-bold">Bem-vindo de volta</h1>
               <div className="w-10 h-0.5 bg-emerald-500 my-3" />
-              <p className="text-gray-500 text-sm">Entre para acessar sua plataforma.</p>
+              <p className="text-text-muted text-sm">Entre para acessar sua plataforma.</p>
             </div>
 
             <form onSubmit={handleLogin} className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">E-mail</label>
+                <label className="block text-sm font-medium text-text-main mb-1.5">E-mail</label>
                 <div className="relative">
                   <Mail size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-500/60" />
                   <input
@@ -149,13 +149,13 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="seu@email.com"
                     required
-                    className="w-full pl-11 pr-4 py-3 bg-black/40 border border-emerald-500/20 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/60 transition-colors"
+                    className="w-full pl-11 pr-4 py-3 bg-black/40 border border-emerald-500/20 rounded-xl text-text-main placeholder-gray-600 focus:outline-none focus:border-emerald-500/60 transition-colors"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Senha</label>
+                <label className="block text-sm font-medium text-text-main mb-1.5">Senha</label>
                 <div className="relative">
                   <Lock size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-500/60" />
                   <input
@@ -164,12 +164,12 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
-                    className="w-full pl-11 pr-11 py-3 bg-black/40 border border-emerald-500/20 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/60 transition-colors"
+                    className="w-full pl-11 pr-11 py-3 bg-black/40 border border-emerald-500/20 rounded-xl text-text-main placeholder-gray-600 focus:outline-none focus:border-emerald-500/60 transition-colors"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-emerald-400 transition-colors"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-emerald-400 transition-colors"
                     aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -206,14 +206,14 @@ export default function LoginPage() {
               <ShieldCheck size={16} className="text-emerald-500/50" />
               <button
                 onClick={handleResetPassword}
-                className="text-sm text-gray-500 hover:text-emerald-400 transition-colors"
+                className="text-sm text-text-muted hover:text-emerald-400 transition-colors"
               >
                 Esqueci <span className="text-emerald-400">minha senha</span>
               </button>
             </div>
           </div>
 
-          <p className="text-center text-gray-600 text-xs mt-6">
+          <p className="text-center text-text-disabled text-xs mt-6">
             © 2026 <span className="text-emerald-400">Digital Alpha</span>. Todos os direitos reservados.
           </p>
         </div>

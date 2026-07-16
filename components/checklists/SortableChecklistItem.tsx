@@ -50,14 +50,14 @@ export function SortableChecklistItem({
       style={style}
       className={`group flex items-center gap-3 p-3 rounded-xl border overflow-hidden min-w-0 transition-all ${
         item.completed 
-          ? 'bg-[#0a0f0c]/30 border-[#00ff88]/5 opacity-60' 
-          : 'bg-[#0a0f0c] border-[#2a2a2a] hover:border-gray-700'
+          ? 'bg-background/30 border-[#00ff88]/5 opacity-60' 
+          : 'bg-background border-border hover:border-gray-700'
       }`}
     >
       <button
         {...attributes}
         {...listeners}
-        className="text-gray-700 hover:text-gray-500 cursor-grab active:cursor-grabbing shrink-0"
+        className="text-text-disabled hover:text-text-muted cursor-grab active:cursor-grabbing shrink-0"
       >
         <GripVertical size={16} />
       </button>
@@ -67,10 +67,10 @@ export function SortableChecklistItem({
         className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all shrink-0 ${
           item.completed 
             ? 'bg-[#00ff88] border-[#00ff88]' 
-            : 'border-[#2a2a2a] group-hover:border-gray-600'
+            : 'border-border group-hover:border-gray-600'
         }`}
       >
-        {item.completed && <div className="w-2 h-2 bg-[#0a0f0c] rounded-sm" />}
+        {item.completed && <div className="w-2 h-2 bg-background rounded-sm" />}
       </button>
 
       {isEditing ? (
@@ -80,13 +80,13 @@ export function SortableChecklistItem({
             value={editingText}
             onChange={(e) => setEditingText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && onSaveEdit(item.id)}
-            className="flex-1 min-w-0 bg-[#111] border border-[#00ff88]/40 rounded-lg px-3 py-1 text-[10px] text-white focus:outline-none truncate"
+            className="flex-1 min-w-0 bg-surface border border-[#00ff88]/40 rounded-lg px-3 py-1 text-[10px] text-text-main focus:outline-none truncate"
             autoFocus
           />
         </div>
       ) : (
         <span className={`flex-1 text-sm font-medium transition-all ${
-          item.completed ? 'text-gray-600 line-through' : 'text-gray-300'
+          item.completed ? 'text-text-disabled line-through' : 'text-text-main'
         }`}>
           {item.text}
         </span>
@@ -94,13 +94,13 @@ export function SortableChecklistItem({
 
       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
         {isEditing ? (
-          <button onClick={onCancelEdit} className="text-[10px] font-bold text-gray-500 hover:text-white uppercase">Cancelar</button>
+          <button onClick={onCancelEdit} className="text-[10px] font-bold text-text-muted hover:text-text-main uppercase">Cancelar</button>
         ) : (
           <>
-            <button onClick={() => onEdit(item.id, item.text)} className="p-1.5 text-gray-700 hover:text-amber-400">
+            <button onClick={() => onEdit(item.id, item.text)} className="p-1.5 text-text-disabled hover:text-amber-400">
               <Edit2 size={14} />
             </button>
-            <button onClick={() => onDelete(item.id)} className="p-1.5 text-gray-700 hover:text-red-500">
+            <button onClick={() => onDelete(item.id)} className="p-1.5 text-text-disabled hover:text-red-500">
               <Trash2 size={14} />
             </button>
           </>

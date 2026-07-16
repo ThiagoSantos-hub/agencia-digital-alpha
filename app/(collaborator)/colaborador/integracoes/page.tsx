@@ -165,7 +165,7 @@ export default function IntegracoesColaboradorPage() {
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-8">
       <div>
-        <h1 className="text-white text-2xl font-bold">Integrações</h1>
+        <h1 className="text-text-main text-2xl font-bold">Integrações</h1>
         <p className="text-sm mt-1" style={{ color: '#4a7a5a' }}>
           Conecte suas ferramentas e visualize as integrações da agência.
         </p>
@@ -185,7 +185,7 @@ export default function IntegracoesColaboradorPage() {
       )}
 
       <section>
-  <h2 className="text-white text-lg font-semibold mb-1">Meu WhatsApp</h2>
+  <h2 className="text-text-main text-lg font-semibold mb-1">Meu WhatsApp</h2>
   <p className="text-xs mb-4" style={{ color: '#4a7a5a' }}>
     Conecte seu WhatsApp pessoal para enviar relatórios automáticos para seus contatos e grupos.
   </p>
@@ -193,7 +193,7 @@ export default function IntegracoesColaboradorPage() {
 </section>
 
       <section>
-        <h2 className="text-white text-lg font-semibold mb-4">Minhas Conexões</h2>
+        <h2 className="text-text-main text-lg font-semibold mb-4">Minhas Conexões</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           {/* OpenAI */}
@@ -205,7 +205,7 @@ export default function IntegracoesColaboradorPage() {
                 <IntegrationIcon type="openai" />
               </div>
               <div>
-                <p className="text-white text-sm font-medium">OpenAI</p>
+                <p className="text-text-main text-sm font-medium">OpenAI</p>
                 <p className="text-xs mt-0.5" style={{ color: openaiKey ? '#00ff88' : '#4a7a5a' }}>
                   {openaiKey ? 'Conectado' : 'Desconectado'}
                 </p>
@@ -217,7 +217,7 @@ export default function IntegracoesColaboradorPage() {
                 placeholder="API Key..."
                 value={openaiKey}
                 onChange={(e) => setOpenaiKey(e.target.value)}
-                className="flex-1 bg-[#0a0f0c] border border-[#1a3a24] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#00ff88]/50"
+                className="flex-1 bg-background border border-border rounded-lg px-3 py-1.5 text-xs text-text-main focus:outline-none focus:border-[#00ff88]/50"
               />
               <button 
                 onClick={() => handleSaveApiKey('openai', openaiKey)}
@@ -238,7 +238,7 @@ export default function IntegracoesColaboradorPage() {
                 <IntegrationIcon type="elevenlabs" />
               </div>
               <div>
-                <p className="text-white text-sm font-medium">ElevenLabs</p>
+                <p className="text-text-main text-sm font-medium">ElevenLabs</p>
                 <p className="text-xs mt-0.5" style={{ color: elevenlabsKey ? '#00ff88' : '#4a7a5a' }}>
                   {elevenlabsKey ? 'Conectado' : 'Desconectado'}
                 </p>
@@ -250,7 +250,7 @@ export default function IntegracoesColaboradorPage() {
                 placeholder="API Key..."
                 value={elevenlabsKey}
                 onChange={(e) => setElevenlabsKey(e.target.value)}
-                className="flex-1 bg-[#0a0f0c] border border-[#1a3a24] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#00ff88]/50"
+                className="flex-1 bg-background border border-border rounded-lg px-3 py-1.5 text-xs text-text-main focus:outline-none focus:border-[#00ff88]/50"
               />
               <button 
                 onClick={() => handleSaveApiKey('elevenlabs', elevenlabsKey)}
@@ -273,7 +273,7 @@ export default function IntegracoesColaboradorPage() {
                 <IntegrationIcon type="google_ads" />
               </div>
               <div>
-                <p className="text-white text-sm font-medium">Google Ads Pessoal</p>
+                <p className="text-text-main text-sm font-medium">Google Ads Pessoal</p>
                 <p className="text-xs mt-0.5" style={{ color: googleAdsConnected ? '#00ff88' : '#4a7a5a' }}>
                   {googleAdsConnected ? 'Conectado' : 'Desconectado'}
                 </p>
@@ -303,7 +303,7 @@ export default function IntegracoesColaboradorPage() {
                 <IntegrationIcon type="google_drive" />
               </div>
               <div>
-                <p className="text-white text-sm font-medium">Google Drive</p>
+                <p className="text-text-main text-sm font-medium">Google Drive</p>
                 <p className="text-xs mt-0.5" style={{ color: googleDriveConnected ? '#00ff88' : '#4a7a5a' }}>
                   {googleDriveConnected ? 'Conectado' : 'Desconectado'}
                 </p>
@@ -333,7 +333,7 @@ export default function IntegracoesColaboradorPage() {
                 <IntegrationIcon type="google_calendar" />
               </div>
               <div>
-                <p className="text-white text-sm font-medium">Google Agenda</p>
+                <p className="text-text-main text-sm font-medium">Google Agenda</p>
                 <p className="text-xs mt-0.5" style={{ color: googleCalendarConnected ? '#00ff88' : '#4a7a5a' }}>
                   {googleCalendarConnected ? 'Conectado' : 'Desconectado'}
                 </p>
@@ -363,7 +363,7 @@ export default function IntegracoesColaboradorPage() {
                 <IntegrationIcon type="email" />
               </div>
               <div>
-                <p className="text-white text-sm font-medium">Google E-mail</p>
+                <p className="text-text-main text-sm font-medium">Google E-mail</p>
                 <p className="text-xs mt-0.5" style={{ color: emailConnected ? '#00ff88' : '#4a7a5a' }}>
                   {emailConnected ? 'Conectado' : 'Desconectado'}
                 </p>
@@ -393,7 +393,7 @@ export default function IntegracoesColaboradorPage() {
                 <IntegrationIcon type="meta_ads" />
               </div>
               <div>
-                <p className="text-white text-sm font-medium">Meta Ads Pessoal</p>
+                <p className="text-text-main text-sm font-medium">Meta Ads Pessoal</p>
                 <p className="text-xs mt-0.5" style={{ color: metaConnected ? '#00ff88' : '#4a7a5a' }}>
                   {metaConnected ? 'Conectado' : 'Desconectado'}
                 </p>
@@ -418,7 +418,7 @@ export default function IntegracoesColaboradorPage() {
       </section>
 
       <section>
-        <h2 className="text-white text-lg font-semibold mb-2">Integrações da Agência</h2>
+        <h2 className="text-text-main text-lg font-semibold mb-2">Integrações da Agência</h2>
         <p className="text-xs mb-4" style={{ color: '#4a7a5a' }}>
           Gerenciadas pelo administrador. Você utiliza automaticamente.
         </p>
@@ -433,7 +433,7 @@ export default function IntegracoesColaboradorPage() {
                 <IntegrationIcon type="whatsapp" />
               </div>
               <div>
-                <p className="text-white text-sm font-medium">WhatsApp (Agência)</p>
+                <p className="text-text-main text-sm font-medium">WhatsApp (Agência)</p>
                 <p className="text-xs mt-0.5" style={{ color: '#00ff88' }}>
                   Ativo pela agência
                 </p>
@@ -454,7 +454,7 @@ export default function IntegracoesColaboradorPage() {
                 <IntegrationIcon type="meta_ads" />
               </div>
               <div>
-                <p className="text-white text-sm font-medium">Meta Ads (Agência)</p>
+                <p className="text-text-main text-sm font-medium">Meta Ads (Agência)</p>
                 <p className="text-xs mt-0.5" style={{ color: '#00ff88' }}>
                   Ativo pela agência
                 </p>

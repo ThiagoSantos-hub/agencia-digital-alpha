@@ -149,7 +149,7 @@ export default function ColaboradorRelatoriosPage() {
   }
 
   return (
-    <div className="min-h-full text-white">
+    <div className="min-h-full text-text-main">
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
@@ -157,11 +157,11 @@ export default function ColaboradorRelatoriosPage() {
             <BarChart2 className="text-[#10b981]" />
             Relatórios
           </h1>
-          <p className="text-gray-400 text-sm">Gerencie seus relatórios automáticos de anúncios</p>
+          <p className="text-text-muted text-sm">Gerencie seus relatórios automáticos de anúncios</p>
         </div>
         <button 
           onClick={() => router.push('/colaborador/relatorios/criar')}
-          className="bg-[#10b981] hover:bg-[#059669] text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-medium"
+          className="bg-[#10b981] hover:bg-[#059669] text-text-main px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-medium"
         >
           <Plus size={18} />
           Criar Relatório
@@ -170,16 +170,16 @@ export default function ColaboradorRelatoriosPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-[#0a0a0f] border border-[#1a1a2e] p-6 rounded-2xl">
-          <p className="text-gray-400 text-sm mb-1">Relatórios Ativos</p>
+        <div className="bg-[#0a0a0f] border border-[#1a1a2e] p-6 rounded-xl">
+          <p className="text-text-muted text-sm mb-1">Relatórios Ativos</p>
           <p className="text-3xl font-bold text-[#10b981]">{stats.ativos}</p>
         </div>
-        <div className="bg-[#0a0a0f] border border-[#1a1a2e] p-6 rounded-2xl">
-          <p className="text-gray-400 text-sm mb-1">Total de Relatórios</p>
+        <div className="bg-[#0a0a0f] border border-[#1a1a2e] p-6 rounded-xl">
+          <p className="text-text-muted text-sm mb-1">Total de Relatórios</p>
           <p className="text-3xl font-bold">{stats.total}</p>
         </div>
-        <div className="bg-[#0a0a0f] border border-[#1a1a2e] p-6 rounded-2xl">
-          <p className="text-gray-400 text-sm mb-1">Próximo Envio</p>
+        <div className="bg-[#0a0a0f] border border-[#1a1a2e] p-6 rounded-xl">
+          <p className="text-text-muted text-sm mb-1">Próximo Envio</p>
           <p className="text-3xl font-bold text-emerald-400">{stats.proximoEnvio}</p>
         </div>
       </div>
@@ -187,9 +187,9 @@ export default function ColaboradorRelatoriosPage() {
       {/* Filters */}
       <div className="flex flex-wrap gap-4 mb-6">
         <div className="flex items-center gap-2 bg-[#0a0a0f] border border-[#1a1a2e] px-3 py-2 rounded-lg">
-          <Filter size={16} className="text-gray-400" />
+          <Filter size={16} className="text-text-muted" />
           <select 
-            className="bg-transparent outline-none text-sm text-gray-300"
+            className="bg-transparent outline-none text-sm text-text-main"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as any)}
           >
@@ -199,9 +199,9 @@ export default function ColaboradorRelatoriosPage() {
           </select>
         </div>
         <div className="flex items-center gap-2 bg-[#0a0a0f] border border-[#1a1a2e] px-3 py-2 rounded-lg">
-          <Globe size={16} className="text-gray-400" />
+          <Globe size={16} className="text-text-muted" />
           <select 
-            className="bg-transparent outline-none text-sm text-gray-300"
+            className="bg-transparent outline-none text-sm text-text-main"
             value={filterCanal}
             onChange={(e) => setFilterCanal(e.target.value as any)}
           >
@@ -213,16 +213,16 @@ export default function ColaboradorRelatoriosPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-[#0a0a0f] border border-[#1a1a2e] rounded-2xl overflow-hidden">
+      <div className="bg-[#0a0a0f] border border-[#1a1a2e] rounded-xl overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-[#1a1a2e] bg-[#0d0d14]">
-              <th className="p-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
-              <th className="p-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Nome</th>
-              <th className="p-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Canal</th>
-              <th className="p-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Frequência</th>
-              <th className="p-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Próximo Envio</th>
-              <th className="p-4 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">Ações</th>
+              <th className="p-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Status</th>
+              <th className="p-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Nome</th>
+              <th className="p-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Canal</th>
+              <th className="p-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Frequência</th>
+              <th className="p-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Próximo Envio</th>
+              <th className="p-4 text-xs font-semibold text-text-muted uppercase tracking-wider text-right">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#1a1a2e]">
@@ -238,14 +238,14 @@ export default function ColaboradorRelatoriosPage() {
               <tr>
                 <td colSpan={6} className="p-12 text-center">
                   <div className="flex flex-col items-center gap-4">
-                    <BarChart2 size={48} className="text-gray-600" />
+                    <BarChart2 size={48} className="text-text-disabled" />
                     <div>
-                      <p className="text-gray-300 font-medium">Nenhum relatório criado ainda</p>
-                      <p className="text-gray-500 text-sm">Comece criando seu primeiro relatório automático.</p>
+                      <p className="text-text-main font-medium">Nenhum relatório criado ainda</p>
+                      <p className="text-text-muted text-sm">Comece criando seu primeiro relatório automático.</p>
                     </div>
                     <button 
                       onClick={() => router.push('/colaborador/relatorios/criar')}
-                      className="bg-[#10b981] hover:bg-[#059669] text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm"
+                      className="bg-[#10b981] hover:bg-[#059669] text-text-main px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm"
                     >
                       <Plus size={16} />
                       Criar primeiro relatório
@@ -265,8 +265,8 @@ export default function ColaboradorRelatoriosPage() {
                     </button>
                   </td>
                   <td className="p-4">
-                    <div className="font-medium text-gray-200">{report.nome}</div>
-                    <div className="text-xs text-gray-500">Criado em {formatDate(report.created_at)}</div>
+                    <div className="font-medium text-text-main">{report.nome}</div>
+                    <div className="text-xs text-text-muted">Criado em {formatDate(report.created_at)}</div>
                   </td>
                   <td className="p-4">
                     {report.canal === 'meta' ? (
@@ -280,18 +280,18 @@ export default function ColaboradorRelatoriosPage() {
                     )}
                   </td>
                   <td className="p-4">
-                    <span className="text-sm text-gray-300 capitalize">{report.frequencia}</span>
-                    <div className="text-[10px] text-gray-500 uppercase">{report.periodo.replace('_', ' ')}</div>
+                    <span className="text-sm text-text-main capitalize">{report.frequencia}</span>
+                    <div className="text-[10px] text-text-muted uppercase">{report.periodo.replace('_', ' ')}</div>
                   </td>
                   <td className="p-4">
-                    <div className="text-sm text-gray-300">
+                    <div className="text-sm text-text-main">
                       {report.proximo_envio ? formatDateTime(report.proximo_envio) : '--'}
                     </div>
                   </td>
                   <td className="p-4 text-right">
                     <button 
                       onClick={() => setActionMenuId(actionMenuId === report.id ? null : report.id)}
-                      className="p-2 hover:bg-[#1a1a2e] rounded-lg text-gray-400 transition-colors"
+                      className="p-2 hover:bg-[#1a1a2e] rounded-lg text-text-muted transition-colors"
                     >
                       <MoreHorizontal size={18} />
                     </button>
@@ -309,7 +309,7 @@ export default function ColaboradorRelatoriosPage() {
                           <button
                             onClick={() => handleSendNow(report.id)}
                             disabled={sendingId === report.id}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1a2e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-text-main hover:bg-[#1a1a2e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {sendingId === report.id ? (
                               <Loader2 className="animate-spin" size={14} />
@@ -320,19 +320,19 @@ export default function ColaboradorRelatoriosPage() {
                           </button>
                           <button 
                             onClick={() => router.push(`/colaborador/relatorios/criar?id=${report.id}`)}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1a2e] transition-colors"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-text-main hover:bg-[#1a1a2e] transition-colors"
                           >
                             <Edit2 size={14} /> Editar
                           </button>
                           <button 
                             onClick={() => handleDuplicate(report)}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1a2e] transition-colors"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-text-main hover:bg-[#1a1a2e] transition-colors"
                           >
                             <Copy size={14} /> Duplicar
                           </button>
                           <button 
                             onClick={() => handleOpenHistory(report)}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1a1a2e] transition-colors"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-text-main hover:bg-[#1a1a2e] transition-colors"
                           >
                             <Clock size={14} /> Histórico
                           </button>
@@ -364,11 +364,11 @@ export default function ColaboradorRelatoriosPage() {
             <div className="p-6 border-b border-[#1a1a2e] flex justify-between items-center">
               <div>
                 <h2 className="text-lg font-bold">Histórico de Envios</h2>
-                <p className="text-xs text-gray-400">{historyReport.nome}</p>
+                <p className="text-xs text-text-muted">{historyReport.nome}</p>
               </div>
               <button 
                 onClick={() => setHistoryReport(null)}
-                className="p-2 hover:bg-[#1a1a2e] rounded-lg text-gray-400"
+                className="p-2 hover:bg-[#1a1a2e] rounded-lg text-text-muted"
               >
                 <ChevronRight size={20} />
               </button>
@@ -380,7 +380,7 @@ export default function ColaboradorRelatoriosPage() {
                   <Loader2 className="animate-spin text-[#10b981]" size={32} />
                 </div>
               ) : historyData.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12 text-text-muted">
                   Nenhum envio registrado ainda.
                 </div>
               ) : (
@@ -390,10 +390,10 @@ export default function ColaboradorRelatoriosPage() {
                       item.status === 'enviado' ? 'bg-[#10b981]' : 'bg-red-500'
                     }`} />
                     <div className="mb-1 flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-200">
+                      <span className="text-sm font-medium text-text-main">
                         {item.status === 'enviado' ? 'Enviado com sucesso' : 'Falha no envio'}
                       </span>
-                      <span className="text-[10px] text-gray-500">{formatHistoryDate(item.enviado_em)}</span>
+                      <span className="text-[10px] text-text-muted">{formatHistoryDate(item.enviado_em)}</span>
                     </div>
                     {item.erro_detalhe && (
                       <p className="text-xs text-red-400/80 bg-red-400/5 p-2 rounded border border-red-400/10 mt-2">

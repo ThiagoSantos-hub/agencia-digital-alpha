@@ -181,10 +181,10 @@ export default function CollaboratorLayout({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0f0c] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-emerald-500 mx-auto mb-3"></div>
-          <p className="text-gray-400 text-sm">Carregando painel...</p>
+          <p className="text-text-muted text-sm">Carregando painel...</p>
         </div>
       </div>
     )
@@ -192,22 +192,22 @@ export default function CollaboratorLayout({
 
   if (!profile || profile.role !== 'collaborator') {
     return (
-      <div className="min-h-screen bg-[#0a0f0c] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-emerald-500 mx-auto mb-3"></div>
-          <p className="text-gray-400 text-sm">Verificando acesso...</p>
+          <p className="text-text-muted text-sm">Verificando acesso...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="h-screen bg-gray-950 text-gray-100 flex overflow-hidden">
+    <div className="h-screen bg-gray-950 text-text-main flex overflow-hidden">
       {/* Sidebar */}
-      <aside className="fixed left-0 top-0 h-screen w-64 bg-[#0a0f0c] border-r border-[#1a3a24] flex flex-col z-40">
-        <div className="px-6 py-5 border-b border-[#1a3a24]">
+      <aside className="fixed left-0 top-0 h-screen w-64 bg-background border-r border-border flex flex-col z-40">
+        <div className="px-6 py-5 border-b border-border">
           <div className="flex items-center gap-2">
-            <span className="text-white font-black text-lg tracking-tight">DIGITAL</span>
+            <span className="text-text-main font-black text-lg tracking-tight">DIGITAL</span>
             <span className="text-[#00ff88] font-black text-lg tracking-tight">ALPHA</span>
           </div>
           <p className="text-[10px] text-emerald-500/70 font-bold uppercase tracking-widest mt-1">Painel Colaborador</p>
@@ -220,7 +220,7 @@ export default function CollaboratorLayout({
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
                 pathname === '/colaborador/dashboard' || pathname.startsWith('/colaborador/dashboard/')
                   ? 'bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30'
-                  : 'text-gray-400 hover:text-white hover:bg-[#1a3a24]/40'
+                  : 'text-text-muted hover:text-text-main hover:bg-hover-bg'
               }`}>
               <LayoutDashboard size={18} />
               <span className="text-sm">Dashboard</span>
@@ -229,7 +229,7 @@ export default function CollaboratorLayout({
 
           {menuGroups.map((group) => (
             <div key={group.label}>
-              <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-600">
+              <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-text-disabled">
                 {group.label}
               </p>
               <div className="space-y-0.5">
@@ -241,10 +241,10 @@ export default function CollaboratorLayout({
                   const showPulse = isNovidades && temNovidade
 
                   if (!item.ativo) return (
-                    <div key={item.href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 cursor-not-allowed opacity-50">
+                    <div key={item.href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-text-disabled cursor-not-allowed opacity-50">
                       <Icon size={18} />
                       <span className="text-sm">{item.label}</span>
-                      <span className="ml-auto text-xs bg-[#1a3a24]/50 text-gray-500 px-1.5 py-0.5 rounded-md">Em breve</span>
+                      <span className="ml-auto text-xs bg-hover-bg/50 text-text-muted px-1.5 py-0.5 rounded-md">Em breve</span>
                     </div>
                   )
                   return (
@@ -255,7 +255,7 @@ export default function CollaboratorLayout({
                           ? 'bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30'
                           : showPulse
                             ? 'text-yellow-400 bg-yellow-400/10 border border-yellow-400/30 animate-pulse'
-                            : 'text-gray-400 hover:text-white hover:bg-[#1a3a24]/40'
+                            : 'text-text-muted hover:text-text-main hover:bg-hover-bg'
                       }`}>
                       <Icon size={18} className={showPulse ? 'fill-yellow-400' : ''} />
                       <span className={`text-sm font-medium ${showPulse ? 'text-yellow-400' : ''}`}>{item.label}</span>
@@ -267,7 +267,7 @@ export default function CollaboratorLayout({
           ))}
         </nav>
 
-        <div className="px-3 py-4 border-t border-[#1a3a24]">
+        <div className="px-3 py-4 border-t border-border">
           <button
             onClick={() => signOut()}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
@@ -281,10 +281,10 @@ export default function CollaboratorLayout({
       {/* Main Content */}
       <div className="flex-1 ml-64 flex flex-col h-full overflow-hidden">
         {/* Header */}
-        <header className="h-16 border-b border-[#1a3a24] bg-[#0a0f0c] px-8 flex items-center justify-between shrink-0">
+        <header className="h-16 border-b border-border bg-background px-8 flex items-center justify-between shrink-0">
           <div>
-            <h2 className="text-sm font-medium text-gray-400">Bem-vindo de volta,</h2>
-            <p className="text-white font-bold">{profile.name || profile.email}</p>
+            <h2 className="text-sm font-medium text-text-muted">Bem-vindo de volta,</h2>
+            <p className="text-text-main font-bold">{profile.name || profile.email}</p>
           </div>
 
           <div className="flex items-center gap-4">
@@ -295,13 +295,13 @@ export default function CollaboratorLayout({
                 className={`relative w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-300 ${
                   naoLidas > 0 
                     ? 'text-amber-400 bg-amber-400/10 border border-amber-400/30 animate-pulse shadow-[0_0_15px_rgba(251,191,36,0.2)]' 
-                    : 'text-gray-400 hover:text-white hover:bg-[#1a3a24]/40'
+                    : 'text-text-muted hover:text-text-main hover:bg-hover-bg'
                 }`}
                 aria-label="Notificações"
               >
                 <Bell size={18} className={naoLidas > 0 ? 'fill-amber-400' : ''} />
                 {naoLidas > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none border-2 border-[#0a0f0c]">
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-text-main text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none border-2 border-[#0a0f0c]">
                     {naoLidas > 99 ? '99+' : naoLidas}
                   </span>
                 )}
@@ -309,10 +309,10 @@ export default function CollaboratorLayout({
 
               {/* Painel de notificações */}
               {sinoAberto && (
-                <div className="absolute right-0 top-11 w-80 bg-[#0f1a14] border border-[#1a3a24] rounded-2xl shadow-2xl z-50 flex flex-col max-h-[480px]">
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-[#1a3a24]">
+                <div className="absolute right-0 top-11 w-80 bg-surface border border-border rounded-xl shadow-2xl z-50 flex flex-col max-h-[480px]">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                     <div className="flex items-center gap-2">
-                      <span className="text-white font-semibold text-sm">Notificações</span>
+                      <span className="text-text-main font-semibold text-sm">Notificações</span>
                       {naoLidas > 0 && (
                         <span className="bg-[#00ff88]/10 text-[#00ff88] text-xs font-medium px-2 py-0.5 rounded-full border border-[#00ff88]/20">
                           {naoLidas} nova{naoLidas !== 1 ? 's' : ''}
@@ -324,14 +324,14 @@ export default function CollaboratorLayout({
                         <button
                           onClick={marcarTodasComoLidas}
                           title="Marcar todas como lidas"
-                          className="p-1.5 rounded-lg text-gray-500 hover:text-[#00ff88] hover:bg-[#00ff88]/10 transition-colors"
+                          className="p-1.5 rounded-lg text-text-muted hover:text-[#00ff88] hover:bg-[#00ff88]/10 transition-colors"
                         >
                           <CheckCheck size={15} />
                         </button>
                       )}
                       <button
                         onClick={() => setSinoAberto(false)}
-                        className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-[#1a3a24]/40 transition-colors"
+                        className="p-1.5 rounded-lg text-text-muted hover:text-text-main hover:bg-hover-bg transition-colors"
                       >
                         <X size={15} />
                       </button>
@@ -340,32 +340,32 @@ export default function CollaboratorLayout({
 
                   <div className="flex-1 overflow-y-auto">
                     {loadingNotif ? (
-                      <div className="py-10 text-center text-gray-500 text-sm">Carregando...</div>
+                      <div className="py-10 text-center text-text-muted text-sm">Carregando...</div>
                     ) : notificacoes.length === 0 ? (
                       <div className="py-10 text-center">
-                        <Bell size={28} className="mx-auto text-gray-700 mb-2" />
-                        <p className="text-gray-500 text-sm">Nenhuma notificação</p>
+                        <Bell size={28} className="mx-auto text-text-disabled mb-2" />
+                        <p className="text-text-muted text-sm">Nenhuma notificação</p>
                       </div>
                     ) : (
                       notificacoes.map((n) => (
                         <div
                           key={n.id}
                           onClick={() => !n.lida && marcarComoLida(n.id)}
-                          className={`flex gap-3 px-4 py-3 border-b border-[#1a3a24]/50 last:border-0 transition-colors cursor-pointer
+                          className={`flex gap-3 px-4 py-3 border-b border-border last:border-0 transition-colors cursor-pointer
                             ${n.lida
                               ? 'opacity-50 hover:opacity-70'
-                              : 'hover:bg-[#1a3a24]/30'
+                              : 'hover:bg-hover-bg'
                             }`}
                         >
                           <span className="text-lg flex-shrink-0 mt-0.5">{iconeTipo(n.tipo)}</span>
                           <div className="flex-1 min-w-0">
-                            <p className={`text-sm font-medium leading-snug ${n.lida ? 'text-gray-400' : 'text-white'}`}>
+                            <p className={`text-sm font-medium leading-snug ${n.lida ? 'text-text-muted' : 'text-text-main'}`}>
                               {n.titulo}
                             </p>
-                            <p className="text-xs text-gray-500 mt-0.5 leading-snug line-clamp-2">
+                            <p className="text-xs text-text-muted mt-0.5 leading-snug line-clamp-2">
                               {n.mensagem}
                             </p>
-                            <p className="text-[10px] text-gray-600 mt-1">
+                            <p className="text-[10px] text-text-disabled mt-1">
                               {tempoRelativo(n.created_at)}
                             </p>
                           </div>
@@ -379,8 +379,8 @@ export default function CollaboratorLayout({
 
                   {/* Rodapé */}
                   {notificacoes.length > 0 && (
-                    <div className="px-4 py-2.5 border-t border-[#1a3a24] text-center">
-                      <p className="text-xs text-gray-600">
+                    <div className="px-4 py-2.5 border-t border-border text-center">
+                      <p className="text-xs text-text-disabled">
                         {notificacoes.length} notificação{notificacoes.length !== 1 ? 'ões' : ''} no total
                       </p>
                     </div>

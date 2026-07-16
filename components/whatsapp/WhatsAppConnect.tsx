@@ -146,8 +146,8 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
   if (state.status === 'loading' && !showQR) {
     return (
       <div className="flex items-center gap-3 py-3">
-        <Loader2 size={18} className="animate-spin text-gray-500" />
-        <span className="text-sm text-gray-500">Verificando WhatsApp...</span>
+        <Loader2 size={18} className="animate-spin text-text-muted" />
+        <span className="text-sm text-text-muted">Verificando WhatsApp...</span>
       </div>
     )
   }
@@ -178,7 +178,7 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
                 <span className="text-xl">💬</span>
               </div>
               <div>
-                <p className="text-white text-sm font-medium">WhatsApp Conectado</p>
+                <p className="text-text-main text-sm font-medium">WhatsApp Conectado</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="w-2 h-2 rounded-full bg-green-400 inline-block animate-pulse" />
                   <p className="text-xs" style={{ color: '#00ff88' }}>Online</p>
@@ -211,14 +211,14 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
         <div className="rounded-xl p-4" style={{ backgroundColor: '#0a1f0f', border: '1px solid #1a3a24' }}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white text-sm font-medium">Permitir que colaboradores vejam meus grupos</p>
+              <p className="text-text-main text-sm font-medium">Permitir que colaboradores vejam meus grupos</p>
               <p className="text-xs" style={{ color: '#00ff88' }}>Se ativo, os colaboradores poderão visualizar os grupos do seu WhatsApp</p>
             </div>
             <button
               onClick={() => handleToggleGruposVisiveis(!gruposVisiveis)}
               disabled={savingGruposVisiveis}
               className={`w-11 h-6 rounded-full transition-colors relative flex items-center px-1 ${
-                gruposVisiveis ? 'bg-[#00ff88]' : 'bg-[#1a3a24]'
+                gruposVisiveis ? 'bg-[#00ff88]' : 'bg-hover-bg'
               }`}
             >
               <div
@@ -241,7 +241,7 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Users size={14} className="text-indigo-400" />
-                <p className="text-sm font-medium text-white">
+                <p className="text-sm font-medium text-text-main">
                   Grupos disponíveis
                   {groups.length > 0 && (
                     <span className="ml-2 text-xs px-1.5 py-0.5 rounded-full" style={{ backgroundColor: '#1a2040', color: '#818cf8' }}>
@@ -271,20 +271,20 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
               <>
                 {loadingGroups ? (
                   <div className="flex items-center gap-2 py-2">
-                    <Loader2 size={14} className="animate-spin text-gray-500" />
-                    <span className="text-xs text-gray-500">Carregando grupos...</span>
+                    <Loader2 size={14} className="animate-spin text-text-muted" />
+                    <span className="text-xs text-text-muted">Carregando grupos...</span>
                   </div>
                 ) : groups.length === 0 ? (
-                  <p className="text-xs text-gray-500 py-2">
+                  <p className="text-xs text-text-muted py-2">
                     Nenhum grupo encontrado. Verifique se seu WhatsApp está em algum grupo.
                   </p>
                 ) : (
                   <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
                     {groups.map(g => (
                       <div key={g.group_id} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ backgroundColor: '#0a0f1a' }}>
-                        <span className="text-sm text-white truncate">{g.name}</span>
+                        <span className="text-sm text-text-main truncate">{g.name}</span>
                         {g.participant_count > 0 && (
-                          <span className="text-xs text-gray-500 ml-2 shrink-0">{g.participant_count} membros</span>
+                          <span className="text-xs text-text-muted ml-2 shrink-0">{g.participant_count} membros</span>
                         )}
                       </div>
                     ))}
@@ -305,7 +305,7 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
     <div className="rounded-xl p-5 text-center" style={{ backgroundColor: '#0f1320', border: '1px solid #1a2040' }}>
       <div className="flex items-center justify-center gap-2 mb-4">
         <Smartphone size={18} className="text-indigo-400" />
-        <p className="text-white text-sm font-semibold">Conectar WhatsApp</p>
+        <p className="text-text-main text-sm font-semibold">Conectar WhatsApp</p>
       </div>
 
       {showQR && state.qrcode ? (
@@ -323,8 +323,8 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
           </div>
           <ol className="text-xs text-left space-y-1 mt-4 px-2" style={{ color: '#6b7280' }}>
             <li>1. Abra o WhatsApp no celular</li>
-            <li>2. Toque em <strong className="text-gray-300">Dispositivos conectados</strong></li>
-            <li>3. Toque em <strong className="text-gray-300">Conectar um dispositivo</strong></li>
+            <li>2. Toque em <strong className="text-text-main">Dispositivos conectados</strong></li>
+            <li>3. Toque em <strong className="text-text-main">Conectar um dispositivo</strong></li>
             <li>4. Aponte a câmera para o QR Code acima</li>
           </ol>
           <button

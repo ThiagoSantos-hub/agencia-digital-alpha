@@ -108,7 +108,7 @@ function BarChart({ data, color }: { data: number[], color: string }) {
               className="w-full rounded-t-sm transition-all duration-500 hover:brightness-90"
               style={{ height: `${height}%`, backgroundColor: color, opacity: 0.6 + (height / 250) }}
             />
-            <div className="absolute -top-4 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] text-white font-bold bg-text-main px-1 rounded border border-border z-10 shadow-sm">
+            <div className="absolute -top-4 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] text-text-main font-bold bg-text-main px-1 rounded border border-border z-10 shadow-sm">
               {v}
             </div>
           </div>
@@ -212,7 +212,7 @@ export default function DashboardPage() {
       
       {/* Topo: Boas-vindas e Filtros - Altura Fixa */}
       <div className="h-16 flex flex-shrink-0 items-center gap-4">
-        <div className="bg-surface border border-border rounded-2xl px-5 h-full flex items-center gap-4 flex-1 min-w-0 shadow-sm">
+        <div className="bg-surface border border-border rounded-xl px-5 h-full flex items-center gap-4 flex-1 min-w-0 shadow-sm">
           <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
             <span className="text-primary text-sm font-black">{nome.charAt(0).toUpperCase()}</span>
           </div>
@@ -226,7 +226,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="bg-surface border border-border rounded-2xl px-4 h-full flex items-center gap-3 flex-shrink-0 shadow-sm">
+        <div className="bg-surface border border-border rounded-xl px-4 h-full flex items-center gap-3 flex-shrink-0 shadow-sm">
           <Calendar size={14} className="text-primary" />
           <div className="flex items-center gap-2">
             <input
@@ -254,7 +254,7 @@ export default function DashboardPage() {
           {cards.map((card) => {
             const Icon = card.icon
             return (
-              <div key={card.label} className="bg-surface border border-border rounded-2xl px-4 flex items-center justify-between transition-all hover:bg-hover-bg min-h-0 overflow-hidden shadow-sm group">
+              <div key={card.label} className="bg-surface border border-border rounded-xl px-4 flex items-center justify-between transition-all hover:bg-hover-bg min-h-0 overflow-hidden shadow-sm group">
                 <div className="min-w-0">
                   <p className="text-text-disabled text-[9px] font-black uppercase tracking-tight mb-0.5 truncate">{card.label}</p>
                   <p className="text-xl font-black tracking-tighter leading-none" style={{ color: card.cor }}>
@@ -271,7 +271,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Gráficos Centrais - Ocupa 4/6 da altura */}
-        <div className="col-span-6 row-span-4 bg-surface border border-border rounded-2xl p-4 flex flex-col min-h-0 shadow-sm">
+        <div className="col-span-6 row-span-4 bg-surface border border-border rounded-xl p-4 flex flex-col min-h-0 shadow-sm">
           <div className="flex items-center justify-between mb-4 flex-shrink-0">
             <div className="flex items-center gap-2">
               <TrendingUp size={14} className="text-primary" />
@@ -299,7 +299,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Distribuição (Pizza) - Ocupa 4/6 da altura */}
-        <div className="col-span-3 row-span-4 bg-surface border border-border rounded-2xl p-4 flex flex-col min-h-0 shadow-sm">
+        <div className="col-span-3 row-span-4 bg-surface border border-border rounded-xl p-4 flex flex-col min-h-0 shadow-sm">
           <div className="flex items-center gap-2 mb-4 flex-shrink-0">
             <Activity size={14} className="text-amber-500" />
             <h2 className="text-text-main font-black text-[10px] uppercase tracking-widest">Canais</h2>
@@ -314,7 +314,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Ranking Inferior - Ocupa 2/6 da altura */}
-        <div className="col-span-9 row-span-2 bg-surface border border-border rounded-2xl p-4 flex flex-col min-h-0 shadow-sm">
+        <div className="col-span-9 row-span-2 bg-surface border border-border rounded-xl p-4 flex flex-col min-h-0 shadow-sm">
           <div className="flex items-center justify-between mb-3 flex-shrink-0">
             <div className="flex items-center gap-2">
               <Trophy size={14} className="text-amber-500" />

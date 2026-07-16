@@ -32,20 +32,20 @@ export function NotificationBell() {
     <div className="relative" ref={dropdownRef}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-400 hover:text-white transition-colors bg-[#1a3a24]/20 rounded-xl border border-[#1a3a24] hover:border-[#00ff88]/30"
+        className="relative p-2 text-text-muted hover:text-text-main transition-colors bg-hover-bg rounded-xl border border-border hover:border-[#00ff88]/30"
       >
         <Bell size={20} />
         {unreadCount > 0 && (
-          <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-black flex items-center justify-center rounded-full border-2 border-[#0a0f0c]">
+          <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-text-main text-[10px] font-black flex items-center justify-center rounded-full border-2 border-[#0a0f0c]">
             {unreadCount}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-3 w-80 bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200">
-          <div className="px-4 py-3 border-b border-[#1a3a24] flex items-center justify-between bg-[#0f1a14]">
-            <h3 className="text-white font-bold text-sm">Notificações</h3>
+        <div className="absolute right-0 mt-3 w-80 bg-background border border-border rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200">
+          <div className="px-4 py-3 border-b border-border flex items-center justify-between bg-surface">
+            <h3 className="text-text-main font-bold text-sm">Notificações</h3>
             {unreadCount > 0 && (
               <button 
                 onClick={markAllAsRead}
@@ -60,24 +60,24 @@ export function NotificationBell() {
             {notifications.length === 0 ? (
               <div className="p-8 text-center">
                 <Bell size={32} className="mx-auto text-gray-800 mb-2" />
-                <p className="text-gray-500 text-xs">Nenhuma notificação por aqui.</p>
+                <p className="text-text-muted text-xs">Nenhuma notificação por aqui.</p>
               </div>
             ) : (
               notifications.map((n) => (
                 <div 
                   key={n.id} 
-                  className={`p-4 border-b border-[#1a3a24]/50 hover:bg-[#1a3a24]/10 transition-colors relative group ${!n.read ? 'bg-[#00ff88]/5' : ''}`}
+                  className={`p-4 border-b border-border hover:bg-hover-bg/10 transition-colors relative group ${!n.read ? 'bg-[#00ff88]/5' : ''}`}
                 >
                   <div className="flex gap-3">
                     <div className="mt-1 shrink-0">{getIcon(n.type)}</div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-bold mb-0.5 ${!n.read ? 'text-white' : 'text-gray-400'}`}>
+                      <p className={`text-xs font-bold mb-0.5 ${!n.read ? 'text-text-main' : 'text-text-muted'}`}>
                         {n.title}
                       </p>
-                      <p className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed">
+                      <p className="text-[11px] text-text-muted line-clamp-2 leading-relaxed">
                         {n.message}
                       </p>
-                      <p className="text-[9px] text-gray-600 mt-2 font-medium">
+                      <p className="text-[9px] text-text-disabled mt-2 font-medium">
                         {new Date(n.created_at).toLocaleDateString('pt-BR')} às {new Date(n.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
@@ -104,10 +104,10 @@ export function NotificationBell() {
             )}
           </div>
 
-          <div className="p-2 border-t border-[#1a3a24] bg-[#0f1a14]">
+          <div className="p-2 border-t border-border bg-surface">
             <button 
               onClick={() => setIsOpen(false)}
-              className="w-full py-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white transition-colors"
+              className="w-full py-2 text-[10px] font-black uppercase tracking-widest text-text-muted hover:text-text-main transition-colors"
             >
               Fechar
             </button>

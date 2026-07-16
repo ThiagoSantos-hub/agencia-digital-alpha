@@ -32,16 +32,16 @@ import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import dynamic from 'next/dynamic'
 
 const KanbanColumn = dynamic(() => import('@/components/tasks/KanbanColumn').then(mod => mod.KanbanColumn), {
-  loading: () => <div className="w-80 h-full bg-[#1a3a24]/10 rounded-2xl animate-pulse" />
+  loading: () => <div className="w-80 h-full bg-hover-bg/10 rounded-xl animate-pulse" />
 })
 
 const TaskCard = dynamic(() => import('@/components/tasks/TaskCard').then(mod => mod.TaskCard), {
-  loading: () => <div className="h-32 bg-[#1a3a24]/5 rounded-xl animate-pulse" />
+  loading: () => <div className="h-32 bg-hover-bg/5 rounded-xl animate-pulse" />
 })
 
 const COLUMNS: { id: TaskStatus; label: string; icon: any; color: string }[] = [
   { id: 'pendente', label: 'Pendências', icon: PauseCircle, color: 'text-amber-600' },
-  { id: 'a_fazer', label: 'A Fazer', icon: Circle, color: 'text-gray-500' },
+  { id: 'a_fazer', label: 'A Fazer', icon: Circle, color: 'text-text-muted' },
   { id: 'em_andamento', label: 'Em Andamento', icon: PlayCircle, color: 'text-blue-500' },
   { id: 'finalizada', label: 'Finalizadas', icon: CheckCircle2, color: 'text-emerald-500' },
 ]
@@ -198,7 +198,7 @@ export default function CollaboratorTasksPage() {
       case 'alta': return 'text-red-500'
       case 'media': return 'text-amber-500'
       case 'baixa': return 'text-emerald-500'
-      default: return 'text-gray-500'
+      default: return 'text-text-muted'
     }
   }
 
@@ -216,8 +216,8 @@ export default function CollaboratorTasksPage() {
     <div className="p-4 space-y-4 h-[calc(100vh-64px)] flex flex-col">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
         <div>
-          <h1 className="text-2xl font-bold text-white">Minhas Tarefas</h1>
-          <p className="text-gray-400 text-sm mt-1">Arraste as tarefas para gerenciar seu progresso.</p>
+          <h1 className="text-2xl font-bold text-text-main">Minhas Tarefas</h1>
+          <p className="text-text-muted text-sm mt-1">Arraste as tarefas para gerenciar seu progresso.</p>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
@@ -281,41 +281,41 @@ export default function CollaboratorTasksPage() {
       {/* Modal de Edição de Tarefa */}
       {isEditModalOpen && editingTask && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
-            <div className="px-6 py-4 border-b border-[#1a3a24] flex justify-between items-center bg-[#0f1a14]">
-              <h2 className="text-white font-bold">Editar Minha Tarefa</h2>
-              <button onClick={() => setIsEditModalOpen(false)} className="text-gray-500 hover:text-white text-2xl">&times;</button>
+          <div className="bg-background border border-border rounded-xl w-full max-w-lg overflow-hidden shadow-2xl">
+            <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-surface">
+              <h2 className="text-text-main font-bold">Editar Minha Tarefa</h2>
+              <button onClick={() => setIsEditModalOpen(false)} className="text-text-muted hover:text-text-main text-2xl">&times;</button>
             </div>
             <form onSubmit={handleUpdateTask} className="p-6 space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Título</label>
+                <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Título</label>
                 <input 
                   required
                   type="text" 
                   value={editingTask.title}
                   onChange={e => setEditingTask({...editingTask, title: e.target.value})}
-                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Descrição</label>
+                <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Descrição</label>
                 <textarea 
                   rows={4}
                   value={editingTask.description || ''}
                   onChange={e => setEditingTask({...editingTask, description: e.target.value})}
-                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50 resize-none whitespace-pre-wrap"
+                  className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50 resize-none whitespace-pre-wrap"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Atribuir a</label>
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Atribuir a</label>
                   <select 
                     required
                     value={editingTask.assigned_to}
                     onChange={e => setEditingTask({...editingTask, assigned_to: e.target.value})}
-                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50"
                   >
                     <option value="">Selecione...</option>
                     {allUsers.map(u => (
@@ -324,11 +324,11 @@ export default function CollaboratorTasksPage() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Status</label>
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Status</label>
                   <select 
                     value={editingTask.status}
                     onChange={e => setEditingTask({...editingTask, status: e.target.value as TaskStatus})}
-                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50"
                   >
                     {COLUMNS.map(col => (
                       <option key={col.id} value={col.id}>{col.label}</option>
@@ -339,11 +339,11 @@ export default function CollaboratorTasksPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Prioridade</label>
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Prioridade</label>
                   <select 
                     value={editingTask.priority}
                     onChange={e => setEditingTask({...editingTask, priority: e.target.value as TaskPriority})}
-                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50"
                   >
                     <option value="baixa">Baixa</option>
                     <option value="media">Média</option>
@@ -352,23 +352,23 @@ export default function CollaboratorTasksPage() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Data de Entrega</label>
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Data de Entrega</label>
                   <input 
                     type="date" 
                     value={editingTask.due_date ? editingTask.due_date.split('T')[0] : ''}
                     onChange={e => setEditingTask({...editingTask, due_date: e.target.value})}
-                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest text-emerald-500">Link do Google Drive (Opcional)</label>
+                <label className="text-xs font-bold text-text-muted uppercase tracking-widest text-emerald-500">Link do Google Drive (Opcional)</label>
                 <input 
                   type="url" 
                   value={editingTask.drive_link || ''}
                   onChange={e => setEditingTask({...editingTask, drive_link: e.target.value})}
-                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50"
                   placeholder="https://drive.google.com/..."
                 />
               </div>
@@ -387,26 +387,26 @@ export default function CollaboratorTasksPage() {
       {/* Modal de Detalhes da Tarefa */}
       {isDetailModalOpen && selectedTask && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl w-full max-w-lg shadow-2xl">
-            <div className="px-4 py-3 border-b border-[#1a3a24] flex justify-between items-center">
-              <h2 className="text-white font-bold text-base">Detalhes da Tarefa</h2>
-              <button onClick={() => setIsDetailModalOpen(false)} className="text-gray-500 hover:text-white">
+          <div className="bg-background border border-border rounded-xl w-full max-w-lg shadow-2xl">
+            <div className="px-4 py-3 border-b border-border flex justify-between items-center">
+              <h2 className="text-text-main font-bold text-base">Detalhes da Tarefa</h2>
+              <button onClick={() => setIsDetailModalOpen(false)} className="text-text-muted hover:text-text-main">
                 <X size={20} />
               </button>
             </div>
 
             <div className="p-4 space-y-3">
               <div>
-                <h1 className="text-lg font-bold text-white">{selectedTask.title}</h1>
-                <span className={`inline-block text-xs font-black uppercase tracking-tighter px-2 py-0.5 rounded-lg ${getPriorityColor(selectedTask.priority)} bg-[#1a3a24]/50`}>
+                <h1 className="text-lg font-bold text-text-main">{selectedTask.title}</h1>
+                <span className={`inline-block text-xs font-black uppercase tracking-tighter px-2 py-0.5 rounded-lg ${getPriorityColor(selectedTask.priority)} bg-hover-bg/50`}>
                   {getPriorityLabel(selectedTask.priority)}
                 </span>
               </div>
 
               {selectedTask.description && (
                 <div>
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Descrição</h3>
-                  <div className="text-gray-300 text-sm leading-relaxed bg-[#1a3a24]/30 p-3 rounded-lg border border-[#1a3a24] whitespace-pre-wrap overflow-y-auto max-h-48 custom-scrollbar">
+                  <h3 className="text-xs font-bold text-text-muted uppercase tracking-widest mb-1">Descrição</h3>
+                  <div className="text-text-main text-sm leading-relaxed bg-hover-bg p-3 rounded-lg border border-border whitespace-pre-wrap overflow-y-auto max-h-48 custom-scrollbar">
                     {selectedTask.description}
                   </div>
                 </div>
@@ -428,38 +428,38 @@ export default function CollaboratorTasksPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Status</h3>
-                  <div className="bg-[#1a3a24]/30 p-2 rounded-lg border border-[#1a3a24]">
-                    <p className="text-sm text-white font-medium capitalize">
+                  <h3 className="text-xs font-bold text-text-muted uppercase tracking-widest mb-1">Status</h3>
+                  <div className="bg-hover-bg p-2 rounded-lg border border-border">
+                    <p className="text-sm text-text-main font-medium capitalize">
                       {COLUMNS.find(c => c.id === selectedTask.status)?.label}
                     </p>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Atribuído a</h3>
-                  <div className="bg-[#1a3a24]/30 p-2 rounded-lg border border-[#1a3a24]">
-                    <p className="text-sm text-white font-medium">
+                  <h3 className="text-xs font-bold text-text-muted uppercase tracking-widest mb-1">Atribuído a</h3>
+                  <div className="bg-hover-bg p-2 rounded-lg border border-border">
+                    <p className="text-sm text-text-main font-medium">
                       {selectedTask.assignee?.name || selectedTask.assignee?.email || 'Não atribuído'}
                     </p>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Data de Entrega</h3>
-                  <div className="flex items-center gap-2 bg-[#1a3a24]/30 p-2 rounded-lg border border-[#1a3a24]">
+                  <h3 className="text-xs font-bold text-text-muted uppercase tracking-widest mb-1">Data de Entrega</h3>
+                  <div className="flex items-center gap-2 bg-hover-bg p-2 rounded-lg border border-border">
                     <Calendar size={14} className="text-[#00ff88]" />
-                    <p className="text-sm text-white font-medium">
+                    <p className="text-sm text-text-main font-medium">
                       {selectedTask.due_date ? new Date(selectedTask.due_date).toLocaleDateString('pt-BR') : 'Sem prazo'}
                     </p>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Criado em</h3>
-                  <div className="flex items-center gap-2 bg-[#1a3a24]/30 p-2 rounded-lg border border-[#1a3a24]">
-                    <Clock size={14} className="text-gray-500" />
-                    <p className="text-sm text-gray-400 font-medium">
+                  <h3 className="text-xs font-bold text-text-muted uppercase tracking-widest mb-1">Criado em</h3>
+                  <div className="flex items-center gap-2 bg-hover-bg p-2 rounded-lg border border-border">
+                    <Clock size={14} className="text-text-muted" />
+                    <p className="text-sm text-text-muted font-medium">
                       {new Date(selectedTask.created_at).toLocaleDateString('pt-BR')}
                     </p>
                   </div>
@@ -473,43 +473,43 @@ export default function CollaboratorTasksPage() {
       {/* Modal de Nova Tarefa */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
-          <div className="bg-[#0a0f0c] border border-[#1a3a24] rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[95vh]">
-            <div className="px-6 py-4 border-b border-[#1a3a24] flex justify-between items-center bg-[#0f1a14] shrink-0 rounded-t-2xl">
-              <h2 className="text-white font-bold">Criar Nova Tarefa / Pendência</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-500 hover:text-white text-2xl">&times;</button>
+          <div className="bg-background border border-border rounded-xl w-full max-w-lg shadow-2xl flex flex-col max-h-[95vh]">
+            <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-surface shrink-0 rounded-t-2xl">
+              <h2 className="text-text-main font-bold">Criar Nova Tarefa / Pendência</h2>
+              <button onClick={() => setIsModalOpen(false)} className="text-text-muted hover:text-text-main text-2xl">&times;</button>
             </div>
             <form onSubmit={handleCreateTask} className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Título</label>
+                <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Título</label>
                 <input 
                   required
                   type="text" 
                   value={newTask.title}
                   onChange={e => setNewTask({...newTask, title: e.target.value})}
-                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50"
                   placeholder="Ex: Falta senha do Instagram do Cliente X"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Descrição (Opcional)</label>
+                <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Descrição (Opcional)</label>
                 <textarea 
                   rows={3}
                   value={newTask.description}
                   onChange={e => setNewTask({...newTask, description: e.target.value})}
-                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50 resize-none"
+                  className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50 resize-none"
                   placeholder="Mais detalhes sobre o que está faltando..."
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Enviar para</label>
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Enviar para</label>
                   <select 
                     required
                     value={newTask.assigned_to}
                     onChange={e => setNewTask({...newTask, assigned_to: e.target.value})}
-                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50"
                   >
                     <option value="">Selecione...</option>
                     {allUsers.map(u => (
@@ -518,11 +518,11 @@ export default function CollaboratorTasksPage() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Status Inicial</label>
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Status Inicial</label>
                   <select 
                     value={newTask.status}
                     onChange={e => setNewTask({...newTask, status: e.target.value as TaskStatus})}
-                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50"
                   >
                     <option value="pendente">Pendência</option>
                     <option value="a_fazer">A Fazer</option>
@@ -532,11 +532,11 @@ export default function CollaboratorTasksPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Prioridade</label>
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Prioridade</label>
                   <select 
                     value={newTask.priority}
                     onChange={e => setNewTask({...newTask, priority: e.target.value as TaskPriority})}
-                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50"
                   >
                     <option value="baixa">Baixa</option>
                     <option value="media">Média</option>
@@ -545,23 +545,23 @@ export default function CollaboratorTasksPage() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Data de Entrega</label>
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Data de Entrega</label>
                   <input 
                     type="date" 
                     value={newTask.due_date}
                     onChange={e => setNewTask({...newTask, due_date: e.target.value})}
-                    className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest text-emerald-500">Link do Google Drive (Opcional)</label>
+                <label className="text-xs font-bold text-text-muted uppercase tracking-widest text-emerald-500">Link do Google Drive (Opcional)</label>
                 <input 
                   type="url" 
                   value={newTask.drive_link}
                   onChange={e => setNewTask({...newTask, drive_link: e.target.value})}
-                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50"
                   placeholder="https://drive.google.com/..."
                 />
               </div>

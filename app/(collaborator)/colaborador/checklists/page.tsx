@@ -129,20 +129,20 @@ export default function ColaboradorChecklistsPage() {
 
   if (loading && checklists.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#0a0f0c]">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-10 h-10 text-[#00ff88] animate-spin" />
-          <p className="text-gray-500 text-xs font-black uppercase tracking-[0.2em]">Carregando suas rotinas...</p>
+          <p className="text-text-muted text-xs font-black uppercase tracking-[0.2em]">Carregando suas rotinas...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="p-8 min-h-screen bg-[#0a0f0c] text-gray-100 selection:bg-[#00ff88]/30">
+    <div className="p-8 min-h-screen bg-background text-text-main selection:bg-[#00ff88]/30">
       {/* HEADER MINIMALISTA */}
       <div className="flex justify-between items-center mb-10">
-        <h1 className="text-xl font-bold text-white uppercase tracking-wider">Meus Checklists</h1>
+        <h1 className="text-xl font-bold text-text-main uppercase tracking-wider">Meus Checklists</h1>
         
         {!isCreating && (
           <button 
@@ -157,27 +157,27 @@ export default function ColaboradorChecklistsPage() {
 
       {/* ÁREA DE CRIAÇÃO - MINIMALISTA */}
       {isCreating && (
-        <div className="mb-6 bg-[#111] border border-[#2a2a2a] rounded-2xl p-4 animate-in fade-in duration-300">
+        <div className="mb-6 bg-surface border border-border rounded-xl p-4 animate-in fade-in duration-300">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xs font-bold text-white uppercase tracking-wider">Novo Checklist</h2>
-            <button onClick={resetCreateForm} className="text-gray-500 hover:text-white transition-all"><X size={16} /></button>
+            <h2 className="text-xs font-bold text-text-main uppercase tracking-wider">Novo Checklist</h2>
+            <button onClick={resetCreateForm} className="text-text-muted hover:text-text-main transition-all"><X size={16} /></button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="group">
-                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2 group-focus-within:text-[#00ff88] transition-colors">Nome da Lista</label>
+                <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2 group-focus-within:text-[#00ff88] transition-colors">Nome da Lista</label>
                 <input
                   type="text"
                   value={newListTitle}
                   onChange={(e) => setNewListTitle(e.target.value)}
                   placeholder="Ex: Tarefas Diárias, Organização..."
-                  className="w-full px-4 py-2.5 bg-[#0a0f0c] border border-[#2a2a2a] rounded-xl text-xs focus:outline-none focus:border-[#00ff88] focus:ring-2 focus:ring-[#00ff88]/10 transition-all"
+                  className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:border-[#00ff88] focus:ring-2 focus:ring-[#00ff88]/10 transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Dias de Repetição</label>
+                <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2">Dias de Repetição</label>
                 <div className="flex justify-between gap-1">
                   {DIAS_SEMANA.map(day => (
                     <button
@@ -186,7 +186,7 @@ export default function ColaboradorChecklistsPage() {
                       className={`flex-1 rounded-lg text-[10px] font-black transition-all duration-300 border flex items-center justify-center h-8 ${
                         newListDays.includes(day.id)
                           ? 'bg-[#00ff88] text-[#0a0f0c] border-[#00ff88] shadow-[0_0_20px_rgba(0,255,136,0.3)]'
-                          : 'bg-[#0a0f0c] text-gray-500 border-[#2a2a2a] hover:border-gray-600'
+                          : 'bg-background text-text-muted border-border hover:border-gray-600'
                       }`}
                     >
                       {day.label}
@@ -197,7 +197,7 @@ export default function ColaboradorChecklistsPage() {
             </div>
 
             <div className="space-y-4">
-              <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Itens do Checklist</label>
+              <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Itens do Checklist</label>
               <div className="relative group">
                 <input
                   type="text"
@@ -205,7 +205,7 @@ export default function ColaboradorChecklistsPage() {
                   onChange={(e) => setCurrentNewItem(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addLocalItem()}
                   placeholder="O que precisa ser feito?"
-                  className="w-full px-4 py-2.5 bg-[#0a0f0c] border border-[#2a2a2a] rounded-xl text-xs focus:outline-none focus:border-[#00ff88] pr-12"
+                  className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:border-[#00ff88] pr-12"
                 />
                 <button onClick={addLocalItem} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-[#00ff88]/10 text-[#00ff88] rounded-lg hover:bg-[#00ff88] hover:text-[#0a0f0c] transition-all">
                   <Plus size={16} />
@@ -214,9 +214,9 @@ export default function ColaboradorChecklistsPage() {
 
               <div className="space-y-1.5 max-h-36 overflow-y-auto custom-scrollbar pr-2">
                 {newListItems.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between p-2.5 bg-[#0a0f0c]/50 border border-[#2a2a2a] rounded-lg group hover:border-gray-700 transition-all">
-                    <span className="text-xs text-gray-400 font-medium">{item}</span>
-                    <button onClick={() => setNewListItems(newListItems.filter((_, i) => i !== index))} className="text-gray-700 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
+                  <div key={index} className="flex items-center justify-between p-2.5 bg-background/50 border border-border rounded-lg group hover:border-gray-700 transition-all">
+                    <span className="text-xs text-text-muted font-medium">{item}</span>
+                    <button onClick={() => setNewListItems(newListItems.filter((_, i) => i !== index))} className="text-text-disabled hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
                       <Trash2 size={16} />
                     </button>
                   </div>
@@ -225,8 +225,8 @@ export default function ColaboradorChecklistsPage() {
             </div>
           </div>
 
-          <div className="mt-4 flex justify-end gap-3 pt-4 border-t border-[#2a2a2a]">
-            <button onClick={resetCreateForm} className="text-[9px] font-bold text-gray-500 hover:text-white uppercase tracking-wider transition-colors">Cancelar</button>
+          <div className="mt-4 flex justify-end gap-3 pt-4 border-t border-border">
+            <button onClick={resetCreateForm} className="text-[9px] font-bold text-text-muted hover:text-text-main uppercase tracking-wider transition-colors">Cancelar</button>
             <button 
               onClick={handleCreateList}
               disabled={!newListTitle.trim() || newListItems.length === 0}
@@ -245,7 +245,7 @@ export default function ColaboradorChecklistsPage() {
           <div className="flex items-center justify-between mb-6 px-2">
             <div className="flex items-center gap-4">
               <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]" />
-              <h2 className="text-base font-bold text-white uppercase tracking-wider">Minhas Pendências</h2>
+              <h2 className="text-base font-bold text-text-main uppercase tracking-wider">Minhas Pendências</h2>
             </div>
             <span className="text-[10px] font-bold text-amber-500/40 uppercase tracking-widest">{pendingLists.length} Ativas</span>
           </div>
@@ -277,7 +277,7 @@ export default function ColaboradorChecklistsPage() {
                   </div>
                 ))}
                 {pendingLists.length === 0 && (
-                  <div className="w-full py-16 border border-dashed border-[#2a2a2a] rounded-2xl flex flex-col items-center justify-center text-gray-700">
+                  <div className="w-full py-16 border border-dashed border-border rounded-xl flex flex-col items-center justify-center text-text-disabled">
                     <ListChecks size={32} className="mb-3 opacity-20" />
                     <p className="text-[10px] font-bold uppercase tracking-widest">Nada pendente no momento</p>
                   </div>
@@ -315,7 +315,7 @@ export default function ColaboradorChecklistsPage() {
           <div className="flex items-center justify-between mb-6 px-2">
             <div className="flex items-center gap-4">
               <div className="w-2 h-2 rounded-full bg-[#00ff88] shadow-[0_0_8px_rgba(0,255,136,0.4)]" />
-              <h2 className="text-base font-bold text-white uppercase tracking-wider">Finalizados</h2>
+              <h2 className="text-base font-bold text-text-main uppercase tracking-wider">Finalizados</h2>
             </div>
             <span className="text-[10px] font-bold text-[#00ff88]/30 uppercase tracking-widest">{completedLists.length} Feitas</span>
           </div>
@@ -369,13 +369,13 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
   const progress = items.length > 0 ? (completedCount / items.length) * 100 : 0
 
   return (
-    <div className={`bg-[#111] border rounded-2xl overflow-hidden transition-all duration-300 flex flex-col ${
+    <div className={`bg-surface border rounded-xl overflow-hidden transition-all duration-300 flex flex-col ${
       list.status === 'completed' 
         ? 'border-[#00ff88]/10 opacity-50' 
-        : 'border-[#1a3a24] hover:border-[#2a4a34]'
+        : 'border-border hover:border-[#2a4a34]'
     }`}>
       {/* BARRA DE PROGRESSO SIMPLES */}
-      <div className="h-0.5 bg-[#1a3a24] w-full">
+      <div className="h-0.5 bg-hover-bg w-full">
         <div 
           className="h-full bg-[#00ff88] transition-all duration-500" 
           style={{ width: `${progress}%` }} 
@@ -391,7 +391,7 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full bg-[#0a0f0c] border border-[#00ff88]/40 rounded-xl px-4 py-2 text-sm text-white focus:outline-none"
+                  className="w-full bg-background border border-[#00ff88]/40 rounded-xl px-4 py-2 text-sm text-text-main focus:outline-none"
                   autoFocus
                 />
                 <div className="grid grid-cols-7 gap-1">
@@ -403,7 +403,7 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
                         else setDays([...days, day.id].sort())
                       }}
                       className={`aspect-square rounded-lg text-[10px] font-black border transition-all flex items-center justify-center ${
-                        days.includes(day.id) ? 'bg-[#00ff88] text-[#0a0f0c] border-[#00ff88]' : 'bg-[#0a0f0c] text-gray-600 border-[#2a2a2a]'
+                        days.includes(day.id) ? 'bg-[#00ff88] text-[#0a0f0c] border-[#00ff88]' : 'bg-background text-text-disabled border-border'
                       }`}
                     >
                       {day.label}
@@ -420,14 +420,14 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
                   >
                     Salvar
                   </button>
-                  <button onClick={() => setIsEditing(false)} className="px-4 py-1.5 bg-white/5 text-gray-400 text-[10px] font-black uppercase rounded-lg">Sair</button>
+                  <button onClick={() => setIsEditing(false)} className="px-4 py-1.5 bg-white/5 text-text-muted text-[10px] font-black uppercase rounded-lg">Sair</button>
                 </div>
               </div>
             ) : (
               <div className="space-y-2">
                 <div className="flex items-center gap-2 group/title">
-                  <h3 className="font-black text-white text-base tracking-tight truncate uppercase">{list.title}</h3>
-                  <button onClick={() => setIsEditing(true)} className="opacity-0 group-hover/title:opacity-100 text-gray-600 hover:text-[#00ff88] transition-all">
+                  <h3 className="font-black text-text-main text-base tracking-tight truncate uppercase">{list.title}</h3>
+                  <button onClick={() => setIsEditing(true)} className="opacity-0 group-hover/title:opacity-100 text-text-disabled hover:text-[#00ff88] transition-all">
                     <Edit2 size={12} />
                   </button>
                 </div>
@@ -441,7 +441,7 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
                       ))}
                     </div>
                   ) : (
-                    <span className="text-[8px] font-black text-gray-600 uppercase tracking-widest">Tarefa Única</span>
+                    <span className="text-[8px] font-black text-text-disabled uppercase tracking-widest">Tarefa Única</span>
                   )}
                 </div>
               </div>
@@ -464,7 +464,7 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
                 className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center cursor-pointer transition-all duration-300 ${
                   item.completed 
                     ? 'bg-[#00ff88] border-[#00ff88] shadow-[0_0_10px_rgba(0,255,136,0.3)]' 
-                    : 'border-[#1a3a24] bg-[#0a0f0c] hover:border-gray-600'
+                    : 'border-border bg-background hover:border-gray-600'
                 }`}
               >
                 {item.completed && <Check size={14} className="text-[#0a0f0c] stroke-[4px]" />}
@@ -476,7 +476,7 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
                     type="text"
                     value={editingItemText}
                     onChange={(e) => setEditingItemText(e.target.value)}
-                    className="flex-1 bg-[#0a0f0c] border border-[#00ff88]/30 rounded-lg px-3 py-1 text-xs text-white outline-none"
+                    className="flex-1 bg-background border border-[#00ff88]/30 rounded-lg px-3 py-1 text-xs text-text-main outline-none"
                     autoFocus
                     onBlur={() => setEditingItemId(null)}
                     onKeyDown={(e) => {
@@ -492,7 +492,7 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
                   <span 
                     onClick={() => { setEditingItemId(item.id); setEditingItemText(item.text); }}
                     className={`text-xs font-bold cursor-pointer transition-all truncate pr-2 ${
-                      item.completed ? 'text-gray-700 line-through' : 'text-gray-400 hover:text-white'
+                      item.completed ? 'text-text-disabled line-through' : 'text-text-muted hover:text-text-main'
                     }`}
                   >
                     {item.text}
@@ -506,7 +506,7 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
           ))}
 
           <div className="flex items-center gap-4 pt-4 mt-2 border-t border-white/5">
-            <div className="w-6 h-6 flex items-center justify-center text-gray-700">
+            <div className="w-6 h-6 flex items-center justify-center text-text-disabled">
               <Plus size={16} />
             </div>
             <input
@@ -520,16 +520,16 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
                   setNewItemText('');
                 }
               }}
-              className="flex-1 bg-transparent text-xs font-bold text-gray-600 focus:outline-none focus:text-[#00ff88] transition-colors"
+              className="flex-1 bg-transparent text-xs font-bold text-text-disabled focus:outline-none focus:text-[#00ff88] transition-colors"
             />
           </div>
         </div>
       </div>
 
-      <div className="px-6 py-3 bg-[#0a0f0c]/40 border-t border-white/5 flex justify-between items-center">
+      <div className="px-6 py-3 bg-background/40 border-t border-white/5 flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <Clock size={10} className="text-gray-700" />
-          <span className="text-[8px] font-bold text-gray-700 uppercase tracking-widest">
+          <Clock size={10} className="text-text-disabled" />
+          <span className="text-[8px] font-bold text-text-disabled uppercase tracking-widest">
             {list.status === 'completed' ? 'Finalizado' : 'Em Progresso'}
           </span>
         </div>

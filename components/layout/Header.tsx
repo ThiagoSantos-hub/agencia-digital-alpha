@@ -86,7 +86,7 @@ export function Header() {
           >
             <Bell size={18} className={naoLidas > 0 ? 'fill-amber-600' : ''} />
             {naoLidas > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none border-2 border-surface">
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-text-main text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none border-2 border-surface">
                 {naoLidas > 99 ? '99+' : naoLidas}
               </span>
             )}
@@ -94,7 +94,7 @@ export function Header() {
 
           {/* Painel de notificações */}
           {sinoAberto && (
-            <div className="absolute right-0 top-11 w-80 bg-surface border border-border rounded-2xl shadow-2xl z-50 flex flex-col max-h-[480px]">
+            <div className="absolute right-0 top-11 w-80 bg-surface border border-border rounded-xl shadow-2xl z-50 flex flex-col max-h-[480px]">
               {/* Cabeçalho do painel */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                 <div className="flex items-center gap-2">

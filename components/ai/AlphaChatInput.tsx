@@ -79,13 +79,13 @@ export function AlphaChatInput({ loading, onSend, onSendVoice, onSendAudio }: Al
   const fmtTempo = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 
   return (
-    <div className={`flex items-end gap-2 bg-[#0f1a14] border rounded-2xl px-4 py-3 transition-colors ${gravando ? 'border-red-500/50' : 'border-[#1a3a24]'}`}>
+    <div className={`flex items-end gap-2 bg-surface border rounded-xl px-4 py-3 transition-colors ${gravando ? 'border-red-500/50' : 'border-border'}`}>
       {gravando ? (
         // Estado de gravação
         <div className="flex-1 flex items-center gap-3">
           <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse flex-shrink-0" />
           <span className="text-red-400 text-sm font-medium">Gravando {fmtTempo(segundos)}</span>
-          <span className="text-gray-600 text-xs">Fale sua pergunta para a Alpha...</span>
+          <span className="text-text-disabled text-xs">Fale sua pergunta para a Alpha...</span>
         </div>
       ) : (
         <textarea
@@ -96,7 +96,7 @@ export function AlphaChatInput({ loading, onSend, onSendVoice, onSendAudio }: Al
           placeholder="Pergunte algo para a Alpha..."
           rows={1}
           disabled={loading}
-          className="flex-1 bg-transparent text-white text-sm placeholder-gray-600 resize-none focus:outline-none leading-relaxed disabled:opacity-50"
+          className="flex-1 bg-transparent text-text-main text-sm placeholder-gray-600 resize-none focus:outline-none leading-relaxed disabled:opacity-50"
           style={{ maxHeight: '160px' }}
         />
       )}
@@ -109,7 +109,7 @@ export function AlphaChatInput({ loading, onSend, onSendVoice, onSendAudio }: Al
         className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0 ${
           gravando
             ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
-            : 'text-gray-500 hover:text-[#00ff88] hover:bg-[#00ff88]/10'
+            : 'text-text-muted hover:text-[#00ff88] hover:bg-[#00ff88]/10'
         }`}
       >
         {gravando ? <Square size={15} fill="currentColor" /> : <Mic size={17} />}

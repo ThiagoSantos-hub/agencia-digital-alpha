@@ -117,8 +117,8 @@ export default function PerfilColaboradorPage() {
           <UserCircle size={20} className="text-[#00ff88]" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-white">Meu Perfil</h1>
-          <p className="text-gray-400 text-xs">Gerencie suas informações e segurança da conta.</p>
+          <h1 className="text-xl font-bold text-text-main">Meu Perfil</h1>
+          <p className="text-text-muted text-xs">Gerencie suas informações e segurança da conta.</p>
         </div>
       </div>
 
@@ -136,47 +136,47 @@ export default function PerfilColaboradorPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Dados Pessoais */}
-        <section className="bg-[#0a0f0c] border border-[#1a3a24] p-5 rounded-2xl">
+        <section className="bg-background border border-border p-5 rounded-xl">
           <div className="flex items-center gap-2.5 mb-4">
             <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
               <User size={16} />
             </div>
-            <h2 className="text-base font-bold text-white">Dados Pessoais</h2>
+            <h2 className="text-base font-bold text-text-main">Dados Pessoais</h2>
           </div>
 
           <form onSubmit={handleUpdateName} className="space-y-3">
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">E-mail</label>
+              <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">E-mail</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" size={14} />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-text-disabled" size={14} />
                 <input 
                   type="email" 
                   disabled
                   value={user?.email || ''}
-                  className="w-full bg-[#1a3a24]/10 border border-[#1a3a24] rounded-xl pl-9 pr-3 py-2 text-sm text-gray-500 cursor-not-allowed"
+                  className="w-full bg-hover-bg/10 border border-border rounded-xl pl-9 pr-3 py-2 text-sm text-text-muted cursor-not-allowed"
                 />
               </div>
               <p className="text-[10px] text-amber-500/70 font-medium">O email não pode ser alterado.</p>
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Nome de exibição</label>
+              <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">Nome de exibição</label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={14} />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={14} />
                 <input 
                   type="text" 
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Seu nome"
-                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                  className="w-full bg-hover-bg border border-border rounded-xl pl-9 pr-3 py-2 text-sm text-text-main focus:outline-none focus:border-emerald-500/50 transition-all"
                 />
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Cargo</label>
-  <div className="bg-[#1a3a24]/10 border border-[#1a3a24] rounded-xl px-3 py-2 text-sm text-emerald-400 font-medium">
+              <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">Cargo</label>
+  <div className="bg-hover-bg/10 border border-border rounded-xl px-3 py-2 text-sm text-emerald-400 font-medium">
     {cargo || 'Colaborador'}
   </div>
             </div>
@@ -193,31 +193,31 @@ export default function PerfilColaboradorPage() {
         </section>
 
         {/* Segurança / Senha */}
-        <section className="bg-[#0a0f0c] border border-[#1a3a24] p-5 rounded-2xl">
+        <section className="bg-background border border-border p-5 rounded-xl">
           <div className="flex items-center gap-2.5 mb-4">
             <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
               <Lock size={16} />
             </div>
-            <h2 className="text-base font-bold text-white">Segurança</h2>
+            <h2 className="text-base font-bold text-text-main">Segurança</h2>
           </div>
 
           <form onSubmit={handleUpdatePassword} className="space-y-3">
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Nova Senha</label>
+              <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">Nova Senha</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={14} />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={14} />
                 <input 
                   type={showPassword ? 'text' : 'password'} 
                   required
                   value={passwordData.newPassword}
                   onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
                   placeholder="Mínimo 6 caracteres"
-                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl pl-9 pr-10 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                  className="w-full bg-hover-bg border border-border rounded-xl pl-9 pr-10 py-2 text-sm text-text-main focus:outline-none focus:border-emerald-500/50 transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition-colors"
                 >
                   {showPassword ? <AlertCircle size={14} className="rotate-45" /> : <KeyRound size={14} />}
                 </button>
@@ -225,21 +225,21 @@ export default function PerfilColaboradorPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Confirmar Senha</label>
+              <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">Confirmar Senha</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={14} />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={14} />
                 <input 
                   type={showConfirm ? 'text' : 'password'} 
                   required
                   value={passwordData.confirmNewPassword}
                   onChange={(e) => setPasswordData({...passwordData, confirmNewPassword: e.target.value})}
                   placeholder="Repita a nova senha"
-                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl pl-9 pr-10 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                  className="w-full bg-hover-bg border border-border rounded-xl pl-9 pr-10 py-2 text-sm text-text-main focus:outline-none focus:border-emerald-500/50 transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition-colors"
                 >
                   {showConfirm ? <AlertCircle size={14} className="rotate-45" /> : <KeyRound size={14} />}
                 </button>
