@@ -15,14 +15,12 @@ const paddingStyles = {
 export function Card({ children, className = '', padding = 'md' }: CardProps) {
   return (
     <div
-      className={`bg-surface border border-border rounded-2xl shadow-sm ${paddingStyles[padding]} ${className}`}
+      className={`bg-surface border border-border rounded-xl shadow-sm ${paddingStyles[padding]} ${className}`}
     >
       {children}
     </div>
   )
 }
-
-// ─── Subcomponentes opcionais ────────────────────────────────────────────────
 
 interface CardHeaderProps {
   title: string

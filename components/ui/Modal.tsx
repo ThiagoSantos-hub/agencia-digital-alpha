@@ -28,7 +28,6 @@ export function Modal({
   footer,
   size = 'md',
 }: ModalProps) {
-  // Fechar com ESC
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -37,7 +36,6 @@ export function Modal({
     return () => document.removeEventListener('keydown', handleKey)
   }, [open, onClose])
 
-  // Bloquear scroll do body
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
@@ -49,7 +47,7 @@ export function Modal({
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       {/* Overlay */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-text-main/40 backdrop-blur-sm"
         onClick={onClose}
       />
 
@@ -57,21 +55,21 @@ export function Modal({
       <div
         className={`
           relative w-full ${sizeStyles[size]}
-          bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl shadow-2xl
+          bg-surface border border-border rounded-xl shadow-2xl
           flex flex-col max-h-[90vh]
         `}
       >
         {/* Header */}
-        <div className="flex items-start justify-between p-6 border-b border-[#2a2a2a]">
+        <div className="flex items-start justify-between p-6 border-b border-border">
           <div>
-            <h2 className="text-white font-semibold text-base">{title}</h2>
+            <h2 className="text-text-main font-bold text-base">{title}</h2>
             {description && (
-              <p className="text-gray-500 text-sm mt-0.5">{description}</p>
+              <p className="text-text-muted text-sm mt-0.5 font-medium">{description}</p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-white transition-colors ml-4 mt-0.5"
+            className="text-text-disabled hover:text-text-main transition-colors ml-4 mt-0.5"
             aria-label="Fechar"
           >
             <X size={18} />
@@ -79,11 +77,11 @@ export function Modal({
         </div>
 
         {/* Conteúdo com scroll */}
-        <div className="flex-1 overflow-y-auto p-6">{children}</div>
+        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">{children}</div>
 
         {/* Footer opcional */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 p-6 border-t border-[#2a2a2a]">
+          <div className="flex items-center justify-end gap-3 p-6 border-t border-border bg-hover-bg/30">
             {footer}
           </div>
         )}
