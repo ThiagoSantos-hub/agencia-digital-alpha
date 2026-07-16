@@ -205,78 +205,74 @@ export default function NovidadesAdminPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4">
-            {novidades.map((n) => (
-              <div
-                key={n.id}
-                className={`bg-surface border rounded-xl overflow-hidden transition-all ${
-                  isOpen(n.id)
-                    ? 'border-primary shadow-sm'
-                    : 'border-border hover:border-active-border'
-                }`}
-              >
-                {/* Cabeçalho clicável */}
-                <button
-                  onClick={() => toggleExpand(n.id)}
-                  className="w-full text-left px-5 py-4 flex items-center gap-3 hover:bg-hover-bg transition-colors"
+            {novidades.map((n) => {
+              const open = isOpen(n.id)
+              return (
+                <div
+                  key={n.id}
+                  className={`bg-surface border rounded-xl overflow-hidden transition-all ${
+                    open
+                      ? 'border-primary shadow-sm'
+                      : 'border-border hover:border-active-border'
+                  }`}
                 >
-                  <Sparkles
-                    size={18}
-                    className={`flex-shrink-0 transition-colors ${
-                      isOpen(n.id) ? 'text-primary' : 'text-text-disabled'
-                    }`}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-text-main font-semibold text-sm truncate">{n.titulo}</h3>
-                  </div>
-                  <span className="text-text-disabled text-xs flex-shrink-0">
-                    {new Date(n.created_at).toLocaleDateString('pt-BR')}
-                  </span>
-                  <ChevronDown
-                    size={18}
-                    className={`text-text-muted flex-shrink-0 transition-transform duration-200 ${
-                      isOpen(n.id) ? 'rotate-180' : ''
-                    }`}
-                  />
-                </button>
-
-                {/* Conteúdo expandido */}
-                {isOpen(n.id) && (
-                  <div className="border-t border-border px-5 pb-4 pt-4 space-y-4">
-                    <p className="text-text-muted text-sm leading-relaxed whitespace-pre-wrap">
-                      {n.descricao}
-                    </p>
-                    
-                    {/* Botões de Ação */}
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleEditar(n)
-                        }}
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-primary hover:bg-active-bg border border-active-border transition-all text-xs font-bold"
-                      >
-                        <Pencil size={14} />
-                        Editar
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleExcluir(n.id)
-                        }}
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-red-500 hover:bg-red-50 border border-red-200 transition-all text-xs font-bold"
-                      >
-                        <Trash2 size={14} />
-                        Excluir
-                      </button>
+                  {/* Cabeçalho clicável */}
+                  <button
+                    onClick={() => toggleExpand(n.id)}
+                    className="w-full text-left px-5 py-4 flex items-center gap-3 transition-colors"
+                  >
+                    <Sparkles
+                      size={18}
+                      className={`flex-shrink-0 transition-colors ${
+                        open ? 'text-primary' : 'text-text-disabled'
+                      }`}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-text-main font-semibold text-sm truncate">{n.titulo}</h3>
                     </div>
-                  </div>
-                )}
-              </div>
-            ))}
+                    <span className="text-text-disabled text-xs flex-shrink-0">
+                      {new Date(n.created_at).toLocaleDateString('pt-BR')}
+                    </span>
+                    <ChevronDown
+                      size={18}
+                      className={`text-text-muted flex-shrink-0 transition-transform duration-200 ${
+                        open ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+
+                  {/* Conteúdo expandido */}
+                  {open && (
+                    <div className="border-t border-border px-5 pb-4 pt-4">
+                      <p className="text-text-muted text-sm leading-relaxed whitespace-pre-wrap">
+                        {n.descricao}
+                      </p>
+                      
+                      {/* Botões de Ação */}
+                      <div className="flex items-center gap-2 mt-4">
+                        <button
+                          onClick={() => handleEditar(n)}
+                          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-primary hover:bg-active-bg border border-active-border transition-all text-xs font-bold"
+                        >
+                          <Pencil size={14} />
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleExcluir(n.id)}
+                          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-red-500 hover:bg-red-50 border border-red-200 transition-all text-xs font-bold"
+                        >
+                          <Trash2 size={14} />
+                          Excluir
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
     </div>
   )
 }
-// dummy change
