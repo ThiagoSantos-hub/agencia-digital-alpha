@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
-import { Sparkles, Trash2, Plus, RefreshCw, Pencil, Check, X } from 'lucide-react'
+import { Sparkles, Trash2, Plus, RefreshCw, Pencil, Check, X, ChevronDown } from 'lucide-react'
 
 interface Novidade {
   id: string
@@ -15,7 +15,7 @@ export default function NovidadesAdminPage() {
   const [novidades, setNovidades] = useState<Novidade[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [selectedNovidade, setSelectedNovidade] = useState<Novidade | null>(null)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
   
   // Estados para Cadastro/Edição
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -41,6 +41,10 @@ export default function NovidadesAdminPage() {
     fetchNovidades()
   }, [])
 
+  const toggleExpand = (id: string) => {
+    setExpandedId(prev => prev === id ? null : id)
+  }
+
   const handleSalvar = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!titulo || !descricao) return
@@ -56,6 +60,7 @@ export default function NovidadesAdminPage() {
 
       if (!error) {
         alert('Novidade atualizada com sucesso!')
+        setExpandedId(null)
         setEditingId(null)
         setTitulo('')
         setDescricao('')
@@ -82,6 +87,7 @@ export default function NovidadesAdminPage() {
   }
 
   const handleEditar = (n: Novidade) => {
+    setExpandedId(null)
     setEditingId(n.id)
     setTitulo(n.titulo)
     setDescricao(n.descricao)
@@ -103,54 +109,57 @@ export default function NovidadesAdminPage() {
       .eq('id', id)
 
     if (!error) {
+      if (expandedId === id) setExpandedId(null)
       setNovidades(novidades.filter(n => n.id !== id))
     } else {
       alert('Erro ao excluir novidade.')
     }
   }
 
+  const isOpen = (id: string) => expandedId === id
+
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-[#1E293B] text-3xl font-bold tracking-tight">Novidades do Sistema</h1>
-        <p className="text-[#64748B] text-sm mt-1">Gerencie as atualizações que aparecem para os colaboradores.</p>
+        <h1 className="text-text-main text-3xl font-bold tracking-tight">Novidades do Sistema</h1>
+        <p className="text-text-muted text-sm mt-1">Gerencie as atualizações que aparecem para os colaboradores.</p>
       </div>
 
       {/* Formulário de Cadastro/Edição */}
-      <div className={`bg-white border rounded-2xl p-6 shadow-xl transition-all ${editingId ? 'border-[#1A56DB]' : 'border-[#E2E8F0]'}`}>
-        <h2 className="text-[#1E293B] font-semibold text-lg mb-4 flex items-center gap-2">
+      <div className={`bg-surface border rounded-xl p-5 transition-all ${editingId ? 'border-primary' : 'border-border'}`}>
+        <h2 className="text-text-main font-semibold text-lg mb-4 flex items-center gap-2">
           {editingId ? (
             <>
-              <Pencil size={20} className="text-blue-500" />
+              <Pencil size={20} className="text-primary" />
               Editar Novidade
             </>
           ) : (
             <>
-              <Plus size={20} className="text-emerald-500" />
+              <Plus size={20} className="text-cta" />
               Publicar Nova Atualização
             </>
           )}
         </h2>
         <form onSubmit={handleSalvar} className="space-y-4">
           <div>
-            <label className="block text-[#64748B] text-xs font-bold uppercase tracking-wider mb-1.5">Título</label>
+            <label className="block text-text-muted text-xs font-bold uppercase tracking-wider mb-1.5">Título</label>
             <input
               type="text"
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
               placeholder="Ex: Novo módulo de relatórios disponível"
-              className="w-full bg-white border border-[#E2E8F0] rounded-xl px-4 py-3 text-[#1E293B] text-sm focus:outline-none focus:border-emerald-500/50 transition-all"
+              className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-text-main text-sm focus:outline-none focus:border-primary transition-all"
               required
             />
           </div>
           <div>
-            <label className="block text-[#64748B] text-xs font-bold uppercase tracking-wider mb-1.5">Descrição</label>
+            <label className="block text-text-muted text-xs font-bold uppercase tracking-wider mb-1.5">Descrição</label>
             <textarea
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
               placeholder="Descreva os detalhes da novidade..."
               rows={4}
-              className="w-full bg-white border border-[#E2E8F0] rounded-xl px-4 py-3 text-[#1E293B] text-sm focus:outline-none focus:border-emerald-500/50 transition-all resize-none"
+              className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-text-main text-sm focus:outline-none focus:border-primary transition-all resize-none"
               required
             />
           </div>
@@ -158,7 +167,7 @@ export default function NovidadesAdminPage() {
             <button
               type="submit"
               disabled={saving}
-              className={`flex-1 font-bold py-3 px-6 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 ${editingId ? 'bg-[#1A56DB] hover:bg-[#1E40AF] text-white' : 'bg-[#16A34A] hover:bg-[#15803D] text-white'}`}
+              className={`flex-1 font-bold py-3 px-6 rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-white ${editingId ? 'bg-primary hover:bg-primary-hover' : 'bg-cta hover:bg-cta-hover'}`}
             >
               {saving ? <RefreshCw size={18} className="animate-spin" /> : editingId ? <Check size={18} /> : <Sparkles size={18} />}
               {saving ? 'Salvando...' : editingId ? 'Salvar Alteração' : 'Publicar Novidade'}
@@ -167,7 +176,7 @@ export default function NovidadesAdminPage() {
               <button
                 type="button"
                 onClick={handleCancelarEdicao}
-                className="px-6 py-3 bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#64748B] font-bold rounded-xl transition-all flex items-center gap-2"
+                className="px-6 py-3 bg-hover-bg hover:bg-border text-text-muted font-bold rounded-lg transition-all flex items-center gap-2"
               >
                 <X size={18} />
                 Cancelar
@@ -179,110 +188,94 @@ export default function NovidadesAdminPage() {
 
       {/* Listagem */}
       <div className="space-y-4">
-        <h2 className="text-[#64748B] text-xs font-black uppercase tracking-[0.2em] flex items-center gap-2">
+        <h2 className="text-text-muted text-xs font-black uppercase tracking-[0.2em] flex items-center gap-2">
           <span className="text-[8px]">●</span> Histórico de Novidades
         </h2>
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <RefreshCw size={32} className="animate-spin text-emerald-500" />
-            <p className="text-[#64748B] text-sm">Carregando novidades...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary" />
+            <p className="text-text-muted text-sm">Carregando novidades...</p>
           </div>
         ) : novidades.length === 0 ? (
-          <div className="bg-white border border-[#E2E8F0] rounded-3xl shadow-sm hover:shadow-md transition-shadow p-20 text-center">
-            <Sparkles size={48} className="text-gray-700 mx-auto mb-4" />
-            <h3 className="text-[#1E293B] font-medium text-lg">Nenhuma novidade cadastrada</h3>
-            <p className="text-[#64748B] text-sm mt-1">Publique sua primeira atualização acima.</p>
+          <div className="bg-surface border border-border rounded-xl shadow-sm hover:shadow-md transition-shadow p-20 text-center">
+            <Sparkles size={48} className="text-text-disabled mx-auto mb-4" />
+            <h3 className="text-text-main font-medium text-lg">Nenhuma novidade cadastrada</h3>
+            <p className="text-text-muted text-sm mt-1">Publique sua primeira atualização acima.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {novidades.map((n) => (
               <div
                 key={n.id}
-                onClick={() => setSelectedNovidade(n)}
-                className="bg-white border border-[#E2E8F0] rounded-2xl p-6 hover:shadow-md hover:border-emerald-500/30 transition-all shadow-lg cursor-pointer"
+                className={`bg-surface border rounded-xl overflow-hidden transition-all ${
+                  isOpen(n.id)
+                    ? 'border-primary shadow-sm'
+                    : 'border-border hover:border-active-border'
+                }`}
               >
-                <div className="flex flex-col gap-4">
-                  <div>
-                    <div className="flex items-center gap-3 mb-1">
-                      <h3 className="text-[#1E293B] font-semibold text-lg">{n.titulo}</h3>
-                      <span className="text-gray-600 text-xs font-medium">
-                        {new Date(n.created_at).toLocaleDateString('pt-BR')}
-                      </span>
+                {/* Cabeçalho clicável */}
+                <button
+                  onClick={() => toggleExpand(n.id)}
+                  className="w-full text-left px-5 py-4 flex items-center gap-3 hover:bg-hover-bg transition-colors"
+                >
+                  <Sparkles
+                    size={18}
+                    className={`flex-shrink-0 transition-colors ${
+                      isOpen(n.id) ? 'text-primary' : 'text-text-disabled'
+                    }`}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-text-main font-semibold text-sm truncate">{n.titulo}</h3>
+                  </div>
+                  <span className="text-text-disabled text-xs flex-shrink-0">
+                    {new Date(n.created_at).toLocaleDateString('pt-BR')}
+                  </span>
+                  <ChevronDown
+                    size={18}
+                    className={`text-text-muted flex-shrink-0 transition-transform duration-200 ${
+                      isOpen(n.id) ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+
+                {/* Conteúdo expandido */}
+                {isOpen(n.id) && (
+                  <div className="border-t border-border px-5 pb-4 pt-4 space-y-4">
+                    <p className="text-text-muted text-sm leading-relaxed whitespace-pre-wrap">
+                      {n.descricao}
+                    </p>
+                    
+                    {/* Botões de Ação */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleEditar(n)
+                        }}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-primary hover:bg-active-bg border border-active-border transition-all text-xs font-bold"
+                      >
+                        <Pencil size={14} />
+                        Editar
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleExcluir(n.id)
+                        }}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-red-500 hover:bg-red-50 border border-red-200 transition-all text-xs font-bold"
+                      >
+                        <Trash2 size={14} />
+                        Excluir
+                      </button>
                     </div>
                   </div>
-                  
-                  {/* Botões de Ação */}
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleEditar(n)
-                      }}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[#1A56DB] hover:bg-[#EFF6FF] border border-[#BFDBFE] transition-all text-xs font-bold"
-                    >
-                      <Pencil size={14} />
-                      Editar
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleExcluir(n.id)
-                      }}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-red-400 hover:bg-red-400/10 border border-red-400/20 transition-all text-xs font-bold"
-                    >
-                      <Trash2 size={14} />
-                      Excluir
-                    </button>
-                  </div>
-                </div>
+                )}
               </div>
             ))}
           </div>
         )}
       </div>
-
-      {/* Modal de Detalhes */}
-      {selectedNovidade && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setSelectedNovidade(null)}
-          />
-          <div className="relative w-full max-w-2xl bg-white border border-[#E2E8F0] rounded-xl shadow-lg flex flex-col max-h-[90vh] overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-6 border-b border-[#E2E8F0]">
-              <div>
-                <h2 className="text-[#1E293B] font-semibold text-base">{selectedNovidade.titulo}</h2>
-                <p className="text-[#64748B] text-sm mt-0.5">
-                  Publicado em {new Date(selectedNovidade.created_at).toLocaleDateString('pt-BR')}
-                </p>
-              </div>
-              <button
-                onClick={() => setSelectedNovidade(null)}
-                className="text-[#64748B] hover:text-[#1E293B] transition-colors"
-                aria-label="Fechar"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-6">
-              <p className="text-[#1E293B] text-sm leading-relaxed whitespace-pre-wrap">
-                {selectedNovidade.descricao}
-              </p>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-[#E2E8F0]">
-              <button
-                onClick={() => setSelectedNovidade(null)}
-                className="px-6 py-2 bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#64748B] font-bold rounded-lg transition-all"
-              >
-                Fechar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
