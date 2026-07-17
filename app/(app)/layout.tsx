@@ -1,16 +1,18 @@
 'use client'
 import { useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { Header } from '@/components/layout/Header'
 import { NotificationSound } from '@/components/layout/NotificationSound'
 import { AlphaWidget } from '@/components/AlphaWidget'
 import { AlphaVoiceButton } from '@/components/AlphaVoiceButton'
+import { PageFade } from '@/components/ui/Motion'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, profile, loading } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
   const didRedirect = useRef(false)
 
   useEffect(() => {
@@ -20,7 +22,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       didRedirect.current = true
       router.replace('/login')
     } else if (!profile) {
-      // User existe mas profile não — redirecionar para login (profile não existe no banco)
       didRedirect.current = true
       router.replace('/login')
     } else if (profile.role === 'collaborator') {
@@ -29,7 +30,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [user, profile, loading, router])
 
-  // Loading — query ao Supabase ainda não retornou
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -41,7 +41,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // User não autenticado — não renderiza nada, o useEffect já redireciona
   if (!user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -53,7 +52,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // User existe mas profile não existe — não renderiza nada, o useEffect redireciona
   if (!profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -65,7 +63,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // Colaborador tentando acessar admin — redireciona
   if (profile.role === 'collaborator') {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -83,7 +80,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col ml-64 h-full">
         <Header />
         <main className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-          {children}
+          <PageFade key={pathname}>
+            {children}
+          </PageFade>
         </main>
       </div>
       <NotificationSound />
