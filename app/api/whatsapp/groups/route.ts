@@ -8,6 +8,28 @@ function instanceName(userId: string) {
   return `alpha_${userId.replace(/-/g, '').slice(0, 16)}`
 }
 
+function isValidGroup(g: any): boolean {
+  const name = (g.subject || g.name || '').trim()
+  const id = String(g.id || '')
+
+  if (!name || name.length < 2) return false
+  if (!id.endsWith('@g.us')) return false
+
+  // Exclui comunidades e anúncios da comunidade
+  if (g.isCommunity === true || g.isGroupAnnouncement === true) return false
+  if (g.isCommunityAnnounce === true || g.announce === true && g.isCommunity) return false
+
+  const lowerName = name.toLowerCase()
+  if (
+    lowerName.includes('broadcast') ||
+    lowerName.includes('rascunho') ||
+    lowerName.startsWith('status@') ||
+    lowerName.includes('lista de transmissão')
+  ) return false
+
+  return true
+}
+
 export async function GET(request: NextRequest) {
   const supabase = createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -15,13 +37,12 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url)
   const source = searchParams.get('source')
+  const force = searchParams.get('force') === '1'
 
   let targetUserId = user.id
   let targetInstanceName = instanceName(user.id)
 
-  // Se o colaborador está tentando ver grupos da agência (source=agency)
   if (source === 'agency') {
-    // 1. Localizar o perfil admin
     const { data: adminProfile } = await supabase
       .from('profiles')
       .select('id')
@@ -31,14 +52,12 @@ export async function GET(request: NextRequest) {
     if (!adminProfile) return NextResponse.json([])
     targetUserId = adminProfile.id
     
-    // 2. Verificar se a instância do admin permite a visualização
     const { data: adminInstance } = await supabase
       .from('whatsapp_instances')
       .select('*')
       .eq('user_id', targetUserId)
       .maybeSingle()
 
-    // TRAVA DE SEGURANÇA: Se não houver instância ou a permissão for falsa, retorna lista vazia IMEDIATAMENTE
     if (!adminInstance || adminInstance.grupos_visiveis_colaboradores !== true) {
       return NextResponse.json([], { status: 200 })
     }
@@ -46,7 +65,6 @@ export async function GET(request: NextRequest) {
     targetInstanceName = adminInstance.instance_name
   }
 
-  // Sincronização com a Evolution API
   if (EVO_URL && EVO_KEY && targetInstanceName) {
     try {
       const controller = new AbortController()
@@ -66,29 +84,17 @@ export async function GET(request: NextRequest) {
         const groups = await res.json()
 
         if (Array.isArray(groups)) {
-          // FILTRAGEM CONTRA GRUPOS FANTASMAS E INVÁLIDOS
-          const validGroups = groups.filter(g => {
-            const name = (g.subject || g.name || '').trim()
-            const id = g.id || ''
-            if (!name || name.length < 2) return false
-            if (!id.endsWith('@g.us')) return false
-            const size = g.size || (g.participants ? g.participants.length : 0)
-            if (size <= 0) return false
-            const lowerName = name.toLowerCase()
-            if (lowerName.includes('whatsapp') || lowerName.includes('broadcast') || lowerName.includes('rascunho')) return false
-            return true
-          })
+          const validGroups = groups.filter(isValidGroup)
 
           const rows = validGroups.map((g: any) => ({
             user_id: targetUserId,
             group_id: g.id,
-            name: g.subject || g.name || 'Grupo sem nome',
+            name: (g.subject || g.name || 'Grupo sem nome').trim(),
             participant_count: g.size || (g.participants ? g.participants.length : 0),
             updated_at: new Date().toISOString(),
           }))
 
-          // SINCRONIZAÇÃO NO BANCO: Apenas se for o próprio usuário ou se for admin com permissão
-          // No caso de source=agency, targetUserId é o ID do admin.
+          // Sempre substitui o cache local pelo resultado fresco da API
           await supabase
             .from('whatsapp_groups')
             .delete()
@@ -108,7 +114,8 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Fallback para o cache do banco
+  // Fallback: cache do banco (só se API falhar)
+  // Se force=1 e API falhou, ainda assim limpa cache antigo não ajuda — retorna o que houver
   const { data: cached } = await supabase
     .from('whatsapp_groups')
     .select('group_id, name, participant_count')

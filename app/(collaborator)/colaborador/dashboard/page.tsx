@@ -93,7 +93,6 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
   )
 }
 
-/** Todas as barras sempre renderizam — inclusive valor 0 */
 function BarChart({ items }: { items: { value: number; color: string; label: string }[] }) {
   const max = Math.max(...items.map((i) => i.value), 1)
 
@@ -214,9 +213,8 @@ export default function CollaboratorDashboardPage() {
             <h1 className="text-text-main text-base font-bold truncate">Olá, {nome}! 👋</h1>
             <p className="text-text-muted text-[10px] truncate">{getFraseDoDia()}</p>
           </div>
-          <div className="ml-auto text-right hidden md:block flex-shrink-0">
-             <p className="text-[9px] text-primary/70 font-bold uppercase tracking-widest leading-none">Painel Colaborador</p>
-             <p className="text-text-muted text-[9px] mt-1">{hoje.toLocaleDateString('pt-BR')}</p>
+          <div className="ml-auto text-right hidden md:block flex-shrink-0 pl-4 border-l border-border">
+             <p className="text-text-disabled text-[10px] font-bold uppercase">{hoje.toLocaleDateString('pt-BR')}</p>
           </div>
         </div>
 

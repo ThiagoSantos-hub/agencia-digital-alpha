@@ -19,8 +19,16 @@ export async function GET() {
 
   const name = instanceName(user.id)
 
+  // Lê preferência salva no banco (não pode ser sobrescrita pelo status da Evolution)
+  const { data: dbInstance } = await supabase
+    .from('whatsapp_instances')
+    .select('grupos_visiveis_colaboradores')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  const gruposVisiveis = dbInstance?.grupos_visiveis_colaboradores === true
+
   try {
-    // PASSO 1: Verificar se a instância existe e seu estado
     const statusRes = await fetch(`${EVO_URL}/instance/connectionState/${name}`, {
       headers: { 'apikey': EVO_KEY },
       cache: 'no-store'
@@ -28,7 +36,6 @@ export async function GET() {
     
     let statusData = await statusRes.json()
 
-    // PASSO 2: Se a instância não existe na Evolution API, criar agora
     if (statusRes.status === 404 || statusData?.status === 404 || !statusData?.instance) {
       const createRes = await fetch(`${EVO_URL}/instance/create`, {
         method: 'POST',
@@ -37,12 +44,11 @@ export async function GET() {
           instanceName: name, 
           qrcode: true, 
           integration: 'WHATSAPP-BAILEYS',
-          token: user.id // Token opcional para segurança extra
+          token: user.id
         }),
       })
       
       if (createRes.ok) {
-        // Aguarda um pequeno delay para a API processar a criação
         await new Promise(r => setTimeout(r, 1000))
         const retryStatus = await fetch(`${EVO_URL}/instance/connectionState/${name}`, {
           headers: { 'apikey': EVO_KEY },
@@ -52,52 +58,50 @@ export async function GET() {
       }
     }
 
-    // PASSO 3: Se já está conectada, atualizar banco e retornar
-    // A Evolution API pode retornar 'open' ou 'connected' dependendo da versão/endpoint
     const isConnected = statusData?.instance?.state === 'open' || 
                         statusData?.instance?.state === 'connected' ||
                         statusData?.state === 'open'
                         
     if (isConnected) {
+      // Atualiza só status — preserva grupos_visiveis_colaboradores
       await supabase.from('whatsapp_instances').upsert({
         user_id: user.id,
         instance_name: name,
         status: 'connected',
         connected_at: new Date().toISOString(),
+        grupos_visiveis_colaboradores: gruposVisiveis,
       }, { onConflict: 'user_id' })
       
-      return NextResponse.json({ status: 'connected', instance_name: name })
+      return NextResponse.json({
+        status: 'connected',
+        instance_name: name,
+        grupos_visiveis_colaboradores: gruposVisiveis,
+      })
     }
 
-    // PASSO 4: Se não está conectada, buscar o QR Code
-    // Tentamos primeiro o endpoint de conexão direta
     const connectRes = await fetch(`${EVO_URL}/instance/connect/${name}`, {
       headers: { 'apikey': EVO_KEY },
       cache: 'no-store'
     })
     const connectData = await connectRes.json()
 
-    // LÓGICA DE EXTRAÇÃO DE QR CODE (A Evolution API varia a resposta conforme a versão)
-    // Procuramos em todas as propriedades possíveis, incluindo o objeto qrcode direto
     const qrcode = 
       connectData?.base64 || 
       connectData?.qrcode?.base64 || 
-      connectData?.qrcode || // Às vezes o objeto qrcode já é a string base64
+      connectData?.qrcode ||
       connectData?.code || 
       statusData?.instance?.qrcode?.base64 || 
       statusData?.instance?.qrcode ||
       null
 
-    // Atualiza estado no banco
     await supabase.from('whatsapp_instances').upsert({
       user_id: user.id,
       instance_name: name,
       status: 'connecting',
+      grupos_visiveis_colaboradores: gruposVisiveis,
     }, { onConflict: 'user_id' })
 
-    // Se mesmo assim não houver QR Code, pode ser que a instância precise ser reiniciada
     if (!qrcode && statusData?.instance) {
-        // Tentativa de "acordar" a instância se ela estiver em 'close' ou 'connecting'
         await fetch(`${EVO_URL}/instance/restart/${name}`, {
             method: 'POST',
             headers: { 'apikey': EVO_KEY }
@@ -108,6 +112,7 @@ export async function GET() {
       status: 'connecting',
       instance_name: name,
       qrcode: qrcode,
+      grupos_visiveis_colaboradores: gruposVisiveis,
       debug_info: !qrcode ? 'QR Code não gerado pela API. Tente reiniciar a instância.' : null
     })
 
@@ -125,13 +130,40 @@ export async function PATCH(request: NextRequest) {
   const body = await request.json()
 
   if (typeof body.grupos_visiveis_colaboradores === 'boolean') {
-    const { error } = await supabase
+    // Garante que a linha existe antes do update
+    const name = instanceName(user.id)
+    const { data: existing } = await supabase
       .from('whatsapp_instances')
-      .update({ grupos_visiveis_colaboradores: body.grupos_visiveis_colaboradores })
+      .select('user_id')
       .eq('user_id', user.id)
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      .maybeSingle()
+
+    if (!existing) {
+      const { error: insertError } = await supabase
+        .from('whatsapp_instances')
+        .insert({
+          user_id: user.id,
+          instance_name: name,
+          status: 'disconnected',
+          grupos_visiveis_colaboradores: body.grupos_visiveis_colaboradores,
+        })
+      if (insertError) {
+        return NextResponse.json({ error: insertError.message }, { status: 500 })
+      }
+    } else {
+      const { error } = await supabase
+        .from('whatsapp_instances')
+        .update({ grupos_visiveis_colaboradores: body.grupos_visiveis_colaboradores })
+        .eq('user_id', user.id)
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 })
+      }
     }
+
+    return NextResponse.json({
+      success: true,
+      grupos_visiveis_colaboradores: body.grupos_visiveis_colaboradores,
+    })
   }
 
   return NextResponse.json({ success: true })
@@ -146,7 +178,6 @@ export async function DELETE() {
 
   if (EVO_URL && EVO_KEY) {
     try {
-      // Logout e Delete na Evolution API
       await fetch(`${EVO_URL}/instance/logout/${name}`, {
         method: 'DELETE',
         headers: { 'apikey': EVO_KEY },
@@ -159,7 +190,6 @@ export async function DELETE() {
     } catch { }
   }
 
-  // Limpa banco local
   await supabase.from('whatsapp_instances').delete().eq('user_id', user.id)
   await supabase.from('whatsapp_groups').delete().eq('user_id', user.id)
 

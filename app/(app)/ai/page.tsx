@@ -5,8 +5,10 @@
 import { AlphaChatPanel } from '@/components/ai/AlphaChatPanel'
 
 export default function AlphaAIPage() {
+  // -m-8 cancela o padding do main; altura = viewport - header (64px)
+  // overflow-hidden evita scrollbar da página; só a área de mensagens rola
   return (
-    <div className="h-[calc(100vh-64px)]">
+    <div className="-m-8 h-[calc(100vh-64px)] overflow-hidden flex flex-col">
       <AlphaChatPanel />
     </div>
   )

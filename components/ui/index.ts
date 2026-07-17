@@ -4,3 +4,11 @@ export { Modal } from './Modal'
 export { Table } from './Table'
 export type { Column } from './Table'
 export { Card, CardHeader } from './Card'
+export {
+  PageFade,
+  MotionCard,
+  Stagger,
+  StaggerItem,
+  MotionPress,
+  MotionDiv,
+} from './Motion'
