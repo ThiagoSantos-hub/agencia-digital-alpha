@@ -42,7 +42,7 @@ const COLUMNS: { id: TaskStatus; label: string; icon: any; color: string }[] = [
   { id: 'pendente', label: 'Pendências', icon: PauseCircle, color: 'text-amber-600' },
   { id: 'a_fazer', label: 'A Fazer', icon: Circle, color: 'text-text-muted' },
   { id: 'em_andamento', label: 'Em Andamento', icon: PlayCircle, color: 'text-blue-400' },
-  { id: 'finalizada', label: 'Finalizadas', icon: CheckCircle2, color: 'text-emerald-400' },
+  { id: 'finalizada', label: 'Finalizadas', icon: CheckCircle2, color: 'text-cta' },
 ]
 
 export default function AdminTasksPage() {
@@ -196,7 +196,7 @@ export default function AdminTasksPage() {
       case 'urgente': return 'text-red-600'
       case 'alta': return 'text-red-500'
       case 'media': return 'text-amber-500'
-      case 'baixa': return 'text-emerald-500'
+      case "baixa": return "text-cta"
       default: return 'text-text-muted'
     }
   }
@@ -220,7 +220,7 @@ export default function AdminTasksPage() {
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-[#0a0f0c] font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-cta hover:bg-cta-hover text-white font-bold rounded-xl transition-all shadow-lg shadow-cta/10"
         >
           <Plus size={20} />
           Nova Tarefa
@@ -291,7 +291,7 @@ export default function AdminTasksPage() {
                   type="text" 
                   value={newTask.title}
                   onChange={e => setNewTask({...newTask, title: e.target.value})}
-                  className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-primary/50"
                   placeholder="Ex: Criar artes para o Cliente X"
                 />
               </div>
@@ -302,7 +302,7 @@ export default function AdminTasksPage() {
                   rows={3}
                   value={newTask.description}
                   onChange={e => setNewTask({...newTask, description: e.target.value})}
-                  className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50 resize-none"
+                  className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-primary/50 resize-none"
                   placeholder="Detalhes da tarefa..."
                 />
               </div>
@@ -314,7 +314,7 @@ export default function AdminTasksPage() {
                     required
                     value={newTask.assigned_to}
                     onChange={e => setNewTask({...newTask, assigned_to: e.target.value})}
-                    className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-primary/50"
                   >
                     <option value="">Selecione...</option>
                     {allUsers.map(u => (
@@ -327,7 +327,7 @@ export default function AdminTasksPage() {
                   <select 
                     value={newTask.status}
                     onChange={e => setNewTask({...newTask, status: e.target.value as TaskStatus})}
-                    className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-primary/50"
                   >
                     {COLUMNS.map(col => (
                       <option key={col.id} value={col.id}>{col.label}</option>
@@ -342,7 +342,7 @@ export default function AdminTasksPage() {
                   <select 
                     value={newTask.priority}
                     onChange={e => setNewTask({...newTask, priority: e.target.value as TaskPriority})}
-                    className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-primary/50"
                   >
                     <option value="baixa">Baixa</option>
                     <option value="media">Média</option>
@@ -356,25 +356,25 @@ export default function AdminTasksPage() {
                     type="date" 
                     value={newTask.due_date}
                     onChange={e => setNewTask({...newTask, due_date: e.target.value})}
-                    className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-primary/50"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-muted uppercase tracking-widest text-emerald-500">Link do Google Drive (Opcional)</label>
+                <label className="text-xs font-bold text-text-muted uppercase tracking-widest text-text-muted">Link do Google Drive (Opcional)</label>
                 <input 
                   type="url" 
                   value={newTask.drive_link}
                   onChange={e => setNewTask({...newTask, drive_link: e.target.value})}
-                  className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-primary/50"
                   placeholder="https://drive.google.com/..."
                 />
               </div>
 
               <button 
                 type="submit"
-                className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-[#0a0f0c] font-bold rounded-xl transition-all mt-4 shadow-lg shadow-emerald-500/20"
+                className="w-full py-3 bg-cta hover:bg-cta-hover text-white font-bold rounded-xl transition-all mt-4 shadow-lg shadow-cta/10"
               >
                 Criar Tarefa
               </button>
@@ -399,7 +399,7 @@ export default function AdminTasksPage() {
                   type="text" 
                   value={editingTask.title}
                   onChange={e => setEditingTask({...editingTask, title: e.target.value})}
-                  className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-primary/50"
                 />
               </div>
 
@@ -409,7 +409,7 @@ export default function AdminTasksPage() {
                   rows={3}
                   value={editingTask.description || ''}
                   onChange={e => setEditingTask({...editingTask, description: e.target.value})}
-                  className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50 resize-none"
+                  className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-primary/50 resize-none"
                 />
               </div>
 
@@ -420,7 +420,7 @@ export default function AdminTasksPage() {
                     required
                     value={editingTask.assigned_to}
                     onChange={e => setEditingTask({...editingTask, assigned_to: e.target.value})}
-                    className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-primary/50"
                   >
                     <option value="">Selecione...</option>
                     {allUsers.map(u => (
@@ -433,7 +433,7 @@ export default function AdminTasksPage() {
                   <select 
                     value={editingTask.status}
                     onChange={e => setEditingTask({...editingTask, status: e.target.value as TaskStatus})}
-                    className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-primary/50"
                   >
                     {COLUMNS.map(col => (
                       <option key={col.id} value={col.id}>{col.label}</option>
@@ -448,7 +448,7 @@ export default function AdminTasksPage() {
                   <select 
                     value={editingTask.priority}
                     onChange={e => setEditingTask({...editingTask, priority: e.target.value as TaskPriority})}
-                    className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-primary/50"
                   >
                     <option value="baixa">Baixa</option>
                     <option value="media">Média</option>
@@ -462,25 +462,25 @@ export default function AdminTasksPage() {
                     type="date" 
                     value={editingTask.due_date ? editingTask.due_date.split('T')[0] : ''}
                     onChange={e => setEditingTask({...editingTask, due_date: e.target.value})}
-                    className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-primary/50"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-muted uppercase tracking-widest text-emerald-500">Link do Google Drive (Opcional)</label>
+                <label className="text-xs font-bold text-text-muted uppercase tracking-widest text-text-muted">Link do Google Drive (Opcional)</label>
                 <input 
                   type="url" 
                   value={editingTask.drive_link || ''}
                   onChange={e => setEditingTask({...editingTask, drive_link: e.target.value})}
-                  className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-primary/50"
                   placeholder="https://drive.google.com/..."
                 />
               </div>
 
               <button 
                 type="submit"
-                className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-[#0a0f0c] font-bold rounded-xl transition-all mt-4 shadow-lg shadow-emerald-500/20"
+                className="w-full py-3 bg-cta hover:bg-cta-hover text-white font-bold rounded-xl transition-all mt-4 shadow-lg shadow-cta/10"
               >
                 Salvar Alterações
               </button>
@@ -522,7 +522,7 @@ export default function AdminTasksPage() {
                     href={selectedTask.drive_link} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 w-full py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 rounded-lg font-bold transition-all text-sm"
+                    className="flex items-center justify-center gap-2 w-full py-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded-lg font-bold transition-all text-sm"
                   >
                     <ExternalLink size={16} />
                     Abrir Google Drive
@@ -552,7 +552,7 @@ export default function AdminTasksPage() {
                 <div>
                   <h3 className="text-xs font-bold text-text-muted uppercase tracking-widest mb-1">Data de Entrega</h3>
                   <div className="flex items-center gap-2 bg-hover-bg p-2 rounded-lg border border-border">
-                    <Calendar size={14} className="text-[#00ff88]" />
+                    <Calendar size={14} className="text-primary" />
                     <p className="text-sm text-text-main font-medium">
                       {selectedTask.due_date ? new Date(selectedTask.due_date).toLocaleDateString('pt-BR') : 'Sem prazo'}
                     </p>
