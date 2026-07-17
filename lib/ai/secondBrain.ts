@@ -62,20 +62,26 @@ export function stripAndApplySaves(text: string): {
   let changed = false
   let clean = text
 
-  const matches = [...text.matchAll(SAVE_RE)]
-  for (const m of matches) {
-    const area = m[1] as NoteArea
-    const title = m[2].trim()
-    const body = m[3].trim()
+  // Sem matchAll/spread — compatível com target TS do projeto
+  SAVE_RE.lastIndex = 0
+  let m: RegExpExecArray | null
+  const found: RegExpExecArray[] = []
+  while ((m = SAVE_RE.exec(text)) !== null) {
+    found.push(m)
+  }
+
+  for (let i = 0; i < found.length; i++) {
+    const match = found[i]
+    const area = match[1] as NoteArea
+    const title = match[2].trim()
+    const body = match[3].trim()
     if (!AREA[area]) continue
 
     const existing = notes.find(
       (n) => n.title.toLowerCase() === title.toLowerCase() && n.area === area
     )
     if (existing) {
-      notes = notes.map((n) =>
-        n.id === existing.id ? { ...n, body } : n
-      )
+      notes = notes.map((n) => (n.id === existing.id ? { ...n, body } : n))
     } else {
       notes = [
         ...notes,
@@ -88,7 +94,7 @@ export function stripAndApplySaves(text: string): {
       ]
     }
     changed = true
-    clean = clean.replace(m[0], '').trim()
+    clean = clean.replace(match[0], '').trim()
   }
 
   if (changed) saveNotes(notes)
@@ -96,5 +102,10 @@ export function stripAndApplySaves(text: string): {
 }
 
 export function areasPresent(notes: BrainNote[]): NoteArea[] {
-  return [...new Set(notes.map((n) => n.area))]
+  const set: NoteArea[] = []
+  for (let i = 0; i < notes.length; i++) {
+    const a = notes[i].area
+    if (set.indexOf(a) === -1) set.push(a)
+  }
+  return set
 }
