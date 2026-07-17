@@ -6,7 +6,6 @@ import {
   Plus, 
   BarChart2, 
   Filter, 
-  MoreHorizontal, 
   Send, 
   Edit2, 
   Copy, 
@@ -35,7 +34,6 @@ export default function RelatoriosPage() {
   const [historyReport, setHistoryReport] = useState<Report | null>(null)
   const [historyData, setHistoryData] = useState<ReportHistory[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
-  const [actionMenuId, setActionMenuId] = useState<string | null>(null)
   const [sendingId, setSendingId] = useState<string | null>(null)
 
   const formatDate = (dateString: string) => {
@@ -121,7 +119,6 @@ export default function RelatoriosPage() {
 
   const handleSendNow = async (report: Report) => {
     setSendingId(report.id)
-    setActionMenuId(null)
     try {
       const response = await fetch('/api/reports/send', {
         method: 'POST',
@@ -141,9 +138,10 @@ export default function RelatoriosPage() {
     }
   }
 
+  const btnAction = 'p-2 rounded-lg border border-border bg-surface text-text-muted hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-colors disabled:opacity-50'
+
   return (
     <div className="min-h-full bg-background text-text-main">
-      {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2 text-text-main">
@@ -161,7 +159,6 @@ export default function RelatoriosPage() {
         </button>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-surface border border-border p-6 rounded-xl shadow-sm">
           <p className="text-text-muted text-sm mb-1">Relatórios Ativos</p>
@@ -177,7 +174,6 @@ export default function RelatoriosPage() {
         </div>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap gap-4 mb-6">
         <div className="flex items-center gap-2 bg-surface border border-border px-3 py-2 rounded-lg">
           <Filter size={16} className="text-text-muted" />
@@ -205,9 +201,8 @@ export default function RelatoriosPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-surface border border-border rounded-xl shadow-sm overflow-hidden">
-        <table className="w-full text-left border-collapse">
+      <div className="bg-surface border border-border rounded-xl shadow-sm overflow-x-auto">
+        <table className="w-full text-left border-collapse min-w-[720px]">
           <thead>
             <tr className="border-b border-border bg-hover-bg">
               <th className="p-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Status</th>
@@ -281,60 +276,45 @@ export default function RelatoriosPage() {
                       {report.proximo_envio ? formatDateTime(report.proximo_envio) : '--'}
                     </div>
                   </td>
-                  <td className="p-4 text-right relative">
-                    <button 
-                      onClick={() => setActionMenuId(actionMenuId === report.id ? null : report.id)}
-                      className="p-2 hover:bg-hover-bg rounded-lg text-text-muted transition-colors"
-                    >
-                      <MoreHorizontal size={18} />
-                    </button>
-
-                    {actionMenuId === report.id && (
-                      <>
-                        <div 
-                          className="fixed inset-0 z-10" 
-                          onClick={() => setActionMenuId(null)} 
-                        />
-                        <div className="absolute right-4 bottom-12 w-48 bg-surface border border-border rounded-xl shadow-lg z-20 overflow-hidden">
-                          <button 
-                            onClick={() => handleSendNow(report)}
-                            disabled={sendingId === report.id}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-text-main hover:bg-hover-bg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {sendingId === report.id ? (
-                              <Loader2 className="animate-spin" size={14} />
-                            ) : (
-                              <Send size={14} />
-                            )}
-                            Enviar agora
-                          </button>
-                          <button 
-                            onClick={() => router.push(`/relatorios/criar?id=${report.id}`)}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-text-main hover:bg-hover-bg transition-colors"
-                          >
-                            <Edit2 size={14} /> Editar
-                          </button>
-                          <button 
-                            onClick={() => handleDuplicate(report)}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-text-main hover:bg-hover-bg transition-colors"
-                          >
-                            <Copy size={14} /> Duplicar
-                          </button>
-                          <button 
-                            onClick={() => handleOpenHistory(report)}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-text-main hover:bg-hover-bg transition-colors"
-                          >
-                            <Clock size={14} /> Histórico
-                          </button>
-                          <button 
-                            onClick={() => handleDelete(report.id)}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                          >
-                            <Trash2 size={14} /> Excluir
-                          </button>
-                        </div>
-                      </>
-                    )}
+                  <td className="p-4">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <button
+                        onClick={() => handleSendNow(report)}
+                        disabled={sendingId === report.id}
+                        title="Enviar agora"
+                        className={btnAction}
+                      >
+                        {sendingId === report.id ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
+                      </button>
+                      <button
+                        onClick={() => router.push(`/relatorios/criar?id=${report.id}`)}
+                        title="Editar"
+                        className={btnAction}
+                      >
+                        <Edit2 size={15} />
+                      </button>
+                      <button
+                        onClick={() => handleDuplicate(report)}
+                        title="Duplicar"
+                        className={btnAction}
+                      >
+                        <Copy size={15} />
+                      </button>
+                      <button
+                        onClick={() => handleOpenHistory(report)}
+                        title="Histórico"
+                        className={btnAction}
+                      >
+                        <Clock size={15} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(report.id)}
+                        title="Excluir"
+                        className="p-2 rounded-lg border border-border bg-surface text-text-muted hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -343,7 +323,6 @@ export default function RelatoriosPage() {
         </table>
       </div>
 
-      {/* History Drawer */}
       {historyReport && (
         <>
           <div 
