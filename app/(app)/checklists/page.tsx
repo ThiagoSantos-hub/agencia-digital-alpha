@@ -69,6 +69,8 @@ export default function ChecklistsPage() {
     const { active, over } = event
     setActiveId(null)
 
+    if (!over) return
+
     if (active.id !== over.id) {
       const oldIndex = pendingLists.findIndex(l => l.id === active.id)
       const newIndex = pendingLists.findIndex(l => l.id === over.id)
