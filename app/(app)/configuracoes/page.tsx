@@ -1,7 +1,17 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Settings, Volume2, Hash, Sliders, RotateCcw, Save, Bot } from 'lucide-react'
+import {
+  Settings,
+  Volume2,
+  Hash,
+  Sliders,
+  RotateCcw,
+  Save,
+  Bot,
+  Timer,
+  Repeat,
+} from 'lucide-react'
 import { motion } from 'framer-motion'
 import {
   DEFAULT_ALPHA_SETTINGS,
@@ -56,7 +66,7 @@ export default function ConfiguracoesPage() {
         <div>
           <h1 className="text-xl font-black text-text-main tracking-tight">Configurações</h1>
           <p className="text-sm text-text-muted mt-0.5">
-            Ajustes da Alpha IA — voz, tamanho da resposta e comportamento
+            Ajustes da Alpha IA — voz, tempo de resposta e comportamento
           </p>
         </div>
       </div>
@@ -92,9 +102,68 @@ export default function ConfiguracoesPage() {
             <span>Natural 1.2</span>
             <span>Rápida 1.5</span>
           </div>
+        </div>
+
+        {/* Tempo de silêncio / aceleração do processar */}
+        <div className="space-y-3 pt-2 border-t border-border">
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 text-sm font-semibold text-text-main">
+              <Timer size={16} className="text-primary" />
+              Tempo até processar (após parar de falar)
+            </label>
+            <span className="text-sm font-black tabular-nums text-primary">
+              {(settings.silenceMs / 1000).toFixed(1)}s
+            </span>
+          </div>
+          <input
+            type="range"
+            min={400}
+            max={2000}
+            step={100}
+            value={settings.silenceMs}
+            onChange={(e) => update('silenceMs', Number(e.target.value))}
+            className="w-full accent-primary h-2 rounded-full cursor-pointer"
+          />
+          <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-text-disabled">
+            <span>Rápido 0.4s</span>
+            <span>Médio 1.0s</span>
+            <span>Calmo 2.0s</span>
+          </div>
           <p className="text-xs text-text-muted">
-            Controla o ritmo da fala da Alpha (OpenAI TTS). Recomendado: 1.25 a 1.35.
+            Quanto menor, mais cedo a Alpha começa a processar depois que você para de falar.
+            Se cortar no meio da frase, aumente um pouco.
           </p>
+        </div>
+
+        {/* Escuta contínua */}
+        <div className="space-y-3 pt-2 border-t border-border">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <label className="flex items-center gap-2 text-sm font-semibold text-text-main">
+                <Repeat size={16} className="text-primary" />
+                Escuta contínua
+              </label>
+              <p className="text-xs text-text-muted mt-1">
+                Desligado (recomendado): responde uma vez e desliga. Você liga de novo no botão.
+                Ligado: depois de falar, volta a ouvir sozinha.
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={settings.continuousListen}
+              onClick={() => update('continuousListen', !settings.continuousListen)}
+              className={`relative shrink-0 w-12 h-7 rounded-full transition-colors ${
+                settings.continuousListen ? 'bg-primary' : 'bg-border'
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform ${
+                  settings.continuousListen ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
         </div>
 
         {/* Max tokens */}
@@ -115,14 +184,6 @@ export default function ConfiguracoesPage() {
             onChange={(e) => update('maxTokens', Number(e.target.value))}
             className="w-full accent-primary h-2 rounded-full cursor-pointer"
           />
-          <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-text-disabled">
-            <span>Curto 60</span>
-            <span>Médio 200</span>
-            <span>Longo 400</span>
-          </div>
-          <p className="text-xs text-text-muted">
-            Quanto menor, mais objetiva e barata a resposta. Para voz, 100–150 costuma ser ideal.
-          </p>
         </div>
 
         {/* Temperatura */}
@@ -145,14 +206,6 @@ export default function ConfiguracoesPage() {
             onChange={(e) => update('temperature', Number(e.target.value))}
             className="w-full accent-primary h-2 rounded-full cursor-pointer"
           />
-          <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-text-disabled">
-            <span>Precisa 0.1</span>
-            <span>Equilibrada 0.4</span>
-            <span>Criativa 0.9</span>
-          </div>
-          <p className="text-xs text-text-muted">
-            Valores baixos = respostas mais diretas e estáveis. Valores altos = mais variação.
-          </p>
         </div>
 
         <div className="flex flex-wrap gap-3 pt-4 border-t border-border">
@@ -185,7 +238,7 @@ export default function ConfiguracoesPage() {
       </section>
 
       <p className="text-xs text-text-disabled text-center">
-        As configurações ficam neste navegador e são aplicadas na próxima conversa com a Alpha.
+        As configurações ficam neste navegador e valem na próxima ativação da Alpha.
       </p>
     </div>
   )

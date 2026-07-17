@@ -83,8 +83,10 @@ export function AlphaVoiceButton() {
     )
   }, [isActive])
 
+  // Abre HUD ao ativar; fecha quando volta a idle
   useEffect(() => {
     if (isActive) setHudOpen(true)
+    else setHudOpen(false)
   }, [isActive])
 
   const handleClick = () => {

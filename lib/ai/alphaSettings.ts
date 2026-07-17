@@ -8,12 +8,24 @@ export interface AlphaSettings {
   maxTokens: number
   /** Criatividade 0–1 */
   temperature: number
+  /**
+   * Tempo de silêncio (ms) antes de enviar o áudio para processar.
+   * Menor = responde mais rápido; maior = espera você terminar de falar.
+   */
+  silenceMs: number
+  /**
+   * Se true, após responder volta a ouvir sozinha.
+   * Se false, responde uma vez e desliga (só liga de novo no botão).
+   */
+  continuousListen: boolean
 }
 
 export const DEFAULT_ALPHA_SETTINGS: AlphaSettings = {
   voiceSpeed: 1.3,
   maxTokens: 120,
   temperature: 0.3,
+  silenceMs: 900,
+  continuousListen: false,
 }
 
 const KEY = 'alpha_ia_settings'
@@ -26,8 +38,21 @@ export function loadAlphaSettings(): AlphaSettings {
     const parsed = JSON.parse(raw) as Partial<AlphaSettings>
     return {
       voiceSpeed: clamp(Number(parsed.voiceSpeed) || DEFAULT_ALPHA_SETTINGS.voiceSpeed, 0.8, 1.5),
-      maxTokens: Math.round(clamp(Number(parsed.maxTokens) || DEFAULT_ALPHA_SETTINGS.maxTokens, 60, 400)),
-      temperature: clamp(Number(parsed.temperature) || DEFAULT_ALPHA_SETTINGS.temperature, 0.1, 0.9),
+      maxTokens: Math.round(
+        clamp(Number(parsed.maxTokens) || DEFAULT_ALPHA_SETTINGS.maxTokens, 60, 400)
+      ),
+      temperature: clamp(
+        Number(parsed.temperature) || DEFAULT_ALPHA_SETTINGS.temperature,
+        0.1,
+        0.9
+      ),
+      silenceMs: Math.round(
+        clamp(Number(parsed.silenceMs) || DEFAULT_ALPHA_SETTINGS.silenceMs, 400, 2000)
+      ),
+      continuousListen:
+        typeof parsed.continuousListen === 'boolean'
+          ? parsed.continuousListen
+          : DEFAULT_ALPHA_SETTINGS.continuousListen,
     }
   } catch {
     return { ...DEFAULT_ALPHA_SETTINGS }
@@ -40,6 +65,8 @@ export function saveAlphaSettings(settings: AlphaSettings): void {
     voiceSpeed: clamp(settings.voiceSpeed, 0.8, 1.5),
     maxTokens: Math.round(clamp(settings.maxTokens, 60, 400)),
     temperature: clamp(settings.temperature, 0.1, 0.9),
+    silenceMs: Math.round(clamp(settings.silenceMs, 400, 2000)),
+    continuousListen: !!settings.continuousListen,
   }
   localStorage.setItem(KEY, JSON.stringify(clean))
 }
