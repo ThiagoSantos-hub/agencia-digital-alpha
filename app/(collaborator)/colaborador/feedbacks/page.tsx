@@ -11,7 +11,6 @@ import {
   RefreshCw, 
   Calendar, 
   CheckCircle2, 
-  Image as ImageIcon,
   X
 } from 'lucide-react'
 
@@ -27,8 +26,6 @@ export default function FeedbacksCollaboratorPage() {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([])
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
-  
-  // Estados do formulário
   const [tipo, setTipo] = useState<'sugestao' | 'bug'>('sugestao')
   const [titulo, setTitulo] = useState('')
   const [descricao, setDescricao] = useState('')
@@ -47,9 +44,7 @@ export default function FeedbacksCollaboratorPage() {
       .eq('colaborador_id', user.id)
       .order('created_at', { ascending: false })
 
-    if (!error && data) {
-      setFeedbacks(data)
-    }
+    if (!error && data) setFeedbacks(data)
     setLoading(false)
   }
 
@@ -78,11 +73,10 @@ export default function FeedbacksCollaboratorPage() {
     let anexo_url = null
 
     try {
-      // 1. Upload do arquivo se houver
       if (arquivo) {
         const fileExt = arquivo.name.split('.').pop()
         const fileName = `${user.id}-${Math.random()}.${fileExt}`
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('feedback-anexos')
           .upload(fileName, arquivo)
 
@@ -95,7 +89,6 @@ export default function FeedbacksCollaboratorPage() {
         anexo_url = publicUrl
       }
 
-      // 2. Inserir no banco
       const { error: insertError } = await supabase
         .from('feedbacks')
         .insert([{
@@ -109,8 +102,6 @@ export default function FeedbacksCollaboratorPage() {
       if (insertError) throw insertError
 
       alert('Feedback enviado com sucesso! Obrigado pela sua contribuição.')
-      
-      // Limpar formulário
       setTitulo('')
       setDescricao('')
       setArquivo(null)
@@ -131,17 +122,15 @@ export default function FeedbacksCollaboratorPage() {
         <p className="text-text-muted text-sm mt-1">Sua opinião é fundamental para melhorarmos a plataforma.</p>
       </div>
 
-      {/* Formulário de Envio */}
-      <div className="bg-surface border border-border rounded-xl p-8 shadow-2xl">
+      <div className="bg-surface border border-border rounded-xl p-8 shadow-sm">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Toggle Tipo */}
           <div className="flex p-1 bg-background border border-border rounded-xl w-fit">
             <button
               type="button"
               onClick={() => setTipo('sugestao')}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${
                 tipo === 'sugestao' 
-                  ? 'bg-emerald-600 text-text-main shadow-lg' 
+                  ? 'bg-primary text-white shadow-sm' 
                   : 'text-text-muted hover:text-text-main'
               }`}
             >
@@ -153,7 +142,7 @@ export default function FeedbacksCollaboratorPage() {
               onClick={() => setTipo('bug')}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${
                 tipo === 'bug' 
-                  ? 'bg-red-600 text-text-main shadow-lg' 
+                  ? 'bg-red-600 text-white shadow-sm' 
                   : 'text-text-muted hover:text-text-main'
               }`}
             >
@@ -170,7 +159,7 @@ export default function FeedbacksCollaboratorPage() {
                 value={titulo}
                 onChange={(e) => setTitulo(e.target.value)}
                 placeholder={tipo === 'bug' ? "Onde o erro aconteceu?" : "Qual a sua ideia?"}
-                className="w-full bg-background border border-border rounded-xl px-5 py-4 text-text-main text-sm focus:outline-none focus:border-emerald-500/50 transition-all shadow-inner"
+                className="w-full bg-background border border-border rounded-xl px-5 py-4 text-text-main text-sm focus:outline-none focus:border-primary/50 transition-all"
                 required
               />
             </div>
@@ -182,31 +171,30 @@ export default function FeedbacksCollaboratorPage() {
                 onChange={(e) => setDescricao(e.target.value)}
                 placeholder={tipo === 'bug' ? "Descreva o que aconteceu e como podemos reproduzir o erro..." : "Explique como sua sugestão pode ajudar no dia a dia..."}
                 rows={5}
-                className="w-full bg-background border border-border rounded-xl px-5 py-4 text-text-main text-sm focus:outline-none focus:border-emerald-500/50 transition-all resize-none shadow-inner"
+                className="w-full bg-background border border-border rounded-xl px-5 py-4 text-text-main text-sm focus:outline-none focus:border-primary/50 transition-all resize-none"
                 required
               />
             </div>
 
-            {/* Upload de Anexo */}
             <div>
               <label className="block text-text-muted text-xs font-bold uppercase tracking-widest mb-2 ml-1">Anexo (Opcional)</label>
               <div className="relative">
                 {!previewUrl ? (
-                  <label className="flex flex-col items-center justify-center w-full h-32 bg-background border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all group">
+                  <label className="flex flex-col items-center justify-center w-full h-32 bg-background border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-all group">
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <Upload className="w-8 h-8 mb-2 text-text-muted group-hover:text-emerald-500 transition-colors" />
-                      <p className="text-xs text-text-muted group-hover:text-text-muted">Clique para enviar um print ou imagem</p>
+                      <Upload className="w-8 h-8 mb-2 text-text-muted group-hover:text-primary transition-colors" />
+                      <p className="text-xs text-text-muted">Clique para enviar um print ou imagem</p>
                     </div>
                     <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
                   </label>
                 ) : (
                   <div className="relative w-full h-40 rounded-xl overflow-hidden border border-border group">
                     <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
                       <button 
                         type="button"
                         onClick={removeFile}
-                        className="p-2 bg-red-500 text-text-main rounded-full hover:bg-red-600 transition-all shadow-xl"
+                        className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all shadow-xl"
                       >
                         <X size={20} />
                       </button>
@@ -220,8 +208,8 @@ export default function FeedbacksCollaboratorPage() {
           <button
             type="submit"
             disabled={sending}
-            className={`w-full py-4 rounded-xl font-bold text-text-main shadow-xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 ${
-              tipo === 'bug' ? 'bg-red-600 hover:bg-red-700 shadow-red-900/20' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-900/20'
+            className={`w-full py-4 rounded-xl font-bold text-white shadow-sm transition-all flex items-center justify-center gap-3 disabled:opacity-50 ${
+              tipo === 'bug' ? 'bg-red-600 hover:bg-red-700' : 'bg-primary hover:bg-primary-hover'
             }`}
           >
             {sending ? <RefreshCw size={20} className="animate-spin" /> : <Send size={20} />}
@@ -230,7 +218,6 @@ export default function FeedbacksCollaboratorPage() {
         </form>
       </div>
 
-      {/* Meus Feedbacks */}
       <div className="space-y-4">
         <h2 className="text-text-muted text-xs font-black uppercase tracking-[0.2em] flex items-center gap-2">
           <span className="text-[8px]">●</span> Meus Envios Recentes
@@ -238,26 +225,26 @@ export default function FeedbacksCollaboratorPage() {
 
         {loading ? (
           <div className="flex justify-center py-10">
-            <RefreshCw size={24} className="animate-spin text-emerald-500" />
+            <RefreshCw size={24} className="animate-spin text-primary" />
           </div>
         ) : feedbacks.length === 0 ? (
-          <div className="bg-surface border border-border rounded-xl p-10 text-center opacity-50">
+          <div className="bg-surface border border-border rounded-xl p-10 text-center opacity-70">
             <p className="text-text-muted text-sm">Você ainda não enviou nenhum feedback.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3">
             {feedbacks.map((f) => (
-              <div key={f.id} className="bg-surface border border-border rounded-xl p-5 flex items-center justify-between group hover:border-emerald-500/20 transition-all">
+              <div key={f.id} className="bg-surface border border-border rounded-xl p-5 flex items-center justify-between group hover:border-primary/30 transition-all">
                 <div className="flex items-center gap-4">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                    f.tipo === 'bug' ? 'bg-red-500/10 text-red-500' : 'bg-emerald-500/10 text-emerald-500'
+                    f.tipo === 'bug' ? 'bg-red-50 text-red-500' : 'bg-primary/10 text-primary'
                   }`}>
                     {f.tipo === 'bug' ? <Bug size={18} /> : <MessageSquare size={18} />}
                   </div>
                   <div>
                     <h4 className="text-text-main font-bold text-sm">{f.titulo}</h4>
                     <div className="flex items-center gap-3 mt-1">
-                      <span className={`text-[10px] font-bold uppercase tracking-tighter ${f.tipo === 'bug' ? 'text-red-400' : 'text-emerald-400'}`}>
+                      <span className={`text-[10px] font-bold uppercase tracking-tighter ${f.tipo === 'bug' ? 'text-red-500' : 'text-primary'}`}>
                         {f.tipo === 'bug' ? 'Bug' : 'Sugestão'}
                       </span>
                       <span className="text-[10px] text-text-disabled flex items-center gap-1">
@@ -267,7 +254,7 @@ export default function FeedbacksCollaboratorPage() {
                     </div>
                   </div>
                 </div>
-                <CheckCircle2 size={18} className="text-gray-800 group-hover:text-emerald-500/20 transition-all" />
+                <CheckCircle2 size={18} className="text-text-disabled group-hover:text-primary/40 transition-all" />
               </div>
             ))}
           </div>
