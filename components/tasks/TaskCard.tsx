@@ -55,7 +55,7 @@ export function TaskCard({
       case 'urgente': return 'text-red-600'
       case 'alta': return 'text-red-500'
       case 'media': return 'text-amber-500'
-      case 'baixa': return 'text-emerald-500'
+      case 'baixa': return 'text-cta'
       default: return 'text-text-muted'
     }
   }
@@ -80,7 +80,7 @@ export function TaskCard({
       style={style}
       {...attributes}
       {...listeners}
-      className="bg-background border border-border rounded-lg p-3 hover:border-[#00ff88]/30 transition-all group shadow-md cursor-grab active:cursor-grabbing"
+      className="bg-background border border-border rounded-lg p-3 hover:border-primary/30 transition-all group shadow-md cursor-grab active:cursor-grabbing"
       onClick={() => onClick(task)}
     >
       <div className="flex justify-between items-start mb-2">
@@ -104,7 +104,7 @@ export function TaskCard({
         </div>
       </div>
 
-      <h3 className="text-text-main font-bold text-xs mb-1 line-clamp-2 group-hover:text-[#00ff88] transition-colors leading-tight">{task.title}</h3>
+      <h3 className="text-text-main font-bold text-xs mb-1 line-clamp-2 group-hover:text-primary transition-colors leading-tight">{task.title}</h3>
       {task.description && (
         <div className="text-text-muted text-[10px] mb-2 whitespace-pre-wrap line-clamp-2 leading-tight">{task.description}</div>
       )}
@@ -121,7 +121,7 @@ export function TaskCard({
                 href={task.drive_link} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex items-center gap-1 text-[9px] text-emerald-500 hover:text-emerald-400 font-bold transition-colors shrink-0"
+                className="flex items-center gap-1 text-[9px] text-cta hover:text-cta-hover font-bold transition-colors shrink-0"
                 onClick={(e) => e.stopPropagation()}
               >
                 <ExternalLink size={10} />
@@ -141,7 +141,7 @@ export function TaskCard({
               </button>
             )}
             {task.status !== 'finalizada' && (
-              <button onClick={() => onMove(task.id, 'finalizada')} title="Mover para Finalizada" className="p-0.5 text-text-disabled hover:text-emerald-400 transition-colors">
+              <button onClick={() => onMove(task.id, 'finalizada')} title="Mover para Finalizada" className="p-0.5 text-text-disabled hover:text-cta transition-colors">
                 <CheckCircle2 size={12} />
               </button>
             )}
@@ -151,7 +151,7 @@ export function TaskCard({
         <div className="flex items-center justify-between border-t border-border pt-1.5">
           <div className="flex items-center gap-1.5">
             <span className="text-[8px] text-text-muted uppercase font-bold shrink-0">Criado por:</span>
-            <span className="text-[9px] text-emerald-400 font-medium truncate max-w-[100px]">
+            <span className="text-[9px] text-cta font-medium truncate max-w-[100px]">
               {task.creator?.name || task.creator?.email?.split('@')[0] || 'Sistema'}
             </span>
           </div>
