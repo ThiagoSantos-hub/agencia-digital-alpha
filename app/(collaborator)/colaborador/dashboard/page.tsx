@@ -93,24 +93,32 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
   )
 }
 
+/** Todas as barras sempre renderizam — inclusive valor 0 */
 function BarChart({ items }: { items: { value: number; color: string; label: string }[] }) {
   const max = Math.max(...items.map((i) => i.value), 1)
+
   return (
-    <div className="flex items-end justify-between h-full w-full gap-1.5 px-1">
+    <div className="flex items-stretch justify-between h-full w-full gap-2 px-1">
       {items.map((item, i) => {
-        const heightPct = Math.max((item.value / max) * 78, item.value > 0 ? 6 : 2)
+        const heightPct = item.value <= 0 ? 12 : Math.max((item.value / max) * 100, 18)
         return (
-          <div key={i} className="flex-1 flex flex-col items-center h-full justify-end min-w-0" title={item.label}>
-            <span className="text-[10px] text-text-main font-bold leading-none tabular-nums mb-1.5 select-none">
+          <div key={i} className="flex-1 flex flex-col items-center min-w-0 h-full">
+            <span className="text-[11px] text-text-main font-black leading-none tabular-nums mb-1.5 select-none">
               {item.value}
             </span>
-            <div
-              className="w-full rounded-t-md transition-all duration-500"
-              style={{
-                height: `${heightPct}%`,
-                backgroundColor: item.color,
-              }}
-            />
+            <div className="flex-1 w-full flex items-end min-h-0">
+              <div
+                className="w-full rounded-t-md transition-all duration-500"
+                style={{
+                  height: `${heightPct}%`,
+                  backgroundColor: item.value <= 0 ? `${item.color}22` : item.color,
+                  border: item.value <= 0 ? `1.5px dashed ${item.color}66` : 'none',
+                }}
+              />
+            </div>
+            <span className="mt-1.5 text-[8px] font-bold uppercase tracking-tight text-text-muted text-center leading-tight truncate w-full">
+              {item.label}
+            </span>
           </div>
         )
       })}
@@ -187,12 +195,12 @@ export default function CollaboratorDashboardPage() {
   ]
 
   const barItems = [
-    { value: stats.totalClientesAtivos || 0, color: '#1A56DB', label: 'Clientes' },
-    { value: stats.campanhasAtivas || 0,     color: '#4C3ABF', label: 'Campanhas' },
-    { value: stats.relatoriosEnviados || 0,  color: '#f59e0b', label: 'Relatórios' },
-    { value: stats.alertasAtivos || 0,       color: '#ef4444', label: 'Alertas' },
-    { value: stats.tarefasAFazer || 0,       color: '#3b82f6', label: 'Tarefas' },
-    { value: stats.checklistsPendentes || 0, color: '#16A34A', label: 'Checklists' },
+    { value: stats.totalClientesAtivos ?? 0, color: '#1A56DB', label: 'Clientes' },
+    { value: stats.campanhasAtivas ?? 0,     color: '#4C3ABF', label: 'Campanhas' },
+    { value: stats.relatoriosEnviados ?? 0,  color: '#f59e0b', label: 'Relatórios' },
+    { value: stats.alertasAtivos ?? 0,       color: '#ef4444', label: 'Alertas' },
+    { value: stats.tarefasAFazer ?? 0,       color: '#3b82f6', label: 'Tarefas' },
+    { value: stats.checklistsPendentes ?? 0, color: '#16A34A', label: 'Checklists' },
   ]
 
   return (
@@ -254,36 +262,14 @@ export default function CollaboratorDashboardPage() {
         </div>
 
         <div className="col-span-6 row-span-4 bg-surface border border-border rounded-xl p-4 flex flex-col min-h-0 shadow-sm">
-          <div className="flex items-center justify-between mb-3 flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <TrendingUp size={14} className="text-primary" />
-              <h2 className="text-text-main font-bold text-xs uppercase tracking-wide">Meu Histórico</h2>
-            </div>
-            <div className="flex flex-wrap gap-x-3 gap-y-1 justify-end">
-              <span className="flex items-center gap-1 text-[9px] text-text-muted font-medium">
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#1A56DB' }} /> Clientes
-              </span>
-              <span className="flex items-center gap-1 text-[9px] text-text-muted font-medium">
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#4C3ABF' }} /> Campanhas
-              </span>
-              <span className="flex items-center gap-1 text-[9px] text-text-muted font-medium">
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#f59e0b' }} /> Relatórios
-              </span>
-              <span className="flex items-center gap-1 text-[9px] text-text-muted font-medium">
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#ef4444' }} /> Alertas
-              </span>
-              <span className="flex items-center gap-1 text-[9px] text-text-muted font-medium">
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#3b82f6' }} /> Tarefas
-              </span>
-              <span className="flex items-center gap-1 text-[9px] text-text-muted font-medium">
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#16A34A' }} /> Checklists
-              </span>
-            </div>
+          <div className="flex items-center gap-2 mb-3 flex-shrink-0">
+            <TrendingUp size={14} className="text-primary" />
+            <h2 className="text-text-main font-bold text-xs uppercase tracking-wide">Meu Histórico</h2>
           </div>
           <div className="flex-1 min-h-0 w-full">
             <BarChart items={barItems} />
           </div>
-          <div className="mt-3 pt-3 border-t border-border flex items-center justify-between flex-shrink-0">
+          <div className="mt-2 pt-2 border-t border-border flex items-center justify-between flex-shrink-0">
             <div className="text-[9px] text-text-muted">Indicadores do período filtrado</div>
             <div className="text-[9px] text-text-muted italic">Atualizado agora</div>
           </div>
