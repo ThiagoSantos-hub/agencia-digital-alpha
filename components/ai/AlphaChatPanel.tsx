@@ -15,7 +15,7 @@ export function AlphaChatPanel() {
   }, [messages])
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-full min-h-0 bg-background overflow-hidden">
 
       {/* Cabeçalho */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
@@ -36,10 +36,10 @@ export function AlphaChatPanel() {
         )}
       </div>
 
-      {/* Mensagens */}
-      <div className="flex-1 overflow-y-auto px-6 py-4">
+      {/* Mensagens — única área com scroll interno */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 custom-scrollbar">
         {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center">
+          <div className="h-full flex flex-col items-center justify-center text-center py-8">
             <div className="w-16 h-16 rounded-full bg-ai/10 border border-ai/20 flex items-center justify-center text-ai text-3xl font-bold mb-4">
               α
             </div>
@@ -82,8 +82,8 @@ export function AlphaChatPanel() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
-      <div className="px-6 py-4 border-t border-border flex-shrink-0">
+      {/* Input fixo no rodapé */}
+      <div className="px-6 py-4 border-t border-border flex-shrink-0 bg-background">
         <AlphaChatInput
           loading={loading}
           onSend={sendMessage}
