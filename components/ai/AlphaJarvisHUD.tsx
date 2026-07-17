@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Activity, Users, Megaphone, CheckSquare, Wallet, Radio } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
@@ -35,11 +35,102 @@ function nowLabel() {
   })
 }
 
+/** Partículas flutuantes (determinísticas por índice — sem Math.random no render) */
+function FloatingParticles({ intense }: { intense: boolean }) {
+  const particles = useMemo(() => {
+    return Array.from({ length: 48 }, (_, i) => {
+      const seed = (i * 97 + 13) % 1000
+      const x = (seed * 17) % 100
+      const y = (seed * 31) % 100
+      const size = 1.5 + ((seed * 7) % 25) / 10
+      const duration = 6 + ((seed * 3) % 10)
+      const delay = ((seed * 5) % 80) / 10
+      const drift = 8 + ((seed * 11) % 24)
+      const hue = seed % 3 // 0 cyan, 1 blue, 2 indigo
+      return { id: i, x, y, size, duration, delay, drift, hue }
+    })
+  }, [])
+
+  const colorFor = (hue: number) => {
+    if (hue === 0) return 'rgba(56,189,248,0.85)'
+    if (hue === 1) return 'rgba(26,86,219,0.8)'
+    return 'rgba(129,140,248,0.85)'
+  }
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {particles.map((p) => (
+        <motion.span
+          key={p.id}
+          className="absolute rounded-full"
+          style={{
+            left: `${p.x}%`,
+            top: `${p.y}%`,
+            width: p.size,
+            height: p.size,
+            background: colorFor(p.hue),
+            boxShadow: `0 0 ${intense ? 10 : 6}px ${colorFor(p.hue)}`,
+          }}
+          animate={{
+            y: intense
+              ? [0, -p.drift * 1.4, p.drift * 0.5, -p.drift, 0]
+              : [0, -p.drift, p.drift * 0.4, 0],
+            x: intense
+              ? [0, p.drift * 0.6, -p.drift * 0.4, p.drift * 0.3, 0]
+              : [0, p.drift * 0.25, -p.drift * 0.15, 0],
+            opacity: intense
+              ? [0.25, 0.95, 0.4, 0.9, 0.25]
+              : [0.15, 0.55, 0.25, 0.5, 0.15],
+            scale: intense ? [1, 1.35, 0.9, 1.25, 1] : [1, 1.1, 1],
+          }}
+          transition={{
+            duration: intense ? p.duration * 0.55 : p.duration,
+            repeat: Infinity,
+            delay: p.delay,
+            ease: 'easeInOut',
+          }}
+        />
+      ))}
+
+      {/* Partículas maiores / “sparks” ocasionais */}
+      {Array.from({ length: 12 }, (_, i) => {
+        const seed = (i * 53 + 7) % 100
+        const left = (seed * 13) % 100
+        const top = (seed * 29) % 100
+        return (
+          <motion.span
+            key={`spark-${i}`}
+            className="absolute rounded-full"
+            style={{
+              left: `${left}%`,
+              top: `${top}%`,
+              width: 3,
+              height: 3,
+              background: 'rgba(165,243,252,0.9)',
+              boxShadow: '0 0 12px rgba(34,211,238,0.9)',
+            }}
+            animate={{
+              y: intense ? [0, -40, -80] : [0, -24, -48],
+              opacity: [0, 0.9, 0],
+              scale: [0.6, 1.2, 0.4],
+            }}
+            transition={{
+              duration: intense ? 2.2 : 4,
+              repeat: Infinity,
+              delay: i * 0.55,
+              ease: 'easeOut',
+            }}
+          />
+        )
+      })}
+    </div>
+  )
+}
+
 /** Globo digital com meridianos/paralelos e rotação */
 function DigitalGlobe({ intense }: { intense: boolean }) {
   return (
     <div className="relative w-44 h-44">
-      {/* Atmosfera */}
       <div
         className="absolute inset-0 rounded-full"
         style={{
@@ -51,7 +142,6 @@ function DigitalGlobe({ intense }: { intense: boolean }) {
         }}
       />
 
-      {/* Esfera com grade (rotação) */}
       <motion.div
         className="absolute inset-2 rounded-full overflow-hidden"
         style={{
@@ -62,7 +152,6 @@ function DigitalGlobe({ intense }: { intense: boolean }) {
         animate={{ rotate: 360 }}
         transition={{ duration: intense ? 12 : 28, repeat: Infinity, ease: 'linear' }}
       >
-        {/* Meridianos */}
         {[0, 30, 60, 90, 120, 150].map((deg) => (
           <div
             key={`m-${deg}`}
@@ -75,7 +164,6 @@ function DigitalGlobe({ intense }: { intense: boolean }) {
             }}
           />
         ))}
-        {/* Paralelos */}
         {[18, 36, 54, 72].map((pct) => (
           <div
             key={`p-${pct}`}
@@ -88,7 +176,6 @@ function DigitalGlobe({ intense }: { intense: boolean }) {
             }}
           />
         ))}
-        {/* Continentes abstratos (manchas digitais) */}
         <div
           className="absolute rounded-full opacity-50"
           style={{
@@ -124,7 +211,6 @@ function DigitalGlobe({ intense }: { intense: boolean }) {
         />
       </motion.div>
 
-      {/* Brilho polar */}
       <div
         className="absolute inset-0 rounded-full pointer-events-none"
         style={{
@@ -133,7 +219,6 @@ function DigitalGlobe({ intense }: { intense: boolean }) {
         }}
       />
 
-      {/* α no centro do globo */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <span
           className="text-3xl font-black text-white/90"
@@ -146,7 +231,6 @@ function DigitalGlobe({ intense }: { intense: boolean }) {
   )
 }
 
-/** Ondas concêntricas que “tremem” quando a Alpha fala/ouve */
 function SoundWaves({ intense }: { intense: boolean }) {
   const rings = [0, 1, 2, 3, 4]
   return (
@@ -176,7 +260,6 @@ function SoundWaves({ intense }: { intense: boolean }) {
   )
 }
 
-/** Barras de equalizer em arco */
 function WaveBars({ intense }: { intense: boolean }) {
   const bars = Array.from({ length: 28 }, (_, i) => i)
   return (
@@ -208,11 +291,9 @@ function WaveBars({ intense }: { intense: boolean }) {
   )
 }
 
-/** Guias / trajetórias digitais cruzando a tela */
 function GuideLines({ intense }: { intense: boolean }) {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/* Linhas horizontais deslizantes */}
       {[18, 35, 55, 72, 88].map((top, i) => (
         <motion.div
           key={`h-${i}`}
@@ -235,7 +316,6 @@ function GuideLines({ intense }: { intense: boolean }) {
         />
       ))}
 
-      {/* Diagonais */}
       {[0, 1, 2].map((i) => (
         <motion.div
           key={`d-${i}`}
@@ -259,7 +339,6 @@ function GuideLines({ intense }: { intense: boolean }) {
         />
       ))}
 
-      {/* Arcos orbitais */}
       {[0, 1].map((i) => (
         <motion.div
           key={`arc-${i}`}
@@ -274,7 +353,6 @@ function GuideLines({ intense }: { intense: boolean }) {
         />
       ))}
 
-      {/* Pontos de dados viajando nas guias */}
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <motion.div
           key={`dot-${i}`}
@@ -362,7 +440,6 @@ export function AlphaJarvisHUD({
               'radial-gradient(ellipse at center, rgba(8,15,35,0.94) 0%, rgba(2,6,18,0.98) 75%)',
           }}
         >
-          {/* Grid de fundo */}
           <div
             className="absolute inset-0 opacity-[0.14] pointer-events-none"
             style={{
@@ -372,7 +449,6 @@ export function AlphaJarvisHUD({
             }}
           />
 
-          {/* Scanline */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-25">
             <motion.div
               className="w-full h-20 bg-gradient-to-b from-transparent via-cyan-400/30 to-transparent"
@@ -381,10 +457,11 @@ export function AlphaJarvisHUD({
             />
           </div>
 
-          {/* Guias digitais */}
+          {/* Partículas flutuantes */}
+          <FloatingParticles intense={intense} />
+
           <GuideLines intense={intense} />
 
-          {/* Top bar */}
           <div className="absolute top-0 left-0 right-0 px-6 py-4 flex items-center justify-between z-10">
             <div className="flex items-center gap-3">
               <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_12px_#22d3ee]" />
@@ -405,7 +482,6 @@ export function AlphaJarvisHUD({
             </div>
           </div>
 
-          {/* Lateral esquerda — CRM */}
           <div className="absolute left-5 top-20 bottom-24 w-56 flex flex-col gap-3 z-10">
             <HudPanel title="MONITOR CRM" icon={<Activity size={12} />}>
               <HudStat icon={<Users size={12} />} label="Clientes ativos" value={stats.clientes} color="#38bdf8" />
@@ -423,7 +499,6 @@ export function AlphaJarvisHUD({
             </HudPanel>
           </div>
 
-          {/* Lateral direita — conversa */}
           <div className="absolute right-5 top-20 bottom-24 w-64 flex flex-col gap-3 z-10">
             <HudPanel title="ENTRADA" icon={<Radio size={12} />}>
               <p className="text-[11px] text-slate-200 min-h-[48px] leading-relaxed">
@@ -440,12 +515,10 @@ export function AlphaJarvisHUD({
             </HudPanel>
           </div>
 
-          {/* Centro — globo + ondas */}
           <div className="relative z-10 flex flex-col items-center justify-center">
             <div className="relative w-[340px] h-[340px] flex items-center justify-center">
               <SoundWaves intense={intense} />
 
-              {/* Anéis externos */}
               <motion.div
                 className="absolute inset-6 rounded-full border border-primary/25"
                 animate={{ rotate: 360 }}
@@ -491,7 +564,6 @@ export function AlphaJarvisHUD({
             </div>
           </div>
 
-          {/* Rodapé */}
           <div className="absolute bottom-5 left-0 right-0 flex justify-center z-10">
             <p className="text-[10px] text-slate-500 font-mono tracking-wide">
               ALPHA HUD · Digital Alpha · Monitoramento em tempo real
