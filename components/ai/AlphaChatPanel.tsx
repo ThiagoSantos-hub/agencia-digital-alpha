@@ -20,7 +20,7 @@ export function AlphaChatPanel() {
       {/* Cabeçalho */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-[#00ff88]/10 border border-[#00ff88]/30 flex items-center justify-center text-[#00ff88] font-bold text-lg">
+          <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-bold text-lg">
             α
           </div>
           <div>
@@ -40,7 +40,7 @@ export function AlphaChatPanel() {
       <div className="flex-1 overflow-y-auto px-6 py-4">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center">
-            <div className="w-16 h-16 rounded-full bg-[#00ff88]/10 border border-[#00ff88]/20 flex items-center justify-center text-[#00ff88] text-3xl font-bold mb-4">
+            <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-3xl font-bold mb-4">
               α
             </div>
             <p className="text-text-main font-semibold mb-1">Olá! Sou a Alpha</p>
@@ -50,7 +50,7 @@ export function AlphaChatPanel() {
             <div className="mt-6 flex flex-wrap gap-2 justify-center">
               {['Como estão os clientes?', 'Minhas tarefas', 'Resumo financeiro do mês', 'Campanhas ativas'].map(s => (
                 <button key={s} onClick={() => sendMessage(s)}
-                  className="px-3 py-1.5 rounded-xl text-xs text-text-muted border border-border hover:border-[#00ff88]/40 hover:text-[#00ff88] transition-colors">
+                  className="px-3 py-1.5 rounded-xl text-xs text-text-muted border border-border hover:border-primary/40 hover:text-primary transition-colors">
                   {s}
                 </button>
               ))}
@@ -61,12 +61,12 @@ export function AlphaChatPanel() {
             {messages.map(msg => <AlphaChatMessage key={msg.id} message={msg} />)}
             {loading && (
               <div className="flex justify-start mb-4">
-                <div className="w-8 h-8 rounded-full bg-[#00ff88]/10 border border-[#00ff88]/30 flex items-center justify-center text-sm mr-2 flex-shrink-0">α</div>
+                <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-sm mr-2 flex-shrink-0">α</div>
                 <div className="bg-surface border border-border rounded-xl rounded-bl-sm px-4 py-3">
                   <div className="flex gap-1 items-center h-4">
-                    <span className="w-1.5 h-1.5 bg-[#00ff88] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-1.5 h-1.5 bg-[#00ff88] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-1.5 h-1.5 bg-[#00ff88] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                   </div>
                 </div>
               </div>
