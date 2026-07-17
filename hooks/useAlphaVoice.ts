@@ -32,9 +32,9 @@ export function useAlphaVoice() {
   const streamRef = useRef<MediaStream | null>(null)
   const iniciarEscutaRef = useRef<() => Promise<void>>()
 
-  // true só enquanto o usuário manteve a Alpha ligada
+  // true enquanto o usuário manteve a Alpha ligada (só false no X / botão desligar)
   const enabledRef = useRef(false)
-  // true quando o stop veio do usuário (X / botão) — não processar nem religar
+  // true quando o stop veio do usuário (X / botão)
   const userStoppedRef = useRef(false)
 
   const pararMonitoramento = useCallback(() => {
@@ -53,24 +53,19 @@ export function useAlphaVoice() {
     streamRef.current = null
   }, [])
 
+  /** Continua ouvindo sempre — só para se o usuário apertou X */
   const maybeRestart = useCallback(() => {
     if (!enabledRef.current || userStoppedRef.current) {
       setVoiceState('idle')
       return
     }
-    const { continuousListen } = loadAlphaSettings()
-    if (continuousListen && iniciarEscutaRef.current) {
+    if (iniciarEscutaRef.current) {
       iniciarEscutaRef.current()
-    } else {
-      // Uma resposta e desliga
-      enabledRef.current = false
-      setVoiceState('idle')
     }
   }, [])
 
   const processarAudio = useCallback(
     async (blob: Blob, mimeType: string) => {
-      // Usuário desligou no meio — não processa
       if (userStoppedRef.current || !enabledRef.current) {
         setVoiceState('idle')
         return
@@ -167,9 +162,11 @@ export function useAlphaVoice() {
       } catch (err: any) {
         if (!userStoppedRef.current) {
           setError(err.message ?? 'Erro desconhecido')
+          // Erro não desliga de vez — tenta ouvir de novo se ainda estiver ativa
+          maybeRestart()
+        } else {
+          setVoiceState('idle')
         }
-        enabledRef.current = false
-        setVoiceState('idle')
       }
     },
     [maybeRestart]
@@ -207,7 +204,6 @@ export function useAlphaVoice() {
         pararStream()
         pararMonitoramento()
 
-        // Stop manual do usuário: não processa e não religa
         if (userStoppedRef.current || !enabledRef.current) {
           chunksRef.current = []
           setVoiceState('idle')
@@ -297,10 +293,8 @@ export function useAlphaVoice() {
       }
     } else {
       pararStream()
-      setVoiceState('idle')
     }
 
-    // Garante idle mesmo se onstop atrasar
     setVoiceState('idle')
   }, [pararMonitoramento, pararStream])
 

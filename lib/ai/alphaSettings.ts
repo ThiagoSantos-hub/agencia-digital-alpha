@@ -13,11 +13,6 @@ export interface AlphaSettings {
    * Menor = responde mais rápido; maior = espera você terminar de falar.
    */
   silenceMs: number
-  /**
-   * Se true, após responder volta a ouvir sozinha.
-   * Se false, responde uma vez e desliga (só liga de novo no botão).
-   */
-  continuousListen: boolean
 }
 
 export const DEFAULT_ALPHA_SETTINGS: AlphaSettings = {
@@ -25,7 +20,6 @@ export const DEFAULT_ALPHA_SETTINGS: AlphaSettings = {
   maxTokens: 120,
   temperature: 0.3,
   silenceMs: 900,
-  continuousListen: false,
 }
 
 const KEY = 'alpha_ia_settings'
@@ -49,10 +43,6 @@ export function loadAlphaSettings(): AlphaSettings {
       silenceMs: Math.round(
         clamp(Number(parsed.silenceMs) || DEFAULT_ALPHA_SETTINGS.silenceMs, 400, 2000)
       ),
-      continuousListen:
-        typeof parsed.continuousListen === 'boolean'
-          ? parsed.continuousListen
-          : DEFAULT_ALPHA_SETTINGS.continuousListen,
     }
   } catch {
     return { ...DEFAULT_ALPHA_SETTINGS }
@@ -66,7 +56,6 @@ export function saveAlphaSettings(settings: AlphaSettings): void {
     maxTokens: Math.round(clamp(settings.maxTokens, 60, 400)),
     temperature: clamp(settings.temperature, 0.1, 0.9),
     silenceMs: Math.round(clamp(settings.silenceMs, 400, 2000)),
-    continuousListen: !!settings.continuousListen,
   }
   localStorage.setItem(KEY, JSON.stringify(clean))
 }

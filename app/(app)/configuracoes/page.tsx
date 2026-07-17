@@ -10,7 +10,7 @@ import {
   Save,
   Bot,
   Timer,
-  Repeat,
+  Info,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import {
@@ -39,14 +39,14 @@ export default function ConfiguracoesPage() {
   const handleSave = () => {
     saveAlphaSettings(settings)
     setSaved(true)
-    window.setTimeout(() => setSaved(false), 2500)
+    window.setTimeout(() => setSaved(false), 3500)
   }
 
   const handleReset = () => {
     setSettings({ ...DEFAULT_ALPHA_SETTINGS })
     saveAlphaSettings(DEFAULT_ALPHA_SETTINGS)
     setSaved(true)
-    window.setTimeout(() => setSaved(false), 2500)
+    window.setTimeout(() => setSaved(false), 3500)
   }
 
   if (!ready) {
@@ -77,7 +77,6 @@ export default function ConfiguracoesPage() {
           <h2 className="text-sm font-black uppercase tracking-widest text-text-main">Alpha IA</h2>
         </div>
 
-        {/* Velocidade da voz */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2 text-sm font-semibold text-text-main">
@@ -104,7 +103,6 @@ export default function ConfiguracoesPage() {
           </div>
         </div>
 
-        {/* Tempo de silêncio / aceleração do processar */}
         <div className="space-y-3 pt-2 border-t border-border">
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2 text-sm font-semibold text-text-main">
@@ -135,38 +133,6 @@ export default function ConfiguracoesPage() {
           </p>
         </div>
 
-        {/* Escuta contínua */}
-        <div className="space-y-3 pt-2 border-t border-border">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <label className="flex items-center gap-2 text-sm font-semibold text-text-main">
-                <Repeat size={16} className="text-primary" />
-                Escuta contínua
-              </label>
-              <p className="text-xs text-text-muted mt-1">
-                Desligado (recomendado): responde uma vez e desliga. Você liga de novo no botão.
-                Ligado: depois de falar, volta a ouvir sozinha.
-              </p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={settings.continuousListen}
-              onClick={() => update('continuousListen', !settings.continuousListen)}
-              className={`relative shrink-0 w-12 h-7 rounded-full transition-colors ${
-                settings.continuousListen ? 'bg-primary' : 'bg-border'
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform ${
-                  settings.continuousListen ? 'translate-x-5' : 'translate-x-0'
-                }`}
-              />
-            </button>
-          </div>
-        </div>
-
-        {/* Max tokens */}
         <div className="space-y-3 pt-2 border-t border-border">
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2 text-sm font-semibold text-text-main">
@@ -186,7 +152,6 @@ export default function ConfiguracoesPage() {
           />
         </div>
 
-        {/* Temperatura */}
         <div className="space-y-3 pt-2 border-t border-border">
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2 text-sm font-semibold text-text-main">
@@ -237,9 +202,17 @@ export default function ConfiguracoesPage() {
         </div>
       </section>
 
-      <p className="text-xs text-text-disabled text-center">
-        As configurações ficam neste navegador e valem na próxima ativação da Alpha.
-      </p>
+      <div className="flex gap-2 items-start rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+        <Info size={16} className="text-primary shrink-0 mt-0.5" />
+        <div className="text-xs text-text-muted leading-relaxed">
+          <p className="font-bold text-text-main mb-1">Não precisa atualizar a página.</p>
+          <p>
+            Depois de salvar, as configurações já valem na <strong>próxima conversa</strong> com a
+            Alpha (se ela estiver ligada, desligue no X e ligue de novo no microfone para aplicar
+            velocidade da voz e tempo de processar).
+          </p>
+        </div>
+      </div>
     </div>
   )
 }
