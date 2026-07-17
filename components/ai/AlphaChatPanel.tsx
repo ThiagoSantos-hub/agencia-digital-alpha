@@ -1,99 +1,504 @@
-// components/ai/AlphaChatPanel.tsx
 'use client'
-import { useEffect, useRef } from 'react'
-import { Trash2, AlertCircle } from 'lucide-react'
-import { useAlphaAI }        from '@/hooks/useAlphaAI'
-import { AlphaChatMessage }  from './AlphaChatMessage'
-import { AlphaChatInput }    from './AlphaChatInput'
 
-export function AlphaChatPanel() {
-  const { messages, loading, error, sendMessage, sendVoice, sendAudio, clearHistory } = useAlphaAI()
-  const bottomRef = useRef<HTMLDivElement>(null)
+import { useEffect, useState } from 'react'
+import { WhatsAppConnect } from '@/components/whatsapp/WhatsAppConnect'
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+interface Integration {
+  id: string
+  type: string
+  label: string
+  status: string
+  connected_at: string | null
+  token_expiry: string | null
+  config: Record<string, string>
+}
+
+interface Webhook {
+  id: string
+  slot: number
+  name: string | null
+  url: string | null
+  event: string | null
+  active: boolean
+}
+
+const OAUTH_INTEGRATIONS = [
+  'google_ads', 'gmail', 'google_drive', 'google_calendar',
+  'meta_ads', 'meta_ads_2', 'meta_ads_3', 'meta_ads_4',
+]
+const GOOGLE_INTEGRATIONS = ['google_ads', 'gmail', 'google_drive', 'google_calendar']
+const META_INTEGRATIONS = ['meta_ads', 'meta_ads_2', 'meta_ads_3', 'meta_ads_4']
+
+const INTEGRATION_ICONS: Record<string, string> = {
+  google_ads: 'https://www.gstatic.com/images/branding/product/2x/google_ads_48dp.png',
+  gmail: 'https://www.gstatic.com/images/branding/product/2x/gmail_2020q4_48dp.png',
+  google_drive: 'https://www.gstatic.com/images/branding/product/2x/drive_2020q4_48dp.png',
+  google_calendar: 'https://www.gstatic.com/images/branding/product/2x/calendar_2020q4_48dp.png',
+  meta_ads: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/200px-Meta_Platforms_Inc._logo.svg.png',
+  meta_ads_2: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/200px-Meta_Platforms_Inc._logo.svg.png',
+  meta_ads_3: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/200px-Meta_Platforms_Inc._logo.svg.png',
+  meta_ads_4: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/200px-Meta_Platforms_Inc._logo.svg.png',
+  brevo: 'https://www.brevo.com/wp-content/uploads/2023/01/brevo-logo.svg',
+  openai: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/OpenAI_Logo.svg/200px-OpenAI_Logo.svg.png',
+  evolution_api: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/200px-WhatsApp.svg.png',
+  n8n: 'https://n8n.io/favicon.ico',
+  elevenlabs: 'https://elevenlabs.io/favicon.ico',
+}
+
+const INTEGRATION_EMOJI: Record<string, string> = {
+  google_ads: '🎯',
+  gmail: '📧',
+  google_drive: '📁',
+  google_calendar: '📅',
+  meta_ads: '📣',
+  meta_ads_2: '📣',
+  meta_ads_3: '📣',
+  meta_ads_4: '📣',
+  brevo: '💌',
+  openai: '🤖',
+  evolution_api: '💬',
+  n8n: '⚡',
+  elevenlabs: '🎙️',
+}
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://agencia-digital-alpha.vercel.app'
+
+function ElevenLabsCard({
+  integration,
+  onSave,
+  onDisconnect,
+  saving,
+}: {
+  integration: Integration
+  onSave: (apiKey: string, agentId: string) => void
+  onDisconnect: () => void
+  saving: boolean
+}) {
+  const [apiKey, setApiKey] = useState('')
+  const [agentId, setAgentId] = useState(integration.config?.agent_id || '')
+  const [copied, setCopied] = useState(false)
+  const webhookUrl = `${APP_URL}/api/elevenlabs/webhook`
+
+  function copyWebhook() {
+    navigator.clipboard.writeText(webhookUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   return (
-    <div className="flex flex-col h-full bg-background">
-
-      {/* Cabeçalho */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
+    <div className="rounded-xl p-4 bg-surface border border-border">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-bold text-lg">
-            α
+          <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-background">
+            <IntegrationIcon type="elevenlabs" />
           </div>
           <div>
-            <p className="text-text-main font-semibold text-sm">Alpha</p>
-            <p className="text-text-muted text-xs">Assistente de IA • Agência Digital Alpha</p>
+            <p className="text-text-main text-sm font-medium">{integration.label}</p>
+            <p className={`text-xs ${integration.status === "connected" ? "text-cta" : "text-text-disabled"}`}>
+              {integration.status === 'connected' ? 'Conectado' : 'Desconectado'}
+            </p>
           </div>
         </div>
-        {messages.length > 0 && (
-          <button onClick={clearHistory} title="Limpar conversa"
-            className="p-2 rounded-xl text-text-disabled hover:text-red-400 hover:bg-red-400/10 transition-colors">
-            <Trash2 size={15} />
+        {integration.status === 'connected' && (
+          <button
+            onClick={onDisconnect}
+            className="text-xs px-3 py-1.5 rounded-lg bg-red-50 text-red-500 border border-red-200 hover:bg-red-100 transition-colors"
+          >
+            Remover
           </button>
         )}
       </div>
 
-      {/* Mensagens */}
-      <div className="flex-1 overflow-y-auto px-6 py-4">
-        {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center">
-            <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-3xl font-bold mb-4">
-              α
-            </div>
-            <p className="text-text-main font-semibold mb-1">Olá! Sou a Alpha</p>
-            <p className="text-text-muted text-sm max-w-xs">
-              Sua assistente de IA. Posso consultar clientes, tarefas, campanhas e o financeiro da agência em tempo real.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-2 justify-center">
-              {['Como estão os clientes?', 'Minhas tarefas', 'Resumo financeiro do mês', 'Campanhas ativas'].map(s => (
-                <button key={s} onClick={() => sendMessage(s)}
-                  className="px-3 py-1.5 rounded-xl text-xs text-text-muted border border-border hover:border-primary/40 hover:text-primary transition-colors">
-                  {s}
-                </button>
-              ))}
-            </div>
+      {integration.status !== 'connected' ? (
+        <div className="space-y-2">
+          <input
+            type="password"
+            placeholder="API Key do ElevenLabs (xi-api-key)"
+            value={apiKey}
+            onChange={e => setApiKey(e.target.value)}
+            className="w-full text-sm px-3 py-2 rounded-lg outline-none bg-background text-text-main border border-border focus:border-primary outline-none"
+          />
+          <input
+            type="text"
+            placeholder="Agent ID (criado no ElevenAgents)"
+            value={agentId}
+            onChange={e => setAgentId(e.target.value)}
+            className="w-full text-sm px-3 py-2 rounded-lg outline-none bg-background text-text-main border border-border focus:border-primary outline-none"
+          />
+          <button
+            onClick={() => onSave(apiKey, agentId)}
+            disabled={saving || !apiKey || !agentId}
+            className="w-full text-xs px-4 py-2 rounded-lg font-medium disabled:opacity-50 bg-cta text-white hover:bg-cta-hover transition-colors"
+          >
+            {saving ? 'Salvando...' : 'Salvar e conectar'}
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <p className="text-xs text-text-muted">
+            Agent ID: <span className="text-text-main">{integration.config?.agent_id}</span>
+          </p>
+          <div className="flex items-center gap-2">
+            <input
+              readOnly
+              value={webhookUrl}
+              className="flex-1 text-xs px-3 py-2 rounded-lg outline-none bg-background text-text-muted border border-border outline-none"
+            />
+            <button
+              onClick={copyWebhook}
+              className="text-xs px-3 py-2 rounded-lg bg-background text-primary border border-border hover:border-primary transition-colors"
+            >
+              {copied ? 'Copiado!' : 'Copiar'}
+            </button>
           </div>
-        ) : (
-          <>
-            {messages.map(msg => <AlphaChatMessage key={msg.id} message={msg} />)}
-            {loading && (
-              <div className="flex justify-start mb-4">
-                <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-sm mr-2 flex-shrink-0">α</div>
-                <div className="bg-surface border border-border rounded-xl rounded-bl-sm px-4 py-3">
-                  <div className="flex gap-1 items-center h-4">
-                    <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                  </div>
-                </div>
-              </div>
-            )}
-          </>
-        )}
+          <p className="text-[11px] text-text-muted">
+            Cole essa URL no painel ElevenLabs em Agent → Webhooks → Post-call transcription.
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
 
-        {error && (
-          <div className="flex items-center gap-2 bg-red-400/10 border border-red-400/20 rounded-xl px-4 py-3 text-red-400 text-sm mb-4">
-            <AlertCircle size={15} /> {error}
-          </div>
-        )}
-        <div ref={bottomRef} />
+const WEBHOOK_EVENTS = [
+  'cliente.criado',
+  'cliente.atualizado',
+  'campanha.criada',
+  'campanha.atualizada',
+  'relatorio.gerado',
+]
+
+function IntegrationIcon({ type }: { type: string }) {
+  const [error, setError] = useState(false)
+  const src = INTEGRATION_ICONS[type]
+
+  if (!src || error) {
+    return <span className="text-2xl">{INTEGRATION_EMOJI[type] ?? '🔌'}</span>
+  }
+
+  return (
+    <img
+      src={src}
+      alt={type}
+      width={32}
+      height={32}
+      className="w-8 h-8 object-contain"
+      onError={() => setError(true)}
+    />
+  )
+}
+
+export default function IntegracoesPage() {
+  const [integrations, setIntegrations] = useState<Integration[]>([])
+  const [webhooks, setWebhooks] = useState<Webhook[]>([])
+  const [loading, setLoading] = useState(true)
+  const [savingKey, setSavingKey] = useState<string | null>(null)
+  const [apiKeys, setApiKeys] = useState<Record<string, string>>({})
+  const [successMsg, setSuccessMsg] = useState<string | null>(null)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('success') === 'google_connected') {
+      const service = params.get('service')
+      setSuccessMsg(
+        service
+          ? `Conta Google conectada com sucesso em ${service.replace('_', ' ')}!`
+          : 'Google conectado com sucesso!'
+      )
+    }
+    if (params.get('success') === 'meta_connected') {
+      const slot = params.get('slot')
+      setSuccessMsg(slot && slot !== 'meta_ads' ? `Meta Ads (${slot.replace('meta_ads_', '#')}) conectado com sucesso!` : 'Meta Ads conectado com sucesso!')
+    }
+    if (params.get('error')) setErrorMsg('Erro ao conectar. Tente novamente.')
+    fetchData()
+  }, [])
+
+  async function fetchData() {
+    setLoading(true)
+    const [intRes, whRes] = await Promise.all([
+      fetch('/api/integrations'),
+      fetch('/api/webhooks'),
+    ])
+    if (intRes.ok) setIntegrations(await intRes.json())
+    if (whRes.ok) setWebhooks(await whRes.json())
+    setLoading(false)
+  }
+
+  async function saveApiKey(type: string) {
+    const key = apiKeys[type]
+    if (!key) return
+    setSavingKey(type)
+    const res = await fetch('/api/integrations', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, access_token: key }),
+    })
+    if (res.ok) {
+      setSuccessMsg(`${type} conectado com sucesso!`)
+      setApiKeys(prev => ({ ...prev, [type]: '' }))
+      fetchData()
+    } else {
+      setErrorMsg('Erro ao salvar chave.')
+    }
+    setSavingKey(null)
+  }
+
+  async function disconnect(type: string) {
+    await fetch(`/api/integrations?type=${type}`, { method: 'DELETE' })
+    fetchData()
+  }
+
+  async function saveElevenLabs(apiKey: string, agentId: string) {
+    setSavingKey('elevenlabs')
+    const res = await fetch('/api/integrations', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'elevenlabs', access_token: apiKey, config: { agent_id: agentId } }),
+    })
+    if (res.ok) {
+      setSuccessMsg('ElevenLabs conectado com sucesso!')
+      fetchData()
+    } else {
+      setErrorMsg('Erro ao salvar ElevenLabs.')
+    }
+    setSavingKey(null)
+  }
+
+  async function saveWebhook(slot: number, field: string, value: string | boolean) {
+    await fetch('/api/webhooks', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slot, [field]: value }),
+    })
+    fetchData()
+  }
+
+  async function clearWebhook(slot: number) {
+    await fetch(`/api/webhooks?slot=${slot}`, { method: 'DELETE' })
+    fetchData()
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-2 rounded-full animate-spin border-primary border-t-transparent" />
       </div>
+    )
+  }
 
-      {/* Input */}
-      <div className="px-6 py-4 border-t border-border flex-shrink-0">
-        <AlphaChatInput
-          loading={loading}
-          onSend={sendMessage}
-          onSendVoice={sendVoice}
-          onSendAudio={sendAudio}
-        />
-        <p className="text-text-disabled text-xs text-center mt-2">
-          Enter para enviar • Shift+Enter para nova linha • 🎙️ para falar com a Alpha
+  return (
+    <div className="p-6 max-w-4xl mx-auto space-y-8">
+      <div>
+        <h1 className="text-text-main text-2xl font-bold">Integrações</h1>
+        <p className="text-sm mt-1 text-text-muted">
+          Conecte suas ferramentas e automatize sua agência
         </p>
       </div>
+
+      {successMsg && (
+        <div className="p-3 rounded-lg text-sm font-medium bg-cta/10 text-cta border border-cta/30">
+          ✅ {successMsg}
+        </div>
+      )}
+      {errorMsg && (
+        <div className="p-3 rounded-lg text-sm font-medium bg-red-50 text-red-500 border border-red-200">
+          ❌ {errorMsg}
+        </div>
+      )}
+
+      <section>
+        <h2 className="text-text-main text-lg font-semibold mb-4">Conexões OAuth</h2>
+        <p className="text-xs mb-4 text-text-muted">
+          Cada serviço do Google pode ser conectado com uma conta diferente. Ao clicar em "Conectar", o Google vai pedir para você escolher a conta.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {integrations
+            .filter(i => OAUTH_INTEGRATIONS.includes(i.type))
+            .map(integration => (
+              <div
+                key={integration.type}
+                className="rounded-xl p-4 flex items-center justify-between bg-surface border border-border"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-background">
+                    <IntegrationIcon type={integration.type} />
+                  </div>
+                  <div>
+                    <p className="text-text-main text-sm font-medium">{integration.label}</p>
+                    <p className={`text-xs mt-0.5 ${integration.status === "connected" ? "text-cta" : "text-text-disabled"}`}>
+                      {integration.status === 'connected'
+                        ? `Conectado${integration.connected_at ? ' em ' + new Date(integration.connected_at).toLocaleDateString('pt-BR') : ''}`
+                        : 'Desconectado'}
+                    </p>
+                    {integration.status === 'connected' && integration.config?.connected_email && (
+                      <p className="text-xs mt-0.5 text-text-muted">
+                        {integration.config.connected_email}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {integration.status === 'connected' ? (
+                  <button
+                    onClick={() => disconnect(integration.type)}
+                    className="text-xs px-3 py-1.5 rounded-lg transition-colors bg-red-50 text-red-500 border border-red-200 hover:bg-red-100 transition-colors"
+                  >
+                    Desconectar
+                  </button>
+                ) : (
+                  <a
+                    href={
+                      GOOGLE_INTEGRATIONS.includes(integration.type)
+                        ? `/api/integrations/connect/google?type=${integration.type}`
+                        : `/api/integrations/connect/meta?slot=${integration.type}`
+                    }
+                    className="text-xs px-3 py-1.5 rounded-lg font-medium transition-colors bg-cta text-white hover:bg-cta-hover transition-colors"
+                  >
+                    Conectar
+                  </a>
+                )}
+              </div>
+            ))}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-text-main text-lg font-semibold mb-4">Chaves de API</h2>
+        <div className="space-y-3">
+          {integrations
+            .filter(i => i.type === 'elevenlabs')
+            .map(integration => (
+              <ElevenLabsCard
+                key={integration.type}
+                integration={integration}
+                onSave={saveElevenLabs}
+                onDisconnect={() => disconnect('elevenlabs')}
+                saving={savingKey === 'elevenlabs'}
+              />
+            ))}
+          {integrations
+            .filter(i => !OAUTH_INTEGRATIONS.includes(i.type) && i.type !== 'elevenlabs' && i.type !== 'whatsapp' && i.type !== 'evolution_api')
+            .map(integration => (
+              <div
+                key={integration.type}
+                className="rounded-xl p-4 bg-surface border border-border"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-background">
+                      <IntegrationIcon type={integration.type} />
+                    </div>
+                    <div>
+                      <p className="text-text-main text-sm font-medium">{integration.label}</p>
+                      <p className={`text-xs ${integration.status === "connected" ? "text-cta" : "text-text-disabled"}`}>
+                        {integration.status === 'connected' ? 'Conectado' : 'Desconectado'}
+                      </p>
+                    </div>
+                  </div>
+                  {integration.status === 'connected' && (
+                    <button
+                      onClick={() => disconnect(integration.type)}
+                      className="text-xs px-3 py-1.5 rounded-lg bg-red-50 text-red-500 border border-red-200 hover:bg-red-100 transition-colors"
+                    >
+                      Remover
+                    </button>
+                  )}
+                </div>
+                {integration.status !== 'connected' && (
+                  <div className="flex gap-2">
+                    <input
+                      type="password"
+                      placeholder={`Chave de API do ${integration.label}`}
+                      value={apiKeys[integration.type] || ''}
+                      onChange={e => setApiKeys(prev => ({ ...prev, [integration.type]: e.target.value }))}
+                      className="flex-1 text-sm px-3 py-2 rounded-lg outline-none bg-background text-text-main border border-border focus:border-primary outline-none"
+                    />
+                    <button
+                      onClick={() => saveApiKey(integration.type)}
+                      disabled={savingKey === integration.type || !apiKeys[integration.type]}
+                      className="text-xs px-4 py-2 rounded-lg font-medium disabled:opacity-50 bg-cta text-white hover:bg-cta-hover transition-colors"
+                    >
+                      {savingKey === integration.type ? '...' : 'Salvar'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+        </div>
+      </section>
+
+      <section>
+  <h2 className="text-text-main text-lg font-semibold mb-1">WhatsApp</h2>
+  <p className="text-xs mb-4 text-text-muted">
+    Conecte seu WhatsApp para enviar relatórios automáticos para contatos e grupos.
+  </p>
+  <WhatsAppConnect showGroupsButton={true} />
+</section>
+
+      <section>
+        <h2 className="text-text-main text-lg font-semibold mb-4">Webhooks</h2>
+        <div className="space-y-3">
+          {webhooks.map(webhook => (
+            <div
+              key={webhook.slot}
+              className="rounded-xl p-4 bg-surface border border-border"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-text-main text-sm font-medium">Slot {webhook.slot}</p>
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <span className="text-xs text-text-muted">Ativo</span>
+                    <div
+                      onClick={() => saveWebhook(webhook.slot, 'active', !webhook.active)}
+                      className={`w-8 h-4 rounded-full relative cursor-pointer transition-colors ${webhook.active ? "bg-cta" : "bg-border"}`}
+                    >
+                      <div
+                        className="w-3 h-3 bg-white rounded-full absolute top-0.5 transition-all"
+                        style={{ left: webhook.active ? '17px' : '2px' }}
+                      />
+                    </div>
+                  </label>
+                  {(webhook.name || webhook.url) && (
+                    <button
+                      onClick={() => clearWebhook(webhook.slot)}
+                      className="text-xs px-2 py-1 rounded text-red-500 hover:text-red-600"
+                    >
+                      Limpar
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <input
+                  type="text"
+                  placeholder="Nome"
+                  defaultValue={webhook.name || ''}
+                  onBlur={e => saveWebhook(webhook.slot, 'name', e.target.value)}
+                  className="text-sm px-3 py-2 rounded-lg outline-none bg-background text-text-main border border-border focus:border-primary outline-none"
+                />
+                <input
+                  type="url"
+                  placeholder="URL do webhook"
+                  defaultValue={webhook.url || ''}
+                  onBlur={e => saveWebhook(webhook.slot, 'url', e.target.value)}
+                  className="text-sm px-3 py-2 rounded-lg outline-none bg-background text-text-main border border-border focus:border-primary outline-none"
+                />
+                <select
+                  defaultValue={webhook.event || ''}
+                  onChange={e => saveWebhook(webhook.slot, 'event', e.target.value)}
+                  className={`text-sm px-3 py-2 rounded-lg outline-none ${`bg-background border border-border outline-none ${webhook.event ? "text-text-main" : "text-text-disabled"}`}`}
+                >
+                  <option value="">Selecionar evento</option>
+                  {WEBHOOK_EVENTS.map(ev => (
+                    <option key={ev} value={ev}>{ev}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   )
 }
