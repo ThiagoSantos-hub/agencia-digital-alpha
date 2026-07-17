@@ -86,15 +86,15 @@ function ElevenLabsCard({
   }
 
   return (
-    <div className="rounded-xl p-4" style={{ backgroundColor: '#0f1f14', border: '1px solid #1a3a24' }}>
+    <div className="rounded-xl p-4" className="bg-surface border border-border">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 flex items-center justify-center rounded-lg" style={{ backgroundColor: '#0a0f0c' }}>
+          <div className="w-9 h-9 flex items-center justify-center rounded-lg" className="bg-background">
             <IntegrationIcon type="elevenlabs" />
           </div>
           <div>
             <p className="text-text-main text-sm font-medium">{integration.label}</p>
-            <p className="text-xs" style={{ color: integration.status === 'connected' ? '#00ff88' : '#4a7a5a' }}>
+            <p className="text-xs" className={integration.status === "connected" ? "text-cta" : "text-text-disabled"}>
               {integration.status === 'connected' ? 'Conectado' : 'Desconectado'}
             </p>
           </div>
@@ -103,7 +103,7 @@ function ElevenLabsCard({
           <button
             onClick={onDisconnect}
             className="text-xs px-3 py-1.5 rounded-lg"
-            style={{ backgroundColor: '#1a0a0a', color: '#ff4444', border: '1px solid #3a1a1a' }}
+            className="bg-red-50 text-red-500 border border-red-200 hover:bg-red-100 transition-colors"
           >
             Remover
           </button>
@@ -118,7 +118,7 @@ function ElevenLabsCard({
             value={apiKey}
             onChange={e => setApiKey(e.target.value)}
             className="w-full text-sm px-3 py-2 rounded-lg outline-none"
-            style={{ backgroundColor: '#0a0f0c', color: 'white', border: '1px solid #1a3a24' }}
+            className="bg-background text-text-main border border-border focus:border-primary outline-none"
           />
           <input
             type="text"
@@ -126,20 +126,20 @@ function ElevenLabsCard({
             value={agentId}
             onChange={e => setAgentId(e.target.value)}
             className="w-full text-sm px-3 py-2 rounded-lg outline-none"
-            style={{ backgroundColor: '#0a0f0c', color: 'white', border: '1px solid #1a3a24' }}
+            className="bg-background text-text-main border border-border focus:border-primary outline-none"
           />
           <button
             onClick={() => onSave(apiKey, agentId)}
             disabled={saving || !apiKey || !agentId}
             className="w-full text-xs px-4 py-2 rounded-lg font-medium disabled:opacity-50"
-            style={{ backgroundColor: '#00ff88', color: '#0a0f0c' }}
+            className="bg-cta text-white hover:bg-cta-hover transition-colors"
           >
             {saving ? 'Salvando...' : 'Salvar e conectar'}
           </button>
         </div>
       ) : (
         <div className="space-y-2">
-          <p className="text-xs" style={{ color: '#4a7a5a' }}>
+          <p className="text-xs" className="text-text-muted">
             Agent ID: <span className="text-text-main">{integration.config?.agent_id}</span>
           </p>
           <div className="flex items-center gap-2">
@@ -147,17 +147,17 @@ function ElevenLabsCard({
               readOnly
               value={webhookUrl}
               className="flex-1 text-xs px-3 py-2 rounded-lg outline-none"
-              style={{ backgroundColor: '#0a0f0c', color: '#4a7a5a', border: '1px solid #1a3a24' }}
+              className="bg-background text-text-muted border border-border outline-none"
             />
             <button
               onClick={copyWebhook}
               className="text-xs px-3 py-2 rounded-lg"
-              style={{ backgroundColor: '#0a0f0c', color: '#00ff88', border: '1px solid #1a3a24' }}
+              className="bg-background text-primary border border-border hover:border-primary transition-colors"
             >
               {copied ? 'Copiado!' : 'Copiar'}
             </button>
           </div>
-          <p className="text-[11px]" style={{ color: '#4a7a5a' }}>
+          <p className="text-[11px]" className="text-text-muted">
             Cole essa URL no painel ElevenLabs em Agent → Webhooks → Post-call transcription.
           </p>
         </div>
@@ -289,7 +289,7 @@ export default function IntegracoesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: '#00ff88', borderTopColor: 'transparent' }} />
+        <div className="w-8 h-8 border-2 rounded-full animate-spin border-primary border-t-transparent" />
       </div>
     )
   }
@@ -298,25 +298,25 @@ export default function IntegracoesPage() {
     <div className="p-6 max-w-4xl mx-auto space-y-8">
       <div>
         <h1 className="text-text-main text-2xl font-bold">Integrações</h1>
-        <p className="text-sm mt-1" style={{ color: '#4a7a5a' }}>
+        <p className="text-sm mt-1" className="text-text-muted">
           Conecte suas ferramentas e automatize sua agência
         </p>
       </div>
 
       {successMsg && (
-        <div className="p-3 rounded-lg text-sm font-medium" style={{ backgroundColor: '#0a2a1a', color: '#00ff88', border: '1px solid #1a3a24' }}>
+        <div className="p-3 rounded-lg text-sm font-medium" className="bg-cta/10 text-cta border border-cta/30">
           ✅ {successMsg}
         </div>
       )}
       {errorMsg && (
-        <div className="p-3 rounded-lg text-sm font-medium" style={{ backgroundColor: '#2a0a0a', color: '#ff4444', border: '1px solid #3a1a1a' }}>
+        <div className="p-3 rounded-lg text-sm font-medium" className="bg-red-50 text-red-500 border border-red-200">
           ❌ {errorMsg}
         </div>
       )}
 
       <section>
         <h2 className="text-text-main text-lg font-semibold mb-4">Conexões OAuth</h2>
-        <p className="text-xs mb-4" style={{ color: '#4a7a5a' }}>
+        <p className="text-xs mb-4" className="text-text-muted">
           Cada serviço do Google pode ser conectado com uma conta diferente. Ao clicar em "Conectar", o Google vai pedir para você escolher a conta.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -326,21 +326,21 @@ export default function IntegracoesPage() {
               <div
                 key={integration.type}
                 className="rounded-xl p-4 flex items-center justify-between"
-                style={{ backgroundColor: '#0f1f14', border: '1px solid #1a3a24' }}
+                className="bg-surface border border-border"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 flex items-center justify-center rounded-lg" style={{ backgroundColor: '#0a0f0c' }}>
+                  <div className="w-9 h-9 flex items-center justify-center rounded-lg" className="bg-background">
                     <IntegrationIcon type={integration.type} />
                   </div>
                   <div>
                     <p className="text-text-main text-sm font-medium">{integration.label}</p>
-                    <p className="text-xs mt-0.5" style={{ color: integration.status === 'connected' ? '#00ff88' : '#4a7a5a' }}>
+                    <p className="text-xs mt-0.5" className={integration.status === "connected" ? "text-cta" : "text-text-disabled"}>
                       {integration.status === 'connected'
                         ? `Conectado${integration.connected_at ? ' em ' + new Date(integration.connected_at).toLocaleDateString('pt-BR') : ''}`
                         : 'Desconectado'}
                     </p>
                     {integration.status === 'connected' && integration.config?.connected_email && (
-                      <p className="text-xs mt-0.5" style={{ color: '#4a7a5a' }}>
+                      <p className="text-xs mt-0.5" className="text-text-muted">
                         {integration.config.connected_email}
                       </p>
                     )}
@@ -350,7 +350,7 @@ export default function IntegracoesPage() {
                   <button
                     onClick={() => disconnect(integration.type)}
                     className="text-xs px-3 py-1.5 rounded-lg transition-colors"
-                    style={{ backgroundColor: '#1a0a0a', color: '#ff4444', border: '1px solid #3a1a1a' }}
+                    className="bg-red-50 text-red-500 border border-red-200 hover:bg-red-100 transition-colors"
                   >
                     Desconectar
                   </button>
@@ -362,7 +362,7 @@ export default function IntegracoesPage() {
                         : `/api/integrations/connect/meta?slot=${integration.type}`
                     }
                     className="text-xs px-3 py-1.5 rounded-lg font-medium transition-colors"
-                    style={{ backgroundColor: '#00ff88', color: '#0a0f0c' }}
+                    className="bg-cta text-white hover:bg-cta-hover transition-colors"
                   >
                     Conectar
                   </a>
@@ -392,16 +392,16 @@ export default function IntegracoesPage() {
               <div
                 key={integration.type}
                 className="rounded-xl p-4"
-                style={{ backgroundColor: '#0f1f14', border: '1px solid #1a3a24' }}
+                className="bg-surface border border-border"
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 flex items-center justify-center rounded-lg" style={{ backgroundColor: '#0a0f0c' }}>
+                    <div className="w-9 h-9 flex items-center justify-center rounded-lg" className="bg-background">
                       <IntegrationIcon type={integration.type} />
                     </div>
                     <div>
                       <p className="text-text-main text-sm font-medium">{integration.label}</p>
-                      <p className="text-xs" style={{ color: integration.status === 'connected' ? '#00ff88' : '#4a7a5a' }}>
+                      <p className="text-xs" className={integration.status === "connected" ? "text-cta" : "text-text-disabled"}>
                         {integration.status === 'connected' ? 'Conectado' : 'Desconectado'}
                       </p>
                     </div>
@@ -410,7 +410,7 @@ export default function IntegracoesPage() {
                     <button
                       onClick={() => disconnect(integration.type)}
                       className="text-xs px-3 py-1.5 rounded-lg"
-                      style={{ backgroundColor: '#1a0a0a', color: '#ff4444', border: '1px solid #3a1a1a' }}
+                      className="bg-red-50 text-red-500 border border-red-200 hover:bg-red-100 transition-colors"
                     >
                       Remover
                     </button>
@@ -424,13 +424,13 @@ export default function IntegracoesPage() {
                       value={apiKeys[integration.type] || ''}
                       onChange={e => setApiKeys(prev => ({ ...prev, [integration.type]: e.target.value }))}
                       className="flex-1 text-sm px-3 py-2 rounded-lg outline-none"
-                      style={{ backgroundColor: '#0a0f0c', color: 'white', border: '1px solid #1a3a24' }}
+                      className="bg-background text-text-main border border-border focus:border-primary outline-none"
                     />
                     <button
                       onClick={() => saveApiKey(integration.type)}
                       disabled={savingKey === integration.type || !apiKeys[integration.type]}
                       className="text-xs px-4 py-2 rounded-lg font-medium disabled:opacity-50"
-                      style={{ backgroundColor: '#00ff88', color: '#0a0f0c' }}
+                      className="bg-cta text-white hover:bg-cta-hover transition-colors"
                     >
                       {savingKey === integration.type ? '...' : 'Salvar'}
                     </button>
@@ -443,7 +443,7 @@ export default function IntegracoesPage() {
 
       <section>
   <h2 className="text-text-main text-lg font-semibold mb-1">WhatsApp</h2>
-  <p className="text-xs mb-4" style={{ color: '#4a7a5a' }}>
+  <p className="text-xs mb-4" className="text-text-muted">
     Conecte seu WhatsApp para enviar relatórios automáticos para contatos e grupos.
   </p>
   <WhatsAppConnect showGroupsButton={true} />
@@ -456,17 +456,17 @@ export default function IntegracoesPage() {
             <div
               key={webhook.slot}
               className="rounded-xl p-4"
-              style={{ backgroundColor: '#0f1f14', border: '1px solid #1a3a24' }}
+              className="bg-surface border border-border"
             >
               <div className="flex items-center justify-between mb-3">
                 <p className="text-text-main text-sm font-medium">Slot {webhook.slot}</p>
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <span className="text-xs" style={{ color: '#4a7a5a' }}>Ativo</span>
+                    <span className="text-xs" className="text-text-muted">Ativo</span>
                     <div
                       onClick={() => saveWebhook(webhook.slot, 'active', !webhook.active)}
                       className="w-8 h-4 rounded-full relative cursor-pointer transition-colors"
-                      style={{ backgroundColor: webhook.active ? '#00ff88' : '#1a3a24' }}
+                      className={webhook.active ? "bg-cta" : "bg-border"}
                     >
                       <div
                         className="w-3 h-3 bg-white rounded-full absolute top-0.5 transition-all"
@@ -478,7 +478,7 @@ export default function IntegracoesPage() {
                     <button
                       onClick={() => clearWebhook(webhook.slot)}
                       className="text-xs px-2 py-1 rounded"
-                      style={{ color: '#ff4444' }}
+                      className="text-red-500 hover:text-red-600"
                     >
                       Limpar
                     </button>
@@ -492,7 +492,7 @@ export default function IntegracoesPage() {
                   defaultValue={webhook.name || ''}
                   onBlur={e => saveWebhook(webhook.slot, 'name', e.target.value)}
                   className="text-sm px-3 py-2 rounded-lg outline-none"
-                  style={{ backgroundColor: '#0a0f0c', color: 'white', border: '1px solid #1a3a24' }}
+                  className="bg-background text-text-main border border-border focus:border-primary outline-none"
                 />
                 <input
                   type="url"
@@ -500,13 +500,13 @@ export default function IntegracoesPage() {
                   defaultValue={webhook.url || ''}
                   onBlur={e => saveWebhook(webhook.slot, 'url', e.target.value)}
                   className="text-sm px-3 py-2 rounded-lg outline-none"
-                  style={{ backgroundColor: '#0a0f0c', color: 'white', border: '1px solid #1a3a24' }}
+                  className="bg-background text-text-main border border-border focus:border-primary outline-none"
                 />
                 <select
                   defaultValue={webhook.event || ''}
                   onChange={e => saveWebhook(webhook.slot, 'event', e.target.value)}
                   className="text-sm px-3 py-2 rounded-lg outline-none"
-                  style={{ backgroundColor: '#0a0f0c', color: webhook.event ? 'white' : '#4a7a5a', border: '1px solid #1a3a24' }}
+                  className={`bg-background border border-border outline-none ${webhook.event ? "text-text-main" : "text-text-disabled"}`}
                 >
                   <option value="">Selecionar evento</option>
                   {WEBHOOK_EVENTS.map(ev => (
