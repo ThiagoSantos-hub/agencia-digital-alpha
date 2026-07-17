@@ -50,8 +50,8 @@ export function SortableChecklistItem({
       style={style}
       className={`group flex items-center gap-3 p-3 rounded-xl border overflow-hidden min-w-0 transition-all ${
         item.completed 
-          ? 'bg-background/30 border-[#00ff88]/5 opacity-60' 
-          : 'bg-background border-border hover:border-gray-700'
+          ? 'bg-cta/5 border-cta/20 opacity-70' 
+          : 'bg-background border-border hover:border-primary/30'
       }`}
     >
       <button
@@ -66,11 +66,11 @@ export function SortableChecklistItem({
         onClick={() => onToggle(item.id, item.completed)}
         className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all shrink-0 ${
           item.completed 
-            ? 'bg-[#00ff88] border-[#00ff88]' 
-            : 'border-border group-hover:border-gray-600'
+            ? 'bg-cta border-cta' 
+            : 'border-border group-hover:border-primary/50'
         }`}
       >
-        {item.completed && <div className="w-2 h-2 bg-background rounded-sm" />}
+        {item.completed && <div className="w-2 h-2 bg-white rounded-sm" />}
       </button>
 
       {isEditing ? (
@@ -80,7 +80,7 @@ export function SortableChecklistItem({
             value={editingText}
             onChange={(e) => setEditingText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && onSaveEdit(item.id)}
-            className="flex-1 min-w-0 bg-surface border border-[#00ff88]/40 rounded-lg px-3 py-1 text-[10px] text-text-main focus:outline-none truncate"
+            className="flex-1 min-w-0 bg-surface border border-primary/40 rounded-lg px-3 py-1 text-[10px] text-text-main focus:outline-none truncate"
             autoFocus
           />
         </div>
@@ -97,7 +97,7 @@ export function SortableChecklistItem({
           <button onClick={onCancelEdit} className="text-[10px] font-bold text-text-muted hover:text-text-main uppercase">Cancelar</button>
         ) : (
           <>
-            <button onClick={() => onEdit(item.id, item.text)} className="p-1.5 text-text-disabled hover:text-amber-400">
+            <button onClick={() => onEdit(item.id, item.text)} className="p-1.5 text-text-disabled hover:text-amber-600">
               <Edit2 size={14} />
             </button>
             <button onClick={() => onDelete(item.id)} className="p-1.5 text-text-disabled hover:text-red-500">

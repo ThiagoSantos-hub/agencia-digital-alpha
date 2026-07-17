@@ -5,12 +5,19 @@
 :root {
   /* Design Tokens — Digital Alpha (Manual de Marca Jul/2026) */
   --color-background: #F8FAFC;
+  --color-surface: #FFFFFF;
   --color-sidebar: #FFFFFF;
-  --color-primary: #1A56DB;      /* Azul Confiança — estado normal / repouso */
+  --color-border: #E2E8F0;
+  --color-hover-bg: #F1F5F9;
+  --color-primary: #1A56DB;      /* Azul Confiança — ações principais */
+  --color-primary-hover: #1E40AF;
   --color-ai: #4C3ABF;           /* Índigo IA — exclusivo quando a IA está agindo */
+  --color-ai-hover: #3B2F9B;
   --color-cta: #16A34A;          /* Verde Sucesso */
+  --color-cta-hover: #15803D;
   --color-text-main: #1E293B;
   --color-text-muted: #64748B;
+  --color-text-disabled: #94A3B8;
 }
 
 * {
