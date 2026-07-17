@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { useColaboradores, ColaboradorInput } from '@/hooks/useColaboradores'
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, X } from 'lucide-react'
 
 interface ColaboradorFormInput extends ColaboradorInput {
   password?: string
@@ -22,6 +22,8 @@ const EMPTY_FORM: ColaboradorFormInput = {
   password: '',
 }
 
+const inputCls = 'w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-text-main placeholder:text-text-disabled focus:outline-none focus:border-primary/50 transition-colors'
+
 export default function ColaboradoresPage() {
   const { profile, loading: authLoading } = useAuth()
   const router = useRouter()
@@ -30,7 +32,6 @@ export default function ColaboradoresPage() {
     loading,
     createColaborador,
     updateColaborador,
-    deleteColaborador,
     toggleStatus,
   } = useColaboradores()
 
@@ -99,14 +100,14 @@ export default function ColaboradoresPage() {
     if (!form.name.trim()) { setFormError('Nome é obrigatório.'); return }
     if (!form.role.trim()) { setFormError('Cargo é obrigatório.'); return }
     if (!editingId && !form.password?.trim()) { setFormError('Senha é obrigatória para novos colaboradores.'); return }
-    
+
     setSaving(true)
     setFormError(null)
     try {
       if (editingId) {
         const { password, ...updateData } = form
         await updateColaborador(editingId, updateData)
-        
+
         if (password?.trim()) {
           const resp = await fetch('/api/collaborators/update-password', {
             method: 'POST',
@@ -122,12 +123,12 @@ export default function ColaboradoresPage() {
             throw new Error(data.error || 'Erro ao atualizar senha.')
           }
         }
-        
+
         setToast({ message: 'Colaborador atualizado com sucesso!', type: 'success' })
       } else {
         const { password, ...dbData } = form
         await createColaborador(dbData as ColaboradorInput)
-        
+
         const inviteRes = await fetch('/api/collaborators/invite', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -138,13 +139,13 @@ export default function ColaboradoresPage() {
             cargo: form.role
           })
         })
-        
+
         const inviteData = await inviteRes.json()
-        
+
         if (!inviteRes.ok) {
           throw new Error(inviteData.error || 'Erro ao enviar convite.')
         }
-        
+
         setToast({ message: 'Colaborador convidado! Email enviado com as credenciais de acesso.', type: 'success' })
       }
       setModalOpen(false)
@@ -183,9 +184,9 @@ export default function ColaboradoresPage() {
   return (
     <div className="min-h-screen bg-background text-text-main p-6">
       {toast && (
-        <div className={`fixed top-6 right-6 z-[60] px-6 py-3 rounded-xl shadow-2xl border transition-all animate-in slide-in-from-right ${
-          toast.type === 'success' 
-            ? 'bg-cta/10 border-cta/50 text-cta' 
+        <div className={`fixed top-6 right-6 z-[60] px-6 py-3 rounded-xl shadow-2xl border ${
+          toast.type === 'success'
+            ? 'bg-cta/10 border-cta/50 text-cta'
             : 'bg-red-50 border-red-200 text-red-600'
         }`}>
           {toast.message}
@@ -195,9 +196,7 @@ export default function ColaboradoresPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-text-main">Colaboradores</h1>
-          <p className="text-text-muted text-sm mt-1">
-            Gerencie a equipe da agência
-          </p>
+          <p className="text-text-muted text-sm mt-1">Gerencie a equipe da agência</p>
         </div>
         <button
           onClick={openCreate}
@@ -226,7 +225,7 @@ export default function ColaboradoresPage() {
         </select>
       </div>
 
-      <div className="bg-surface border border-border rounded-xl overflow-hidden">
+      <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-sm">
         {loading ? (
           <div className="p-12 text-center text-text-muted">Carregando...</div>
         ) : filtered.length === 0 ? (
@@ -300,153 +299,104 @@ export default function ColaboradoresPage() {
       )}
 
       {modalOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface border border-border rounded-xl w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]">
-            <div className="p-6 border-b border-border">
-              <h2 className="text-lg font-bold text-text-main">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={(e) => e.target === e.currentTarget && setModalOpen(false)}>
+          <div className="bg-surface border border-border rounded-xl w-full max-w-md shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
+            <div className="flex-shrink-0 flex items-center justify-between px-5 py-3 border-b border-border">
+              <h2 className="text-sm font-semibold text-text-main">
                 {editingId ? 'Editar Colaborador' : 'Novo Colaborador'}
               </h2>
+              <button onClick={() => setModalOpen(false)} className="text-text-muted hover:text-text-main p-1 rounded-lg hover:bg-hover-bg">
+                <X size={16} />
+              </button>
             </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-text-main mb-1.5">
-                  Nome <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="Ex: Maria Silva"
-                  className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-text-main placeholder:text-text-disabled focus:outline-none focus:border-primary"
-                />
+
+            <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-2.5">
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-medium text-text-muted">Nome <span className="text-red-500">*</span></label>
+                  <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Maria Silva" className={inputCls} />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-medium text-text-muted">Cargo <span className="text-red-500">*</span></label>
+                  <input type="text" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} placeholder="Designer" className={inputCls} />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-text-main mb-1.5">
-                  Cargo <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.role}
-                  onChange={(e) => setForm({ ...form, role: e.target.value })}
-                  placeholder="Ex: Designer, Copywriter, Gestor de Tráfego"
-                  className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-text-main placeholder:text-text-disabled focus:outline-none focus:border-primary"
-                />
+
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-text-muted">E-mail</label>
+                <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="maria@agencia.com" className={inputCls} />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-text-main mb-1.5">E-mail</label>
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="Ex: maria@agencia.com"
-                  className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-text-main placeholder:text-text-disabled focus:outline-none focus:border-primary"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-text-main mb-1.5">
-                  Senha {editingId ? <span className="text-text-muted">(deixe em branco para manter a atual)</span> : <span className="text-red-500">*</span>}
+
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-text-muted">
+                  Senha {editingId ? <span className="text-text-disabled">(opcional)</span> : <span className="text-red-500">*</span>}
                 </label>
                 <div className="relative">
                   <input
-                    type={showPassword ? "text" : "password"}
+                    type={showPassword ? 'text' : 'password'}
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    placeholder={editingId ? "Nova senha (opcional)" : "Defina uma senha de acesso"}
-                    className="w-full bg-background border border-border rounded-lg pl-4 pr-10 py-2.5 text-sm text-text-main placeholder:text-text-disabled focus:outline-none focus:border-primary"
+                    placeholder={editingId ? 'Nova senha' : 'Senha de acesso'}
+                    className={`${inputCls} pr-10`}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition-colors"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  <button type="button" onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main">
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-text-main mb-1.5">Telefone</label>
-                <input
-                  type="text"
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  placeholder="Ex: (85) 99999-0000"
-                  className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-text-main placeholder:text-text-disabled focus:outline-none focus:border-primary"
-                />
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-medium text-text-muted">Telefone</label>
+                  <input type="text" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(85) 99999-0000" className={inputCls} />
+                </div>
+                {editingId && (
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-medium text-text-muted">Status</label>
+                    <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as 'ativo' | 'inativo' })} className={inputCls}>
+                      <option value="ativo">Ativo</option>
+                      <option value="inativo">Inativo</option>
+                    </select>
+                  </div>
+                )}
               </div>
 
-              <div className="pt-4 border-t border-border space-y-4">
-                <h3 className="text-sm font-semibold text-primary uppercase tracking-wider">Informações Financeiras</h3>
-                <div>
-                  <label className="block text-sm font-medium text-text-main mb-1.5">Salário</label>
-                  <input
-                    type="number"
-                    value={form.salary || ''}
-                    onChange={(e) => setForm({ ...form, salary: e.target.value ? Number(e.target.value) : undefined })}
-                    placeholder="Ex: 2500.00"
-                    className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-text-main placeholder:text-text-disabled focus:outline-none focus:border-primary"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-text-main mb-1.5">Frequência</label>
-                  <select
-                    value={form.salary_frequency || ''}
-                    onChange={(e) => setForm({ ...form, salary_frequency: (e.target.value as any) || undefined })}
-                    className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-primary"
-                  >
-                    <option value="">Selecione...</option>
-                    <option value="mensal">Mensal</option>
-                    <option value="quinzenal">Quinzenal</option>
-                    <option value="semanal">Semanal</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-text-main mb-1.5">Dia de pagamento</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="31"
-                    value={form.salary_day || ''}
-                    onChange={(e) => setForm({ ...form, salary_day: e.target.value ? Number(e.target.value) : undefined })}
-                    placeholder="Ex: 5"
-                    className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-text-main placeholder:text-text-disabled focus:outline-none focus:border-primary"
-                  />
+              <div className="pt-2 border-t border-border space-y-2.5">
+                <p className="text-[10px] font-bold text-primary uppercase tracking-wider">Financeiro</p>
+                <div className="grid grid-cols-3 gap-2.5">
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-medium text-text-muted">Salário</label>
+                    <input type="number" value={form.salary || ''} onChange={(e) => setForm({ ...form, salary: e.target.value ? Number(e.target.value) : undefined })} placeholder="2500" className={inputCls} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-medium text-text-muted">Frequência</label>
+                    <select value={form.salary_frequency || ''} onChange={(e) => setForm({ ...form, salary_frequency: (e.target.value as any) || undefined })} className={inputCls}>
+                      <option value="">—</option>
+                      <option value="mensal">Mensal</option>
+                      <option value="quinzenal">Quinzenal</option>
+                      <option value="semanal">Semanal</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-medium text-text-muted">Dia</label>
+                    <input type="number" min="1" max="31" value={form.salary_day || ''} onChange={(e) => setForm({ ...form, salary_day: e.target.value ? Number(e.target.value) : undefined })} placeholder="5" className={inputCls} />
+                  </div>
                 </div>
               </div>
 
-              {editingId && (
-                <div>
-                  <label className="block text-sm font-medium text-text-main mb-1.5">Status</label>
-                  <select
-                    value={form.status}
-                    onChange={(e) => setForm({ ...form, status: e.target.value as 'ativo' | 'inativo' })}
-                    className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-primary"
-                  >
-                    <option value="ativo">Ativo</option>
-                    <option value="inativo">Inativo</option>
-                  </select>
-                </div>
-              )}
               {formError && (
-                <p className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-                  {formError}
-                </p>
+                <p className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{formError}</p>
               )}
             </div>
-            <div className="p-6 border-t border-border flex justify-end gap-3">
-              <button
-                onClick={() => setModalOpen(false)}
-                className="px-4 py-2 text-sm text-text-muted hover:text-text-main border border-border hover:border-primary rounded-lg transition-colors"
-              >
+
+            <div className="flex-shrink-0 flex gap-2 px-5 py-3 border-t border-border">
+              <button onClick={() => setModalOpen(false)} className="flex-1 py-2 text-sm text-text-muted border border-border rounded-lg hover:text-text-main">
                 Cancelar
               </button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="px-4 py-2 text-sm font-semibold bg-primary hover:bg-primary-hover disabled:opacity-50 text-white rounded-lg transition-colors shadow-sm"
-              >
-                {saving ? 'Processando...' : editingId ? 'Salvar alterações' : 'Convidar Colaborador'}
+              <button onClick={handleSave} disabled={saving}
+                className="flex-1 py-2 text-sm font-semibold bg-primary hover:bg-primary-hover disabled:opacity-50 text-white rounded-lg shadow-sm">
+                {saving ? 'Processando...' : editingId ? 'Salvar' : 'Convidar'}
               </button>
             </div>
           </div>
@@ -455,24 +405,12 @@ export default function ColaboradoresPage() {
 
       {deleteConfirmId && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface border border-border rounded-xl w-full max-w-sm shadow-2xl p-6">
-            <h2 className="text-lg font-bold text-text-main mb-2">Excluir colaborador?</h2>
-            <p className="text-sm text-text-muted mb-6">
-              Esta ação não pode ser desfeita. O colaborador será removido permanentemente.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setDeleteConfirmId(null)}
-                className="px-4 py-2 text-sm text-text-muted hover:text-text-main border border-border rounded-lg transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => handleDelete(deleteConfirmId)}
-                className="px-4 py-2 text-sm font-semibold bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors"
-              >
-                Sim, excluir
-              </button>
+          <div className="bg-surface border border-border rounded-xl w-full max-w-sm shadow-2xl p-5">
+            <h2 className="text-sm font-semibold text-text-main mb-2">Excluir colaborador?</h2>
+            <p className="text-sm text-text-muted mb-5">Esta ação não pode ser desfeita.</p>
+            <div className="flex gap-2">
+              <button onClick={() => setDeleteConfirmId(null)} className="flex-1 py-2 text-sm text-text-muted border border-border rounded-lg">Cancelar</button>
+              <button onClick={() => handleDelete(deleteConfirmId)} className="flex-1 py-2 text-sm font-semibold bg-red-600 hover:bg-red-500 text-white rounded-lg">Excluir</button>
             </div>
           </div>
         </div>
