@@ -1,70 +1,43 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import { useNotifications } from '@/hooks/useNotifications'
+import { useEffect, useRef } from 'react'
+import { useNotificacoes } from '@/hooks/useNotificacoes'
+import { playNotificationChime } from '@/lib/notificationPrefs'
 
+/**
+ * Mantém compatibilidade com o layout admin.
+ * O toque principal de novas notificações agora é disparado em NotificationToasts.
+ * Aqui só tocamos se o contador de não lidas subir (fallback).
+ */
 export function NotificationSound() {
-  const { unreadCount, notifications } = useNotifications()
-  const [hasInteracted, setHasInteracted] = useState(false)
-  const lastUnreadCount = useRef(unreadCount)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-  const isFirstLoad = useRef(true)
+  const { naoLidas } = useNotificacoes()
+  const last = useRef(naoLidas)
+  const ready = useRef(false)
 
   useEffect(() => {
-    // Detectar interação do usuário para liberar o áudio no navegador
-    const handleInteraction = () => {
-      setHasInteracted(true)
-      document.removeEventListener('click', handleInteraction)
-      document.removeEventListener('keydown', handleInteraction)
+    const unlock = () => {
+      ready.current = true
+      document.removeEventListener('click', unlock)
+      document.removeEventListener('keydown', unlock)
     }
-    document.addEventListener('click', handleInteraction)
-    document.addEventListener('keydown', handleInteraction)
-    
+    document.addEventListener('click', unlock)
+    document.addEventListener('keydown', unlock)
     return () => {
-      document.removeEventListener('click', handleInteraction)
-      document.removeEventListener('keydown', handleInteraction)
+      document.removeEventListener('click', unlock)
+      document.removeEventListener('keydown', unlock)
     }
   }, [])
 
-  const playPersistentSound = () => {
-    // Tentativa mais agressiva de tocar o som
-    try {
-      const audio = new Audio('/sounds/notification.mp3')
-      audio.volume = 1.0
-      
-      // Tocar em loop manual para garantir os 3 segundos se o arquivo for curto
-      const playPromise = audio.play()
-      
-      if (playPromise !== undefined) {
-        playPromise.then(() => {
-          // Tocar por 3 segundos
-          setTimeout(() => {
-            audio.pause()
-          }, 3000)
-        }).catch(e => {
-          console.warn('Navegador bloqueou o som. Aguardando interação.', e)
-        })
-      }
-    } catch (e) {
-      console.error('Erro ao tocar som:', e)
-    }
-  }
-
-  // Efeito para o carregamento inicial
   useEffect(() => {
-    if (isFirstLoad.current && unreadCount > 0 && hasInteracted) {
-      playPersistentSound()
-      isFirstLoad.current = false
+    if (!ready.current) {
+      last.current = naoLidas
+      return
     }
-  }, [unreadCount, hasInteracted])
-
-  // Efeito para novas notificações
-  useEffect(() => {
-    if (!isFirstLoad.current && unreadCount > lastUnreadCount.current && hasInteracted) {
-      playPersistentSound()
+    if (naoLidas > last.current) {
+      playNotificationChime()
     }
-    lastUnreadCount.current = unreadCount
-  }, [unreadCount, hasInteracted])
+    last.current = naoLidas
+  }, [naoLidas])
 
-  return null // Componente invisível apenas para gerenciar som
+  return null
 }

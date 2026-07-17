@@ -18,6 +18,13 @@
   --color-text-main: #1E293B;
   --color-text-muted: #64748B;
   --color-text-disabled: #94A3B8;
+
+  /* Elevação 3D — profundidade sem tema escuro */
+  --shadow-elevated-sm: 0 1px 2px rgba(15, 23, 42, 0.05), 0 2px 6px rgba(15, 23, 42, 0.06);
+  --shadow-elevated-md: 0 2px 4px rgba(15, 23, 42, 0.05), 0 6px 16px rgba(15, 23, 42, 0.08);
+  --shadow-elevated-lg: 0 4px 8px rgba(15, 23, 42, 0.06), 0 12px 28px rgba(15, 23, 42, 0.1);
+  --shadow-btn: 0 1px 0 rgba(255, 255, 255, 0.22) inset, 0 1px 2px rgba(15, 23, 42, 0.08), 0 3px 8px rgba(15, 23, 42, 0.1);
+  --shadow-btn-hover: 0 1px 0 rgba(255, 255, 255, 0.28) inset, 0 2px 4px rgba(15, 23, 42, 0.1), 0 6px 14px rgba(15, 23, 42, 0.12);
 }
 
 * {
@@ -57,10 +64,28 @@ elevenlabs-convai {
   display: none !important;
 }
 
+@layer utilities {
+  .shadow-elevated-sm {
+    box-shadow: var(--shadow-elevated-sm);
+  }
+  .shadow-elevated-md {
+    box-shadow: var(--shadow-elevated-md);
+  }
+  .shadow-elevated-lg {
+    box-shadow: var(--shadow-elevated-lg);
+  }
+  .shadow-btn {
+    box-shadow: var(--shadow-btn);
+  }
+  .shadow-btn-hover {
+    box-shadow: var(--shadow-btn-hover);
+  }
+}
+
 @layer components {
-  /* Divisórias e seções — evita “folha em branco” contínua */
+  /* Divisórias e seções — elevação para não “grudar” no fundo */
   .section-card {
-    @apply bg-surface border border-border rounded-xl shadow-sm;
+    @apply bg-surface border border-border rounded-xl shadow-elevated-md;
   }
 
   .section-divider {
@@ -68,14 +93,22 @@ elevenlabs-convai {
   }
 
   .panel-block {
-    @apply bg-surface border border-border rounded-xl shadow-sm p-5;
+    @apply bg-surface border border-border rounded-xl shadow-elevated-md p-5;
+  }
+
+  /* Botão com profundidade 3D */
+  .btn-elevated {
+    @apply shadow-btn transition-shadow;
+  }
+  .btn-elevated:hover {
+    box-shadow: var(--shadow-btn-hover);
   }
 
   /* Inputs compactos para modais minimalistas */
   .input-compact {
     @apply w-full px-3 py-2 bg-background border border-border rounded-lg
            text-text-main text-sm placeholder:text-text-disabled
-           focus:outline-none focus:border-primary/50 transition-colors;
+           focus:outline-none focus:border-primary/50 transition-colors shadow-elevated-sm;
   }
 
   .label-compact {

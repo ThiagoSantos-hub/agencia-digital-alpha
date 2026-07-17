@@ -17,15 +17,15 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<Variant, string> = {
   primary:
-    'bg-primary hover:bg-primary-hover text-white border border-primary shadow-sm',
+    'bg-primary hover:bg-primary-hover text-white border border-primary shadow-btn hover:shadow-btn-hover',
   cta:
-    'bg-cta hover:bg-cta-hover text-white border border-cta shadow-sm',
+    'bg-cta hover:bg-cta-hover text-white border border-cta shadow-btn hover:shadow-btn-hover',
   secondary:
-    'bg-surface hover:bg-hover-bg text-text-main border border-border',
+    'bg-surface hover:bg-hover-bg text-text-main border border-border shadow-elevated-sm hover:shadow-elevated-md',
   ghost:
     'bg-transparent hover:bg-hover-bg text-text-muted hover:text-text-main border border-transparent',
   danger:
-    'bg-red-50 hover:bg-red-100 text-red-600 border border-red-200',
+    'bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 shadow-elevated-sm',
 }
 
 const sizeStyles: Record<Size, string> = {
@@ -49,11 +49,11 @@ export function Button({
   return (
     <motion.button
       disabled={isDisabled}
-      whileHover={isDisabled ? undefined : { scale: 1.02 }}
-      whileTap={isDisabled ? undefined : { scale: 0.97 }}
+      whileHover={isDisabled ? undefined : { scale: 1.02, y: -1 }}
+      whileTap={isDisabled ? undefined : { scale: 0.97, y: 0 }}
       transition={{ type: 'spring', stiffness: 400, damping: 22 }}
       className={`
-        inline-flex items-center justify-center font-medium
+        inline-flex items-center justify-center font-medium transition-shadow
         disabled:opacity-50 disabled:cursor-not-allowed
         ${variantStyles[variant]}
         ${sizeStyles[size]}
