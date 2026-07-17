@@ -94,23 +94,18 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
   )
 }
 
-/** Todas as barras sempre renderizam — inclusive valor 0 */
 function BarChart({ items }: { items: { value: number; color: string; label: string }[] }) {
   const max = Math.max(...items.map((i) => i.value), 1)
 
   return (
     <div className="flex items-stretch justify-between h-full w-full gap-2 px-1">
       {items.map((item, i) => {
-        // Escala: 0 = 12% (barra mínima visível), valor máximo = 100%
         const heightPct = item.value <= 0 ? 12 : Math.max((item.value / max) * 100, 18)
         return (
           <div key={i} className="flex-1 flex flex-col items-center min-w-0 h-full">
-            {/* Valor numérico */}
             <span className="text-[11px] text-text-main font-black leading-none tabular-nums mb-1.5 select-none">
               {item.value}
             </span>
-
-            {/* Área da barra */}
             <div className="flex-1 w-full flex items-end min-h-0">
               <div
                 className="w-full rounded-t-md transition-all duration-500"
@@ -121,8 +116,6 @@ function BarChart({ items }: { items: { value: number; color: string; label: str
                 }}
               />
             </div>
-
-            {/* Rótulo embaixo */}
             <span className="mt-1.5 text-[8px] font-bold uppercase tracking-tight text-text-muted text-center leading-tight truncate w-full">
               {item.label}
             </span>
@@ -134,9 +127,8 @@ function BarChart({ items }: { items: { value: number; color: string; label: str
 }
 
 export default function DashboardPage() {
-  const { profile, role } = useAuth()
+  const { profile } = useAuth()
   const nome = profile?.name ?? profile?.email ?? 'Usuário'
-  const roleLabel = role === 'admin' ? 'Administrador' : 'Gestor'
 
   const hoje = new Date()
   const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
@@ -220,7 +212,6 @@ export default function DashboardPage() {
     { label: 'Checklists Pendentes', valor: stats.checklistsPendentes, icon: ListChecks,   cor: '#16A34A' },
   ]
 
-  // SEMPRE 6 indicadores — nunca filtra zeros
   const barItems = [
     { value: stats.totalClientesAtivos ?? 0, color: '#1A56DB', label: 'Clientes' },
     { value: stats.campanhasAtivas ?? 0,     color: '#4C3ABF', label: 'Campanhas' },
@@ -242,8 +233,7 @@ export default function DashboardPage() {
             <p className="text-text-muted text-[10px] font-medium truncate">{getFraseDoDia()}</p>
           </div>
           <div className="ml-auto text-right hidden md:block flex-shrink-0 pl-4 border-l border-border">
-             <p className="text-[9px] text-primary font-black uppercase tracking-widest leading-none">{roleLabel}</p>
-             <p className="text-text-disabled text-[9px] font-bold mt-1 uppercase">{hoje.toLocaleDateString('pt-BR')}</p>
+             <p className="text-text-disabled text-[10px] font-bold uppercase">{hoje.toLocaleDateString('pt-BR')}</p>
           </div>
         </div>
 
