@@ -9,7 +9,6 @@ interface CardProps {
   className?: string
   padding?: 'sm' | 'md' | 'lg'
   elevated?: boolean
-  /** Animação de entrada (padrão: true) */
   animate?: boolean
   delay?: number
 }
@@ -30,7 +29,7 @@ export function Card({
 }: CardProps) {
   const cls = `
     bg-surface border border-border rounded-xl
-    ${elevated ? 'shadow-elevated-md' : 'shadow-elevated-sm'}
+    ${elevated ? 'shadow-md' : 'shadow-sm'}
     ${paddingStyles[padding]}
     ${className}
   `

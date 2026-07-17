@@ -9,7 +9,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background:        'var(--color-background, #F8FAFC)',
+        background:        'var(--color-background, #F1F5F9)',
         surface:           'var(--color-surface, #FFFFFF)',
         border:            'var(--color-border, #E2E8F0)',
         primary:           'var(--color-primary, #1A56DB)',
@@ -24,6 +24,20 @@ const config: Config = {
         'active-bg':       '#EFF6FF',
         'active-border':   '#BFDBFE',
         'hover-bg':        'var(--color-hover-bg, #F1F5F9)',
+      },
+      // Elevação 3D global — qualquer shadow-sm/md/lg do sistema
+      boxShadow: {
+        sm: 'var(--shadow-elevated-sm)',
+        DEFAULT: 'var(--shadow-elevated-sm)',
+        md: 'var(--shadow-elevated-md)',
+        lg: 'var(--shadow-elevated-lg)',
+        xl: 'var(--shadow-elevated-lg)',
+        '2xl': 'var(--shadow-elevated-lg)',
+        'elevated-sm': 'var(--shadow-elevated-sm)',
+        'elevated-md': 'var(--shadow-elevated-md)',
+        'elevated-lg': 'var(--shadow-elevated-lg)',
+        btn: 'var(--shadow-btn)',
+        'btn-hover': 'var(--shadow-btn-hover)',
       },
     },
   },
