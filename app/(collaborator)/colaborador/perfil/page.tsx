@@ -3,46 +3,24 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
-import { 
-  User, 
-  Mail, 
-  Lock, 
-  Save, 
-  AlertCircle, 
-  CheckCircle2,
-  KeyRound,
-  UserCircle
-} from 'lucide-react'
+import { User, Mail, Lock, Save, AlertCircle, CheckCircle2, KeyRound, UserCircle } from 'lucide-react'
 
 export default function PerfilColaboradorPage() {
   const { user, profile } = useAuth()
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
-  
-  const [passwordData, setPasswordData] = useState({
-    newPassword: '',
-    confirmNewPassword: ''
-  })
+  const [passwordData, setPasswordData] = useState({ newPassword: '', confirmNewPassword: '' })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [cargo, setCargo] = useState('')
-
   const supabase = createClient()
 
   useEffect(() => {
-    if (profile) {
-      setName(profile.name || '')
-    }
+    if (profile) setName(profile.name || '')
     if (user) {
-      supabase
-        .from('collaborators')
-        .select('role')
-        .eq('email', user.email)
-        .single()
-        .then(({ data }) => {
-          if (data?.role) setCargo(data.role)
-        })
+      supabase.from('collaborators').select('role').eq('email', user.email).single()
+        .then(({ data }) => { if (data?.role) setCargo(data.role) })
     }
   }, [profile, user])
 
@@ -55,26 +33,13 @@ export default function PerfilColaboradorPage() {
     e.preventDefault()
     if (!user) return
     setLoading(true)
-
     try {
-      // 1. Atualizar na tabela profiles
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ name })
-        .eq('id', user.id)
-
+      const { error: profileError } = await supabase.from('profiles').update({ name }).eq('id', user.id)
       if (profileError) throw profileError
-
-      // 2. Atualizar na tabela collaborators
-      const { error: collabError } = await supabase
-        .from('collaborators')
-        .update({ name })
-        .eq('user_id', user.id)
-
+      const { error: collabError } = await supabase.from('collaborators').update({ name }).eq('user_id', user.id)
       if (collabError) throw collabError
-
       showToast('success', 'Nome atualizado com sucesso!')
-    } catch (error: any) {
+    } catch {
       showToast('error', 'Falha ao atualizar nome.')
     } finally {
       setLoading(false)
@@ -84,22 +49,15 @@ export default function PerfilColaboradorPage() {
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault()
     if (passwordData.newPassword !== passwordData.confirmNewPassword) {
-      showToast('error', 'As novas senhas não coincidem.')
-      return
+      showToast('error', 'As novas senhas não coincidem.'); return
     }
     if (passwordData.newPassword.length < 6) {
-      showToast('error', 'A senha deve ter pelo menos 6 caracteres.')
-      return
+      showToast('error', 'A senha deve ter pelo menos 6 caracteres.'); return
     }
-
     setLoading(true)
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: passwordData.newPassword
-      })
-
+      const { error } = await supabase.auth.updateUser({ password: passwordData.newPassword })
       if (error) throw error
-
       showToast('success', 'Senha atualizada com sucesso!')
       setPasswordData({ newPassword: '', confirmNewPassword: '' })
     } catch (error: any) {
@@ -109,12 +67,13 @@ export default function PerfilColaboradorPage() {
     }
   }
 
+  const inputCls = 'w-full bg-hover-bg border border-border rounded-xl pl-9 pr-3 py-2 text-sm text-text-main focus:outline-none focus:border-primary/50 transition-all'
+
   return (
     <div className="px-6 py-4 space-y-4">
-      {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="p-2 rounded-xl bg-[#00ff88]/10 border border-[#00ff88]/30">
-          <UserCircle size={20} className="text-[#00ff88]" />
+        <div className="p-2 rounded-xl bg-primary/10 border border-primary/20">
+          <UserCircle size={20} className="text-primary" />
         </div>
         <div>
           <h1 className="text-xl font-bold text-text-main">Meu Perfil</h1>
@@ -122,12 +81,9 @@ export default function PerfilColaboradorPage() {
         </div>
       </div>
 
-      {/* Toast Notification */}
       {message && (
-        <div className={`fixed top-20 right-8 z-50 flex items-center gap-3 px-4 py-2.5 rounded-xl border shadow-2xl animate-in fade-in slide-in-from-right-4 ${
-          message.type === 'success' 
-            ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' 
-            : 'bg-red-500/10 border-red-500/50 text-red-400'
+        <div className={`fixed top-20 right-8 z-50 flex items-center gap-3 px-4 py-2.5 rounded-xl border shadow-lg ${
+          message.type === 'success' ? 'bg-cta/10 border-cta/30 text-cta' : 'bg-red-50 border-red-200 text-red-600'
         }`}>
           {message.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
           <p className="text-sm font-medium">{message.text}</p>
@@ -135,124 +91,61 @@ export default function PerfilColaboradorPage() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Dados Pessoais */}
-        <section className="bg-background border border-border p-5 rounded-xl">
+        <section className="bg-surface border border-border p-5 rounded-xl shadow-sm">
           <div className="flex items-center gap-2.5 mb-4">
-            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
-              <User size={16} />
-            </div>
+            <div className="p-1.5 rounded-lg bg-primary/10 text-primary"><User size={16} /></div>
             <h2 className="text-base font-bold text-text-main">Dados Pessoais</h2>
           </div>
-
           <form onSubmit={handleUpdateName} className="space-y-3">
             <div className="space-y-1">
               <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">E-mail</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-text-disabled" size={14} />
-                <input 
-                  type="email" 
-                  disabled
-                  value={user?.email || ''}
-                  className="w-full bg-hover-bg/10 border border-border rounded-xl pl-9 pr-3 py-2 text-sm text-text-muted cursor-not-allowed"
-                />
+                <input type="email" disabled value={user?.email || ''} className="w-full bg-hover-bg border border-border rounded-xl pl-9 pr-3 py-2 text-sm text-text-muted cursor-not-allowed" />
               </div>
-              <p className="text-[10px] text-amber-500/70 font-medium">O email não pode ser alterado.</p>
+              <p className="text-[10px] text-amber-600 font-medium">O email não pode ser alterado.</p>
             </div>
-
             <div className="space-y-1">
               <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">Nome de exibição</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={14} />
-                <input 
-                  type="text" 
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Seu nome"
-                  className="w-full bg-hover-bg border border-border rounded-xl pl-9 pr-3 py-2 text-sm text-text-main focus:outline-none focus:border-emerald-500/50 transition-all"
-                />
+                <input type="text" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Seu nome" className={inputCls} />
               </div>
             </div>
-
             <div className="space-y-1">
               <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">Cargo</label>
-  <div className="bg-hover-bg/10 border border-border rounded-xl px-3 py-2 text-sm text-emerald-400 font-medium">
-    {cargo || 'Colaborador'}
-  </div>
+              <div className="bg-hover-bg border border-border rounded-xl px-3 py-2 text-sm text-primary font-medium">{cargo || 'Colaborador'}</div>
             </div>
-
-            <button 
-              type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-[#0a0f0c] font-bold rounded-xl transition-all disabled:opacity-50 text-sm"
-            >
-              <Save size={16} />
-              {loading ? 'Salvando...' : 'Salvar Alterações'}
+            <button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl disabled:opacity-50 text-sm shadow-sm">
+              <Save size={16} />{loading ? 'Salvando...' : 'Salvar Alterações'}
             </button>
           </form>
         </section>
 
-        {/* Segurança / Senha */}
-        <section className="bg-background border border-border p-5 rounded-xl">
+        <section className="bg-surface border border-border p-5 rounded-xl shadow-sm">
           <div className="flex items-center gap-2.5 mb-4">
-            <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
-              <Lock size={16} />
-            </div>
+            <div className="p-1.5 rounded-lg bg-amber-50 text-amber-600"><Lock size={16} /></div>
             <h2 className="text-base font-bold text-text-main">Segurança</h2>
           </div>
-
           <form onSubmit={handleUpdatePassword} className="space-y-3">
             <div className="space-y-1">
               <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">Nova Senha</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={14} />
-                <input 
-                  type={showPassword ? 'text' : 'password'} 
-                  required
-                  value={passwordData.newPassword}
-                  onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
-                  placeholder="Mínimo 6 caracteres"
-                  className="w-full bg-hover-bg border border-border rounded-xl pl-9 pr-10 py-2 text-sm text-text-main focus:outline-none focus:border-emerald-500/50 transition-all"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition-colors"
-                >
-                  {showPassword ? <AlertCircle size={14} className="rotate-45" /> : <KeyRound size={14} />}
-                </button>
+                <input type={showPassword ? 'text' : 'password'} required value={passwordData.newPassword} onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})} placeholder="Mínimo 6 caracteres" className={`${inputCls} pr-10`} />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main"><KeyRound size={14} /></button>
               </div>
             </div>
-
             <div className="space-y-1">
               <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">Confirmar Senha</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={14} />
-                <input 
-                  type={showConfirm ? 'text' : 'password'} 
-                  required
-                  value={passwordData.confirmNewPassword}
-                  onChange={(e) => setPasswordData({...passwordData, confirmNewPassword: e.target.value})}
-                  placeholder="Repita a nova senha"
-                  className="w-full bg-hover-bg border border-border rounded-xl pl-9 pr-10 py-2 text-sm text-text-main focus:outline-none focus:border-emerald-500/50 transition-all"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition-colors"
-                >
-                  {showConfirm ? <AlertCircle size={14} className="rotate-45" /> : <KeyRound size={14} />}
-                </button>
+                <input type={showConfirm ? 'text' : 'password'} required value={passwordData.confirmNewPassword} onChange={(e) => setPasswordData({...passwordData, confirmNewPassword: e.target.value})} placeholder="Repita a nova senha" className={`${inputCls} pr-10`} />
+                <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main"><KeyRound size={14} /></button>
               </div>
             </div>
-
-            <button 
-              type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-gray-100 text-[#0a0f0c] font-bold rounded-xl transition-all disabled:opacity-50 text-sm"
-            >
-              <KeyRound size={16} />
-              {loading ? 'Processando...' : 'Atualizar Senha'}
+            <button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-surface border border-border hover:bg-hover-bg text-text-main font-bold rounded-xl disabled:opacity-50 text-sm">
+              <KeyRound size={16} />{loading ? 'Processando...' : 'Atualizar Senha'}
             </button>
           </form>
         </section>
