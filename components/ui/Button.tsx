@@ -1,5 +1,8 @@
+'use client'
+
 import { ButtonHTMLAttributes, ReactNode } from 'react'
 import { Loader2 } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'cta'
 type Size = 'sm' | 'md' | 'lg'
@@ -44,16 +47,19 @@ export function Button({
   const isDisabled = disabled || loading
 
   return (
-    <button
+    <motion.button
       disabled={isDisabled}
+      whileHover={isDisabled ? undefined : { scale: 1.02 }}
+      whileTap={isDisabled ? undefined : { scale: 0.97 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 22 }}
       className={`
-        inline-flex items-center justify-center font-medium transition-all
+        inline-flex items-center justify-center font-medium
         disabled:opacity-50 disabled:cursor-not-allowed
         ${variantStyles[variant]}
         ${sizeStyles[size]}
         ${className}
       `}
-      {...props}
+      {...(props as any)}
     >
       {loading ? (
         <Loader2 size={14} className="animate-spin" />
@@ -61,6 +67,6 @@ export function Button({
         <span className="flex-shrink-0">{icon}</span>
       ) : null}
       {children}
-    </button>
+    </motion.button>
   )
 }

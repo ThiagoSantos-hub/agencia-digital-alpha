@@ -9,11 +9,11 @@
   --color-sidebar: #FFFFFF;
   --color-border: #E2E8F0;
   --color-hover-bg: #F1F5F9;
-  --color-primary: #1A56DB;      /* Azul Confiança — ações principais */
+  --color-primary: #1A56DB;
   --color-primary-hover: #1E40AF;
-  --color-ai: #4C3ABF;           /* Índigo IA — exclusivo quando a IA está agindo */
+  --color-ai: #4C3ABF;
   --color-ai-hover: #3B2F9B;
-  --color-cta: #16A34A;          /* Verde Sucesso */
+  --color-cta: #16A34A;
   --color-cta-hover: #15803D;
   --color-text-main: #1E293B;
   --color-text-muted: #64748B;
@@ -34,8 +34,10 @@ body {
   color: var(--color-text-main);
 }
 
+/* Scrollbar minimalista */
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -53,4 +55,30 @@ body {
 
 elevenlabs-convai {
   display: none !important;
+}
+
+@layer components {
+  /* Divisórias e seções — evita “folha em branco” contínua */
+  .section-card {
+    @apply bg-surface border border-border rounded-xl shadow-sm;
+  }
+
+  .section-divider {
+    @apply border-t border-border my-6;
+  }
+
+  .panel-block {
+    @apply bg-surface border border-border rounded-xl shadow-sm p-5;
+  }
+
+  /* Inputs compactos para modais minimalistas */
+  .input-compact {
+    @apply w-full px-3 py-2 bg-background border border-border rounded-lg
+           text-text-main text-sm placeholder:text-text-disabled
+           focus:outline-none focus:border-primary/50 transition-colors;
+  }
+
+  .label-compact {
+    @apply block text-[11px] font-medium text-text-muted mb-1;
+  }
 }
