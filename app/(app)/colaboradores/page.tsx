@@ -6,7 +6,6 @@ import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 
-// Interface estendida para incluir password localmente no formulário
 interface ColaboradorFormInput extends ColaboradorInput {
   password?: string
 }
@@ -52,7 +51,6 @@ export default function ColaboradoresPage() {
     }
   }, [authLoading, profile, router])
 
-  // Limpar toast após 5 segundos
   useEffect(() => {
     if (toast) {
       const timer = setTimeout(() => setToast(null), 5000)
@@ -90,7 +88,7 @@ export default function ColaboradoresPage() {
       salary: c.salary ?? undefined,
       salary_frequency: c.salary_frequency ?? undefined,
       salary_day: c.salary_day ?? undefined,
-      password: '', // Não usado na edição
+      password: '',
     })
     setFormError(null)
     setShowPassword(false)
@@ -106,11 +104,9 @@ export default function ColaboradoresPage() {
     setFormError(null)
     try {
       if (editingId) {
-        // Separar senha dos dados do colaborador
         const { password, ...updateData } = form
         await updateColaborador(editingId, updateData)
         
-        // Atualizar senha se preenchida
         if (password?.trim()) {
           const resp = await fetch('/api/collaborators/update-password', {
             method: 'POST',
@@ -129,11 +125,9 @@ export default function ColaboradoresPage() {
         
         setToast({ message: 'Colaborador atualizado com sucesso!', type: 'success' })
       } else {
-        // 1. Criar no banco (tabela collaborators) — sem a senha
         const { password, ...dbData } = form
         await createColaborador(dbData as ColaboradorInput)
         
-        // 2. Chamar API de convite (Auth + Email)
         const inviteRes = await fetch('/api/collaborators/invite', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -165,7 +159,6 @@ export default function ColaboradoresPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      // Chamar a API server-side que remove Auth, profiles e collaborators
       const resp = await fetch('/api/collaborators/delete', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
@@ -179,7 +172,6 @@ export default function ColaboradoresPage() {
       setToast({ message: 'Colaborador excluído com sucesso!', type: 'success' })
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erro ao excluir.'
-      alert(msg)
       setToast({ message: msg, type: 'error' })
     }
   }
@@ -190,7 +182,6 @@ export default function ColaboradoresPage() {
 
   return (
     <div className="min-h-screen bg-background text-text-main p-6">
-      {/* Toast Notification */}
       {toast && (
         <div className={`fixed top-6 right-6 z-[60] px-6 py-3 rounded-xl shadow-2xl border transition-all animate-in slide-in-from-right ${
           toast.type === 'success' 
@@ -201,7 +192,6 @@ export default function ColaboradoresPage() {
         </div>
       )}
 
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-text-main">Colaboradores</h1>
@@ -211,13 +201,12 @@ export default function ColaboradoresPage() {
         </div>
         <button
           onClick={openCreate}
-          className="bg-cta hover:bg-cta-hover text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm"
+          className="bg-primary hover:bg-primary-hover text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm shadow-sm"
         >
           + Novo Colaborador
         </button>
       </div>
 
-      {/* Filtros */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <input
           type="text"
@@ -237,7 +226,6 @@ export default function ColaboradoresPage() {
         </select>
       </div>
 
-      {/* Tabela */}
       <div className="bg-surface border border-border rounded-xl overflow-hidden">
         {loading ? (
           <div className="p-12 text-center text-text-muted">Carregando...</div>
@@ -250,7 +238,7 @@ export default function ColaboradoresPage() {
         ) : (
           <table className="w-full">
             <thead>
-              <tr className="border-b border-border text-left">
+              <tr className="border-b border-border text-left bg-hover-bg">
                 <th className="px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Nome</th>
                 <th className="px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Cargo</th>
                 <th className="px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider hidden md:table-cell">E-mail</th>
@@ -292,7 +280,7 @@ export default function ColaboradoresPage() {
                       </button>
                       <button
                         onClick={() => setDeleteConfirmId(c.id)}
-                        className="text-xs text-red-400 hover:text-red-300 border border-red-200 hover:border-red-400 px-3 py-1.5 rounded-lg transition-colors"
+                        className="text-xs text-red-500 hover:text-red-600 border border-red-200 hover:border-red-400 px-3 py-1.5 rounded-lg transition-colors"
                       >
                         Excluir
                       </button>
@@ -305,14 +293,12 @@ export default function ColaboradoresPage() {
         )}
       </div>
 
-      {/* Counter */}
       {!loading && (
         <p className="text-xs text-text-disabled mt-3">
           {filtered.length} colaborador{filtered.length !== 1 ? 'es' : ''} exibido{filtered.length !== 1 ? 's' : ''}
         </p>
       )}
 
-      {/* Modal Criar/Editar */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-surface border border-border rounded-xl w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]">
@@ -324,7 +310,7 @@ export default function ColaboradoresPage() {
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-text-main mb-1.5">
-                  Nome <span className="text-red-400">*</span>
+                  Nome <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -336,7 +322,7 @@ export default function ColaboradoresPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-text-main mb-1.5">
-                  Cargo <span className="text-red-400">*</span>
+                  Cargo <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -347,9 +333,7 @@ export default function ColaboradoresPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-text-main mb-1.5">
-                  E-mail
-                </label>
+                <label className="block text-sm font-medium text-text-main mb-1.5">E-mail</label>
                 <input
                   type="email"
                   value={form.email}
@@ -361,7 +345,7 @@ export default function ColaboradoresPage() {
               
               <div>
                 <label className="block text-sm font-medium text-text-main mb-1.5">
-                  Senha {editingId ? <span className="text-text-muted">(deixe em branco para manter a atual)</span> : <span className="text-red-400">*</span>}
+                  Senha {editingId ? <span className="text-text-muted">(deixe em branco para manter a atual)</span> : <span className="text-red-500">*</span>}
                 </label>
                 <div className="relative">
                   <input
@@ -382,9 +366,7 @@ export default function ColaboradoresPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-text-main mb-1.5">
-                  Telefone
-                </label>
+                <label className="block text-sm font-medium text-text-main mb-1.5">Telefone</label>
                 <input
                   type="text"
                   value={form.phone}
@@ -394,13 +376,10 @@ export default function ColaboradoresPage() {
                 />
               </div>
 
-              {/* Campos de Salário (Fase 2) */}
               <div className="pt-4 border-t border-border space-y-4">
                 <h3 className="text-sm font-semibold text-primary uppercase tracking-wider">Informações Financeiras</h3>
                 <div>
-                  <label className="block text-sm font-medium text-text-main mb-1.5">
-                    Salário
-                  </label>
+                  <label className="block text-sm font-medium text-text-main mb-1.5">Salário</label>
                   <input
                     type="number"
                     value={form.salary || ''}
@@ -410,9 +389,7 @@ export default function ColaboradoresPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-text-main mb-1.5">
-                    Frequência
-                  </label>
+                  <label className="block text-sm font-medium text-text-main mb-1.5">Frequência</label>
                   <select
                     value={form.salary_frequency || ''}
                     onChange={(e) => setForm({ ...form, salary_frequency: (e.target.value as any) || undefined })}
@@ -425,9 +402,7 @@ export default function ColaboradoresPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-text-main mb-1.5">
-                    Dia de pagamento
-                  </label>
+                  <label className="block text-sm font-medium text-text-main mb-1.5">Dia de pagamento</label>
                   <input
                     type="number"
                     min="1"
@@ -469,7 +444,7 @@ export default function ColaboradoresPage() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="px-4 py-2 text-sm font-semibold bg-cta hover:bg-cta-hover disabled:opacity-50 text-white rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-semibold bg-primary hover:bg-primary-hover disabled:opacity-50 text-white rounded-lg transition-colors shadow-sm"
               >
                 {saving ? 'Processando...' : editingId ? 'Salvar alterações' : 'Convidar Colaborador'}
               </button>
@@ -478,7 +453,6 @@ export default function ColaboradoresPage() {
         </div>
       )}
 
-      {/* Modal Confirmação de Exclusão */}
       {deleteConfirmId && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-surface border border-border rounded-xl w-full max-w-sm shadow-2xl p-6">
@@ -495,7 +469,7 @@ export default function ColaboradoresPage() {
               </button>
               <button
                 onClick={() => handleDelete(deleteConfirmId)}
-                className="px-4 py-2 text-sm font-semibold bg-red-600 hover:bg-red-500 text-text-main rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-semibold bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors"
               >
                 Sim, excluir
               </button>
