@@ -116,9 +116,9 @@ export default function PerfilAdminPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Dados Pessoais */}
-        <section className="bg-background border border-border p-5 rounded-xl">
+        <section className="bg-surface border border-border p-5 rounded-xl shadow-sm">
           <div className="flex items-center gap-2.5 mb-4">
-            <div className="p-1.5 rounded-lg bg-cta/10 text-cta">
+            <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
               <User size={16} />
             </div>
             <h2 className="text-base font-bold text-text-main">Dados Pessoais</h2>
@@ -136,7 +136,7 @@ export default function PerfilAdminPage() {
                   className="w-full bg-hover-bg/10 border border-border rounded-xl pl-9 pr-3 py-2 text-sm text-text-muted cursor-not-allowed"
                 />
               </div>
-              <p className="text-[10px] text-amber-500/70 font-medium">O email não pode ser alterado.</p>
+              <p className="text-[10px] text-amber-600 font-medium">O email não pode ser alterado.</p>
             </div>
 
             <div className="space-y-1">
@@ -149,14 +149,14 @@ export default function PerfilAdminPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Seu nome"
-                  className="w-full bg-hover-bg border border-border rounded-xl pl-9 pr-3 py-2 text-sm text-text-main focus:outline-none focus:border-primary/50 transition-all"
+                  className="w-full bg-background border border-border rounded-xl pl-9 pr-3 py-2 text-sm text-text-main focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                 />
               </div>
             </div>
 
             <div className="space-y-1">
               <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">Cargo</label>
-              <div className="bg-hover-bg/10 border border-border rounded-xl px-3 py-2 text-sm text-text-muted font-medium">
+              <div className="bg-background border border-border rounded-xl px-3 py-2 text-sm text-text-muted font-medium">
                 {profile?.role === 'admin' ? 'Administrador' : 'Gestor'}
               </div>
             </div>
@@ -164,7 +164,7 @@ export default function PerfilAdminPage() {
             <button 
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-cta hover:bg-cta-hover text-white font-bold rounded-xl transition-all disabled:opacity-50 text-sm"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl transition-all disabled:opacity-50 text-sm shadow-sm"
             >
               <Save size={16} />
               {loading ? 'Salvando...' : 'Salvar Alterações'}
@@ -173,9 +173,9 @@ export default function PerfilAdminPage() {
         </section>
 
         {/* Segurança / Senha */}
-        <section className="bg-background border border-border p-5 rounded-xl">
+        <section className="bg-surface border border-border p-5 rounded-xl shadow-sm">
           <div className="flex items-center gap-2.5 mb-4">
-            <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
+            <div className="p-1.5 rounded-lg bg-amber-50 text-amber-600 border border-amber-200">
               <Lock size={16} />
             </div>
             <h2 className="text-base font-bold text-text-main">Segurança</h2>
@@ -192,7 +192,7 @@ export default function PerfilAdminPage() {
                   value={passwordData.newPassword}
                   onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
                   placeholder="Mínimo 6 caracteres"
-                  className="w-full bg-hover-bg border border-border rounded-xl pl-9 pr-10 py-2 text-sm text-text-main focus:outline-none focus:border-primary/50 transition-all"
+                  className="w-full bg-background border border-border rounded-xl pl-9 pr-10 py-2 text-sm text-text-main focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                 />
                 <button
                   type="button"
@@ -214,7 +214,7 @@ export default function PerfilAdminPage() {
                   value={passwordData.confirmNewPassword}
                   onChange={(e) => setPasswordData({...passwordData, confirmNewPassword: e.target.value})}
                   placeholder="Repita a nova senha"
-                  className="w-full bg-hover-bg border border-border rounded-xl pl-9 pr-10 py-2 text-sm text-text-main focus:outline-none focus:border-primary/50 transition-all"
+                  className="w-full bg-background border border-border rounded-xl pl-9 pr-10 py-2 text-sm text-text-main focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                 />
                 <button
                   type="button"
@@ -229,7 +229,7 @@ export default function PerfilAdminPage() {
             <button 
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-surface hover:bg-hover-bg text-text-main border border-border font-bold rounded-xl transition-all disabled:opacity-50 text-sm"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl transition-all disabled:opacity-50 text-sm shadow-sm"
             >
               <KeyRound size={16} />
               {loading ? 'Processando...' : 'Atualizar Senha'}
