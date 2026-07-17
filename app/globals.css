@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Design Tokens — Digital Alpha (Manual de Marca Jul/2026) */
+  --color-background: #F8FAFC;
+  --color-sidebar: #FFFFFF;
+  --color-primary: #1A56DB;      /* Azul Confiança — estado normal / repouso */
+  --color-ai: #4C3ABF;           /* Índigo IA — exclusivo quando a IA está agindo */
+  --color-cta: #16A34A;          /* Verde Sucesso */
+  --color-text-main: #1E293B;
+  --color-text-muted: #64748B;
+}
+
 * {
   box-sizing: border-box;
   padding: 0;
@@ -12,8 +23,8 @@ html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
-  background-color: #F8FAFC;
-  color: #1E293B;
+  background-color: var(--color-background);
+  color: var(--color-text-main);
 }
 
 ::-webkit-scrollbar {
@@ -30,7 +41,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #1A56DB;
+  background: var(--color-primary);
 }
 
 elevenlabs-convai {

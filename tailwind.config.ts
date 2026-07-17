@@ -14,6 +14,10 @@ const config: Config = {
         border:            '#E2E8F0',
         primary:           'var(--color-primary, #1A56DB)',
         'primary-hover':   '#1E40AF',
+        // Índigo IA — exclusivo para estados em que a inteligência está agindo
+        // (Manual de Marca §07: só aparece quando a IA está processando)
+        ai:                'var(--color-ai, #4C3ABF)',
+        'ai-hover':        '#3B2F9B',
         cta:               'var(--color-cta, #16A34A)',
         'cta-hover':       '#15803D',
         'text-main':       'var(--color-text-main, #1E293B)',
