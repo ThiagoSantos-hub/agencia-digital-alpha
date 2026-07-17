@@ -6,7 +6,9 @@ import {
   CheckSquare, List, Wallet, UserCog, Bot, Plug,
   Sparkles, MessageSquare, UserCircle, LogOut
 } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { useAuth } from '@/hooks/useAuth'
+import { springSoft } from '@/lib/motion'
 
 const menuGroups = [
   {
@@ -49,6 +51,33 @@ const menuGroups = [
   },
 ]
 
+function NavLink({
+  href,
+  active,
+  children,
+}: {
+  href: string
+  active: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <Link href={href} className="block">
+      <motion.div
+        whileHover={{ x: 3 }}
+        whileTap={{ scale: 0.98 }}
+        transition={springSoft}
+        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl ${
+          active
+            ? 'bg-active-bg text-primary border border-active-border'
+            : 'text-text-muted hover:text-text-main hover:bg-hover-bg'
+        }`}
+      >
+        {children}
+      </motion.div>
+    </Link>
+  )
+}
+
 export function Sidebar() {
   const pathname = usePathname()
   const { signOut } = useAuth()
@@ -64,15 +93,13 @@ export function Sidebar() {
 
       <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-4 custom-scrollbar">
         <div className="mb-2">
-          <Link href="/dashboard"
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
-              pathname === '/dashboard' || pathname.startsWith('/dashboard/')
-                ? 'bg-active-bg text-primary border border-active-border'
-                : 'text-text-muted hover:text-text-main hover:bg-hover-bg'
-            }`}>
+          <NavLink
+            href="/dashboard"
+            active={pathname === '/dashboard' || pathname.startsWith('/dashboard/')}
+          >
             <LayoutDashboard size={18} />
             <span className="text-sm font-semibold">Dashboard</span>
-          </Link>
+          </NavLink>
         </div>
 
         {menuGroups.map((group) => (
@@ -92,15 +119,10 @@ export function Sidebar() {
                   </div>
                 )
                 return (
-                  <Link key={item.href} href={item.href}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
-                      isActive
-                        ? 'bg-active-bg text-primary border border-active-border'
-                        : 'text-text-muted hover:text-text-main hover:bg-hover-bg'
-                    }`}>
+                  <NavLink key={item.href} href={item.href} active={isActive}>
                     <Icon size={18} />
                     <span className="text-sm font-semibold">{item.label}</span>
-                  </Link>
+                  </NavLink>
                 )
               })}
             </div>
@@ -109,11 +131,16 @@ export function Sidebar() {
       </nav>
 
       <div className="px-3 py-4 border-t border-border">
-        <button onClick={() => signOut()}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-600 hover:bg-red-50 transition-colors">
+        <motion.button
+          onClick={() => signOut()}
+          whileHover={{ x: 2 }}
+          whileTap={{ scale: 0.98 }}
+          transition={springSoft}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-600 hover:bg-red-50"
+        >
           <LogOut size={18} />
           <span className="text-sm font-semibold">Sair do sistema</span>
-        </button>
+        </motion.button>
       </div>
     </aside>
   )
