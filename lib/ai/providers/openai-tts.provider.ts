@@ -1,6 +1,4 @@
 // lib/ai/providers/openai-tts.provider.ts
-// Síntese de voz usando OpenAI TTS (tts-1)
-// Transcrição usando OpenAI Whisper
 import type { VoiceProvider } from '../types'
 
 export class OpenAITTSProvider implements VoiceProvider {
@@ -13,22 +11,27 @@ export class OpenAITTSProvider implements VoiceProvider {
     }
   }
 
-  async sintetizar(texto: string): Promise<Buffer> {
+  async sintetizar(texto: string, options?: { speed?: number }): Promise<Buffer> {
     if (!this.openAiKey) {
       throw new Error('[OpenAITTSProvider] OPENAI_API_KEY não configurada.')
     }
 
+    const input = texto.length > 280 ? texto.slice(0, 277) + '…' : texto
+    let speed = typeof options?.speed === 'number' ? options.speed : 1.3
+    if (speed < 0.8) speed = 0.8
+    if (speed > 1.5) speed = 1.5
+
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
-      method:  'POST',
+      method: 'POST',
       headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${this.openAiKey}`,
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.openAiKey}`,
       },
       body: JSON.stringify({
         model: 'tts-1',
-        input: texto,
-        voice: "onyx",
-        speed: 0.9,  // 1.0 = normal, 0.9 = ligeiramente mais lento e natural // voz feminina — opções: alloy, echo, fable, nova, onyx, shimmer
+        input,
+        voice: 'onyx',
+        speed,
       }),
     })
 
@@ -49,14 +52,14 @@ export class OpenAITTSProvider implements VoiceProvider {
     const formData = new FormData()
     const blob = new Blob([new Uint8Array(audioBuffer)], { type: mimeType })
     const extensao = mimeType.includes('mp4') ? 'm4a' : 'webm'
-    formData.append('file',     blob, `audio.${extensao}`)
-    formData.append('model',    'whisper-1')
+    formData.append('file', blob, `audio.${extensao}`)
+    formData.append('model', 'whisper-1')
     formData.append('language', 'pt')
 
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-      method:  'POST',
+      method: 'POST',
       headers: { Authorization: `Bearer ${this.openAiKey}` },
-      body:    formData,
+      body: formData,
     })
 
     if (!response.ok) {

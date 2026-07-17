@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { ConversationProvider, useConversationControls, useConversationStatus, useConversationClientTool } from '@elevenlabs/react'
 import { Mic, MicOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
+import { AlphaJarvisHUD } from '@/components/ai/AlphaJarvisHUD'
 
 const AGENT_ID = 'agent_0101kwhjn4ymf3warnf5k6ktfb4y'
 
@@ -10,8 +11,9 @@ function AlphaButton({ userName }: { userName: string }) {
   const { startSession, endSession } = useConversationControls()
   const { status } = useConversationStatus()
   const [loading, setLoading] = useState(false)
+  const [hudOpen, setHudOpen] = useState(false)
   const active = status === 'connected'
-  
+
   const userNameRef = useRef(userName)
   useEffect(() => {
     userNameRef.current = userName
@@ -26,7 +28,7 @@ function AlphaButton({ userName }: { userName: string }) {
         const limite = dias ?? 7
         const desde = new Date()
         desde.setDate(desde.getDate() - limite)
-        
+
         const { data, error } = await supabase
           .from('conversations')
           .select('created_at, transcript')
@@ -54,15 +56,21 @@ function AlphaButton({ userName }: { userName: string }) {
     }, [supabase])
   )
 
+  useEffect(() => {
+    if (active) setHudOpen(true)
+  }, [active])
+
   const handleClick = useCallback(async () => {
     if (active) {
       try { await endSession() } catch {}
+      setHudOpen(false)
       return
     }
-    
+
     if (loading) return
-    
+
     setLoading(true)
+    setHudOpen(true)
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true })
       await startSession({ agentId: AGENT_ID })
@@ -72,40 +80,57 @@ function AlphaButton({ userName }: { userName: string }) {
     }
   }, [active, loading, startSession, endSession])
 
+  const handleCloseHud = useCallback(async () => {
+    try { await endSession() } catch {}
+    setHudOpen(false)
+  }, [endSession])
+
   useEffect(() => {
     if (status === 'connected' || status === 'disconnected') {
       setLoading(false)
     }
+    if (status === 'disconnected') {
+      // mantém HUD só se ainda quiser — fecha ao desconectar
+    }
   }, [status])
 
+  const statusLabel = loading
+    ? 'CONECTANDO'
+    : active
+      ? 'CONECTADA · FALE AGORA'
+      : 'PRONTA'
+
   return (
-    <div className="fixed bottom-6 right-6 z-[60] flex flex-col items-end gap-3 pointer-events-none">
-      {active && (
-        <div className="bg-surface border border-ai/30 rounded-xl p-4 shadow-2xl w-48 pointer-events-auto">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-2 h-2 rounded-full bg-ai animate-pulse" />
-            <span className="text-ai text-sm font-semibold">Alpha ativa</span>
-          </div>
-          <p className="text-text-muted text-xs">Pode falar!</p>
-        </div>
-      )}
-      <button
-        onClick={handleClick}
-        disabled={loading}
-        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all disabled:opacity-50 pointer-events-auto hover:scale-110 active:scale-95 border-2 ${
-          active
-            ? 'bg-ai border-ai text-white shadow-ai/40'
-            : 'bg-primary border-primary text-white shadow-primary/20'
-        }`}
-      >
-        {loading
-          ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          : active
-            ? <MicOff size={22} />
-            : <Mic size={22} />
-        }
-      </button>
-    </div>
+    <>
+      <AlphaJarvisHUD
+        open={hudOpen}
+        onClose={handleCloseHud}
+        mode="eleven"
+        voiceState={active ? 'listening' : loading ? 'processing' : 'idle'}
+        statusLabel={statusLabel}
+        transcript={active ? 'Sessão de voz ElevenLabs ativa' : ''}
+        lastResponse={active ? 'Alpha está ouvindo e respondendo em tempo real.' : ''}
+      />
+
+      <div className="fixed bottom-6 right-6 z-[60] flex flex-col items-end gap-3 pointer-events-none">
+        <button
+          onClick={handleClick}
+          disabled={loading}
+          className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all disabled:opacity-50 pointer-events-auto hover:scale-110 active:scale-95 border-2 ${
+            active
+              ? 'bg-ai border-ai text-white shadow-ai/40'
+              : 'bg-primary border-primary text-white shadow-primary/20'
+          }`}
+        >
+          {loading
+            ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            : active
+              ? <MicOff size={22} />
+              : <Mic size={22} />
+          }
+        </button>
+      </div>
+    </>
   )
 }
 
@@ -116,10 +141,10 @@ export function AlphaWidget() {
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
-      if (!data.user) { 
+      if (!data.user) {
         setUserName('')
         setUserId(null)
-        return 
+        return
       }
       setUserId(data.user.id)
       const { data: profile } = await supabase

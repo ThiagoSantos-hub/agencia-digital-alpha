@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, Megaphone, BarChart2, Bell,
   CheckSquare, List, Wallet, UserCog, Bot, Plug,
-  Sparkles, MessageSquare, UserCircle, LogOut
+  Sparkles, MessageSquare, UserCircle, LogOut, Settings
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/hooks/useAuth'
@@ -46,7 +46,8 @@ const menuGroups = [
   {
     label: 'OUTROS',
     items: [
-      { label: 'Perfil',    href: '/perfil',    icon: UserCircle,   ativo: true  },
+      { label: 'Configurações', href: '/configuracoes', icon: Settings,   ativo: true },
+      { label: 'Perfil',        href: '/perfil',        icon: UserCircle, ativo: true },
     ],
   },
 ]
