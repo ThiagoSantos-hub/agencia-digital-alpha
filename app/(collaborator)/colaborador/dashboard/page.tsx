@@ -93,23 +93,22 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
   )
 }
 
-function BarChart({ data, color }: { data: number[], color: string }) {
-  const max = Math.max(...data, 1)
+function BarChart({ items }: { items: { value: number; color: string; label: string }[] }) {
+  const max = Math.max(...items.map((i) => i.value), 1)
   return (
     <div className="flex items-end justify-between h-full w-full gap-1.5 px-1">
-      {data.map((v, i) => {
-        const heightPct = Math.max((v / max) * 78, v > 0 ? 6 : 2)
+      {items.map((item, i) => {
+        const heightPct = Math.max((item.value / max) * 78, item.value > 0 ? 6 : 2)
         return (
-          <div key={i} className="flex-1 flex flex-col items-center h-full justify-end min-w-0">
+          <div key={i} className="flex-1 flex flex-col items-center h-full justify-end min-w-0" title={item.label}>
             <span className="text-[10px] text-text-main font-bold leading-none tabular-nums mb-1.5 select-none">
-              {v}
+              {item.value}
             </span>
             <div
               className="w-full rounded-t-md transition-all duration-500"
               style={{
                 height: `${heightPct}%`,
-                backgroundColor: color,
-                opacity: 0.65 + (heightPct / 300),
+                backgroundColor: item.color,
               }}
             />
           </div>
@@ -187,6 +186,15 @@ export default function CollaboratorDashboardPage() {
     { label: 'Checklists Pendentes', valor: stats.checklistsPendentes, icon: ListChecks,  cor: '#16A34A' },
   ]
 
+  const barItems = [
+    { value: stats.totalClientesAtivos || 0, color: '#1A56DB', label: 'Clientes' },
+    { value: stats.campanhasAtivas || 0,     color: '#4C3ABF', label: 'Campanhas' },
+    { value: stats.relatoriosEnviados || 0,  color: '#f59e0b', label: 'Relatórios' },
+    { value: stats.alertasAtivos || 0,       color: '#ef4444', label: 'Alertas' },
+    { value: stats.tarefasAFazer || 0,       color: '#3b82f6', label: 'Tarefas' },
+    { value: stats.checklistsPendentes || 0, color: '#16A34A', label: 'Checklists' },
+  ]
+
   return (
     <div className="h-[calc(100vh-100px)] flex flex-col gap-4 overflow-hidden p-1">
       <div className="h-16 flex flex-shrink-0 items-center gap-4">
@@ -251,26 +259,29 @@ export default function CollaboratorDashboardPage() {
               <TrendingUp size={14} className="text-primary" />
               <h2 className="text-text-main font-bold text-xs uppercase tracking-wide">Meu Histórico</h2>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-x-3 gap-y-1 justify-end">
               <span className="flex items-center gap-1 text-[9px] text-text-muted font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary" /> TAREFAS CONCLUÍDAS
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#1A56DB' }} /> Clientes
+              </span>
+              <span className="flex items-center gap-1 text-[9px] text-text-muted font-medium">
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#4C3ABF' }} /> Campanhas
+              </span>
+              <span className="flex items-center gap-1 text-[9px] text-text-muted font-medium">
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#f59e0b' }} /> Relatórios
+              </span>
+              <span className="flex items-center gap-1 text-[9px] text-text-muted font-medium">
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#ef4444' }} /> Alertas
+              </span>
+              <span className="flex items-center gap-1 text-[9px] text-text-muted font-medium">
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#3b82f6' }} /> Tarefas
+              </span>
+              <span className="flex items-center gap-1 text-[9px] text-text-muted font-medium">
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#16A34A' }} /> Checklists
               </span>
             </div>
           </div>
           <div className="flex-1 min-h-0 w-full">
-            <BarChart
-              data={[
-                stats.tarefasAFazer || 0,
-                stats.checklistsPendentes || 0,
-                stats.campanhasAtivas || 0,
-                stats.totalClientesAtivos || 0,
-                stats.relatoriosEnviados || 0,
-                stats.alertasAtivos || 0,
-                (stats.tarefasAFazer + stats.checklistsPendentes) || 0,
-                (stats.campanhasAtivas + stats.totalClientesAtivos) || 0,
-              ]}
-              color="#1A56DB"
-            />
+            <BarChart items={barItems} />
           </div>
           <div className="mt-3 pt-3 border-t border-border flex items-center justify-between flex-shrink-0">
             <div className="text-[9px] text-text-muted">Indicadores do período filtrado</div>
@@ -285,7 +296,7 @@ export default function CollaboratorDashboardPage() {
           </div>
           <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center overflow-hidden">
             <DonutChart data={[
-              { label: 'Tarefas', value: Math.max(stats.tarefasAFazer, 0), color: '#1A56DB' },
+              { label: 'Tarefas', value: Math.max(stats.tarefasAFazer, 0), color: '#3b82f6' },
               { label: 'Checklists', value: Math.max(stats.checklistsPendentes, 0), color: '#16A34A' },
               { label: 'Campanhas', value: Math.max(stats.campanhasAtivas, 0), color: '#4C3ABF' },
             ]} />
