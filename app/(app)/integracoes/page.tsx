@@ -27,7 +27,6 @@ const OAUTH_INTEGRATIONS = [
   'meta_ads', 'meta_ads_2', 'meta_ads_3', 'meta_ads_4',
 ]
 const GOOGLE_INTEGRATIONS = ['google_ads', 'gmail', 'google_drive', 'google_calendar']
-const META_INTEGRATIONS = ['meta_ads', 'meta_ads_2', 'meta_ads_3', 'meta_ads_4']
 
 const INTEGRATION_ICONS: Record<string, string> = {
   google_ads: 'https://www.gstatic.com/images/branding/product/2x/google_ads_48dp.png',
@@ -116,19 +115,19 @@ function ElevenLabsCard({
             placeholder="API Key do ElevenLabs (xi-api-key)"
             value={apiKey}
             onChange={e => setApiKey(e.target.value)}
-            className="w-full text-sm px-3 py-2 rounded-lg outline-none bg-background text-text-main border border-border focus:border-primary outline-none"
+            className="w-full text-sm px-3 py-2 rounded-lg outline-none bg-background text-text-main border border-border focus:border-primary"
           />
           <input
             type="text"
             placeholder="Agent ID (criado no ElevenAgents)"
             value={agentId}
             onChange={e => setAgentId(e.target.value)}
-            className="w-full text-sm px-3 py-2 rounded-lg outline-none bg-background text-text-main border border-border focus:border-primary outline-none"
+            className="w-full text-sm px-3 py-2 rounded-lg outline-none bg-background text-text-main border border-border focus:border-primary"
           />
           <button
             onClick={() => onSave(apiKey, agentId)}
             disabled={saving || !apiKey || !agentId}
-            className="w-full text-xs px-4 py-2 rounded-lg font-medium disabled:opacity-50 bg-cta text-white hover:bg-cta-hover transition-colors"
+            className="w-full text-xs px-4 py-2 rounded-lg font-medium disabled:opacity-50 bg-primary text-white hover:bg-primary-hover transition-colors"
           >
             {saving ? 'Salvando...' : 'Salvar e conectar'}
           </button>
@@ -142,7 +141,7 @@ function ElevenLabsCard({
             <input
               readOnly
               value={webhookUrl}
-              className="flex-1 text-xs px-3 py-2 rounded-lg outline-none bg-background text-text-muted border border-border outline-none"
+              className="flex-1 text-xs px-3 py-2 rounded-lg outline-none bg-background text-text-muted border border-border"
             />
             <button
               onClick={copyWebhook}
@@ -342,7 +341,7 @@ export default function IntegracoesPage() {
                 {integration.status === 'connected' ? (
                   <button
                     onClick={() => disconnect(integration.type)}
-                    className="text-xs px-3 py-1.5 rounded-lg transition-colors bg-red-50 text-red-500 border border-red-200 hover:bg-red-100 transition-colors"
+                    className="text-xs px-3 py-1.5 rounded-lg transition-colors bg-red-50 text-red-500 border border-red-200 hover:bg-red-100"
                   >
                     Desconectar
                   </button>
@@ -353,7 +352,7 @@ export default function IntegracoesPage() {
                         ? `/api/integrations/connect/google?type=${integration.type}`
                         : `/api/integrations/connect/meta?slot=${integration.type}`
                     }
-                    className="text-xs px-3 py-1.5 rounded-lg font-medium transition-colors bg-cta text-white hover:bg-cta-hover transition-colors"
+                    className="text-xs px-3 py-1.5 rounded-lg font-medium transition-colors bg-primary text-white hover:bg-primary-hover"
                   >
                     Conectar
                   </a>
@@ -412,12 +411,12 @@ export default function IntegracoesPage() {
                       placeholder={`Chave de API do ${integration.label}`}
                       value={apiKeys[integration.type] || ''}
                       onChange={e => setApiKeys(prev => ({ ...prev, [integration.type]: e.target.value }))}
-                      className="flex-1 text-sm px-3 py-2 rounded-lg outline-none bg-background text-text-main border border-border focus:border-primary outline-none"
+                      className="flex-1 text-sm px-3 py-2 rounded-lg outline-none bg-background text-text-main border border-border focus:border-primary"
                     />
                     <button
                       onClick={() => saveApiKey(integration.type)}
                       disabled={savingKey === integration.type || !apiKeys[integration.type]}
-                      className="text-xs px-4 py-2 rounded-lg font-medium disabled:opacity-50 bg-cta text-white hover:bg-cta-hover transition-colors"
+                      className="text-xs px-4 py-2 rounded-lg font-medium disabled:opacity-50 bg-primary text-white hover:bg-primary-hover transition-colors"
                     >
                       {savingKey === integration.type ? '...' : 'Salvar'}
                     </button>
@@ -429,12 +428,12 @@ export default function IntegracoesPage() {
       </section>
 
       <section>
-  <h2 className="text-text-main text-lg font-semibold mb-1">WhatsApp</h2>
-  <p className="text-xs mb-4 text-text-muted">
-    Conecte seu WhatsApp para enviar relatórios automáticos para contatos e grupos.
-  </p>
-  <WhatsAppConnect showGroupsButton={true} />
-</section>
+        <h2 className="text-text-main text-lg font-semibold mb-1">WhatsApp</h2>
+        <p className="text-xs mb-4 text-text-muted">
+          Conecte seu WhatsApp para enviar relatórios automáticos para contatos e grupos.
+        </p>
+        <WhatsAppConnect showGroupsButton={true} />
+      </section>
 
       <section>
         <h2 className="text-text-main text-lg font-semibold mb-4">Webhooks</h2>
@@ -475,19 +474,19 @@ export default function IntegracoesPage() {
                   placeholder="Nome"
                   defaultValue={webhook.name || ''}
                   onBlur={e => saveWebhook(webhook.slot, 'name', e.target.value)}
-                  className="text-sm px-3 py-2 rounded-lg outline-none bg-background text-text-main border border-border focus:border-primary outline-none"
+                  className="text-sm px-3 py-2 rounded-lg outline-none bg-background text-text-main border border-border focus:border-primary"
                 />
                 <input
                   type="url"
                   placeholder="URL do webhook"
                   defaultValue={webhook.url || ''}
                   onBlur={e => saveWebhook(webhook.slot, 'url', e.target.value)}
-                  className="text-sm px-3 py-2 rounded-lg outline-none bg-background text-text-main border border-border focus:border-primary outline-none"
+                  className="text-sm px-3 py-2 rounded-lg outline-none bg-background text-text-main border border-border focus:border-primary"
                 />
                 <select
                   defaultValue={webhook.event || ''}
                   onChange={e => saveWebhook(webhook.slot, 'event', e.target.value)}
-                  className={`text-sm px-3 py-2 rounded-lg outline-none ${`bg-background border border-border outline-none ${webhook.event ? "text-text-main" : "text-text-disabled"}`}`}
+                  className={`text-sm px-3 py-2 rounded-lg outline-none bg-background border border-border ${webhook.event ? "text-text-main" : "text-text-disabled"}`}
                 >
                   <option value="">Selecionar evento</option>
                   {WEBHOOK_EVENTS.map(ev => (
