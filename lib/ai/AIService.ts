@@ -1,11 +1,10 @@
-// lib/ai/AIService.ts — v1.5.0 (persona + Second Brain)
+// lib/ai/AIService.ts — v1.5.1 (respostas curtas)
 import type { AIProvider, AIRequest, AIResponse, CRMTool, Message } from './types'
 import { buildSystemPersonaBlock, DEFAULT_NOTES, type BrainNote } from './alphaPersona'
 
 const CRM_HINT = `
-Você tem acesso aos dados reais do CRM da agência: clientes, tarefas, campanhas, financeiro e integrações.
-Quando precisar de dados, use as ferramentas disponíveis.
-IMPORTANTE: conversa contínua — use o contexto anterior. Não invente dados.
+CRM: use ferramentas só quando a pergunta exigir dado real.
+Depois da ferramenta, responda em 1 frase com o resultado. Sem rodeios.
 `.trim()
 
 export class AIService {
@@ -23,7 +22,7 @@ export class AIService {
     const agora = new Date()
     const dataHoraBrasilia = agora.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })
     const brain = buildSystemPersonaBlock(notes?.length ? notes : DEFAULT_NOTES)
-    return `${brain}\n\n${CRM_HINT}\n\nDATA E HORA ATUAL (Brasília): ${dataHoraBrasilia}`
+    return `${brain}\n\n${CRM_HINT}\n\nDATA E HORA (Brasília): ${dataHoraBrasilia}`
   }
 
   async chat(
@@ -42,8 +41,9 @@ export class AIService {
     const request: AIRequest = {
       messages: fullMessages,
       tools: tools,
-      maxTokens: options?.maxTokens ?? 600,
-      temperature: options?.temperature ?? 0.65,
+      // Limite baixo força resposta curta (voz + tokens)
+      maxTokens: options?.maxTokens ?? 180,
+      temperature: options?.temperature ?? 0.4,
     }
 
     let response = await provider.chat(request)
