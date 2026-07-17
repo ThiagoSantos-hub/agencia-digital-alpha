@@ -20,7 +20,6 @@ export function AlphaChatInput({ loading, onSend, onSendVoice, onSendAudio }: Al
   const chunksRef     = useRef<Blob[]>([])
   const timerRef      = useRef<NodeJS.Timeout | null>(null)
 
-  // Limpa timer ao desmontar
   useEffect(() => {
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [])
@@ -81,10 +80,9 @@ export function AlphaChatInput({ loading, onSend, onSendVoice, onSendAudio }: Al
   return (
     <div className={`flex items-end gap-2 bg-surface border rounded-xl px-4 py-3 transition-colors ${gravando ? 'border-red-500/50' : 'border-border'}`}>
       {gravando ? (
-        // Estado de gravação
         <div className="flex-1 flex items-center gap-3">
           <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse flex-shrink-0" />
-          <span className="text-red-400 text-sm font-medium">Gravando {fmtTempo(segundos)}</span>
+          <span className="text-red-500 text-sm font-medium">Gravando {fmtTempo(segundos)}</span>
           <span className="text-text-disabled text-xs">Fale sua pergunta para a Alpha...</span>
         </div>
       ) : (
@@ -96,31 +94,31 @@ export function AlphaChatInput({ loading, onSend, onSendVoice, onSendAudio }: Al
           placeholder="Pergunte algo para a Alpha..."
           rows={1}
           disabled={loading}
-          className="flex-1 bg-transparent text-text-main text-sm placeholder-gray-600 resize-none focus:outline-none leading-relaxed disabled:opacity-50"
+          className="flex-1 bg-transparent text-text-main text-sm placeholder:text-text-disabled resize-none focus:outline-none leading-relaxed disabled:opacity-50"
           style={{ maxHeight: '160px' }}
         />
       )}
 
-      {/* Botão microfone — grava ou para */}
+      {/* Botão microfone */}
       <button
         onClick={gravando ? pararGravacao : iniciarGravacao}
         disabled={loading}
         title={gravando ? 'Parar gravação' : 'Gravar pergunta com resposta em voz'}
         className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0 ${
           gravando
-            ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
-            : 'text-text-muted hover:text-[#00ff88] hover:bg-[#00ff88]/10'
+            ? 'bg-red-500/20 text-red-500 hover:bg-red-500/30'
+            : 'text-text-muted hover:text-ai hover:bg-ai/10'
         }`}
       >
         {gravando ? <Square size={15} fill="currentColor" /> : <Mic size={17} />}
       </button>
 
-      {/* Botão enviar texto */}
+      {/* Botão enviar — Azul Confiança */}
       {!gravando && (
         <button
           onClick={handleSend}
           disabled={!texto.trim() || loading}
-          className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#00ff88] text-[#0a0f0c] hover:bg-[#00e87a] transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
+          className="w-9 h-9 rounded-xl flex items-center justify-center bg-primary text-white hover:bg-primary-hover transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
         >
           {loading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
         </button>

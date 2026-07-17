@@ -16,9 +16,9 @@ export function AlphaChatMessage({ message }: AlphaChatMessageProps) {
 
   return (
     <div className={`flex w-full mb-4 ${isUser ? 'justify-end' : 'justify-start'}`}>
-      {/* Avatar Alpha */}
+      {/* Avatar Alpha — usa Índigo IA */}
       {!isUser && (
-        <div className="w-8 h-8 rounded-full bg-[#00ff88]/10 border border-[#00ff88]/30 flex items-center justify-center text-sm mr-2 flex-shrink-0 mt-1">
+        <div className="w-8 h-8 rounded-full bg-ai/10 border border-ai/30 flex items-center justify-center text-sm mr-2 flex-shrink-0 mt-1 text-ai font-bold">
           α
         </div>
       )}
@@ -27,7 +27,7 @@ export function AlphaChatMessage({ message }: AlphaChatMessageProps) {
         {/* Bolha */}
         <div className={`px-4 py-3 rounded-xl text-sm leading-relaxed whitespace-pre-wrap ${
           isUser
-            ? 'bg-[#00ff88] text-[#0a0f0c] rounded-br-sm font-medium'
+            ? 'bg-primary text-white rounded-br-sm font-medium'
             : 'bg-surface border border-border text-text-main rounded-bl-sm'
         }`}>
           {message.content}

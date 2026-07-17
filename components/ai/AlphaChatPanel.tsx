@@ -20,7 +20,7 @@ export function AlphaChatPanel() {
       {/* Cabeçalho */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-bold text-lg">
+          <div className="w-9 h-9 rounded-full bg-ai/10 border border-ai/30 flex items-center justify-center text-ai font-bold text-lg">
             α
           </div>
           <div>
@@ -30,7 +30,7 @@ export function AlphaChatPanel() {
         </div>
         {messages.length > 0 && (
           <button onClick={clearHistory} title="Limpar conversa"
-            className="p-2 rounded-xl text-text-disabled hover:text-red-400 hover:bg-red-400/10 transition-colors">
+            className="p-2 rounded-xl text-text-disabled hover:text-red-500 hover:bg-red-50 transition-colors">
             <Trash2 size={15} />
           </button>
         )}
@@ -40,7 +40,7 @@ export function AlphaChatPanel() {
       <div className="flex-1 overflow-y-auto px-6 py-4">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center">
-            <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-3xl font-bold mb-4">
+            <div className="w-16 h-16 rounded-full bg-ai/10 border border-ai/20 flex items-center justify-center text-ai text-3xl font-bold mb-4">
               α
             </div>
             <p className="text-text-main font-semibold mb-1">Olá! Sou a Alpha</p>
@@ -61,12 +61,12 @@ export function AlphaChatPanel() {
             {messages.map(msg => <AlphaChatMessage key={msg.id} message={msg} />)}
             {loading && (
               <div className="flex justify-start mb-4">
-                <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-sm mr-2 flex-shrink-0">α</div>
-                <div className="bg-surface border border-border rounded-xl rounded-bl-sm px-4 py-3">
+                <div className="w-8 h-8 rounded-full bg-ai/10 border border-ai/30 flex items-center justify-center text-sm mr-2 flex-shrink-0 text-ai font-bold">α</div>
+                <div className="bg-surface border border-ai/30 rounded-xl rounded-bl-sm px-4 py-3">
                   <div className="flex gap-1 items-center h-4">
-                    <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <span className="w-1.5 h-1.5 bg-ai rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-1.5 h-1.5 bg-ai rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-1.5 h-1.5 bg-ai rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                   </div>
                 </div>
               </div>
@@ -75,7 +75,7 @@ export function AlphaChatPanel() {
         )}
 
         {error && (
-          <div className="flex items-center gap-2 bg-red-400/10 border border-red-400/20 rounded-xl px-4 py-3 text-red-400 text-sm mb-4">
+          <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-600 text-sm mb-4">
             <AlertCircle size={15} /> {error}
           </div>
         )}
