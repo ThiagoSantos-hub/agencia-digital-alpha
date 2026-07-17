@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import { useColaboradorFinance } from '@/hooks/useColaboradorFinance'
-import { Plus, Trash2, TrendingUp, TrendingDown, Wallet, X, Calendar as CalendarIcon, DollarSign } from 'lucide-react'
+import { Plus, Trash2, TrendingUp, TrendingDown, Wallet, X, Calendar as CalendarIcon, DollarSign, Eye, EyeOff } from 'lucide-react'
 
 export default function FinanceiroPage() {
   const { finances, loading, createFinance, deleteFinance, totalReceitas, totalGastos, saldo } = useColaboradorFinance()
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [visiveis, setVisiveis] = useState(false)
   const [formData, setFormData] = useState({
     type: 'receita' as 'receita' | 'gasto',
     description: '',
@@ -37,6 +38,7 @@ export default function FinanceiroPage() {
   }
 
   const formatCurrency = (value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  const val = (v: number) => visiveis ? formatCurrency(v) : '••••••'
   const formatDate = (date: string) => new Date(date + 'T00:00:00').toLocaleDateString('pt-BR')
   const inputCls = 'w-full bg-hover-bg border border-border rounded-xl px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-primary/50'
 
@@ -47,26 +49,36 @@ export default function FinanceiroPage() {
           <h1 className="text-2xl font-bold text-text-main">Financeiro Pessoal</h1>
           <p className="text-text-muted text-sm mt-1">Gerencie suas receitas e gastos de forma simples.</p>
         </div>
-        <button onClick={() => setIsModalOpen(true)} className="flex items-center justify-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl transition-all shadow-sm">
-          <Plus size={18} /> Novo Lançamento
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setVisiveis(v => !v)}
+            className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm border border-border text-text-muted hover:border-primary/30 hover:text-text-main transition-colors"
+            title={visiveis ? 'Ocultar valores' : 'Mostrar valores'}
+          >
+            {visiveis ? <EyeOff size={15} /> : <Eye size={15} />}
+            <span className="text-xs font-medium">{visiveis ? 'Ocultar' : 'Mostrar'}</span>
+          </button>
+          <button onClick={() => setIsModalOpen(true)} className="flex items-center justify-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl transition-all shadow-sm">
+            <Plus size={18} /> Novo Lançamento
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-surface border border-border p-6 rounded-xl shadow-sm">
           <div className="p-2.5 rounded-xl bg-cta/10 text-cta w-fit mb-4"><TrendingUp size={20} /></div>
           <p className="text-text-muted text-sm font-medium">Total Receitas</p>
-          <h3 className="text-2xl font-bold text-cta mt-1">{loading ? '...' : formatCurrency(totalReceitas)}</h3>
+          <h3 className="text-2xl font-bold text-cta mt-1">{loading ? '...' : val(totalReceitas)}</h3>
         </div>
         <div className="bg-surface border border-border p-6 rounded-xl shadow-sm">
           <div className="p-2.5 rounded-xl bg-red-50 text-red-500 w-fit mb-4"><TrendingDown size={20} /></div>
           <p className="text-text-muted text-sm font-medium">Total Gastos</p>
-          <h3 className="text-2xl font-bold text-red-500 mt-1">{loading ? '...' : formatCurrency(totalGastos)}</h3>
+          <h3 className="text-2xl font-bold text-red-500 mt-1">{loading ? '...' : val(totalGastos)}</h3>
         </div>
         <div className="bg-surface border border-border p-6 rounded-xl shadow-sm">
           <div className="p-2.5 rounded-xl bg-primary/10 text-primary w-fit mb-4"><Wallet size={20} /></div>
           <p className="text-text-muted text-sm font-medium">Saldo Atual</p>
-          <h3 className={`text-2xl font-bold mt-1 ${saldo >= 0 ? 'text-text-main' : 'text-red-500'}`}>{loading ? '...' : formatCurrency(saldo)}</h3>
+          <h3 className={`text-2xl font-bold mt-1 ${saldo >= 0 ? 'text-text-main' : 'text-red-500'}`}>{loading ? '...' : val(saldo)}</h3>
         </div>
       </div>
 
@@ -95,7 +107,9 @@ export default function FinanceiroPage() {
                   }`}>{item.type}</span>
                 </td>
                 <td className={`px-6 py-4 text-sm font-bold ${item.type === 'receita' ? 'text-cta' : 'text-red-500'}`}>
-                  {item.type === 'receita' ? '+' : '-'} {formatCurrency(item.amount)}
+                  {visiveis
+                    ? `${item.type === 'receita' ? '+' : '-'} ${formatCurrency(item.amount)}`
+                    : '••••••'}
                 </td>
                 <td className="px-6 py-4 text-sm text-text-muted">{formatDate(item.date)}</td>
                 <td className="px-6 py-4 text-right">

@@ -1,6 +1,6 @@
 'use client'
-// app/(app)/financeiro/page.tsx — v2.3.0
-// Design System: tema claro oficial (Manual de Marca)
+// app/(app)/financeiro/page.tsx — v2.3.1
+// Valores ocultos por padrão; olhinho revela
 
 import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase'
@@ -121,7 +121,8 @@ export default function FinanceiroPage() {
 
   const [abaFiltro, setAbaFiltro] = useState<AbaFiltro>('todas')
   const [busca, setBusca] = useState('')
-  const [visiveis, setVisiveis] = useState(true)
+  // Valores começam ocultos — usuário revela com o olhinho
+  const [visiveis, setVisiveis] = useState(false)
 
   const [modalAberto, setModalAberto] = useState(false)
   const [modalTipo, setModalTipo] = useState<'receita' | 'despesa'>('receita')
@@ -306,7 +307,6 @@ export default function FinanceiroPage() {
   return (
     <div className="space-y-6">
 
-      {/* Topo: abas escopo + botão olho */}
       <div className="flex items-center justify-between">
         {isAdmin && (
           <div className="flex gap-2">
@@ -336,7 +336,6 @@ export default function FinanceiroPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Card Receitas */}
         <div className="bg-surface border border-border rounded-xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2 text-cta">
@@ -369,7 +368,6 @@ export default function FinanceiroPage() {
           </div>
         </div>
 
-        {/* Card Despesas */}
         <div className="bg-surface border border-border rounded-xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2 text-red-500">
@@ -543,7 +541,6 @@ export default function FinanceiroPage() {
         </div>
       </div>
 
-      {/* Modal criar/editar */}
       {modalAberto && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setModalAberto(false)} />
@@ -665,7 +662,6 @@ export default function FinanceiroPage() {
         </div>
       )}
 
-      {/* Modal exclusão */}
       {deletandoId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDeletandoId(null)} />
