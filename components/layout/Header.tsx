@@ -1,7 +1,5 @@
 'use client'
-// components/layout/Header.tsx — v0.3.1
-// Atualização: remoção do botão sair do topo
-// Projeto: Agência Digital Alpha
+// components/layout/Header.tsx
 
 import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -9,7 +7,6 @@ import { useNotificacoes } from '@/hooks/useNotificacoes'
 import { Bell, CheckCheck, Trash2, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
-// ── Ícone por tipo de notificação ─────────────────────────────
 function iconeTipo(tipo: string) {
   switch (tipo) {
     case 'vencimento_5dias':   return '⚠️'
@@ -19,7 +16,6 @@ function iconeTipo(tipo: string) {
   }
 }
 
-// ── Formata data relativa ─────────────────────────────────────
 function tempoRelativo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
   const min  = Math.floor(diff / 60000)
@@ -47,7 +43,6 @@ export function Header() {
   const [sinoAberto, setSinoAberto] = useState(false)
   const sinoRef = useRef<HTMLDivElement>(null)
 
-  // Fecha o painel ao clicar fora
   useEffect(() => {
     function handleClickFora(e: MouseEvent) {
       if (sinoRef.current && !sinoRef.current.contains(e.target as Node)) {
@@ -64,38 +59,31 @@ export function Header() {
 
   return (
     <header className="h-16 bg-surface border-b border-border flex items-center justify-between px-6 shrink-0 shadow-sm">
-      {/* Título */}
       <div>
         <h2 className="text-text-main font-bold text-sm">Painel de Controle</h2>
-        <p className="text-text-muted text-[10px] font-bold uppercase tracking-wider">Agência Digital Alpha</p>
       </div>
 
-      {/* Lado direito */}
       <div className="flex items-center gap-4">
-
-        {/* ── SINO DE NOTIFICAÇÕES ── */}
         <div ref={sinoRef} className="relative">
           <button
             onClick={() => setSinoAberto(prev => !prev)}
             className={`relative w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-300 ${
-              naoLidas > 0 
-                ? 'text-amber-600 bg-amber-50 border border-amber-200 shadow-sm' 
+              naoLidas > 0
+                ? 'text-amber-600 bg-amber-50 border border-amber-200 shadow-sm'
                 : 'text-text-muted hover:text-text-main hover:bg-hover-bg'
             }`}
             aria-label="Notificações"
           >
             <Bell size={18} className={naoLidas > 0 ? 'fill-amber-600' : ''} />
             {naoLidas > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-text-main text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none border-2 border-surface">
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none border-2 border-surface">
                 {naoLidas > 99 ? '99+' : naoLidas}
               </span>
             )}
           </button>
 
-          {/* Painel de notificações */}
           {sinoAberto && (
             <div className="absolute right-0 top-11 w-80 bg-surface border border-border rounded-xl shadow-2xl z-50 flex flex-col max-h-[480px]">
-              {/* Cabeçalho do painel */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                 <div className="flex items-center gap-2">
                   <span className="text-text-main font-bold text-sm">Notificações</span>
@@ -133,7 +121,6 @@ export function Header() {
                 </div>
               </div>
 
-              {/* Lista */}
               <div className="flex-1 overflow-y-auto custom-scrollbar">
                 {loadingNotif ? (
                   <div className="py-10 text-center text-text-muted text-sm">Carregando...</div>
@@ -148,15 +135,9 @@ export function Header() {
                       key={n.id}
                       onClick={() => !n.lida && marcarComoLida(n.id)}
                       className={`flex gap-3 px-4 py-3 border-b border-border/50 last:border-0 transition-colors cursor-pointer
-                        ${n.lida
-                          ? 'opacity-50 hover:opacity-70'
-                          : 'hover:bg-hover-bg'
-                        }`}
+                        ${n.lida ? 'opacity-50 hover:opacity-70' : 'hover:bg-hover-bg'}`}
                     >
-                      {/* Ícone */}
                       <span className="text-lg flex-shrink-0 mt-0.5">{iconeTipo(n.tipo)}</span>
-
-                      {/* Conteúdo */}
                       <div className="flex-1 min-w-0">
                         <p className={`text-sm font-bold leading-snug ${n.lida ? 'text-text-muted' : 'text-text-main'}`}>
                           {n.titulo}
@@ -168,8 +149,6 @@ export function Header() {
                           {tempoRelativo(n.created_at)}
                         </p>
                       </div>
-
-                      {/* Bolinha não lida */}
                       {!n.lida && (
                         <span className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1.5 shadow-sm shadow-primary/30" />
                       )}
@@ -178,7 +157,6 @@ export function Header() {
                 )}
               </div>
 
-              {/* Rodapé */}
               {notificacoes.length > 0 && (
                 <div className="px-4 py-2.5 border-t border-border text-center">
                   <p className="text-[10px] text-text-disabled font-bold uppercase tracking-widest">
@@ -190,7 +168,6 @@ export function Header() {
           )}
         </div>
 
-        {/* ── PERFIL DO USUÁRIO ── */}
         <div className="flex items-center gap-2.5 pl-2 border-l border-border">
           <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
             <span className="text-primary text-xs font-black">{inicial}</span>
