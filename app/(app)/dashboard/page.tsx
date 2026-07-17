@@ -13,7 +13,7 @@ interface DashStats {
   totalClientesAtivos: number
   campanhasAtivas: number
   relatoriosEnviados: number
-  alertasEnviados: number
+  alertasAtivos: number
   tarefasAFazer: number
   checklistsPendentes: number
   rankingColaboradores: { nome: string; concluidas: number }[]
@@ -35,7 +35,6 @@ function formatDate(date: Date) {
   return date.toISOString().split('T')[0]
 }
 
-// Componente de Gráfico de Pizza Nativo (SVG) - Ajustado para Light Mode
 function DonutChart({ data }: { data: { label: string; value: number; color: string }[] }) {
   const total = data.reduce((s, d) => s + d.value, 0)
   if (total === 0) return (
@@ -48,7 +47,7 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
   let cumAngle = -Math.PI / 2
   const cx = 80, cy = 80, r = 60, inner = 38
 
-  const slices = data.map((d, i) => {
+  const slices = data.map((d) => {
     const angle = (d.value / total) * 2 * Math.PI
     const x1 = cx + r * Math.cos(cumAngle)
     const y1 = cy + r * Math.sin(cumAngle)
@@ -95,7 +94,6 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
   )
 }
 
-// Componente de Gráfico de Barras Nativo (SVG) - Ajustado para Light Mode
 function BarChart({ data, color }: { data: number[], color: string }) {
   const max = Math.max(...data, 1)
   return (
@@ -108,7 +106,7 @@ function BarChart({ data, color }: { data: number[], color: string }) {
               className="w-full rounded-t-sm transition-all duration-500 hover:brightness-90"
               style={{ height: `${height}%`, backgroundColor: color, opacity: 0.6 + (height / 250) }}
             />
-            <div className="absolute -top-4 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] text-text-main font-bold bg-text-main px-1 rounded border border-border z-10 shadow-sm">
+            <div className="absolute -top-4 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] text-text-main font-bold bg-surface px-1 rounded border border-border z-10 shadow-sm">
               {v}
             </div>
           </div>
@@ -132,7 +130,7 @@ export default function DashboardPage() {
     totalClientesAtivos: 0,
     campanhasAtivas: 0,
     relatoriosEnviados: 0,
-    alertasEnviados: 0,
+    alertasAtivos: 0,
     tarefasAFazer: 0,
     checklistsPendentes: 0,
     rankingColaboradores: [],
@@ -158,9 +156,8 @@ export default function DashboardPage() {
         supabase.from('report_history').select('id', { count: 'exact', head: true })
           .eq('status', 'enviado')
           .gte('enviado_em', dataInicio).lte('enviado_em', dataFim + 'T23:59:59'),
-        supabase.from('report_history').select('id', { count: 'exact', head: true }) 
-          .eq('status', 'enviado')
-          .gte('enviado_em', dataInicio).lte('enviado_em', dataFim + 'T23:59:59'),
+        // BUG FIX: antes usava a mesma query de relatórios
+        supabase.from('alerts').select('id', { count: 'exact', head: true }).eq('ativo', true),
         supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('status', 'a_fazer'),
         supabase.from('checklist_items').select('id', { count: 'exact', head: true }).eq('completed', false),
         supabase.from('tasks')
@@ -187,7 +184,7 @@ export default function DashboardPage() {
         totalClientesAtivos: clientesRes.count ?? 0,
         campanhasAtivas: campanhasRes.count ?? 0,
         relatoriosEnviados: relatoriosRes.count ?? 0,
-        alertasEnviados: alertasRes.count ?? 0,
+        alertasAtivos: alertasRes.count ?? 0,
         tarefasAFazer: tarefasRes.count ?? 0,
         checklistsPendentes: checklistsRes.count ?? 0,
         rankingColaboradores: ranking,
@@ -199,18 +196,17 @@ export default function DashboardPage() {
   }, [dataInicio, dataFim])
 
   const cards = [
-    { label: 'Clientes Ativos',     valor: stats.totalClientesAtivos, icon: Users,        cor: '#1A56DB' },
-    { label: 'Campanhas Ativas',    valor: stats.campanhasAtivas,     icon: Megaphone,    cor: '#6366f1' },
-    { label: 'Relatórios Enviados', valor: stats.relatoriosEnviados,  icon: BarChart2,    cor: '#f59e0b' },
-    { label: 'Alertas Enviados',    valor: stats.alertasEnviados,     icon: Bell,         cor: '#ef4444' },
-    { label: 'Tarefas a Fazer',     valor: stats.tarefasAFazer,       icon: CheckSquare,  cor: '#3b82f6' },
-    { label: 'Checklists Pendentes',valor: stats.checklistsPendentes, icon: ListChecks,   cor: '#a855f7' },
+    { label: 'Clientes Ativos',      valor: stats.totalClientesAtivos, icon: Users,        cor: '#1A56DB' },
+    { label: 'Campanhas Ativas',     valor: stats.campanhasAtivas,     icon: Megaphone,    cor: '#4C3ABF' },
+    { label: 'Relatórios Enviados',  valor: stats.relatoriosEnviados,  icon: BarChart2,    cor: '#f59e0b' },
+    { label: 'Alertas Ativos',       valor: stats.alertasAtivos,       icon: Bell,         cor: '#ef4444' },
+    { label: 'Tarefas a Fazer',      valor: stats.tarefasAFazer,       icon: CheckSquare,  cor: '#3b82f6' },
+    { label: 'Checklists Pendentes', valor: stats.checklistsPendentes, icon: ListChecks,   cor: '#16A34A' },
   ]
 
   return (
     <div className="h-[calc(100vh-100px)] flex flex-col gap-4 overflow-hidden">
       
-      {/* Topo: Boas-vindas e Filtros - Altura Fixa */}
       <div className="h-16 flex flex-shrink-0 items-center gap-4">
         <div className="bg-surface border border-border rounded-xl px-5 h-full flex items-center gap-4 flex-1 min-w-0 shadow-sm">
           <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
@@ -246,10 +242,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Grid Principal - Ocupa o restante da tela sem scroll */}
       <div className="flex-1 grid grid-cols-12 grid-rows-6 gap-4 min-h-0">
-        
-        {/* KPIs Laterais - Altura Total Dividida */}
         <div className="col-span-3 row-span-6 grid grid-rows-6 gap-3 min-h-0">
           {cards.map((card) => {
             const Icon = card.icon
@@ -270,7 +263,6 @@ export default function DashboardPage() {
           })}
         </div>
 
-        {/* Gráficos Centrais - Ocupa 4/6 da altura */}
         <div className="col-span-6 row-span-4 bg-surface border border-border rounded-xl p-4 flex flex-col min-h-0 shadow-sm">
           <div className="flex items-center justify-between mb-4 flex-shrink-0">
             <div className="flex items-center gap-2">
@@ -279,7 +271,7 @@ export default function DashboardPage() {
             </div>
             <div className="flex gap-3">
               <span className="flex items-center gap-1 text-[9px] text-text-disabled font-bold uppercase">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#6366f1]" /> CAMPANHAS
+                <span className="w-1.5 h-1.5 rounded-full bg-ai" /> CAMPANHAS
               </span>
               <span className="flex items-center gap-1 text-[9px] text-text-disabled font-bold uppercase">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary" /> CLIENTES
@@ -287,18 +279,27 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="flex-1 min-h-0 w-full overflow-hidden">
+            {/* Placeholder visual até haver série temporal real */}
             <BarChart 
-              data={[12, 19, 15, 25, 22, 30, 28, 35, 32, 40, 38, 45]} 
+              data={[
+                stats.totalClientesAtivos || 1,
+                stats.campanhasAtivas || 1,
+                stats.relatoriosEnviados || 1,
+                stats.alertasAtivos || 1,
+                stats.tarefasAFazer || 1,
+                stats.checklistsPendentes || 1,
+                stats.totalClientesAtivos + stats.campanhasAtivas || 1,
+                stats.relatoriosEnviados + stats.alertasAtivos || 1,
+              ]} 
               color="#1A56DB" 
             />
           </div>
           <div className="mt-3 pt-3 border-t border-border flex items-center justify-between flex-shrink-0">
-            <div className="text-[9px] text-text-muted font-medium uppercase">Média de crescimento: <span className="text-primary font-black">+12.5%</span></div>
+            <div className="text-[9px] text-text-muted font-medium uppercase">Indicadores do período filtrado</div>
             <div className="text-[9px] text-text-disabled italic font-bold">DADOS CONSOLIDADOS</div>
           </div>
         </div>
 
-        {/* Distribuição (Pizza) - Ocupa 4/6 da altura */}
         <div className="col-span-3 row-span-4 bg-surface border border-border rounded-xl p-4 flex flex-col min-h-0 shadow-sm">
           <div className="flex items-center gap-2 mb-4 flex-shrink-0">
             <Activity size={14} className="text-amber-500" />
@@ -306,21 +307,20 @@ export default function DashboardPage() {
           </div>
           <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center overflow-hidden">
             <DonutChart data={[
-              { label: 'Meta Ads', value: 45, color: '#6366f1' },
-              { label: 'Google Ads', value: 35, color: '#1A56DB' },
-              { label: 'Outros', value: 20, color: '#f59e0b' },
+              { label: 'Meta Ads', value: Math.max(stats.campanhasAtivas, 1), color: '#4C3ABF' },
+              { label: 'Clientes', value: Math.max(stats.totalClientesAtivos, 1), color: '#1A56DB' },
+              { label: 'Tarefas', value: Math.max(stats.tarefasAFazer, 1), color: '#f59e0b' },
             ]} />
           </div>
         </div>
 
-        {/* Ranking Inferior - Ocupa 2/6 da altura */}
         <div className="col-span-9 row-span-2 bg-surface border border-border rounded-xl p-4 flex flex-col min-h-0 shadow-sm">
           <div className="flex items-center justify-between mb-3 flex-shrink-0">
             <div className="flex items-center gap-2">
               <Trophy size={14} className="text-amber-500" />
               <h2 className="text-text-main font-black text-[10px] uppercase tracking-widest">Top Colaboradores</h2>
             </div>
-            <span className="text-[9px] text-primary/60 uppercase font-black tracking-widest">RANKING MENSAL</span>
+            <span className="text-[9px] text-primary/60 uppercase font-black tracking-widest">RANKING DO PERÍODO</span>
           </div>
           <div className="flex-1 min-h-0 overflow-hidden flex items-center gap-5">
             {loading ? (
