@@ -107,7 +107,7 @@ export default function FeedbacksAdminPage() {
     switch (status) {
       case 'pendente': return 'text-amber-400 bg-amber-400/10 border-amber-400/20'
       case 'em_analise': return 'text-blue-400 bg-blue-400/10 border-blue-400/20'
-      case 'resolvido': return 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20'
+      case 'resolvido': return 'text-cta bg-cta/10 border-cta/20'
       default: return 'text-text-muted bg-gray-400/10 border-gray-400/20'
     }
   }
@@ -130,7 +130,7 @@ export default function FeedbacksAdminPage() {
         </div>
         <button 
           onClick={fetchFeedbacks}
-          className="p-2.5 bg-surface border border-border rounded-xl text-text-muted hover:text-text-main hover:border-emerald-500/50 transition-all"
+          className="p-2.5 bg-surface border border-border rounded-xl text-text-muted hover:text-text-main hover:border-primary/50 transition-all"
           title="Recarregar"
         >
           <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
@@ -140,31 +140,31 @@ export default function FeedbacksAdminPage() {
       {/* Filtros */}
       <div className="flex flex-wrap gap-4 p-4 bg-surface border border-border rounded-xl shadow-lg">
         <div className="flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-xl">
-          <Filter size={16} className="text-emerald-500" />
+          <Filter size={16} className="text-cta" />
           <span className="text-xs font-bold text-text-muted uppercase tracking-wider">Tipo:</span>
           <select 
             value={filterTipo}
             onChange={(e) => setFilterTipo(e.target.value)}
             className="bg-transparent text-text-main text-sm focus:outline-none cursor-pointer"
           >
-            <option value="todos" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Todos</option>
-            <option value="sugestao" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Sugestão</option>
-            <option value="bug" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Bug</option>
+            <option value="todos" className="bg-surface text-text-main">Todos</option>
+            <option value="sugestao" className="bg-surface text-text-main">Sugestão</option>
+            <option value="bug" className="bg-surface text-text-main">Bug</option>
           </select>
         </div>
 
         <div className="flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-xl">
-          <Clock size={16} className="text-emerald-500" />
+          <Clock size={16} className="text-cta" />
           <span className="text-xs font-bold text-text-muted uppercase tracking-wider">Status:</span>
           <select 
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
             className="bg-transparent text-text-main text-sm focus:outline-none cursor-pointer"
           >
-            <option value="todos" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Todos</option>
-            <option value="pendente" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Pendente</option>
-            <option value="em_analise" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Em Análise</option>
-            <option value="resolvido" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Resolvido</option>
+            <option value="todos" className="bg-surface text-text-main">Todos</option>
+            <option value="pendente" className="bg-surface text-text-main">Pendente</option>
+            <option value="em_analise" className="bg-surface text-text-main">Em Análise</option>
+            <option value="resolvido" className="bg-surface text-text-main">Resolvido</option>
           </select>
         </div>
       </div>
@@ -172,7 +172,7 @@ export default function FeedbacksAdminPage() {
       {/* Listagem */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <RefreshCw size={32} className="animate-spin text-emerald-500" />
+          <RefreshCw size={32} className="animate-spin text-cta" />
           <p className="text-text-muted text-sm">Carregando feedbacks...</p>
         </div>
       ) : filteredFeedbacks.length === 0 ? (
@@ -187,13 +187,13 @@ export default function FeedbacksAdminPage() {
             <div 
               key={f.id} 
               onClick={() => setSelectedFeedback(f)}
-              className="bg-surface border border-border rounded-xl p-6 hover:border-emerald-500/30 transition-all group shadow-lg cursor-pointer"
+              className="bg-surface border border-border rounded-xl p-6 hover:border-primary/30 transition-all group shadow-lg cursor-pointer"
             >
               <div className="flex flex-col md:flex-row justify-between gap-6">
                 <div className="flex-1 space-y-3">
                   <div className="flex items-center gap-3">
                     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter border ${
-                      f.tipo === 'bug' ? 'text-red-400 bg-red-400/10 border-red-400/20' : 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20'
+                      f.tipo === 'bug' ? 'text-red-400 bg-red-400/10 border-red-400/20' : 'text-cta bg-cta/10 border-cta/20'
                     }`}>
                       {f.tipo === 'bug' ? 'Bug' : 'Sugestão'}
                     </span>
@@ -202,15 +202,15 @@ export default function FeedbacksAdminPage() {
 
                   <div className="flex flex-wrap items-center gap-y-2 gap-x-6">
                     <div className="flex items-center gap-2 text-text-muted text-xs">
-                      <User size={14} className="text-emerald-500" />
+                      <User size={14} className="text-cta" />
                       <span className="font-medium">{f.profiles?.name || f.profiles?.email || 'Desconhecido'}</span>
                     </div>
                     <div className="flex items-center gap-2 text-text-muted text-xs">
-                      <Calendar size={14} className="text-emerald-500" />
+                      <Calendar size={14} className="text-cta" />
                       <span>{new Date(f.created_at).toLocaleDateString('pt-BR')}</span>
                     </div>
                     {f.anexo_url && (
-                      <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold">
+                      <div className="flex items-center gap-2 text-cta text-xs font-bold">
                         <ExternalLink size={14} />
                         Possui Anexo
                       </div>
@@ -237,7 +237,7 @@ export default function FeedbacksAdminPage() {
           <div className="relative w-full max-w-2xl bg-surface border border-border rounded-xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="flex items-center justify-between px-8 py-6 border-b border-border">
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${selectedFeedback.tipo === 'bug' ? 'bg-red-400/10 text-red-400' : 'bg-emerald-400/10 text-emerald-400'}`}>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${selectedFeedback.tipo === 'bug' ? 'bg-red-400/10 text-red-400' : 'bg-cta/10 text-cta'}`}>
                   {selectedFeedback.tipo === 'bug' ? <Bug size={20} /> : <MessageSquare size={20} />}
                 </div>
                 <div>
@@ -249,7 +249,7 @@ export default function FeedbacksAdminPage() {
               </div>
               <button 
                 onClick={() => setSelectedFeedback(null)}
-                className="p-2 rounded-xl text-text-muted hover:text-text-main hover:bg-white/5 transition-all"
+                className="p-2 rounded-xl text-text-muted hover:text-text-main hover:bg-hover-bg transition-all"
               >
                 <X size={20} />
               </button>
@@ -270,7 +270,7 @@ export default function FeedbacksAdminPage() {
                     <img 
                       src={selectedFeedback.anexo_url} 
                       alt="Anexo" 
-                      className="w-full rounded-xl border border-border hover:border-emerald-500/50 transition-all"
+                      className="w-full rounded-xl border border-border hover:border-primary/50 transition-all"
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
                       <Search size={32} className="text-text-main" />
@@ -287,16 +287,16 @@ export default function FeedbacksAdminPage() {
                   value={selectedFeedback.status}
                   disabled={updatingId === selectedFeedback.id}
                   onChange={(e) => handleStatusChange(selectedFeedback.id, e.target.value)}
-                  className="bg-background border border-border rounded-xl px-3 py-1.5 text-text-main text-xs focus:outline-none focus:border-emerald-500/50 transition-all cursor-pointer"
+                  className="bg-background border border-border rounded-xl px-3 py-1.5 text-text-main text-xs focus:outline-none focus:border-primary/50 transition-all cursor-pointer"
                 >
-                  <option value="pendente" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Pendente</option>
-                  <option value="em_analise" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Em Análise</option>
-                  <option value="resolvido" style={{ backgroundColor: '#0f0f0f', color: '#ffffff' }}>Resolvido</option>
+                  <option value="pendente" className="bg-surface text-text-main">Pendente</option>
+                  <option value="em_analise" className="bg-surface text-text-main">Em Análise</option>
+                  <option value="resolvido" className="bg-surface text-text-main">Resolvido</option>
                 </select>
               </div>
               <button
                 onClick={() => setSelectedFeedback(null)}
-                className="w-full md:w-auto px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-text-main font-bold rounded-xl transition-all shadow-lg shadow-emerald-900/20"
+                className="w-full md:w-auto px-6 py-2.5 bg-cta hover:bg-cta-hover text-text-main font-bold rounded-xl transition-all shadow-lg shadow-cta/10"
               >
                 Fechar
               </button>
@@ -313,7 +313,7 @@ export default function FeedbacksAdminPage() {
             <div className="absolute -top-12 right-0 flex items-center gap-4">
               <button 
                 onClick={() => handleDownload(selectedImage)}
-                className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-text-main rounded-xl font-bold text-sm hover:bg-emerald-600 transition-all shadow-lg"
+                className="flex items-center gap-2 px-4 py-2 bg-cta text-white rounded-xl font-bold text-sm hover:bg-cta-hover transition-all shadow-lg"
               >
                 <Download size={18} />
                 Baixar
