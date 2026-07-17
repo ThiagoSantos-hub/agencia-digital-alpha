@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { 
   Plus, 
   Bell, 
@@ -103,19 +103,19 @@ export default function AlertasPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050508] text-text-main p-8">
+    <div className="min-h-full bg-background text-text-main">
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Bell className="text-[#6366f1]" />
+          <h1 className="text-2xl font-bold flex items-center gap-2 text-text-main">
+            <Bell className="text-primary" />
             Alertas
           </h1>
           <p className="text-text-muted text-sm">Configure notificações automáticas para suas contas</p>
         </div>
         <button 
           onClick={() => handleOpenModal()}
-          className="bg-[#6366f1] hover:bg-[#4f46e5] text-text-main px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-medium"
+          className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-medium shadow-sm"
         >
           <Plus size={18} />
           Criar Alerta
@@ -126,16 +126,16 @@ export default function AlertasPage() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-[#0a0a0f] border border-[#1a1a2e] h-48 rounded-xl animate-pulse" />
+            <div key={i} className="bg-surface border border-border h-48 rounded-xl animate-pulse" />
           ))}
         </div>
       ) : alerts.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-[#0a0a0f] border border-[#1a1a2e] rounded-xl">
+        <div className="flex flex-col items-center justify-center py-20 bg-surface border border-border rounded-xl shadow-sm">
           <Bell size={48} className="text-text-disabled mb-4" />
           <p className="text-text-main font-medium">Nenhum alerta criado ainda</p>
           <button 
             onClick={() => handleOpenModal()}
-            className="mt-4 text-[#6366f1] hover:underline text-sm font-medium"
+            className="mt-4 text-primary hover:underline text-sm font-medium"
           >
             Criar meu primeiro alerta
           </button>
@@ -143,24 +143,24 @@ export default function AlertasPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {alerts.map((alert) => (
-            <div key={alert.id} className="bg-[#0a0a0f] border border-[#1a1a2e] p-6 rounded-xl flex flex-col justify-between hover:border-[#6366f1]/50 transition-colors group">
+            <div key={alert.id} className="bg-surface border border-border p-6 rounded-xl flex flex-col justify-between hover:border-primary/40 transition-colors group shadow-sm">
               <div>
                 <div className="flex justify-between items-start mb-4">
                   <h3 className="font-bold text-lg text-text-main">{alert.nome}</h3>
                   {alert.canal === 'meta' ? (
-                    <Facebook size={18} className="text-blue-400" />
+                    <Facebook size={18} className="text-primary" />
                   ) : (
-                    <Globe size={18} className="text-red-400" />
+                    <Globe size={18} className="text-red-500" />
                   )}
                 </div>
                 
                 <div className="flex flex-wrap gap-2 mb-4">
                   {alert.tipo === 'saldo_minimo' ? (
-                    <span className="bg-yellow-500/10 text-yellow-500 text-[10px] font-bold uppercase px-2 py-1 rounded-md flex items-center gap-1">
+                    <span className="bg-amber-50 text-amber-700 text-[10px] font-bold uppercase px-2 py-1 rounded-md flex items-center gap-1 border border-amber-200">
                       <DollarSign size={10} /> Saldo Mínimo
                     </span>
                   ) : (
-                    <span className="bg-red-500/10 text-red-500 text-[10px] font-bold uppercase px-2 py-1 rounded-md flex items-center gap-1">
+                    <span className="bg-red-50 text-red-600 text-[10px] font-bold uppercase px-2 py-1 rounded-md flex items-center gap-1 border border-red-200">
                       <AlertTriangle size={10} /> Erro na Conta
                     </span>
                   )}
@@ -169,27 +169,27 @@ export default function AlertasPage() {
                 <div className="space-y-1 text-sm text-text-muted">
                   <p>Conta: <span className="text-text-main">{alert.conta_anuncio}</span></p>
                   {alert.tipo === 'saldo_minimo' && (
-                    <p>Saldo mínimo: <span className="text-yellow-500 font-bold">R$ {alert.saldo_minimo}</span></p>
+                    <p>Saldo mínimo: <span className="text-amber-600 font-bold">R$ {alert.saldo_minimo}</span></p>
                   )}
                 </div>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-[#1a1a2e] flex justify-between items-center">
+              <div className="mt-6 pt-4 border-t border-border flex justify-between items-center">
                 <button 
                   onClick={() => toggleAtivo(alert.id, !alert.ativo)}
-                  className={`w-10 h-5 rounded-full relative transition-colors ${alert.ativo ? 'bg-[#6366f1]' : 'bg-gray-700'}`}
+                  className={`w-10 h-5 rounded-full relative transition-colors ${alert.ativo ? 'bg-primary' : 'bg-slate-300'}`}
                 >
-                  <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${alert.ativo ? 'right-1' : 'left-1'}`} />
+                  <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all shadow-sm ${alert.ativo ? 'right-1' : 'left-1'}`} />
                 </button>
 
                 <div className="flex items-center gap-3">
-                  <button onClick={() => handleOpenModal(alert)} className="p-1.5 hover:bg-[#1a1a2e] rounded-lg text-text-muted hover:text-text-main transition-colors">
+                  <button onClick={() => handleOpenModal(alert)} className="p-1.5 hover:bg-hover-bg rounded-lg text-text-muted hover:text-text-main transition-colors">
                     <Edit2 size={16} />
                   </button>
-                  <button onClick={() => handleDuplicate(alert)} className="p-1.5 hover:bg-[#1a1a2e] rounded-lg text-text-muted hover:text-text-main transition-colors">
+                  <button onClick={() => handleDuplicate(alert)} className="p-1.5 hover:bg-hover-bg rounded-lg text-text-muted hover:text-text-main transition-colors">
                     <Copy size={16} />
                   </button>
-                  <button onClick={() => handleDelete(alert.id)} className="p-1.5 hover:bg-red-500/10 rounded-lg text-text-muted hover:text-red-500 transition-colors">
+                  <button onClick={() => handleDelete(alert.id)} className="p-1.5 hover:bg-red-50 rounded-lg text-text-muted hover:text-red-600 transition-colors">
                     <Trash2 size={16} />
                   </button>
                 </div>
@@ -202,12 +202,12 @@ export default function AlertasPage() {
       {/* Modal Criar/Editar */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
           
-          <div className="relative bg-[#0a0a0f] border border-[#1a1a2e] w-full max-w-lg rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-[#1a1a2e] flex justify-between items-center">
-              <h2 className="text-xl font-bold">{editingAlert ? 'Editar Alerta' : 'Criar Alerta'}</h2>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-[#1a1a2e] rounded-lg text-text-muted">
+          <div className="relative bg-surface border border-border w-full max-w-lg rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-border flex justify-between items-center">
+              <h2 className="text-xl font-bold text-text-main">{editingAlert ? 'Editar Alerta' : 'Criar Alerta'}</h2>
+              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-hover-bg rounded-lg text-text-muted">
                 <X size={20} />
               </button>
             </div>
@@ -220,7 +220,7 @@ export default function AlertasPage() {
                   type="text"
                   value={formData.nome}
                   onChange={e => setFormData({...formData, nome: e.target.value})}
-                  className="w-full bg-[#050508] border border-[#1a1a2e] rounded-xl px-4 py-2.5 outline-none focus:border-[#6366f1] transition-colors"
+                  className="w-full bg-background border border-border rounded-xl px-4 py-2.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors text-text-main"
                   placeholder="Ex: Alerta de Saldo - Alpha"
                 />
               </div>
@@ -233,7 +233,7 @@ export default function AlertasPage() {
                       type="button"
                       onClick={() => setFormData({...formData, tipo: 'saldo_minimo'})}
                       className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all text-sm ${
-                        formData.tipo === 'saldo_minimo' ? 'bg-yellow-500/10 border-yellow-500/50 text-yellow-500' : 'bg-[#050508] border-[#1a1a2e] text-text-muted'
+                        formData.tipo === 'saldo_minimo' ? 'bg-amber-50 border-amber-300 text-amber-700' : 'bg-background border-border text-text-muted'
                       }`}
                     >
                       <DollarSign size={14} /> Saldo Mínimo
@@ -242,7 +242,7 @@ export default function AlertasPage() {
                       type="button"
                       onClick={() => setFormData({...formData, tipo: 'erro_conta'})}
                       className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all text-sm ${
-                        formData.tipo === 'erro_conta' ? 'bg-red-500/10 border-red-500/50 text-red-500' : 'bg-[#050508] border-[#1a1a2e] text-text-muted'
+                        formData.tipo === 'erro_conta' ? 'bg-red-50 border-red-300 text-red-600' : 'bg-background border-border text-text-muted'
                       }`}
                     >
                       <AlertTriangle size={14} /> Erro na Conta
@@ -257,7 +257,7 @@ export default function AlertasPage() {
                       type="button"
                       onClick={() => setFormData({...formData, canal: 'meta'})}
                       className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all text-sm ${
-                        formData.canal === 'meta' ? 'bg-blue-500/10 border-blue-500/50 text-blue-500' : 'bg-[#050508] border-[#1a1a2e] text-text-muted'
+                        formData.canal === 'meta' ? 'bg-primary/10 border-primary/40 text-primary' : 'bg-background border-border text-text-muted'
                       }`}
                     >
                       <Facebook size={14} /> Meta Ads
@@ -266,7 +266,7 @@ export default function AlertasPage() {
                       type="button"
                       onClick={() => setFormData({...formData, canal: 'google'})}
                       className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all text-sm ${
-                        formData.canal === 'google' ? 'bg-red-500/10 border-red-500/50 text-red-500' : 'bg-[#050508] border-[#1a1a2e] text-text-muted'
+                        formData.canal === 'google' ? 'bg-red-50 border-red-300 text-red-600' : 'bg-background border-border text-text-muted'
                       }`}
                     >
                       <Globe size={14} /> Google Ads
@@ -283,7 +283,7 @@ export default function AlertasPage() {
                     type="text"
                     value={formData.conta_anuncio}
                     onChange={e => setFormData({...formData, conta_anuncio: e.target.value})}
-                    className="w-full bg-[#050508] border border-[#1a1a2e] rounded-xl px-4 py-2.5 outline-none focus:border-[#6366f1] transition-colors text-sm"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors text-sm text-text-main"
                     placeholder="act_123456789"
                   />
                 </div>
@@ -295,7 +295,7 @@ export default function AlertasPage() {
                       type="number"
                       value={formData.saldo_minimo || ''}
                       onChange={e => setFormData({...formData, saldo_minimo: Number(e.target.value)})}
-                      className="w-full bg-[#050508] border border-[#1a1a2e] rounded-xl px-4 py-2.5 outline-none focus:border-[#6366f1] transition-colors text-sm"
+                      className="w-full bg-background border border-border rounded-xl px-4 py-2.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors text-sm text-text-main"
                       placeholder="100.00"
                     />
                   </div>
@@ -310,7 +310,7 @@ export default function AlertasPage() {
                       type="button"
                       onClick={() => setFormData({...formData, recebedor_tipo: 'privado'})}
                       className={`flex items-center justify-center p-2 rounded-xl border transition-all ${
-                        formData.recebedor_tipo === 'privado' ? 'bg-[#6366f1]/10 border-[#6366f1] text-[#6366f1]' : 'bg-[#050508] border-[#1a1a2e] text-text-muted'
+                        formData.recebedor_tipo === 'privado' ? 'bg-primary/10 border-primary text-primary' : 'bg-background border-border text-text-muted'
                       }`}
                     >
                       <Smartphone size={14} />
@@ -319,7 +319,7 @@ export default function AlertasPage() {
                       type="button"
                       onClick={() => setFormData({...formData, recebedor_tipo: 'grupo'})}
                       className={`flex items-center justify-center p-2 rounded-xl border transition-all ${
-                        formData.recebedor_tipo === 'grupo' ? 'bg-[#6366f1]/10 border-[#6366f1] text-[#6366f1]' : 'bg-[#050508] border-[#1a1a2e] text-text-muted'
+                        formData.recebedor_tipo === 'grupo' ? 'bg-primary/10 border-primary text-primary' : 'bg-background border-border text-text-muted'
                       }`}
                     >
                       <Users size={14} />
@@ -333,7 +333,7 @@ export default function AlertasPage() {
                     type="text"
                     value={formData.recebedor_numero}
                     onChange={e => setFormData({...formData, recebedor_numero: e.target.value.replace(/\D/g, '')})}
-                    className="w-full bg-[#050508] border border-[#1a1a2e] rounded-xl px-4 py-2.5 outline-none focus:border-[#6366f1] transition-colors text-sm"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors text-sm text-text-main"
                     placeholder="5511999999999"
                   />
                 </div>
@@ -345,11 +345,11 @@ export default function AlertasPage() {
                   <div className="flex gap-1">
                     {formData.tipo === 'saldo_minimo' ? (
                       ['<CA>', '<SALDO>', '<TARGET>'].map(v => (
-                        <button key={v} type="button" onClick={() => insertVariable(v)} className="text-[9px] bg-[#1a1a2e] px-1.5 py-0.5 rounded text-text-muted hover:text-text-main">{v}</button>
+                        <button key={v} type="button" onClick={() => insertVariable(v)} className="text-[9px] bg-hover-bg px-1.5 py-0.5 rounded text-text-muted hover:text-text-main border border-border">{v}</button>
                       ))
                     ) : (
                       ['<CA>', '<ACT_STATUS>', '<STATUS_DESCRIPTION>'].map(v => (
-                        <button key={v} type="button" onClick={() => insertVariable(v)} className="text-[9px] bg-[#1a1a2e] px-1.5 py-0.5 rounded text-text-muted hover:text-text-main">{v}</button>
+                        <button key={v} type="button" onClick={() => insertVariable(v)} className="text-[9px] bg-hover-bg px-1.5 py-0.5 rounded text-text-muted hover:text-text-main border border-border">{v}</button>
                       ))
                     )}
                   </div>
@@ -358,7 +358,7 @@ export default function AlertasPage() {
                   required
                   value={formData.mensagem_template}
                   onChange={e => setFormData({...formData, mensagem_template: e.target.value})}
-                  className="w-full bg-[#050508] border border-[#1a1a2e] rounded-xl px-4 py-3 outline-none focus:border-[#6366f1] transition-colors text-sm min-h-[100px] resize-none"
+                  className="w-full bg-background border border-border rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors text-sm min-h-[100px] resize-none text-text-main"
                   placeholder="Digite o template do alerta..."
                 />
               </div>
@@ -367,14 +367,14 @@ export default function AlertasPage() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 bg-transparent border border-[#1a1a2e] hover:bg-[#1a1a2e] text-text-muted py-2.5 rounded-xl transition-colors text-sm font-medium"
+                  className="flex-1 bg-transparent border border-border hover:bg-hover-bg text-text-muted py-2.5 rounded-xl transition-colors text-sm font-medium"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="flex-1 bg-[#6366f1] hover:bg-[#4f46e5] text-text-main py-2.5 rounded-xl transition-colors text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="flex-1 bg-primary hover:bg-primary-hover text-white py-2.5 rounded-xl transition-colors text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
                 >
                   {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
                   Salvar Alerta

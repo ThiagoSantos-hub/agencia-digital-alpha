@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { 
   Plus, 
   BarChart2, 
-  Search, 
   Filter, 
   MoreHorizontal, 
   Send, 
@@ -13,13 +12,10 @@ import {
   Copy, 
   Clock, 
   Trash2, 
-  CheckCircle2, 
-  XCircle,
-  Calendar,
-  Facebook,
   Globe,
   ChevronRight,
-  Loader2
+  Loader2,
+  Facebook
 } from 'lucide-react'
 import { useRelatorios, Report, ReportHistory } from '@/hooks/useRelatorios'
 
@@ -42,7 +38,6 @@ export default function RelatoriosPage() {
   const [actionMenuId, setActionMenuId] = useState<string | null>(null)
   const [sendingId, setSendingId] = useState<string | null>(null)
 
-  // Formatação de data nativa
   const formatDate = (dateString: string) => {
     return new Intl.DateTimeFormat('pt-BR', {
       day: '2-digit',
@@ -70,7 +65,6 @@ export default function RelatoriosPage() {
     }).format(new Date(dateString)).replace(',', ' às')
   }
 
-  // Filtragem dos relatórios
   const filteredReports = useMemo(() => {
     return reports.filter(report => {
       const matchStatus = filterStatus === 'todos' || (filterStatus === 'ativo' ? report.ativo : !report.ativo)
@@ -79,7 +73,6 @@ export default function RelatoriosPage() {
     })
   }, [reports, filterStatus, filterCanal])
 
-  // Estatísticas
   const stats = useMemo(() => {
     const ativos = reports.filter(r => r.ativo).length
     const total = reports.length
@@ -149,19 +142,19 @@ export default function RelatoriosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050508] text-text-main p-8">
+    <div className="min-h-full bg-background text-text-main">
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <BarChart2 className="text-[#6366f1]" />
+          <h1 className="text-2xl font-bold flex items-center gap-2 text-text-main">
+            <BarChart2 className="text-primary" />
             Relatórios
           </h1>
           <p className="text-text-muted text-sm">Gerencie seus relatórios automáticos de anúncios</p>
         </div>
         <button 
           onClick={() => router.push('/relatorios/criar')}
-          className="bg-[#6366f1] hover:bg-[#4f46e5] text-text-main px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-medium"
+          className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-medium shadow-sm"
         >
           <Plus size={18} />
           Criar Relatório
@@ -170,23 +163,23 @@ export default function RelatoriosPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-[#0a0a0f] border border-[#1a1a2e] p-6 rounded-xl">
+        <div className="bg-surface border border-border p-6 rounded-xl shadow-sm">
           <p className="text-text-muted text-sm mb-1">Relatórios Ativos</p>
-          <p className="text-3xl font-bold text-[#6366f1]">{stats.ativos}</p>
+          <p className="text-3xl font-bold text-primary">{stats.ativos}</p>
         </div>
-        <div className="bg-[#0a0a0f] border border-[#1a1a2e] p-6 rounded-xl">
+        <div className="bg-surface border border-border p-6 rounded-xl shadow-sm">
           <p className="text-text-muted text-sm mb-1">Total de Relatórios</p>
-          <p className="text-3xl font-bold">{stats.total}</p>
+          <p className="text-3xl font-bold text-text-main">{stats.total}</p>
         </div>
-        <div className="bg-[#0a0a0f] border border-[#1a1a2e] p-6 rounded-xl">
+        <div className="bg-surface border border-border p-6 rounded-xl shadow-sm">
           <p className="text-text-muted text-sm mb-1">Próximo Envio</p>
-          <p className="text-3xl font-bold text-[#10b981]">{stats.proximoEnvio}</p>
+          <p className="text-3xl font-bold text-cta">{stats.proximoEnvio}</p>
         </div>
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-4 mb-6">
-        <div className="flex items-center gap-2 bg-[#0a0a0f] border border-[#1a1a2e] px-3 py-2 rounded-lg">
+        <div className="flex items-center gap-2 bg-surface border border-border px-3 py-2 rounded-lg">
           <Filter size={16} className="text-text-muted" />
           <select 
             className="bg-transparent outline-none text-sm text-text-main"
@@ -198,7 +191,7 @@ export default function RelatoriosPage() {
             <option value="inativo">Inativos</option>
           </select>
         </div>
-        <div className="flex items-center gap-2 bg-[#0a0a0f] border border-[#1a1a2e] px-3 py-2 rounded-lg">
+        <div className="flex items-center gap-2 bg-surface border border-border px-3 py-2 rounded-lg">
           <Globe size={16} className="text-text-muted" />
           <select 
             className="bg-transparent outline-none text-sm text-text-main"
@@ -213,10 +206,10 @@ export default function RelatoriosPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-[#0a0a0f] border border-[#1a1a2e] rounded-xl">
+      <div className="bg-surface border border-border rounded-xl shadow-sm overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-[#1a1a2e] bg-[#0d0d14]">
+            <tr className="border-b border-border bg-hover-bg">
               <th className="p-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Status</th>
               <th className="p-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Nome</th>
               <th className="p-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Canal</th>
@@ -225,12 +218,12 @@ export default function RelatoriosPage() {
               <th className="p-4 text-xs font-semibold text-text-muted uppercase tracking-wider text-right">Ações</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#1a1a2e]">
+          <tbody className="divide-y divide-border">
             {loading ? (
               [...Array(5)].map((_, i) => (
                 <tr key={i} className="animate-pulse">
                   <td colSpan={6} className="p-4">
-                    <div className="h-10 bg-[#1a1a2e] rounded-lg w-full"></div>
+                    <div className="h-10 bg-hover-bg rounded-lg w-full"></div>
                   </td>
                 </tr>
               ))
@@ -245,7 +238,7 @@ export default function RelatoriosPage() {
                     </div>
                     <button 
                       onClick={() => router.push('/relatorios/criar')}
-                      className="bg-[#6366f1] hover:bg-[#4f46e5] text-text-main px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm"
+                      className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium shadow-sm"
                     >
                       <Plus size={16} />
                       Criar primeiro relatório
@@ -255,13 +248,13 @@ export default function RelatoriosPage() {
               </tr>
             ) : (
               filteredReports.map((report) => (
-                <tr key={report.id} className="hover:bg-[#0d0d14] transition-colors group">
+                <tr key={report.id} className="hover:bg-hover-bg transition-colors group">
                   <td className="p-4">
                     <button 
                       onClick={() => toggleAtivo(report.id, !report.ativo)}
-                      className={`w-10 h-5 rounded-full relative transition-colors ${report.ativo ? 'bg-[#6366f1]' : 'bg-gray-700'}`}
+                      className={`w-10 h-5 rounded-full relative transition-colors ${report.ativo ? 'bg-primary' : 'bg-slate-300'}`}
                     >
-                      <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${report.ativo ? 'right-1' : 'left-1'}`} />
+                      <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all shadow-sm ${report.ativo ? 'right-1' : 'left-1'}`} />
                     </button>
                   </td>
                   <td className="p-4">
@@ -270,11 +263,11 @@ export default function RelatoriosPage() {
                   </td>
                   <td className="p-4">
                     {report.canal === 'meta' ? (
-                      <span className="flex items-center gap-1.5 text-blue-400 text-sm">
+                      <span className="flex items-center gap-1.5 text-primary text-sm">
                         <Facebook size={14} /> Meta
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1.5 text-red-400 text-sm">
+                      <span className="flex items-center gap-1.5 text-red-500 text-sm">
                         <Globe size={14} /> Google
                       </span>
                     )}
@@ -291,7 +284,7 @@ export default function RelatoriosPage() {
                   <td className="p-4 text-right relative">
                     <button 
                       onClick={() => setActionMenuId(actionMenuId === report.id ? null : report.id)}
-                      className="p-2 hover:bg-[#1a1a2e] rounded-lg text-text-muted transition-colors"
+                      className="p-2 hover:bg-hover-bg rounded-lg text-text-muted transition-colors"
                     >
                       <MoreHorizontal size={18} />
                     </button>
@@ -302,11 +295,11 @@ export default function RelatoriosPage() {
                           className="fixed inset-0 z-10" 
                           onClick={() => setActionMenuId(null)} 
                         />
-                        <div className="absolute right-4 bottom-12 w-48 bg-[#0d0d14] border border-[#1a1a2e] rounded-xl shadow-2xl z-20 overflow-hidden">
+                        <div className="absolute right-4 bottom-12 w-48 bg-surface border border-border rounded-xl shadow-lg z-20 overflow-hidden">
                           <button 
                             onClick={() => handleSendNow(report)}
                             disabled={sendingId === report.id}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-text-main hover:bg-[#1a1a2e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-text-main hover:bg-hover-bg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {sendingId === report.id ? (
                               <Loader2 className="animate-spin" size={14} />
@@ -317,25 +310,25 @@ export default function RelatoriosPage() {
                           </button>
                           <button 
                             onClick={() => router.push(`/relatorios/criar?id=${report.id}`)}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-text-main hover:bg-[#1a1a2e] transition-colors"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-text-main hover:bg-hover-bg transition-colors"
                           >
                             <Edit2 size={14} /> Editar
                           </button>
                           <button 
                             onClick={() => handleDuplicate(report)}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-text-main hover:bg-[#1a1a2e] transition-colors"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-text-main hover:bg-hover-bg transition-colors"
                           >
                             <Copy size={14} /> Duplicar
                           </button>
                           <button 
                             onClick={() => handleOpenHistory(report)}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-text-main hover:bg-[#1a1a2e] transition-colors"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-text-main hover:bg-hover-bg transition-colors"
                           >
                             <Clock size={14} /> Histórico
                           </button>
                           <button 
                             onClick={() => handleDelete(report.id)}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-400/10 transition-colors"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
                           >
                             <Trash2 size={14} /> Excluir
                           </button>
@@ -354,18 +347,18 @@ export default function RelatoriosPage() {
       {historyReport && (
         <>
           <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity"
             onClick={() => setHistoryReport(null)}
           />
-          <div className="fixed right-0 top-0 h-screen w-full max-w-md bg-[#050508] border-l border-[#1a1a2e] z-50 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
-            <div className="p-6 border-b border-[#1a1a2e] flex justify-between items-center">
+          <div className="fixed right-0 top-0 h-screen w-full max-w-md bg-surface border-l border-border z-50 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+            <div className="p-6 border-b border-border flex justify-between items-center">
               <div>
-                <h2 className="text-lg font-bold">Histórico de Envios</h2>
+                <h2 className="text-lg font-bold text-text-main">Histórico de Envios</h2>
                 <p className="text-xs text-text-muted">{historyReport.nome}</p>
               </div>
               <button 
                 onClick={() => setHistoryReport(null)}
-                className="p-2 hover:bg-[#1a1a2e] rounded-lg text-text-muted"
+                className="p-2 hover:bg-hover-bg rounded-lg text-text-muted"
               >
                 <ChevronRight size={20} />
               </button>
@@ -374,7 +367,7 @@ export default function RelatoriosPage() {
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {loadingHistory ? (
                 <div className="flex justify-center py-12">
-                  <Loader2 className="animate-spin text-[#6366f1]" size={32} />
+                  <Loader2 className="animate-spin text-primary" size={32} />
                 </div>
               ) : historyData.length === 0 ? (
                 <div className="text-center py-12 text-text-muted">
@@ -382,10 +375,10 @@ export default function RelatoriosPage() {
                 </div>
               ) : (
                 historyData.map((item) => (
-                  <div key={item.id} className="relative pl-6 border-l border-[#1a1a2e]">
-                    <div className={`absolute -left-1.5 top-0 w-3 h-3 rounded-full ${item.status === 'enviado' ? 'bg-[#10b981]' : 'bg-red-500'}`} />
+                  <div key={item.id} className="relative pl-6 border-l border-border">
+                    <div className={`absolute -left-1.5 top-0 w-3 h-3 rounded-full ${item.status === 'enviado' ? 'bg-cta' : 'bg-red-500'}`} />
                     <div className="mb-1 flex items-center justify-between">
-                      <span className={`text-xs font-bold uppercase ${item.status === 'enviado' ? 'text-[#10b981]' : 'text-red-500'}`}>
+                      <span className={`text-xs font-bold uppercase ${item.status === 'enviado' ? 'text-cta' : 'text-red-500'}`}>
                         {item.status}
                       </span>
                       <span className="text-[10px] text-text-muted">
@@ -393,11 +386,11 @@ export default function RelatoriosPage() {
                       </span>
                     </div>
                     {item.erro_detalhe && (
-                      <p className="text-xs text-red-400/80 mt-1 bg-red-400/5 p-2 rounded border border-red-400/10">
+                      <p className="text-xs text-red-600 mt-1 bg-red-50 p-2 rounded border border-red-100">
                         {item.erro_detalhe}
                       </p>
                     )}
-                    <div className="mt-2 text-xs text-text-muted bg-[#0d0d14] p-3 rounded-lg border border-[#1a1a2e] whitespace-pre-wrap font-mono">
+                    <div className="mt-2 text-xs text-text-muted bg-hover-bg p-3 rounded-lg border border-border whitespace-pre-wrap font-mono">
                       {item.mensagem_enviada}
                     </div>
                   </div>
