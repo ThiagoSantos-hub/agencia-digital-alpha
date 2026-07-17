@@ -1,42 +1,49 @@
 'use client'
 import { useState, useRef, useCallback } from 'react'
+import { loadNotes, stripAndApplySaves } from '@/lib/ai/secondBrain'
 
 export type VoiceState = 'idle' | 'listening' | 'processing' | 'speaking'
 
 function base64ToBlob(base64: string, mimeType: string): Blob {
-  const bytes  = atob(base64)
+  const bytes = atob(base64)
   const buffer = new Uint8Array(bytes.length)
   for (let i = 0; i < bytes.length; i++) buffer[i] = bytes.charCodeAt(i)
   return new Blob([buffer], { type: mimeType })
 }
 
-// Verifica se o texto contém a wake word "Alpha" (variações comuns)
 function contemWakeWord(texto: string): boolean {
   const normalizado = texto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   return /\balfa\b|\balpha\b/.test(normalizado)
 }
 
 export function useAlphaVoice() {
-  const [voiceState,   setVoiceState]   = useState<VoiceState>('idle')
-  const [transcript,   setTranscript]   = useState<string>('')
+  const [voiceState, setVoiceState] = useState<VoiceState>('idle')
+  const [transcript, setTranscript] = useState<string>('')
   const [lastResponse, setLastResponse] = useState<string>('')
-  const [error,        setError]        = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [brainFlashId, setBrainFlashId] = useState<string | null>(null)
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const chunksRef        = useRef<Blob[]>([])
-  const audioCtxRef      = useRef<AudioContext | null>(null)
-  const rafRef           = useRef<number | null>(null)
-  const audioRef         = useRef<HTMLAudioElement | null>(null)
-  const streamRef        = useRef<MediaStream | null>(null)
+  const chunksRef = useRef<Blob[]>([])
+  const audioCtxRef = useRef<AudioContext | null>(null)
+  const rafRef = useRef<number | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
   const iniciarEscutaRef = useRef<() => Promise<void>>()
 
   const pararMonitoramento = useCallback(() => {
-    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null }
-    if (audioCtxRef.current) { audioCtxRef.current.close().catch(() => {}); audioCtxRef.current = null }
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
+    if (audioCtxRef.current) {
+      audioCtxRef.current.close().catch(() => {})
+      audioCtxRef.current = null
+    }
   }, [])
 
   const pararStream = useCallback(() => {
-    streamRef.current?.getTracks().forEach(t => t.stop())
+    streamRef.current?.getTracks().forEach((t) => t.stop())
     streamRef.current = null
   }, [])
 
@@ -45,7 +52,6 @@ export function useAlphaVoice() {
     setError(null)
 
     try {
-      // 1. Transcrever
       const formData = new FormData()
       formData.append('audio', blob, `gravacao.${mimeType.includes('webm') ? 'webm' : 'mp4'}`)
       formData.append('mimeType', mimeType)
@@ -54,7 +60,6 @@ export function useAlphaVoice() {
       if (!transRes.ok) throw new Error('Erro na transcrição')
       const { texto } = await transRes.json()
 
-      // Sem texto ou só ruído → volta a ouvir
       if (!texto?.trim()) {
         if (iniciarEscutaRef.current) iniciarEscutaRef.current()
         return
@@ -62,24 +67,27 @@ export function useAlphaVoice() {
 
       setTranscript(texto.trim())
 
-      // Wake word: só processa se disser "Alpha" ou "Alfa"
       if (!contemWakeWord(texto)) {
-        // Não falou "Alpha" — volta a ouvir sem chamar a API
         if (iniciarEscutaRef.current) iniciarEscutaRef.current()
         return
       }
 
-      // 2. Consultar Alpha
+      const notes = loadNotes()
       const aiRes = await fetch('/api/ai', {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ mensagem: texto.trim(), incluirVoz: true }),
+        body: JSON.stringify({ mensagem: texto.trim(), incluirVoz: true, notes }),
       })
       if (!aiRes.ok) throw new Error('Erro ao consultar a Alpha')
       const data = await aiRes.json()
-      setLastResponse(data.resposta ?? '')
 
-      // 3. Tocar áudio
+      const { clean, changed } = stripAndApplySaves(data.resposta ?? '')
+      setLastResponse(clean)
+      if (changed) {
+        setBrainFlashId(`flash-${Date.now()}`)
+        window.setTimeout(() => setBrainFlashId(null), 2000)
+      }
+
       if (data.audio) {
         setVoiceState('speaking')
         const audioBlob = base64ToBlob(data.audio, 'audio/mpeg')
@@ -121,9 +129,9 @@ export function useAlphaVoice() {
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          autoGainControl:  true,
-          sampleRate:       16000,
-        }
+          autoGainControl: true,
+          sampleRate: 16000,
+        },
       })
       streamRef.current = stream
 
@@ -131,7 +139,9 @@ export function useAlphaVoice() {
       const recorder = new MediaRecorder(stream, { mimeType })
       chunksRef.current = []
 
-      recorder.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data) }
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data)
+      }
       recorder.onstop = () => {
         pararStream()
         pararMonitoramento()
@@ -144,7 +154,7 @@ export function useAlphaVoice() {
       mediaRecorderRef.current = recorder
       setVoiceState('listening')
 
-      const ctx      = new AudioContext()
+      const ctx = new AudioContext()
       const analyser = ctx.createAnalyser()
       analyser.fftSize = 512
       const source = ctx.createMediaStreamSource(stream)
@@ -152,10 +162,8 @@ export function useAlphaVoice() {
       audioCtxRef.current = ctx
 
       const dataArr = new Uint8Array(analyser.frequencyBinCount)
-
-      const THRESHOLD  = 25    // ignora ruídos leves
-      const SILENCE_MS = 1500  // 1.5s de silêncio para processar — tempo suficiente para terminar a frase
-
+      const THRESHOLD = 25
+      const SILENCE_MS = 1500
       let silenceStart: number | null = null
       let faleiAlgo = false
 
@@ -166,21 +174,18 @@ export function useAlphaVoice() {
         if (media >= THRESHOLD) {
           faleiAlgo = true
           silenceStart = null
-        } else {
-          if (faleiAlgo) {
-            if (silenceStart === null) silenceStart = Date.now()
-            else if (Date.now() - silenceStart >= SILENCE_MS) {
-              if (mediaRecorderRef.current?.state === 'recording') {
-                mediaRecorderRef.current.stop()
-              }
-              return
+        } else if (faleiAlgo) {
+          if (silenceStart === null) silenceStart = Date.now()
+          else if (Date.now() - silenceStart >= SILENCE_MS) {
+            if (mediaRecorderRef.current?.state === 'recording') {
+              mediaRecorderRef.current.stop()
             }
+            return
           }
         }
         rafRef.current = requestAnimationFrame(verificar)
       }
       rafRef.current = requestAnimationFrame(verificar)
-
     } catch {
       setError('Permissão de microfone negada.')
       setVoiceState('idle')
@@ -197,7 +202,10 @@ export function useAlphaVoice() {
   }, [iniciarEscuta])
 
   const stopListening = useCallback(() => {
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = '' }
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ''
+    }
     if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop()
     else {
       pararStream()
@@ -214,5 +222,14 @@ export function useAlphaVoice() {
     setVoiceState('idle')
   }, [stopListening])
 
-  return { voiceState, transcript, lastResponse, error, startListening, stopListening, reset }
+  return {
+    voiceState,
+    transcript,
+    lastResponse,
+    error,
+    brainFlashId,
+    startListening,
+    stopListening,
+    reset,
+  }
 }

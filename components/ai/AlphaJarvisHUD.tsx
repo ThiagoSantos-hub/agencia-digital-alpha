@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Activity, Users, Megaphone, CheckSquare, Wallet, Radio } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import type { VoiceState } from '@/hooks/useAlphaVoice'
+import { SecondBrainGraph } from '@/components/ai/SecondBrainGraph'
+import { ALPHA_CONFIG } from '@/lib/ai/alphaPersona'
 
 export type JarvisMode = 'alpha' | 'eleven'
 
@@ -24,6 +26,7 @@ interface AlphaJarvisHUDProps {
   lastResponse?: string
   error?: string | null
   statusLabel?: string
+  brainFlashId?: string | null
 }
 
 function nowLabel() {
@@ -35,19 +38,20 @@ function nowLabel() {
   })
 }
 
-/** Partículas flutuantes (determinísticas por índice — sem Math.random no render) */
 function FloatingParticles({ intense }: { intense: boolean }) {
   const particles = useMemo(() => {
     return Array.from({ length: 48 }, (_, i) => {
       const seed = (i * 97 + 13) % 1000
-      const x = (seed * 17) % 100
-      const y = (seed * 31) % 100
-      const size = 1.5 + ((seed * 7) % 25) / 10
-      const duration = 6 + ((seed * 3) % 10)
-      const delay = ((seed * 5) % 80) / 10
-      const drift = 8 + ((seed * 11) % 24)
-      const hue = seed % 3 // 0 cyan, 1 blue, 2 indigo
-      return { id: i, x, y, size, duration, delay, drift, hue }
+      return {
+        id: i,
+        x: (seed * 17) % 100,
+        y: (seed * 31) % 100,
+        size: 1.5 + ((seed * 7) % 25) / 10,
+        duration: 6 + ((seed * 3) % 10),
+        delay: ((seed * 5) % 80) / 10,
+        drift: 8 + ((seed * 11) % 24),
+        hue: seed % 3,
+      }
     })
   }, [])
 
@@ -72,15 +76,9 @@ function FloatingParticles({ intense }: { intense: boolean }) {
             boxShadow: `0 0 ${intense ? 10 : 6}px ${colorFor(p.hue)}`,
           }}
           animate={{
-            y: intense
-              ? [0, -p.drift * 1.4, p.drift * 0.5, -p.drift, 0]
-              : [0, -p.drift, p.drift * 0.4, 0],
-            x: intense
-              ? [0, p.drift * 0.6, -p.drift * 0.4, p.drift * 0.3, 0]
-              : [0, p.drift * 0.25, -p.drift * 0.15, 0],
-            opacity: intense
-              ? [0.25, 0.95, 0.4, 0.9, 0.25]
-              : [0.15, 0.55, 0.25, 0.5, 0.15],
+            y: intense ? [0, -p.drift * 1.4, p.drift * 0.5, -p.drift, 0] : [0, -p.drift, p.drift * 0.4, 0],
+            x: intense ? [0, p.drift * 0.6, -p.drift * 0.4, p.drift * 0.3, 0] : [0, p.drift * 0.25, -p.drift * 0.15, 0],
+            opacity: intense ? [0.25, 0.95, 0.4, 0.9, 0.25] : [0.15, 0.55, 0.25, 0.5, 0.15],
             scale: intense ? [1, 1.35, 0.9, 1.25, 1] : [1, 1.1, 1],
           }}
           transition={{
@@ -91,46 +89,13 @@ function FloatingParticles({ intense }: { intense: boolean }) {
           }}
         />
       ))}
-
-      {/* Partículas maiores / “sparks” ocasionais */}
-      {Array.from({ length: 12 }, (_, i) => {
-        const seed = (i * 53 + 7) % 100
-        const left = (seed * 13) % 100
-        const top = (seed * 29) % 100
-        return (
-          <motion.span
-            key={`spark-${i}`}
-            className="absolute rounded-full"
-            style={{
-              left: `${left}%`,
-              top: `${top}%`,
-              width: 3,
-              height: 3,
-              background: 'rgba(165,243,252,0.9)',
-              boxShadow: '0 0 12px rgba(34,211,238,0.9)',
-            }}
-            animate={{
-              y: intense ? [0, -40, -80] : [0, -24, -48],
-              opacity: [0, 0.9, 0],
-              scale: [0.6, 1.2, 0.4],
-            }}
-            transition={{
-              duration: intense ? 2.2 : 4,
-              repeat: Infinity,
-              delay: i * 0.55,
-              ease: 'easeOut',
-            }}
-          />
-        )
-      })}
     </div>
   )
 }
 
-/** Globo digital com meridianos/paralelos e rotação */
 function DigitalGlobe({ intense }: { intense: boolean }) {
   return (
-    <div className="relative w-44 h-44">
+    <div className="relative w-36 h-36 md:w-44 md:h-44">
       <div
         className="absolute inset-0 rounded-full"
         style={{
@@ -141,7 +106,6 @@ function DigitalGlobe({ intense }: { intense: boolean }) {
             : '0 0 40px rgba(26,86,219,0.35)',
         }}
       />
-
       <motion.div
         className="absolute inset-2 rounded-full overflow-hidden"
         style={{
@@ -154,7 +118,7 @@ function DigitalGlobe({ intense }: { intense: boolean }) {
       >
         {[0, 30, 60, 90, 120, 150].map((deg) => (
           <div
-            key={`m-${deg}`}
+            key={deg}
             className="absolute inset-0"
             style={{
               borderLeft: '1px solid rgba(56,189,248,0.22)',
@@ -164,66 +128,9 @@ function DigitalGlobe({ intense }: { intense: boolean }) {
             }}
           />
         ))}
-        {[18, 36, 54, 72].map((pct) => (
-          <div
-            key={`p-${pct}`}
-            className="absolute left-1/2 -translate-x-1/2 rounded-full"
-            style={{
-              top: `${pct}%`,
-              width: `${Math.sin((pct / 100) * Math.PI) * 92}%`,
-              height: 1,
-              background: 'rgba(56,189,248,0.28)',
-            }}
-          />
-        ))}
-        <div
-          className="absolute rounded-full opacity-50"
-          style={{
-            width: '38%',
-            height: '28%',
-            top: '28%',
-            left: '22%',
-            background: 'rgba(26,86,219,0.55)',
-            filter: 'blur(1px)',
-          }}
-        />
-        <div
-          className="absolute rounded-full opacity-40"
-          style={{
-            width: '26%',
-            height: '22%',
-            top: '48%',
-            left: '55%',
-            background: 'rgba(76,58,191,0.5)',
-            filter: 'blur(1px)',
-          }}
-        />
-        <div
-          className="absolute rounded-full opacity-35"
-          style={{
-            width: '20%',
-            height: '16%',
-            top: '62%',
-            left: '30%',
-            background: 'rgba(14,165,233,0.45)',
-            filter: 'blur(1px)',
-          }}
-        />
       </motion.div>
-
-      <div
-        className="absolute inset-0 rounded-full pointer-events-none"
-        style={{
-          background:
-            'radial-gradient(circle at 30% 22%, rgba(255,255,255,0.22) 0%, transparent 35%)',
-        }}
-      />
-
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <span
-          className="text-3xl font-black text-white/90"
-          style={{ textShadow: '0 0 18px rgba(56,189,248,0.8)' }}
-        >
+        <span className="text-3xl font-black text-white/90" style={{ textShadow: '0 0 18px rgba(56,189,248,0.8)' }}>
           α
         </span>
       </div>
@@ -232,16 +139,15 @@ function DigitalGlobe({ intense }: { intense: boolean }) {
 }
 
 function SoundWaves({ intense }: { intense: boolean }) {
-  const rings = [0, 1, 2, 3, 4]
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-      {rings.map((i) => (
+      {[0, 1, 2, 3].map((i) => (
         <motion.div
           key={i}
           className="absolute rounded-full border"
           style={{
-            width: 160 + i * 48,
-            height: 160 + i * 48,
+            width: 140 + i * 40,
+            height: 140 + i * 40,
             borderColor: i % 2 === 0 ? 'rgba(56,189,248,0.35)' : 'rgba(76,58,191,0.3)',
           }}
           animate={{
@@ -260,120 +166,6 @@ function SoundWaves({ intense }: { intense: boolean }) {
   )
 }
 
-function WaveBars({ intense }: { intense: boolean }) {
-  const bars = Array.from({ length: 28 }, (_, i) => i)
-  return (
-    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex items-end gap-[3px] h-14 pointer-events-none">
-      {bars.map((i) => (
-        <motion.span
-          key={i}
-          className="w-[3px] rounded-full"
-          style={{
-            background:
-              i % 3 === 0
-                ? 'linear-gradient(to top, #1A56DB, #38bdf8)'
-                : 'linear-gradient(to top, #4C3ABF, #67e8f9)',
-          }}
-          animate={{
-            height: intense
-              ? [8, 28 + (i % 5) * 6, 10, 36, 8]
-              : [6, 12, 8, 14, 6],
-          }}
-          transition={{
-            duration: intense ? 0.45 + (i % 4) * 0.05 : 1.4,
-            repeat: Infinity,
-            delay: i * 0.03,
-            ease: 'easeInOut',
-          }}
-        />
-      ))}
-    </div>
-  )
-}
-
-function GuideLines({ intense }: { intense: boolean }) {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {[18, 35, 55, 72, 88].map((top, i) => (
-        <motion.div
-          key={`h-${i}`}
-          className="absolute h-px w-full"
-          style={{
-            top: `${top}%`,
-            background:
-              'linear-gradient(90deg, transparent, rgba(56,189,248,0.45), transparent)',
-          }}
-          animate={{
-            x: ['-100%', '100%'],
-            opacity: intense ? [0.2, 0.9, 0.2] : [0.15, 0.45, 0.15],
-          }}
-          transition={{
-            duration: intense ? 2.2 + i * 0.3 : 5 + i * 0.6,
-            repeat: Infinity,
-            ease: 'linear',
-            delay: i * 0.4,
-          }}
-        />
-      ))}
-
-      {[0, 1, 2].map((i) => (
-        <motion.div
-          key={`d-${i}`}
-          className="absolute w-[140%] h-px origin-left"
-          style={{
-            top: `${20 + i * 25}%`,
-            left: '-20%',
-            background:
-              'linear-gradient(90deg, transparent, rgba(76,58,191,0.5), transparent)',
-            transform: `rotate(${12 + i * 4}deg)`,
-          }}
-          animate={{
-            x: intense ? ['-10%', '30%', '-5%'] : ['0%', '15%', '0%'],
-            opacity: intense ? [0.3, 0.85, 0.3] : [0.2, 0.4, 0.2],
-          }}
-          transition={{
-            duration: intense ? 1.4 : 3.5,
-            repeat: Infinity,
-            delay: i * 0.35,
-          }}
-        />
-      ))}
-
-      {[0, 1].map((i) => (
-        <motion.div
-          key={`arc-${i}`}
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-400/20"
-          style={{ width: 420 + i * 120, height: 280 + i * 80 }}
-          animate={{ rotate: i % 2 === 0 ? 360 : -360 }}
-          transition={{
-            duration: intense ? 10 + i * 4 : 22 + i * 8,
-            repeat: Infinity,
-            ease: 'linear',
-          }}
-        />
-      ))}
-
-      {[0, 1, 2, 3, 4, 5].map((i) => (
-        <motion.div
-          key={`dot-${i}`}
-          className="absolute w-1.5 h-1.5 rounded-full bg-cyan-300 shadow-[0_0_8px_#22d3ee]"
-          style={{ top: `${15 + i * 12}%` }}
-          animate={{
-            left: ['-2%', '102%'],
-            scale: intense ? [1, 1.6, 1] : [1, 1.15, 1],
-          }}
-          transition={{
-            duration: intense ? 1.8 + i * 0.2 : 4 + i * 0.35,
-            repeat: Infinity,
-            ease: 'linear',
-            delay: i * 0.5,
-          }}
-        />
-      ))}
-    </div>
-  )
-}
-
 export function AlphaJarvisHUD({
   open,
   onClose,
@@ -383,6 +175,7 @@ export function AlphaJarvisHUD({
   lastResponse = '',
   error = null,
   statusLabel,
+  brainFlashId = null,
 }: AlphaJarvisHUDProps) {
   const [clock, setClock] = useState(nowLabel())
   const [stats, setStats] = useState<CrmStats>({ clientes: 0, campanhas: 0, tarefas: 0, alertas: 0 })
@@ -425,8 +218,6 @@ export function AlphaJarvisHUD({
           ? 'FALANDO'
           : 'PRONTA')
 
-  const modeTitle = mode === 'eleven' ? 'ALPHA · VOZ (ELEVEN)' : 'ALPHA · IA'
-
   return (
     <AnimatePresence>
       {open && (
@@ -434,14 +225,14 @@ export function AlphaJarvisHUD({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center"
+          className="fixed inset-0 z-[100] flex flex-col"
           style={{
             background:
-              'radial-gradient(ellipse at center, rgba(8,15,35,0.94) 0%, rgba(2,6,18,0.98) 75%)',
+              'radial-gradient(ellipse at center, rgba(8,15,35,0.96) 0%, rgba(2,6,18,0.99) 75%)',
           }}
         >
           <div
-            className="absolute inset-0 opacity-[0.14] pointer-events-none"
+            className="absolute inset-0 opacity-[0.12] pointer-events-none"
             style={{
               backgroundImage:
                 'linear-gradient(rgba(26,86,219,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(26,86,219,0.4) 1px, transparent 1px)',
@@ -449,125 +240,84 @@ export function AlphaJarvisHUD({
             }}
           />
 
-          <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-25">
-            <motion.div
-              className="w-full h-20 bg-gradient-to-b from-transparent via-cyan-400/30 to-transparent"
-              animate={{ y: ['-15%', '115%'] }}
-              transition={{ duration: intense ? 2.2 : 4.2, repeat: Infinity, ease: 'linear' }}
-            />
-          </div>
-
-          {/* Partículas flutuantes */}
           <FloatingParticles intense={intense} />
 
-          <GuideLines intense={intense} />
-
-          <div className="absolute top-0 left-0 right-0 px-6 py-4 flex items-center justify-between z-10">
+          {/* Top */}
+          <div className="relative z-10 px-5 py-3 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_12px_#22d3ee]" />
               <span className="text-[11px] font-black tracking-[0.25em] text-cyan-300/90 uppercase">
-                Digital Alpha · Sistema Online
+                {ALPHA_CONFIG.name} · Digital Alpha · Online
               </span>
             </div>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4">
               <span className="text-cyan-300/90 font-mono text-sm tabular-nums">{clock}</span>
               <button
                 type="button"
                 onClick={onClose}
                 className="w-9 h-9 rounded-xl border border-cyan-400/40 bg-cyan-400/10 text-cyan-300 hover:bg-cyan-400/20 flex items-center justify-center"
-                aria-label="Fechar"
               >
                 <X size={16} />
               </button>
             </div>
           </div>
 
-          <div className="absolute left-5 top-20 bottom-24 w-56 flex flex-col gap-3 z-10">
-            <HudPanel title="MONITOR CRM" icon={<Activity size={12} />}>
-              <HudStat icon={<Users size={12} />} label="Clientes ativos" value={stats.clientes} color="#38bdf8" />
-              <HudStat icon={<Megaphone size={12} />} label="Campanhas" value={stats.campanhas} color="#818cf8" />
-              <HudStat icon={<CheckSquare size={12} />} label="Tarefas a fazer" value={stats.tarefas} color="#60a5fa" />
-              <HudStat icon={<Radio size={12} />} label="Alertas" value={stats.alertas} color="#f87171" />
-            </HudPanel>
-
-            <HudPanel title="CANAL" icon={<Wallet size={12} />}>
-              <p className="text-[10px] text-cyan-200/80 font-mono leading-relaxed">
-                {mode === 'eleven'
-                  ? 'ElevenLabs conversacional ativo. Fale naturalmente com a Alpha.'
-                  : 'Alpha Voice com wake-word. Diga "Alpha" para comandar o CRM.'}
-              </p>
-            </HudPanel>
-          </div>
-
-          <div className="absolute right-5 top-20 bottom-24 w-64 flex flex-col gap-3 z-10">
-            <HudPanel title="ENTRADA" icon={<Radio size={12} />}>
-              <p className="text-[11px] text-slate-200 min-h-[48px] leading-relaxed">
-                {transcript || (
-                  <span className="text-slate-500 italic">Aguardando sua voz…</span>
-                )}
-              </p>
-            </HudPanel>
-            <HudPanel title="RESPOSTA ALPHA" icon={<Activity size={12} />} className="flex-1">
-              <p className="text-[11px] text-cyan-100/90 min-h-[80px] leading-relaxed">
-                {lastResponse || <span className="text-slate-500 italic">—</span>}
-              </p>
-              {error && <p className="mt-2 text-[10px] text-red-400 font-medium">{error}</p>}
-            </HudPanel>
-          </div>
-
-          <div className="relative z-10 flex flex-col items-center justify-center">
-            <div className="relative w-[340px] h-[340px] flex items-center justify-center">
-              <SoundWaves intense={intense} />
-
-              <motion.div
-                className="absolute inset-6 rounded-full border border-primary/25"
-                animate={{ rotate: 360 }}
-                transition={{ duration: intense ? 8 : 18, repeat: Infinity, ease: 'linear' }}
-              />
-              <motion.div
-                className="absolute inset-12 rounded-full border border-dashed border-ai/35"
-                animate={{ rotate: -360 }}
-                transition={{ duration: intense ? 6 : 14, repeat: Infinity, ease: 'linear' }}
-              />
-
-              <DigitalGlobe intense={intense} />
-
-              <div className="absolute inset-x-8 bottom-4">
-                <WaveBars intense={intense} />
-              </div>
+          {/* Corpo */}
+          <div className="relative z-10 flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-3 px-4 pb-3">
+            {/* CRM */}
+            <div className="lg:col-span-3 flex flex-col gap-2 order-2 lg:order-1">
+              <HudPanel title="MONITOR CRM" icon={<Activity size={12} />}>
+                <HudStat label="Clientes" value={stats.clientes} color="#38bdf8" />
+                <HudStat label="Campanhas" value={stats.campanhas} color="#818cf8" />
+                <HudStat label="Tarefas" value={stats.tarefas} color="#60a5fa" />
+                <HudStat label="Alertas" value={stats.alertas} color="#f87171" />
+              </HudPanel>
+              <HudPanel title="CANAL" icon={<Wallet size={12} />}>
+                <p className="text-[10px] text-cyan-200/80 font-mono leading-relaxed">
+                  {mode === 'eleven'
+                    ? 'ElevenLabs ativo. Fale com a Alpha.'
+                    : `Wake word: "${ALPHA_CONFIG.wakeWord}". Trata você como ${ALPHA_CONFIG.address}.`}
+                </p>
+              </HudPanel>
             </div>
 
-            <div className="mt-4 text-center">
-              <p className="text-[10px] font-black tracking-[0.35em] text-cyan-400/90 uppercase mb-1">
-                {modeTitle}
+            {/* Centro */}
+            <div className="lg:col-span-6 flex flex-col items-center justify-center order-1 lg:order-2 min-h-0">
+              <div className="relative w-[260px] h-[260px] md:w-[300px] md:h-[300px] flex items-center justify-center shrink-0">
+                <SoundWaves intense={intense} />
+                <DigitalGlobe intense={intense} />
+              </div>
+              <p className="mt-2 text-[10px] font-black tracking-[0.35em] text-cyan-400/90 uppercase">
+                {mode === 'eleven' ? 'ALPHA · ELEVEN' : 'ALPHA · IA'}
               </p>
               <motion.p
-                className={`text-sm font-bold tracking-widest ${
-                  intense ? 'text-cyan-300' : 'text-slate-400'
-                }`}
+                className={`text-sm font-bold tracking-widest ${intense ? 'text-cyan-300' : 'text-slate-400'}`}
                 animate={intense ? { opacity: [1, 0.55, 1] } : { opacity: 1 }}
                 transition={{ duration: 1.2, repeat: Infinity }}
               >
                 {stateText}
               </motion.p>
+
+              {/* Second Brain */}
+              <div className="w-full mt-3 max-w-2xl px-1">
+                <SecondBrainGraph flashId={brainFlashId} />
+              </div>
             </div>
 
-            <div className="mt-6 flex flex-wrap justify-center gap-2 max-w-md">
-              {['Clientes', 'Campanhas', 'Tarefas', 'Financeiro'].map((label) => (
-                <span
-                  key={label}
-                  className="px-3 py-1.5 rounded-lg border border-cyan-400/25 bg-cyan-400/10 text-[10px] font-bold uppercase tracking-wider text-cyan-100/90"
-                >
-                  {label}
-                </span>
-              ))}
+            {/* Conversa */}
+            <div className="lg:col-span-3 flex flex-col gap-2 order-3">
+              <HudPanel title="ENTRADA" icon={<Radio size={12} />}>
+                <p className="text-[11px] text-slate-200 min-h-[40px] leading-relaxed">
+                  {transcript || <span className="text-slate-500 italic">Aguardando voz…</span>}
+                </p>
+              </HudPanel>
+              <HudPanel title="RESPOSTA ALPHA" icon={<Activity size={12} />} className="flex-1">
+                <p className="text-[11px] text-cyan-100/90 min-h-[60px] leading-relaxed">
+                  {lastResponse || <span className="text-slate-500 italic">—</span>}
+                </p>
+                {error && <p className="mt-2 text-[10px] text-red-400">{error}</p>}
+              </HudPanel>
             </div>
-          </div>
-
-          <div className="absolute bottom-5 left-0 right-0 flex justify-center z-10">
-            <p className="text-[10px] text-slate-500 font-mono tracking-wide">
-              ALPHA HUD · Digital Alpha · Monitoramento em tempo real
-            </p>
           </div>
         </motion.div>
       )}
@@ -599,22 +349,9 @@ function HudPanel({
   )
 }
 
-function HudStat({
-  icon,
-  label,
-  value,
-  color,
-}: {
-  icon: React.ReactNode
-  label: string
-  value: number
-  color: string
-}) {
+function HudStat({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <div className="flex items-center gap-2 py-1.5">
-      <span style={{ color }} className="opacity-90">
-        {icon}
-      </span>
+    <div className="flex items-center gap-2 py-1">
       <span className="text-[10px] text-slate-400 flex-1">{label}</span>
       <span className="text-sm font-black tabular-nums" style={{ color }}>
         {value}
