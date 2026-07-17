@@ -112,13 +112,13 @@ export function SortableChecklistCard({
       style={style}
       className={`bg-surface border rounded-xl overflow-hidden transition-transform duration-300 flex flex-col w-full max-w-[260px] ${
         list.status === 'completed' 
-          ? 'border-[#00ff88]/10 opacity-50' 
+          ? 'border-primary/20 opacity-60' 
           : 'border-border hover:border-border'
       }`}
     >
       <div className="h-0.5 bg-hover-bg w-full">
         <div 
-          className="h-full bg-[#00ff88] transition-all duration-500" 
+          className="h-full bg-cta transition-all duration-500" 
           style={{ width: `${progress}%` }} 
         />
       </div>
@@ -149,12 +149,12 @@ export function SortableChecklistCard({
         </div>
 
         {isEditing ? (
-          <div className="space-y-2 mb-3 bg-background p-2 rounded-xl border border-[#00ff88]/20 overflow-hidden max-w-[220px]">
+          <div className="space-y-2 mb-3 bg-background p-2 rounded-xl border border-primary/20 overflow-hidden max-w-[220px]">
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full bg-surface border border-border rounded-lg px-2 py-1 text-[10px] text-text-main focus:outline-none focus:border-[#00ff88] truncate"
+              className="w-full bg-surface border border-border rounded-lg px-2 py-1 text-[10px] text-text-main focus:outline-none focus:border-primary truncate"
               autoFocus
             />
             <div className="flex flex-wrap gap-0.5">
@@ -166,7 +166,7 @@ export function SortableChecklistCard({
                     else setDays([...days, day.id].sort())
                   }}
                   className={`w-5 h-5 rounded-lg text-[8px] font-black border transition-all ${
-                    days.includes(day.id) ? 'bg-[#00ff88] text-[#0a0f0c] border-[#00ff88]' : 'bg-surface text-text-disabled border-border'
+                    days.includes(day.id) ? 'bg-primary text-white border-primary' : 'bg-surface text-text-disabled border-border'
                   }`}
                 >
                   {day.label}
@@ -179,7 +179,7 @@ export function SortableChecklistCard({
                   await updateChecklist(list.id, { title, recurrence_days: days, recurrence: days.length > 0 ? 'daily' : 'once' });
                   setIsEditing(false);
                 }} 
-                className="flex-1 py-1 bg-[#00ff88] text-[#0a0f0c] text-[8px] font-black uppercase rounded-lg"
+                className="flex-1 py-1 bg-cta text-white text-[8px] font-black uppercase rounded-lg"
               >
                 Salvar
               </button>
@@ -191,7 +191,7 @@ export function SortableChecklistCard({
             <h3 className="text-text-main font-bold text-sm leading-tight mb-1.5 line-clamp-2">{list.title}</h3>
             <div className="flex flex-wrap gap-1">
               {list.recurrence_days?.map(dayId => (
-                <span key={dayId} className="px-1.5 py-0.5 bg-[#00ff88]/10 text-[#00ff88] text-[8px] font-black rounded-md uppercase border border-[#00ff88]/10">
+                <span key={dayId} className="px-1.5 py-0.5 bg-primary/10 text-primary text-[8px] font-black rounded-md uppercase border border-primary/10">
                   {DIAS_SEMANA[dayId].label}
                 </span>
               ))}
@@ -210,11 +210,11 @@ export function SortableChecklistCard({
               onChange={(e) => setNewItemText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && (addItem(list.id, newItemText), setNewItemText(''))}
               placeholder="Adicionar tarefa..."
-              className="w-full bg-background border border-border rounded-xl pl-3 pr-8 py-2 text-[11px] text-text-main focus:outline-none focus:border-[#00ff88]"
+              className="w-full bg-background border border-border rounded-xl pl-3 pr-8 py-2 text-[11px] text-text-main focus:outline-none focus:border-primary"
             />
             <button 
               onClick={() => { addItem(list.id, newItemText); setNewItemText(''); }}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 text-[#00ff88] hover:bg-[#00ff88]/10 rounded-lg transition-all"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 text-primary hover:bg-primary/10 rounded-lg transition-all"
             >
               <Plus size={14} />
             </button>
@@ -251,7 +251,7 @@ export function SortableChecklistCard({
 
         <div className="mt-6 pt-4 border-t border-border flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-text-muted">
           <span>{completedCount}/{items.length} Concluído</span>
-          <span className="text-[#00ff88]">{Math.round(progress)}%</span>
+          <span className="text-primary">{Math.round(progress)}%</span>
         </div>
       </div>
     </div>
