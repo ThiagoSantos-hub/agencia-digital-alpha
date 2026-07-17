@@ -1,14 +1,8 @@
-// hooks/useNotificacoes.ts — v2.1.0
-// Projeto: Agência Digital Alpha
-// Módulo Notificações — busca otimizada, marcar lida, limpar todas
-// Supabase client: sempre import { createClient } from '@/lib/supabase'
+// hooks/useNotificacoes.ts — v2.2.0
+// Canal Realtime com nome único por instância (evita erro "callbacks after subscribe")
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
-
-// ============================================================
-// TIPOS
-// ============================================================
 
 export type TipoNotificacao =
   | 'vencimento_5dias'
@@ -17,53 +11,47 @@ export type TipoNotificacao =
   | 'geral'
 
 export interface Notificacao {
-  id:         string
-  user_id:    string
-  tipo:       TipoNotificacao
-  titulo:     string
-  mensagem:   string
+  id: string
+  user_id: string
+  tipo: TipoNotificacao
+  titulo: string
+  mensagem: string
   finance_id: string | null
-  lida:       boolean
+  lida: boolean
   created_at: string
 }
 
-// Cache global para notificações
 let cachedNotificacoes: Notificacao[] | null = null
 let cacheTimestamp = 0
-const CACHE_DURATION = 30000 // 30 segundos
-
-// ============================================================
-// HOOK
-// ============================================================
+const CACHE_DURATION = 30000
 
 export function useNotificacoes() {
   const supabase = useMemo(() => createClient(), [])
+  const channelId = useRef(`notifications_${Math.random().toString(36).slice(2, 10)}`)
 
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>(cachedNotificacoes ?? [])
-  const [naoLidas,     setNaoLidas]     = useState(0)
-  const [loading,      setLoading]      = useState(!cachedNotificacoes)
-  const [error,        setError]        = useState<string | null>(null)
+  const [naoLidas, setNaoLidas] = useState(0)
+  const [loading, setLoading] = useState(!cachedNotificacoes)
+  const [error, setError] = useState<string | null>(null)
 
-  // ── FETCH ──────────────────────────────────────────────────
   const fetchNotificacoes = useCallback(async () => {
     const now = Date.now()
-    
-    // Usar cache se ainda for válido
-    if (cachedNotificacoes && (now - cacheTimestamp) < CACHE_DURATION) {
+
+    if (cachedNotificacoes && now - cacheTimestamp < CACHE_DURATION) {
       setNotificacoes(cachedNotificacoes)
-      setNaoLidas(cachedNotificacoes.filter(n => !n.lida).length)
+      setNaoLidas(cachedNotificacoes.filter((n) => !n.lida).length)
       setLoading(false)
       return
     }
 
-    if (notificacoes.length === 0) setLoading(true)
+    setLoading(true)
     setError(null)
 
     try {
       const { data, error: err } = await supabase
         .from('notifications')
         .select('*')
-        .eq('lida', false) // Buscar apenas as não lidas
+        .eq('lida', false)
         .order('created_at', { ascending: false })
         .limit(50)
 
@@ -72,86 +60,93 @@ export function useNotificacoes() {
       const lista = (data ?? []) as Notificacao[]
       cachedNotificacoes = lista
       cacheTimestamp = now
-      
+
       setNotificacoes(lista)
-      setNaoLidas(lista.filter(n => !n.lida).length)
+      setNaoLidas(lista.filter((n) => !n.lida).length)
     } catch (e: any) {
       setError(e.message ?? 'Erro ao buscar notificações')
     } finally {
       setLoading(false)
     }
-  }, [supabase, notificacoes.length])
+  }, [supabase])
 
   useEffect(() => {
     fetchNotificacoes()
 
-    // Realtime: atualiza o sino automaticamente quando chega notificação nova
-    const channel = supabase
-      .channel('notifications_realtime')
-      .on(
-        'postgres_changes',
-        { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'notifications'
-        },
-        (payload) => { 
-          console.log('Nova notificação recebida em tempo real:', payload.new)
-          const novaNotif = payload.new as Notificacao
-          
-          // O som agora é gerenciado pelo componente NotificationSound
+    let channel: ReturnType<typeof supabase.channel> | null = null
 
-          setNotificacoes(prev => [novaNotif, ...prev])
-          setNaoLidas(prev => prev + 1)
-          cachedNotificacoes = null
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'notifications' },
-        () => {
-          cachedNotificacoes = null
-          fetchNotificacoes()
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'notifications' },
-        () => {
-          cachedNotificacoes = null
-          fetchNotificacoes()
-        }
-      )
-      .subscribe((status) => {
-        console.log('Status canal notifications_realtime:', status)
-      })
+    try {
+      channel = supabase
+        .channel(channelId.current)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+          },
+          (payload) => {
+            const novaNotif = payload.new as Notificacao
+            setNotificacoes((prev) => {
+              if (prev.some((n) => n.id === novaNotif.id)) return prev
+              return [novaNotif, ...prev]
+            })
+            setNaoLidas((prev) => prev + 1)
+            cachedNotificacoes = null
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'notifications' },
+          () => {
+            cachedNotificacoes = null
+            fetchNotificacoes()
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: 'DELETE', schema: 'public', table: 'notifications' },
+          () => {
+            cachedNotificacoes = null
+            fetchNotificacoes()
+          }
+        )
+        .subscribe((status) => {
+          console.log('Status canal notificações:', status)
+        })
+    } catch (e) {
+      console.warn('Falha ao assinar canal de notificações:', e)
+    }
 
-    return () => { supabase.removeChannel(channel) }
+    return () => {
+      if (channel) {
+        try {
+          supabase.removeChannel(channel)
+        } catch {
+          /* ignore */
+        }
+      }
+    }
   }, [fetchNotificacoes, supabase])
 
-  // ── MARCAR UMA COMO LIDA (E EXCLUIR PARA LIMPAR) ────────────
   async function marcarComoLida(id: string): Promise<boolean> {
-    // Em vez de apenas atualizar para lida, vamos excluir para manter o banco limpo
-    // ou apenas remover da UI se você preferir manter o histórico no banco.
-    // O usuário pediu para "sumir", então vamos excluir do banco.
-    const { error: err } = await supabase
-      .from('notifications')
-      .delete()
-      .eq('id', id)
+    const { error: err } = await supabase.from('notifications').delete().eq('id', id)
 
-    if (err) { setError(err.message); return false }
-    
-    // Remover da UI instantaneamente
-    setNotificacoes(prev => prev.filter(n => n.id !== id))
-    setNaoLidas(prev => Math.max(0, prev - 1))
+    if (err) {
+      setError(err.message)
+      return false
+    }
+
+    setNotificacoes((prev) => prev.filter((n) => n.id !== id))
+    setNaoLidas((prev) => Math.max(0, prev - 1))
     cachedNotificacoes = null
-    
     return true
   }
 
-  // ── MARCAR TODAS COMO LIDAS ────────────────────────────────
   async function marcarTodasComoLidas(): Promise<boolean> {
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) return false
 
     const { error: err } = await supabase
@@ -160,33 +155,33 @@ export function useNotificacoes() {
       .eq('user_id', user.id)
       .eq('lida', false)
 
-    if (err) { setError(err.message); return false }
-    
-    // Atualizar UI instantaneamente
-    setNotificacoes(prev => prev.map(n => ({ ...n, lida: true })))
+    if (err) {
+      setError(err.message)
+      return false
+    }
+
+    setNotificacoes((prev) => prev.map((n) => ({ ...n, lida: true })))
     setNaoLidas(0)
-    cachedNotificacoes = null // Invalidar cache
-    
+    cachedNotificacoes = null
     return true
   }
 
-  // ── LIMPAR TODAS ────────────────────────────────────────────
   async function limparTodas(): Promise<boolean> {
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) return false
 
-    const { error: err } = await supabase
-      .from('notifications')
-      .delete()
-      .eq('user_id', user.id)
+    const { error: err } = await supabase.from('notifications').delete().eq('user_id', user.id)
 
-    if (err) { setError(err.message); return false }
-    
-    // Atualizar UI instantaneamente
+    if (err) {
+      setError(err.message)
+      return false
+    }
+
     setNotificacoes([])
     setNaoLidas(0)
-    cachedNotificacoes = null // Invalidar cache
-    
+    cachedNotificacoes = null
     return true
   }
 

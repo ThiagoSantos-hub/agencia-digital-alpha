@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BellRing, X } from 'lucide-react'
 import {
-  hasAskedNotificationPermission,
-  markNotificationPermissionAsked,
+  shouldAskNotificationPermission,
+  markNotificationPermissionGranted,
+  markNotificationPermissionDeclinedToday,
   playNotificationChime,
 } from '@/lib/notificationPrefs'
 
@@ -14,20 +15,15 @@ export function NotificationPermissionPrompt() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    if (!('Notification' in window)) return
-    if (hasAskedNotificationPermission()) return
-    if (Notification.permission === 'granted' || Notification.permission === 'denied') {
-      markNotificationPermissionAsked()
-      return
-    }
+    if (!shouldAskNotificationPermission()) return
 
-    // Pequeno atraso para não competir com o loading do painel
     const t = window.setTimeout(() => setOpen(true), 1200)
     return () => window.clearTimeout(t)
   }, [])
 
-  const close = () => {
-    markNotificationPermissionAsked()
+  const decline = () => {
+    // Só para hoje — amanhã pergunta de novo
+    markNotificationPermissionDeclinedToday()
     setOpen(false)
   }
 
@@ -35,12 +31,16 @@ export function NotificationPermissionPrompt() {
     try {
       const result = await Notification.requestPermission()
       if (result === 'granted') {
+        markNotificationPermissionGranted() // permanente
         playNotificationChime()
+      } else {
+        // Navegador negou ou fechou o prompt nativo → trata como “hoje não”
+        markNotificationPermissionDeclinedToday()
       }
     } catch {
-      /* ignore */
+      markNotificationPermissionDeclinedToday()
     }
-    close()
+    setOpen(false)
   }
 
   return (
@@ -61,12 +61,12 @@ export function NotificationPermissionPrompt() {
           >
             <div className="p-5">
               <div className="flex items-start justify-between gap-3">
-                <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shadow-elevated-sm">
+                <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shadow-elevated-md">
                   <BellRing size={20} className="text-primary" />
                 </div>
                 <button
                   type="button"
-                  onClick={close}
+                  onClick={decline}
                   className="p-1.5 rounded-lg text-text-muted hover:text-text-main hover:bg-hover-bg"
                   aria-label="Fechar"
                 >
@@ -77,13 +77,13 @@ export function NotificationPermissionPrompt() {
               <h3 className="mt-4 text-base font-bold text-text-main">Receber notificações?</h3>
               <p className="mt-1.5 text-sm text-text-muted leading-relaxed">
                 Ative para ouvir um toque e ver alertas mesmo quando estiver em outra aba.
-                Você pode mudar isso depois nas configurações do navegador.
+                Se aceitar, fica ativo. Se recusar, perguntamos de novo amanhã.
               </p>
 
               <div className="mt-5 flex gap-2">
                 <button
                   type="button"
-                  onClick={close}
+                  onClick={decline}
                   className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-text-muted border border-border bg-surface hover:bg-hover-bg shadow-elevated-sm"
                 >
                   Agora não
@@ -91,7 +91,7 @@ export function NotificationPermissionPrompt() {
                 <button
                   type="button"
                   onClick={accept}
-                  className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-primary hover:bg-primary-hover border border-primary shadow-elevated-md"
+                  className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-primary hover:bg-primary-hover border border-primary shadow-btn"
                 >
                   Sim, notificar
                 </button>

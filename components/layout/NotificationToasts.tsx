@@ -37,6 +37,7 @@ export function NotificationToasts() {
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [muted, setMuted] = useState(false)
   const seenIds = useRef<Set<string>>(new Set())
+  const channelRef = useRef<string>(`toast_${Math.random().toString(36).slice(2, 10)}`)
 
   useEffect(() => {
     setMuted(isPopupMutedToday())
@@ -46,61 +47,67 @@ export function NotificationToasts() {
     setToasts((prev) => prev.filter((t) => t.id !== id))
   }, [])
 
-  const pushToast = useCallback(
-    (item: ToastItem) => {
-      if (seenIds.current.has(item.id)) return
-      seenIds.current.add(item.id)
+  const pushToast = useCallback((item: ToastItem) => {
+    if (seenIds.current.has(item.id)) return
+    seenIds.current.add(item.id)
 
-      // Som + notificação do navegador sempre (se permitido), mesmo com popup mutado
-      playNotificationChime()
-      showBrowserNotification(item.titulo, item.mensagem)
+    playNotificationChime()
+    showBrowserNotification(item.titulo, item.mensagem)
 
-      if (isPopupMutedToday()) {
-        setMuted(true)
-        return
-      }
+    if (isPopupMutedToday()) {
+      setMuted(true)
+      return
+    }
 
-      setToasts((prev) => [item, ...prev].slice(0, 4))
+    setToasts((prev) => [item, ...prev].slice(0, 4))
 
-      // Auto-fecha em 9s
-      window.setTimeout(() => {
-        setToasts((prev) => prev.filter((t) => t.id !== item.id))
-      }, 9000)
-    },
-    []
-  )
+    window.setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== item.id))
+    }, 9000)
+  }, [])
 
   useEffect(() => {
     if (!user?.id) return
 
     const supabase = createClient()
-    const channel = supabase
-      .channel(`toast_notifications_${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          const row = payload.new as Record<string, unknown>
-          const id = String(row.id ?? '')
-          if (!id) return
+    let channel: ReturnType<typeof supabase.channel> | null = null
 
-          // Compatível com schema PT (titulo/mensagem/lida) e EN (title/message/read)
-          const titulo = String(row.titulo ?? row.title ?? 'Nova notificação')
-          const mensagem = String(row.mensagem ?? row.message ?? '')
-          const tipo = String(row.tipo ?? row.type ?? 'geral')
+    try {
+      channel = supabase
+        .channel(`${channelRef.current}_${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            const row = payload.new as Record<string, unknown>
+            const id = String(row.id ?? '')
+            if (!id) return
 
-          pushToast({ id, titulo, mensagem, tipo })
-        }
-      )
-      .subscribe()
+            const titulo = String(row.titulo ?? row.title ?? 'Nova notificação')
+            const mensagem = String(row.mensagem ?? row.message ?? '')
+            const tipo = String(row.tipo ?? row.type ?? 'geral')
+
+            pushToast({ id, titulo, mensagem, tipo })
+          }
+        )
+        .subscribe()
+    } catch (e) {
+      console.warn('Falha ao assinar toasts de notificação:', e)
+    }
 
     return () => {
-      supabase.removeChannel(channel)
+      if (channel) {
+        try {
+          supabase.removeChannel(channel)
+        } catch {
+          /* ignore */
+        }
+      }
     }
   }, [user?.id, pushToast])
 
@@ -124,7 +131,7 @@ export function NotificationToasts() {
             className="pointer-events-auto bg-surface border border-border rounded-2xl shadow-elevated-lg overflow-hidden"
           >
             <div className="flex gap-3 p-4">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 shadow-elevated-sm">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 shadow-elevated-md">
                 <span className="text-lg leading-none">{iconeTipo(t.tipo)}</span>
               </div>
               <div className="flex-1 min-w-0">

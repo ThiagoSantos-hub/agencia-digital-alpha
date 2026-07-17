@@ -4,7 +4,7 @@
 
 :root {
   /* Design Tokens — Digital Alpha (Manual de Marca Jul/2026) */
-  --color-background: #F8FAFC;
+  --color-background: #F1F5F9;
   --color-surface: #FFFFFF;
   --color-sidebar: #FFFFFF;
   --color-border: #E2E8F0;
@@ -19,12 +19,26 @@
   --color-text-muted: #64748B;
   --color-text-disabled: #94A3B8;
 
-  /* Elevação 3D — profundidade sem tema escuro */
-  --shadow-elevated-sm: 0 1px 2px rgba(15, 23, 42, 0.05), 0 2px 6px rgba(15, 23, 42, 0.06);
-  --shadow-elevated-md: 0 2px 4px rgba(15, 23, 42, 0.05), 0 6px 16px rgba(15, 23, 42, 0.08);
-  --shadow-elevated-lg: 0 4px 8px rgba(15, 23, 42, 0.06), 0 12px 28px rgba(15, 23, 42, 0.1);
-  --shadow-btn: 0 1px 0 rgba(255, 255, 255, 0.22) inset, 0 1px 2px rgba(15, 23, 42, 0.08), 0 3px 8px rgba(15, 23, 42, 0.1);
-  --shadow-btn-hover: 0 1px 0 rgba(255, 255, 255, 0.28) inset, 0 2px 4px rgba(15, 23, 42, 0.1), 0 6px 14px rgba(15, 23, 42, 0.12);
+  /* Elevação 3D mais marcada — contraste com fundo */
+  --shadow-elevated-sm:
+    0 1px 2px rgba(15, 23, 42, 0.06),
+    0 3px 8px rgba(15, 23, 42, 0.08);
+  --shadow-elevated-md:
+    0 2px 4px rgba(15, 23, 42, 0.06),
+    0 8px 20px rgba(15, 23, 42, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.8) inset;
+  --shadow-elevated-lg:
+    0 4px 10px rgba(15, 23, 42, 0.08),
+    0 16px 36px rgba(15, 23, 42, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.85) inset;
+  --shadow-btn:
+    0 1px 0 rgba(255, 255, 255, 0.28) inset,
+    0 2px 4px rgba(15, 23, 42, 0.12),
+    0 6px 14px rgba(26, 86, 219, 0.18);
+  --shadow-btn-hover:
+    0 1px 0 rgba(255, 255, 255, 0.32) inset,
+    0 4px 8px rgba(15, 23, 42, 0.14),
+    0 10px 22px rgba(26, 86, 219, 0.22);
 }
 
 * {
@@ -41,14 +55,13 @@ body {
   color: var(--color-text-main);
 }
 
-/* Scrollbar minimalista */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #F1F5F9;
+  background: #E2E8F0;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -83,7 +96,6 @@ elevenlabs-convai {
 }
 
 @layer components {
-  /* Divisórias e seções — elevação para não “grudar” no fundo */
   .section-card {
     @apply bg-surface border border-border rounded-xl shadow-elevated-md;
   }
@@ -96,7 +108,6 @@ elevenlabs-convai {
     @apply bg-surface border border-border rounded-xl shadow-elevated-md p-5;
   }
 
-  /* Botão com profundidade 3D */
   .btn-elevated {
     @apply shadow-btn transition-shadow;
   }
@@ -104,7 +115,6 @@ elevenlabs-convai {
     box-shadow: var(--shadow-btn-hover);
   }
 
-  /* Inputs compactos para modais minimalistas */
   .input-compact {
     @apply w-full px-3 py-2 bg-background border border-border rounded-lg
            text-text-main text-sm placeholder:text-text-disabled
