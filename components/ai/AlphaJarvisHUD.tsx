@@ -23,7 +23,6 @@ interface AlphaJarvisHUDProps {
   transcript?: string
   lastResponse?: string
   error?: string | null
-  /** ElevenLabs / status externo */
   statusLabel?: string
 }
 
@@ -34,6 +33,267 @@ function nowLabel() {
     second: '2-digit',
     timeZone: 'America/Fortaleza',
   })
+}
+
+/** Globo digital com meridianos/paralelos e rotação */
+function DigitalGlobe({ intense }: { intense: boolean }) {
+  return (
+    <div className="relative w-44 h-44">
+      {/* Atmosfera */}
+      <div
+        className="absolute inset-0 rounded-full"
+        style={{
+          background:
+            'radial-gradient(circle at 32% 28%, rgba(125,211,252,0.35) 0%, rgba(26,86,219,0.25) 40%, rgba(15,23,42,0.9) 72%)',
+          boxShadow: intense
+            ? '0 0 60px rgba(56,189,248,0.45), 0 0 120px rgba(76,58,191,0.35)'
+            : '0 0 40px rgba(26,86,219,0.35)',
+        }}
+      />
+
+      {/* Esfera com grade (rotação) */}
+      <motion.div
+        className="absolute inset-2 rounded-full overflow-hidden"
+        style={{
+          background:
+            'radial-gradient(circle at 30% 25%, rgba(56,189,248,0.2), transparent 55%), #0b1224',
+          border: '1px solid rgba(56,189,248,0.45)',
+        }}
+        animate={{ rotate: 360 }}
+        transition={{ duration: intense ? 12 : 28, repeat: Infinity, ease: 'linear' }}
+      >
+        {/* Meridianos */}
+        {[0, 30, 60, 90, 120, 150].map((deg) => (
+          <div
+            key={`m-${deg}`}
+            className="absolute inset-0"
+            style={{
+              borderLeft: '1px solid rgba(56,189,248,0.22)',
+              transform: `rotate(${deg}deg)`,
+              left: '50%',
+              transformOrigin: 'left center',
+            }}
+          />
+        ))}
+        {/* Paralelos */}
+        {[18, 36, 54, 72].map((pct) => (
+          <div
+            key={`p-${pct}`}
+            className="absolute left-1/2 -translate-x-1/2 rounded-full"
+            style={{
+              top: `${pct}%`,
+              width: `${Math.sin((pct / 100) * Math.PI) * 92}%`,
+              height: 1,
+              background: 'rgba(56,189,248,0.28)',
+            }}
+          />
+        ))}
+        {/* Continentes abstratos (manchas digitais) */}
+        <div
+          className="absolute rounded-full opacity-50"
+          style={{
+            width: '38%',
+            height: '28%',
+            top: '28%',
+            left: '22%',
+            background: 'rgba(26,86,219,0.55)',
+            filter: 'blur(1px)',
+          }}
+        />
+        <div
+          className="absolute rounded-full opacity-40"
+          style={{
+            width: '26%',
+            height: '22%',
+            top: '48%',
+            left: '55%',
+            background: 'rgba(76,58,191,0.5)',
+            filter: 'blur(1px)',
+          }}
+        />
+        <div
+          className="absolute rounded-full opacity-35"
+          style={{
+            width: '20%',
+            height: '16%',
+            top: '62%',
+            left: '30%',
+            background: 'rgba(14,165,233,0.45)',
+            filter: 'blur(1px)',
+          }}
+        />
+      </motion.div>
+
+      {/* Brilho polar */}
+      <div
+        className="absolute inset-0 rounded-full pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(circle at 30% 22%, rgba(255,255,255,0.22) 0%, transparent 35%)',
+        }}
+      />
+
+      {/* α no centro do globo */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <span
+          className="text-3xl font-black text-white/90"
+          style={{ textShadow: '0 0 18px rgba(56,189,248,0.8)' }}
+        >
+          α
+        </span>
+      </div>
+    </div>
+  )
+}
+
+/** Ondas concêntricas que “tremem” quando a Alpha fala/ouve */
+function SoundWaves({ intense }: { intense: boolean }) {
+  const rings = [0, 1, 2, 3, 4]
+  return (
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+      {rings.map((i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-full border"
+          style={{
+            width: 160 + i * 48,
+            height: 160 + i * 48,
+            borderColor: i % 2 === 0 ? 'rgba(56,189,248,0.35)' : 'rgba(76,58,191,0.3)',
+          }}
+          animate={{
+            scale: intense ? [1, 1.08, 0.96, 1.05, 1] : [1, 1.02, 1],
+            opacity: intense ? [0.55, 0.2, 0.5, 0.25, 0.55] : [0.35, 0.15, 0.35],
+          }}
+          transition={{
+            duration: intense ? 1.1 + i * 0.12 : 2.8 + i * 0.25,
+            repeat: Infinity,
+            delay: i * 0.15,
+            ease: 'easeInOut',
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+/** Barras de equalizer em arco */
+function WaveBars({ intense }: { intense: boolean }) {
+  const bars = Array.from({ length: 28 }, (_, i) => i)
+  return (
+    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex items-end gap-[3px] h-14 pointer-events-none">
+      {bars.map((i) => (
+        <motion.span
+          key={i}
+          className="w-[3px] rounded-full"
+          style={{
+            background:
+              i % 3 === 0
+                ? 'linear-gradient(to top, #1A56DB, #38bdf8)'
+                : 'linear-gradient(to top, #4C3ABF, #67e8f9)',
+          }}
+          animate={{
+            height: intense
+              ? [8, 28 + (i % 5) * 6, 10, 36, 8]
+              : [6, 12, 8, 14, 6],
+          }}
+          transition={{
+            duration: intense ? 0.45 + (i % 4) * 0.05 : 1.4,
+            repeat: Infinity,
+            delay: i * 0.03,
+            ease: 'easeInOut',
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+/** Guias / trajetórias digitais cruzando a tela */
+function GuideLines({ intense }: { intense: boolean }) {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Linhas horizontais deslizantes */}
+      {[18, 35, 55, 72, 88].map((top, i) => (
+        <motion.div
+          key={`h-${i}`}
+          className="absolute h-px w-full"
+          style={{
+            top: `${top}%`,
+            background:
+              'linear-gradient(90deg, transparent, rgba(56,189,248,0.45), transparent)',
+          }}
+          animate={{
+            x: ['-100%', '100%'],
+            opacity: intense ? [0.2, 0.9, 0.2] : [0.15, 0.45, 0.15],
+          }}
+          transition={{
+            duration: intense ? 2.2 + i * 0.3 : 5 + i * 0.6,
+            repeat: Infinity,
+            ease: 'linear',
+            delay: i * 0.4,
+          }}
+        />
+      ))}
+
+      {/* Diagonais */}
+      {[0, 1, 2].map((i) => (
+        <motion.div
+          key={`d-${i}`}
+          className="absolute w-[140%] h-px origin-left"
+          style={{
+            top: `${20 + i * 25}%`,
+            left: '-20%',
+            background:
+              'linear-gradient(90deg, transparent, rgba(76,58,191,0.5), transparent)',
+            transform: `rotate(${12 + i * 4}deg)`,
+          }}
+          animate={{
+            x: intense ? ['-10%', '30%', '-5%'] : ['0%', '15%', '0%'],
+            opacity: intense ? [0.3, 0.85, 0.3] : [0.2, 0.4, 0.2],
+          }}
+          transition={{
+            duration: intense ? 1.4 : 3.5,
+            repeat: Infinity,
+            delay: i * 0.35,
+          }}
+        />
+      ))}
+
+      {/* Arcos orbitais */}
+      {[0, 1].map((i) => (
+        <motion.div
+          key={`arc-${i}`}
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-400/20"
+          style={{ width: 420 + i * 120, height: 280 + i * 80 }}
+          animate={{ rotate: i % 2 === 0 ? 360 : -360 }}
+          transition={{
+            duration: intense ? 10 + i * 4 : 22 + i * 8,
+            repeat: Infinity,
+            ease: 'linear',
+          }}
+        />
+      ))}
+
+      {/* Pontos de dados viajando nas guias */}
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <motion.div
+          key={`dot-${i}`}
+          className="absolute w-1.5 h-1.5 rounded-full bg-cyan-300 shadow-[0_0_8px_#22d3ee]"
+          style={{ top: `${15 + i * 12}%` }}
+          animate={{
+            left: ['-2%', '102%'],
+            scale: intense ? [1, 1.6, 1] : [1, 1.15, 1],
+          }}
+          transition={{
+            duration: intense ? 1.8 + i * 0.2 : 4 + i * 0.35,
+            repeat: Infinity,
+            ease: 'linear',
+            delay: i * 0.5,
+          }}
+        />
+      ))}
+    </div>
+  )
 }
 
 export function AlphaJarvisHUD({
@@ -74,7 +334,9 @@ export function AlphaJarvisHUD({
     })()
   }, [open])
 
-  const active = voiceState === 'listening' || voiceState === 'speaking' || voiceState === 'processing'
+  const intense =
+    voiceState === 'listening' || voiceState === 'speaking' || voiceState === 'processing'
+
   const stateText =
     statusLabel ??
     (voiceState === 'listening'
@@ -97,33 +359,36 @@ export function AlphaJarvisHUD({
           className="fixed inset-0 z-[100] flex items-center justify-center"
           style={{
             background:
-              'radial-gradient(ellipse at center, rgba(15,23,42,0.92) 0%, rgba(2,6,23,0.97) 70%)',
+              'radial-gradient(ellipse at center, rgba(8,15,35,0.94) 0%, rgba(2,6,18,0.98) 75%)',
           }}
         >
           {/* Grid de fundo */}
           <div
-            className="absolute inset-0 opacity-[0.12] pointer-events-none"
+            className="absolute inset-0 opacity-[0.14] pointer-events-none"
             style={{
               backgroundImage:
-                'linear-gradient(rgba(26,86,219,0.35) 1px, transparent 1px), linear-gradient(90deg, rgba(26,86,219,0.35) 1px, transparent 1px)',
-              backgroundSize: '48px 48px',
+                'linear-gradient(rgba(26,86,219,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(26,86,219,0.4) 1px, transparent 1px)',
+              backgroundSize: '40px 40px',
             }}
           />
 
-          {/* Scanline sutil */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-20">
+          {/* Scanline */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-25">
             <motion.div
-              className="w-full h-24 bg-gradient-to-b from-transparent via-primary/40 to-transparent"
-              animate={{ y: ['-20%', '120%'] }}
-              transition={{ duration: 4.5, repeat: Infinity, ease: 'linear' }}
+              className="w-full h-20 bg-gradient-to-b from-transparent via-cyan-400/30 to-transparent"
+              animate={{ y: ['-15%', '115%'] }}
+              transition={{ duration: intense ? 2.2 : 4.2, repeat: Infinity, ease: 'linear' }}
             />
           </div>
+
+          {/* Guias digitais */}
+          <GuideLines intense={intense} />
 
           {/* Top bar */}
           <div className="absolute top-0 left-0 right-0 px-6 py-4 flex items-center justify-between z-10">
             <div className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-ai animate-pulse shadow-[0_0_12px_#4C3ABF]" />
-              <span className="text-[11px] font-black tracking-[0.25em] text-primary uppercase">
+              <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_12px_#22d3ee]" />
+              <span className="text-[11px] font-black tracking-[0.25em] text-cyan-300/90 uppercase">
                 Digital Alpha · Sistema Online
               </span>
             </div>
@@ -132,7 +397,7 @@ export function AlphaJarvisHUD({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-9 h-9 rounded-xl border border-primary/40 bg-primary/10 text-primary hover:bg-primary/20 flex items-center justify-center"
+                className="w-9 h-9 rounded-xl border border-cyan-400/40 bg-cyan-400/10 text-cyan-300 hover:bg-cyan-400/20 flex items-center justify-center"
                 aria-label="Fechar"
               >
                 <X size={16} />
@@ -143,10 +408,10 @@ export function AlphaJarvisHUD({
           {/* Lateral esquerda — CRM */}
           <div className="absolute left-5 top-20 bottom-24 w-56 flex flex-col gap-3 z-10">
             <HudPanel title="MONITOR CRM" icon={<Activity size={12} />}>
-              <HudStat icon={<Users size={12} />} label="Clientes ativos" value={stats.clientes} color="#1A56DB" />
-              <HudStat icon={<Megaphone size={12} />} label="Campanhas" value={stats.campanhas} color="#4C3ABF" />
-              <HudStat icon={<CheckSquare size={12} />} label="Tarefas a fazer" value={stats.tarefas} color="#3b82f6" />
-              <HudStat icon={<Radio size={12} />} label="Alertas" value={stats.alertas} color="#ef4444" />
+              <HudStat icon={<Users size={12} />} label="Clientes ativos" value={stats.clientes} color="#38bdf8" />
+              <HudStat icon={<Megaphone size={12} />} label="Campanhas" value={stats.campanhas} color="#818cf8" />
+              <HudStat icon={<CheckSquare size={12} />} label="Tarefas a fazer" value={stats.tarefas} color="#60a5fa" />
+              <HudStat icon={<Radio size={12} />} label="Alertas" value={stats.alertas} color="#f87171" />
             </HudPanel>
 
             <HudPanel title="CANAL" icon={<Wallet size={12} />}>
@@ -169,95 +434,56 @@ export function AlphaJarvisHUD({
             </HudPanel>
             <HudPanel title="RESPOSTA ALPHA" icon={<Activity size={12} />} className="flex-1">
               <p className="text-[11px] text-cyan-100/90 min-h-[80px] leading-relaxed">
-                {lastResponse || (
-                  <span className="text-slate-500 italic">—</span>
-                )}
+                {lastResponse || <span className="text-slate-500 italic">—</span>}
               </p>
-              {error && (
-                <p className="mt-2 text-[10px] text-red-400 font-medium">{error}</p>
-              )}
+              {error && <p className="mt-2 text-[10px] text-red-400 font-medium">{error}</p>}
             </HudPanel>
           </div>
 
-          {/* Centro — núcleo Alpha */}
+          {/* Centro — globo + ondas */}
           <div className="relative z-10 flex flex-col items-center justify-center">
-            <div className="relative w-64 h-64 flex items-center justify-center">
-              {/* Anéis */}
+            <div className="relative w-[340px] h-[340px] flex items-center justify-center">
+              <SoundWaves intense={intense} />
+
+              {/* Anéis externos */}
               <motion.div
-                className="absolute inset-0 rounded-full border border-primary/30"
+                className="absolute inset-6 rounded-full border border-primary/25"
                 animate={{ rotate: 360 }}
-                transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                transition={{ duration: intense ? 8 : 18, repeat: Infinity, ease: 'linear' }}
               />
               <motion.div
-                className="absolute inset-4 rounded-full border border-ai/40 border-dashed"
+                className="absolute inset-12 rounded-full border border-dashed border-ai/35"
                 animate={{ rotate: -360 }}
-                transition={{ duration: 14, repeat: Infinity, ease: 'linear' }}
-              />
-              <motion.div
-                className="absolute inset-10 rounded-full border-2 border-cyan-400/50"
-                animate={{
-                  scale: active ? [1, 1.06, 1] : 1,
-                  boxShadow: active
-                    ? [
-                        '0 0 20px rgba(76,58,191,0.4)',
-                        '0 0 48px rgba(26,86,219,0.55)',
-                        '0 0 20px rgba(76,58,191,0.4)',
-                      ]
-                    : '0 0 24px rgba(26,86,219,0.25)',
-                }}
-                transition={{ duration: 1.4, repeat: Infinity }}
+                transition={{ duration: intense ? 6 : 14, repeat: Infinity, ease: 'linear' }}
               />
 
-              {/* Núcleo */}
-              <div
-                className="relative w-28 h-28 rounded-full flex items-center justify-center"
-                style={{
-                  background:
-                    'radial-gradient(circle at 35% 30%, #4C3ABF 0%, #1A56DB 45%, #0f172a 100%)',
-                  boxShadow: '0 0 40px rgba(76,58,191,0.55), inset 0 0 20px rgba(255,255,255,0.15)',
-                }}
-              >
-                <span className="text-white text-4xl font-black tracking-tighter">α</span>
+              <DigitalGlobe intense={intense} />
+
+              <div className="absolute inset-x-8 bottom-4">
+                <WaveBars intense={intense} />
               </div>
-
-              {/* Barras de áudio */}
-              {(voiceState === 'listening' || voiceState === 'speaking') && (
-                <div className="absolute -bottom-2 flex items-end gap-1 h-8">
-                  {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-                    <motion.span
-                      key={i}
-                      className="w-1 rounded-full bg-cyan-400"
-                      animate={{ height: [6, 22, 8, 18, 6] }}
-                      transition={{
-                        duration: 0.7 + i * 0.05,
-                        repeat: Infinity,
-                        delay: i * 0.08,
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
             </div>
 
-            <div className="mt-8 text-center">
-              <p className="text-[10px] font-black tracking-[0.35em] text-primary uppercase mb-1">
+            <div className="mt-4 text-center">
+              <p className="text-[10px] font-black tracking-[0.35em] text-cyan-400/90 uppercase mb-1">
                 {modeTitle}
               </p>
-              <p
+              <motion.p
                 className={`text-sm font-bold tracking-widest ${
-                  active ? 'text-cyan-300' : 'text-slate-400'
+                  intense ? 'text-cyan-300' : 'text-slate-400'
                 }`}
+                animate={intense ? { opacity: [1, 0.55, 1] } : { opacity: 1 }}
+                transition={{ duration: 1.2, repeat: Infinity }}
               >
                 {stateText}
-              </p>
+              </motion.p>
             </div>
 
-            {/* Atalhos centrais */}
-            <div className="mt-8 flex flex-wrap justify-center gap-2 max-w-md">
+            <div className="mt-6 flex flex-wrap justify-center gap-2 max-w-md">
               {['Clientes', 'Campanhas', 'Tarefas', 'Financeiro'].map((label) => (
                 <span
                   key={label}
-                  className="px-3 py-1.5 rounded-lg border border-primary/30 bg-primary/10 text-[10px] font-bold uppercase tracking-wider text-cyan-100/90"
+                  className="px-3 py-1.5 rounded-lg border border-cyan-400/25 bg-cyan-400/10 text-[10px] font-bold uppercase tracking-wider text-cyan-100/90"
                 >
                   {label}
                 </span>
@@ -268,7 +494,7 @@ export function AlphaJarvisHUD({
           {/* Rodapé */}
           <div className="absolute bottom-5 left-0 right-0 flex justify-center z-10">
             <p className="text-[10px] text-slate-500 font-mono tracking-wide">
-              ALPHA HUD · Digital Alpha · Dados em tempo real do CRM
+              ALPHA HUD · Digital Alpha · Monitoramento em tempo real
             </p>
           </div>
         </motion.div>
@@ -290,11 +516,11 @@ function HudPanel({
 }) {
   return (
     <div
-      className={`rounded-xl border border-primary/25 bg-slate-950/70 backdrop-blur-md p-3 shadow-[0_0_24px_rgba(26,86,219,0.15)] ${className}`}
+      className={`rounded-xl border border-cyan-400/20 bg-slate-950/75 backdrop-blur-md p-3 shadow-[0_0_28px_rgba(26,86,219,0.18)] ${className}`}
     >
-      <div className="flex items-center gap-2 mb-2 pb-2 border-b border-primary/20">
-        <span className="text-primary">{icon}</span>
-        <span className="text-[9px] font-black tracking-[0.2em] text-primary uppercase">{title}</span>
+      <div className="flex items-center gap-2 mb-2 pb-2 border-b border-cyan-400/15">
+        <span className="text-cyan-400">{icon}</span>
+        <span className="text-[9px] font-black tracking-[0.2em] text-cyan-400/90 uppercase">{title}</span>
       </div>
       {children}
     </div>
