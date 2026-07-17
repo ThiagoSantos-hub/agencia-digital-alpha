@@ -86,15 +86,15 @@ function ElevenLabsCard({
   }
 
   return (
-    <div className="rounded-xl p-4" className="bg-surface border border-border">
+    <div className="rounded-xl p-4 bg-surface border border-border">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 flex items-center justify-center rounded-lg" className="bg-background">
+          <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-background">
             <IntegrationIcon type="elevenlabs" />
           </div>
           <div>
             <p className="text-text-main text-sm font-medium">{integration.label}</p>
-            <p className="text-xs" className={integration.status === "connected" ? "text-cta" : "text-text-disabled"}>
+            <p className={`text-xs ${integration.status === "connected" ? "text-cta" : "text-text-disabled"}`}>
               {integration.status === 'connected' ? 'Conectado' : 'Desconectado'}
             </p>
           </div>
@@ -102,8 +102,7 @@ function ElevenLabsCard({
         {integration.status === 'connected' && (
           <button
             onClick={onDisconnect}
-            className="text-xs px-3 py-1.5 rounded-lg"
-            className="bg-red-50 text-red-500 border border-red-200 hover:bg-red-100 transition-colors"
+            className="text-xs px-3 py-1.5 rounded-lg bg-red-50 text-red-500 border border-red-200 hover:bg-red-100 transition-colors"
           >
             Remover
           </button>
@@ -117,47 +116,42 @@ function ElevenLabsCard({
             placeholder="API Key do ElevenLabs (xi-api-key)"
             value={apiKey}
             onChange={e => setApiKey(e.target.value)}
-            className="w-full text-sm px-3 py-2 rounded-lg outline-none"
-            className="bg-background text-text-main border border-border focus:border-primary outline-none"
+            className="w-full text-sm px-3 py-2 rounded-lg outline-none bg-background text-text-main border border-border focus:border-primary outline-none"
           />
           <input
             type="text"
             placeholder="Agent ID (criado no ElevenAgents)"
             value={agentId}
             onChange={e => setAgentId(e.target.value)}
-            className="w-full text-sm px-3 py-2 rounded-lg outline-none"
-            className="bg-background text-text-main border border-border focus:border-primary outline-none"
+            className="w-full text-sm px-3 py-2 rounded-lg outline-none bg-background text-text-main border border-border focus:border-primary outline-none"
           />
           <button
             onClick={() => onSave(apiKey, agentId)}
             disabled={saving || !apiKey || !agentId}
-            className="w-full text-xs px-4 py-2 rounded-lg font-medium disabled:opacity-50"
-            className="bg-cta text-white hover:bg-cta-hover transition-colors"
+            className="w-full text-xs px-4 py-2 rounded-lg font-medium disabled:opacity-50 bg-cta text-white hover:bg-cta-hover transition-colors"
           >
             {saving ? 'Salvando...' : 'Salvar e conectar'}
           </button>
         </div>
       ) : (
         <div className="space-y-2">
-          <p className="text-xs" className="text-text-muted">
+          <p className="text-xs text-text-muted">
             Agent ID: <span className="text-text-main">{integration.config?.agent_id}</span>
           </p>
           <div className="flex items-center gap-2">
             <input
               readOnly
               value={webhookUrl}
-              className="flex-1 text-xs px-3 py-2 rounded-lg outline-none"
-              className="bg-background text-text-muted border border-border outline-none"
+              className="flex-1 text-xs px-3 py-2 rounded-lg outline-none bg-background text-text-muted border border-border outline-none"
             />
             <button
               onClick={copyWebhook}
-              className="text-xs px-3 py-2 rounded-lg"
-              className="bg-background text-primary border border-border hover:border-primary transition-colors"
+              className="text-xs px-3 py-2 rounded-lg bg-background text-primary border border-border hover:border-primary transition-colors"
             >
               {copied ? 'Copiado!' : 'Copiar'}
             </button>
           </div>
-          <p className="text-[11px]" className="text-text-muted">
+          <p className="text-[11px] text-text-muted">
             Cole essa URL no painel ElevenLabs em Agent → Webhooks → Post-call transcription.
           </p>
         </div>
@@ -298,25 +292,25 @@ export default function IntegracoesPage() {
     <div className="p-6 max-w-4xl mx-auto space-y-8">
       <div>
         <h1 className="text-text-main text-2xl font-bold">Integrações</h1>
-        <p className="text-sm mt-1" className="text-text-muted">
+        <p className="text-sm mt-1 text-text-muted">
           Conecte suas ferramentas e automatize sua agência
         </p>
       </div>
 
       {successMsg && (
-        <div className="p-3 rounded-lg text-sm font-medium" className="bg-cta/10 text-cta border border-cta/30">
+        <div className="p-3 rounded-lg text-sm font-medium bg-cta/10 text-cta border border-cta/30">
           ✅ {successMsg}
         </div>
       )}
       {errorMsg && (
-        <div className="p-3 rounded-lg text-sm font-medium" className="bg-red-50 text-red-500 border border-red-200">
+        <div className="p-3 rounded-lg text-sm font-medium bg-red-50 text-red-500 border border-red-200">
           ❌ {errorMsg}
         </div>
       )}
 
       <section>
         <h2 className="text-text-main text-lg font-semibold mb-4">Conexões OAuth</h2>
-        <p className="text-xs mb-4" className="text-text-muted">
+        <p className="text-xs mb-4 text-text-muted">
           Cada serviço do Google pode ser conectado com uma conta diferente. Ao clicar em "Conectar", o Google vai pedir para você escolher a conta.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -325,22 +319,21 @@ export default function IntegracoesPage() {
             .map(integration => (
               <div
                 key={integration.type}
-                className="rounded-xl p-4 flex items-center justify-between"
-                className="bg-surface border border-border"
+                className="rounded-xl p-4 flex items-center justify-between bg-surface border border-border"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 flex items-center justify-center rounded-lg" className="bg-background">
+                  <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-background">
                     <IntegrationIcon type={integration.type} />
                   </div>
                   <div>
                     <p className="text-text-main text-sm font-medium">{integration.label}</p>
-                    <p className="text-xs mt-0.5" className={integration.status === "connected" ? "text-cta" : "text-text-disabled"}>
+                    <p className={`text-xs mt-0.5 ${integration.status === "connected" ? "text-cta" : "text-text-disabled"}`}>
                       {integration.status === 'connected'
                         ? `Conectado${integration.connected_at ? ' em ' + new Date(integration.connected_at).toLocaleDateString('pt-BR') : ''}`
                         : 'Desconectado'}
                     </p>
                     {integration.status === 'connected' && integration.config?.connected_email && (
-                      <p className="text-xs mt-0.5" className="text-text-muted">
+                      <p className="text-xs mt-0.5 text-text-muted">
                         {integration.config.connected_email}
                       </p>
                     )}
@@ -349,8 +342,7 @@ export default function IntegracoesPage() {
                 {integration.status === 'connected' ? (
                   <button
                     onClick={() => disconnect(integration.type)}
-                    className="text-xs px-3 py-1.5 rounded-lg transition-colors"
-                    className="bg-red-50 text-red-500 border border-red-200 hover:bg-red-100 transition-colors"
+                    className="text-xs px-3 py-1.5 rounded-lg transition-colors bg-red-50 text-red-500 border border-red-200 hover:bg-red-100 transition-colors"
                   >
                     Desconectar
                   </button>
@@ -361,8 +353,7 @@ export default function IntegracoesPage() {
                         ? `/api/integrations/connect/google?type=${integration.type}`
                         : `/api/integrations/connect/meta?slot=${integration.type}`
                     }
-                    className="text-xs px-3 py-1.5 rounded-lg font-medium transition-colors"
-                    className="bg-cta text-white hover:bg-cta-hover transition-colors"
+                    className="text-xs px-3 py-1.5 rounded-lg font-medium transition-colors bg-cta text-white hover:bg-cta-hover transition-colors"
                   >
                     Conectar
                   </a>
@@ -391,17 +382,16 @@ export default function IntegracoesPage() {
             .map(integration => (
               <div
                 key={integration.type}
-                className="rounded-xl p-4"
-                className="bg-surface border border-border"
+                className="rounded-xl p-4 bg-surface border border-border"
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 flex items-center justify-center rounded-lg" className="bg-background">
+                    <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-background">
                       <IntegrationIcon type={integration.type} />
                     </div>
                     <div>
                       <p className="text-text-main text-sm font-medium">{integration.label}</p>
-                      <p className="text-xs" className={integration.status === "connected" ? "text-cta" : "text-text-disabled"}>
+                      <p className={`text-xs ${integration.status === "connected" ? "text-cta" : "text-text-disabled"}`}>
                         {integration.status === 'connected' ? 'Conectado' : 'Desconectado'}
                       </p>
                     </div>
@@ -409,8 +399,7 @@ export default function IntegracoesPage() {
                   {integration.status === 'connected' && (
                     <button
                       onClick={() => disconnect(integration.type)}
-                      className="text-xs px-3 py-1.5 rounded-lg"
-                      className="bg-red-50 text-red-500 border border-red-200 hover:bg-red-100 transition-colors"
+                      className="text-xs px-3 py-1.5 rounded-lg bg-red-50 text-red-500 border border-red-200 hover:bg-red-100 transition-colors"
                     >
                       Remover
                     </button>
@@ -423,14 +412,12 @@ export default function IntegracoesPage() {
                       placeholder={`Chave de API do ${integration.label}`}
                       value={apiKeys[integration.type] || ''}
                       onChange={e => setApiKeys(prev => ({ ...prev, [integration.type]: e.target.value }))}
-                      className="flex-1 text-sm px-3 py-2 rounded-lg outline-none"
-                      className="bg-background text-text-main border border-border focus:border-primary outline-none"
+                      className="flex-1 text-sm px-3 py-2 rounded-lg outline-none bg-background text-text-main border border-border focus:border-primary outline-none"
                     />
                     <button
                       onClick={() => saveApiKey(integration.type)}
                       disabled={savingKey === integration.type || !apiKeys[integration.type]}
-                      className="text-xs px-4 py-2 rounded-lg font-medium disabled:opacity-50"
-                      className="bg-cta text-white hover:bg-cta-hover transition-colors"
+                      className="text-xs px-4 py-2 rounded-lg font-medium disabled:opacity-50 bg-cta text-white hover:bg-cta-hover transition-colors"
                     >
                       {savingKey === integration.type ? '...' : 'Salvar'}
                     </button>
@@ -443,7 +430,7 @@ export default function IntegracoesPage() {
 
       <section>
   <h2 className="text-text-main text-lg font-semibold mb-1">WhatsApp</h2>
-  <p className="text-xs mb-4" className="text-text-muted">
+  <p className="text-xs mb-4 text-text-muted">
     Conecte seu WhatsApp para enviar relatórios automáticos para contatos e grupos.
   </p>
   <WhatsAppConnect showGroupsButton={true} />
@@ -455,18 +442,16 @@ export default function IntegracoesPage() {
           {webhooks.map(webhook => (
             <div
               key={webhook.slot}
-              className="rounded-xl p-4"
-              className="bg-surface border border-border"
+              className="rounded-xl p-4 bg-surface border border-border"
             >
               <div className="flex items-center justify-between mb-3">
                 <p className="text-text-main text-sm font-medium">Slot {webhook.slot}</p>
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <span className="text-xs" className="text-text-muted">Ativo</span>
+                    <span className="text-xs text-text-muted">Ativo</span>
                     <div
                       onClick={() => saveWebhook(webhook.slot, 'active', !webhook.active)}
-                      className="w-8 h-4 rounded-full relative cursor-pointer transition-colors"
-                      className={webhook.active ? "bg-cta" : "bg-border"}
+                      className={`w-8 h-4 rounded-full relative cursor-pointer transition-colors ${webhook.active ? "bg-cta" : "bg-border"}`}
                     >
                       <div
                         className="w-3 h-3 bg-white rounded-full absolute top-0.5 transition-all"
@@ -477,8 +462,7 @@ export default function IntegracoesPage() {
                   {(webhook.name || webhook.url) && (
                     <button
                       onClick={() => clearWebhook(webhook.slot)}
-                      className="text-xs px-2 py-1 rounded"
-                      className="text-red-500 hover:text-red-600"
+                      className="text-xs px-2 py-1 rounded text-red-500 hover:text-red-600"
                     >
                       Limpar
                     </button>
@@ -491,22 +475,19 @@ export default function IntegracoesPage() {
                   placeholder="Nome"
                   defaultValue={webhook.name || ''}
                   onBlur={e => saveWebhook(webhook.slot, 'name', e.target.value)}
-                  className="text-sm px-3 py-2 rounded-lg outline-none"
-                  className="bg-background text-text-main border border-border focus:border-primary outline-none"
+                  className="text-sm px-3 py-2 rounded-lg outline-none bg-background text-text-main border border-border focus:border-primary outline-none"
                 />
                 <input
                   type="url"
                   placeholder="URL do webhook"
                   defaultValue={webhook.url || ''}
                   onBlur={e => saveWebhook(webhook.slot, 'url', e.target.value)}
-                  className="text-sm px-3 py-2 rounded-lg outline-none"
-                  className="bg-background text-text-main border border-border focus:border-primary outline-none"
+                  className="text-sm px-3 py-2 rounded-lg outline-none bg-background text-text-main border border-border focus:border-primary outline-none"
                 />
                 <select
                   defaultValue={webhook.event || ''}
                   onChange={e => saveWebhook(webhook.slot, 'event', e.target.value)}
-                  className="text-sm px-3 py-2 rounded-lg outline-none"
-                  className={`bg-background border border-border outline-none ${webhook.event ? "text-text-main" : "text-text-disabled"}`}
+                  className={`text-sm px-3 py-2 rounded-lg outline-none ${`bg-background border border-border outline-none ${webhook.event ? "text-text-main" : "text-text-disabled"}`}`}
                 >
                   <option value="">Selecionar evento</option>
                   {WEBHOOK_EVENTS.map(ev => (
