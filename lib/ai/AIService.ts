@@ -1,11 +1,6 @@
-// lib/ai/AIService.ts — v1.5.1 (respostas curtas)
+// lib/ai/AIService.ts — v1.5.2 (voz natural + CRM snapshot)
 import type { AIProvider, AIRequest, AIResponse, CRMTool, Message } from './types'
 import { buildSystemPersonaBlock, DEFAULT_NOTES, type BrainNote } from './alphaPersona'
-
-const CRM_HINT = `
-CRM: use ferramentas só quando a pergunta exigir dado real.
-Depois da ferramenta, responda em 1 frase com o resultado. Sem rodeios.
-`.trim()
 
 export class AIService {
   private provider: AIProvider | null = null
@@ -18,22 +13,45 @@ export class AIService {
     return this.provider!
   }
 
-  private getDynamicSystemPrompt(notes?: BrainNote[]): string {
+  private getDynamicSystemPrompt(notes?: BrainNote[], crmSnapshot?: string): string {
     const agora = new Date()
     const dataHoraBrasilia = agora.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })
     const brain = buildSystemPersonaBlock(notes?.length ? notes : DEFAULT_NOTES)
-    return `${brain}\n\n${CRM_HINT}\n\nDATA E HORA (Brasília): ${dataHoraBrasilia}`
+
+    const crmBlock = crmSnapshot
+      ? `
+SNAPSHOT CRM AGORA (dados reais — use estes números quando perguntarem resumo/contagens):
+${crmSnapshot}
+
+Se a pergunta exigir lista detalhada, nomes específicos ou ação (cadastrar/ativar),
+USE a ferramenta correspondente. Não invente nomes nem valores.
+`
+      : `
+Para qualquer pergunta sobre clientes, campanhas, tarefas, financeiro ou integrações,
+USE sempre a ferramenta do CRM. Nunca invente dados.
+`
+
+    return `${brain}
+
+${crmBlock.trim()}
+
+DATA E HORA (Brasília): ${dataHoraBrasilia}`
   }
 
   async chat(
     messages: Message[],
     tools?: CRMTool[],
-    options?: { maxTokens?: number; temperature?: number; notes?: BrainNote[] }
+    options?: {
+      maxTokens?: number
+      temperature?: number
+      notes?: BrainNote[]
+      crmSnapshot?: string
+    }
   ): Promise<AIResponse> {
     const provider = this.getProvider()
     const systemMessage: Message = {
       role: 'system',
-      content: this.getDynamicSystemPrompt(options?.notes),
+      content: this.getDynamicSystemPrompt(options?.notes, options?.crmSnapshot),
     }
 
     let fullMessages: Message[] = [systemMessage, ...messages]
@@ -41,9 +59,8 @@ export class AIService {
     const request: AIRequest = {
       messages: fullMessages,
       tools: tools,
-      // Limite baixo força resposta curta (voz + tokens)
       maxTokens: options?.maxTokens ?? 180,
-      temperature: options?.temperature ?? 0.4,
+      temperature: options?.temperature ?? 0.35,
     }
 
     let response = await provider.chat(request)

@@ -19,16 +19,17 @@ export class OpenAITTSProvider implements VoiceProvider {
     }
 
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
-      method:  'POST',
+      method: 'POST',
       headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${this.openAiKey}`,
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.openAiKey}`,
       },
       body: JSON.stringify({
         model: 'tts-1',
         input: texto,
-        voice: "onyx",
-        speed: 0.9,  // 1.0 = normal, 0.9 = ligeiramente mais lento e natural // voz feminina — opções: alloy, echo, fable, nova, onyx, shimmer
+        voice: 'onyx', // masculina
+        // 1.0 = normal | 1.15 = ritmo natural de conversa (não arrastado)
+        speed: 1.15,
       }),
     })
 
@@ -49,14 +50,14 @@ export class OpenAITTSProvider implements VoiceProvider {
     const formData = new FormData()
     const blob = new Blob([new Uint8Array(audioBuffer)], { type: mimeType })
     const extensao = mimeType.includes('mp4') ? 'm4a' : 'webm'
-    formData.append('file',     blob, `audio.${extensao}`)
-    formData.append('model',    'whisper-1')
+    formData.append('file', blob, `audio.${extensao}`)
+    formData.append('model', 'whisper-1')
     formData.append('language', 'pt')
 
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-      method:  'POST',
+      method: 'POST',
       headers: { Authorization: `Bearer ${this.openAiKey}` },
-      body:    formData,
+      body: formData,
     })
 
     if (!response.ok) {
