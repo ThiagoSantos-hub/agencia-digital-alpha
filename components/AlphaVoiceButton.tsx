@@ -1,6 +1,7 @@
 'use client'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useAlphaVoice, VoiceState } from '@/hooks/useAlphaVoice'
+import { AlphaJarvisHUD } from '@/components/ai/AlphaJarvisHUD'
 
 function IconMic() {
   return (
@@ -26,7 +27,7 @@ function WaveIcon() {
       {[0, 1, 2, 3, 4].map(i => (
         <span key={i} className="alpha-wave-bar" style={{
           display: 'block', width: 3, borderRadius: 2,
-          background: '#4C3ABF',
+          background: '#FFFFFF',
           animationName: 'alphaWave',
           animationDuration: '0.9s',
           animationTimingFunction: 'ease-in-out',
@@ -41,7 +42,7 @@ function Spinner() {
   return (
     <span style={{
       width: 20, height: 20,
-      border: '2.5px solid #4C3ABF',
+      border: '2.5px solid #FFFFFF',
       borderTopColor: 'transparent',
       borderRadius: '50%',
       display: 'inline-block',
@@ -51,8 +52,9 @@ function Spinner() {
 }
 
 export function AlphaVoiceButton() {
-  const { voiceState, startListening, stopListening } = useAlphaVoice()
+  const { voiceState, transcript, lastResponse, error, startListening, stopListening } = useAlphaVoice()
   const isActive = voiceState !== 'idle'
+  const [hudOpen, setHudOpen] = useState(false)
 
   useEffect(() => {
     localStorage.setItem('alphaAtiva', isActive ? 'true' : 'false')
@@ -62,12 +64,26 @@ export function AlphaVoiceButton() {
     }))
   }, [isActive])
 
+  // Abre HUD automaticamente ao ativar; mantém aberto enquanto ativo
+  useEffect(() => {
+    if (isActive) setHudOpen(true)
+  }, [isActive])
+
   const handleClick = () => {
-    if (isActive) stopListening()
-    else startListening()
+    if (isActive) {
+      stopListening()
+      setHudOpen(false)
+    } else {
+      setHudOpen(true)
+      startListening()
+    }
   }
 
-  // idle = primary, listening/processing/speaking = Índigo IA
+  const handleCloseHud = () => {
+    stopListening()
+    setHudOpen(false)
+  }
+
   const btnBg: Record<VoiceState, string> = {
     idle:       '#1A56DB',
     listening:  '#4C3ABF',
@@ -91,6 +107,17 @@ export function AlphaVoiceButton() {
         }
         .alpha-wave-bar { height: 5px; }
       `}</style>
+
+      <AlphaJarvisHUD
+        open={hudOpen}
+        onClose={handleCloseHud}
+        mode="alpha"
+        voiceState={voiceState}
+        transcript={transcript}
+        lastResponse={lastResponse}
+        error={error}
+      />
+
       <button
         onClick={handleClick}
         title={isActive ? 'Desativar Alpha AI' : 'Ativar Alpha AI'}
@@ -113,7 +140,7 @@ export function AlphaVoiceButton() {
           animation:      voiceState === 'listening'
             ? 'alphaPulseAi 1.4s ease-in-out infinite'
             : 'none',
-          boxShadow:      '0 4px 20px rgba(0,0,0,0.15)',
+          boxShadow:      '0 4px 20px rgba(26,86,219,0.35)',
         }}
         onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
         onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
