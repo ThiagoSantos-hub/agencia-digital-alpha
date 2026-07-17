@@ -97,18 +97,23 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
 function BarChart({ data, color }: { data: number[], color: string }) {
   const max = Math.max(...data, 1)
   return (
-    <div className="flex items-end justify-between h-full w-full gap-1 px-2 pt-2 pb-1">
+    <div className="flex items-end justify-between h-full w-full gap-1.5 px-1">
       {data.map((v, i) => {
-        const height = (v / max) * 100
+        // Reserva ~22% do espaço para o número em cima da barra
+        const heightPct = Math.max((v / max) * 78, v > 0 ? 6 : 2)
         return (
-          <div key={i} className="flex-1 group relative flex flex-col items-center h-full justify-end">
-            <div 
-              className="w-full rounded-t-sm transition-all duration-500 hover:brightness-90"
-              style={{ height: `${height}%`, backgroundColor: color, opacity: 0.6 + (height / 250) }}
-            />
-            <div className="absolute -top-4 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] text-text-main font-bold bg-surface px-1 rounded border border-border z-10 shadow-sm">
+          <div key={i} className="flex-1 flex flex-col items-center h-full justify-end min-w-0">
+            <span className="text-[10px] text-text-main font-bold leading-none tabular-nums mb-1.5 select-none">
               {v}
-            </div>
+            </span>
+            <div
+              className="w-full rounded-t-md transition-all duration-500"
+              style={{
+                height: `${heightPct}%`,
+                backgroundColor: color,
+                opacity: 0.65 + (heightPct / 300),
+              }}
+            />
           </div>
         )
       })}
@@ -156,7 +161,6 @@ export default function DashboardPage() {
         supabase.from('report_history').select('id', { count: 'exact', head: true })
           .eq('status', 'enviado')
           .gte('enviado_em', dataInicio).lte('enviado_em', dataFim + 'T23:59:59'),
-        // BUG FIX: antes usava a mesma query de relatórios
         supabase.from('alerts').select('id', { count: 'exact', head: true }).eq('ativo', true),
         supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('status', 'a_fazer'),
         supabase.from('checklist_items').select('id', { count: 'exact', head: true }).eq('completed', false),
@@ -206,7 +210,6 @@ export default function DashboardPage() {
 
   return (
     <div className="h-[calc(100vh-100px)] flex flex-col gap-4 overflow-hidden">
-      
       <div className="h-16 flex flex-shrink-0 items-center gap-4">
         <div className="bg-surface border border-border rounded-xl px-5 h-full flex items-center gap-4 flex-1 min-w-0 shadow-sm">
           <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
@@ -264,7 +267,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="col-span-6 row-span-4 bg-surface border border-border rounded-xl p-4 flex flex-col min-h-0 shadow-sm">
-          <div className="flex items-center justify-between mb-4 flex-shrink-0">
+          <div className="flex items-center justify-between mb-3 flex-shrink-0">
             <div className="flex items-center gap-2">
               <TrendingUp size={14} className="text-primary" />
               <h2 className="text-text-main font-black text-[10px] uppercase tracking-widest">Desempenho Geral</h2>
@@ -278,20 +281,19 @@ export default function DashboardPage() {
               </span>
             </div>
           </div>
-          <div className="flex-1 min-h-0 w-full overflow-hidden">
-            {/* Placeholder visual até haver série temporal real */}
-            <BarChart 
+          <div className="flex-1 min-h-0 w-full">
+            <BarChart
               data={[
-                stats.totalClientesAtivos || 1,
-                stats.campanhasAtivas || 1,
-                stats.relatoriosEnviados || 1,
-                stats.alertasAtivos || 1,
-                stats.tarefasAFazer || 1,
-                stats.checklistsPendentes || 1,
-                stats.totalClientesAtivos + stats.campanhasAtivas || 1,
-                stats.relatoriosEnviados + stats.alertasAtivos || 1,
-              ]} 
-              color="#1A56DB" 
+                stats.totalClientesAtivos || 0,
+                stats.campanhasAtivas || 0,
+                stats.relatoriosEnviados || 0,
+                stats.alertasAtivos || 0,
+                stats.tarefasAFazer || 0,
+                stats.checklistsPendentes || 0,
+                (stats.totalClientesAtivos + stats.campanhasAtivas) || 0,
+                (stats.relatoriosEnviados + stats.alertasAtivos) || 0,
+              ]}
+              color="#1A56DB"
             />
           </div>
           <div className="mt-3 pt-3 border-t border-border flex items-center justify-between flex-shrink-0">

@@ -96,18 +96,22 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
 function BarChart({ data, color }: { data: number[], color: string }) {
   const max = Math.max(...data, 1)
   return (
-    <div className="flex items-end justify-between h-full w-full gap-1 px-2 pt-2 pb-1">
+    <div className="flex items-end justify-between h-full w-full gap-1.5 px-1">
       {data.map((v, i) => {
-        const height = (v / max) * 100
+        const heightPct = Math.max((v / max) * 78, v > 0 ? 6 : 2)
         return (
-          <div key={i} className="flex-1 group relative flex flex-col items-center h-full justify-end">
-            <div 
-              className="w-full rounded-t-sm transition-all duration-500 hover:brightness-90"
-              style={{ height: `${height}%`, backgroundColor: color, opacity: 0.55 + (height / 250) }}
-            />
-            <div className="absolute -top-4 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] text-text-main font-bold bg-surface px-1 rounded border border-border z-10 shadow-sm">
+          <div key={i} className="flex-1 flex flex-col items-center h-full justify-end min-w-0">
+            <span className="text-[10px] text-text-main font-bold leading-none tabular-nums mb-1.5 select-none">
               {v}
-            </div>
+            </span>
+            <div
+              className="w-full rounded-t-md transition-all duration-500"
+              style={{
+                height: `${heightPct}%`,
+                backgroundColor: color,
+                opacity: 0.65 + (heightPct / 300),
+              }}
+            />
           </div>
         )
       })}
@@ -242,7 +246,7 @@ export default function CollaboratorDashboardPage() {
         </div>
 
         <div className="col-span-6 row-span-4 bg-surface border border-border rounded-xl p-4 flex flex-col min-h-0 shadow-sm">
-          <div className="flex items-center justify-between mb-4 flex-shrink-0">
+          <div className="flex items-center justify-between mb-3 flex-shrink-0">
             <div className="flex items-center gap-2">
               <TrendingUp size={14} className="text-primary" />
               <h2 className="text-text-main font-bold text-xs uppercase tracking-wide">Meu Histórico</h2>
@@ -253,19 +257,19 @@ export default function CollaboratorDashboardPage() {
               </span>
             </div>
           </div>
-          <div className="flex-1 min-h-0 w-full overflow-hidden">
-            <BarChart 
+          <div className="flex-1 min-h-0 w-full">
+            <BarChart
               data={[
-                Math.max(stats.tarefasAFazer, 1),
-                Math.max(stats.checklistsPendentes, 1),
-                Math.max(stats.campanhasAtivas, 1),
-                Math.max(stats.totalClientesAtivos, 1),
-                Math.max(stats.relatoriosEnviados, 1),
-                Math.max(stats.alertasAtivos, 1),
-                Math.max(stats.tarefasAFazer + stats.checklistsPendentes, 1),
-                Math.max(stats.campanhasAtivas + stats.totalClientesAtivos, 1),
-              ]} 
-              color="#1A56DB" 
+                stats.tarefasAFazer || 0,
+                stats.checklistsPendentes || 0,
+                stats.campanhasAtivas || 0,
+                stats.totalClientesAtivos || 0,
+                stats.relatoriosEnviados || 0,
+                stats.alertasAtivos || 0,
+                (stats.tarefasAFazer + stats.checklistsPendentes) || 0,
+                (stats.campanhasAtivas + stats.totalClientesAtivos) || 0,
+              ]}
+              color="#1A56DB"
             />
           </div>
           <div className="mt-3 pt-3 border-t border-border flex items-center justify-between flex-shrink-0">
