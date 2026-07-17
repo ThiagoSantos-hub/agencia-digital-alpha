@@ -4,7 +4,7 @@
 
 :root {
   /* Design Tokens — Digital Alpha (Manual de Marca Jul/2026) */
-  --color-background: #F8FAFC;
+  --color-background: #EEF2F7;
   --color-surface: #FFFFFF;
   --color-sidebar: #FFFFFF;
   --color-border: #E2E8F0;
@@ -18,6 +18,27 @@
   --color-text-main: #1E293B;
   --color-text-muted: #64748B;
   --color-text-disabled: #94A3B8;
+
+  /* Elevação 3D — contraste forte com o fundo */
+  --shadow-elevated-sm:
+    0 1px 2px rgba(15, 23, 42, 0.06),
+    0 3px 10px rgba(15, 23, 42, 0.08);
+  --shadow-elevated-md:
+    0 2px 4px rgba(15, 23, 42, 0.06),
+    0 8px 22px rgba(15, 23, 42, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.85) inset;
+  --shadow-elevated-lg:
+    0 4px 12px rgba(15, 23, 42, 0.08),
+    0 18px 40px rgba(15, 23, 42, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  --shadow-btn:
+    0 1px 0 rgba(255, 255, 255, 0.28) inset,
+    0 2px 4px rgba(15, 23, 42, 0.12),
+    0 6px 14px rgba(26, 86, 219, 0.18);
+  --shadow-btn-hover:
+    0 1px 0 rgba(255, 255, 255, 0.32) inset,
+    0 4px 8px rgba(15, 23, 42, 0.14),
+    0 10px 22px rgba(26, 86, 219, 0.22);
 }
 
 * {
@@ -34,14 +55,13 @@ body {
   color: var(--color-text-main);
 }
 
-/* Scrollbar minimalista */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #F1F5F9;
+  background: #E2E8F0;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -57,10 +77,27 @@ elevenlabs-convai {
   display: none !important;
 }
 
+@layer utilities {
+  .shadow-elevated-sm {
+    box-shadow: var(--shadow-elevated-sm);
+  }
+  .shadow-elevated-md {
+    box-shadow: var(--shadow-elevated-md);
+  }
+  .shadow-elevated-lg {
+    box-shadow: var(--shadow-elevated-lg);
+  }
+  .shadow-btn {
+    box-shadow: var(--shadow-btn);
+  }
+  .shadow-btn-hover {
+    box-shadow: var(--shadow-btn-hover);
+  }
+}
+
 @layer components {
-  /* Divisórias e seções — evita “folha em branco” contínua */
   .section-card {
-    @apply bg-surface border border-border rounded-xl shadow-sm;
+    @apply bg-surface border border-border rounded-xl shadow-md;
   }
 
   .section-divider {
@@ -68,17 +105,51 @@ elevenlabs-convai {
   }
 
   .panel-block {
-    @apply bg-surface border border-border rounded-xl shadow-sm p-5;
+    @apply bg-surface border border-border rounded-xl shadow-md p-5;
   }
 
-  /* Inputs compactos para modais minimalistas */
+  .btn-elevated {
+    @apply shadow-btn transition-shadow;
+  }
+  .btn-elevated:hover {
+    box-shadow: var(--shadow-btn-hover);
+  }
+
   .input-compact {
     @apply w-full px-3 py-2 bg-background border border-border rounded-lg
            text-text-main text-sm placeholder:text-text-disabled
-           focus:outline-none focus:border-primary/50 transition-colors;
+           focus:outline-none focus:border-primary/50 transition-colors shadow-sm;
   }
 
   .label-compact {
     @apply block text-[11px] font-medium text-text-muted mb-1;
+  }
+
+  /*
+   * Elevação automática em cards do conteúdo principal
+   * (admin + colaborador) — cobre páginas que só usam bg-surface + border + rounded
+   * sem shadow explícita.
+   */
+  main .bg-surface.border.rounded-xl,
+  main .bg-surface.border.rounded-2xl,
+  main .bg-white.border.rounded-xl,
+  main .bg-white.border.rounded-2xl {
+    box-shadow: var(--shadow-elevated-md);
+  }
+
+  /* Tabelas e listas em container com borda */
+  main .overflow-x-auto.rounded-xl.border,
+  main .overflow-hidden.rounded-xl.border,
+  main .rounded-xl.border.border-border {
+    box-shadow: var(--shadow-elevated-md);
+  }
+
+  /* Sidebar e header com leve elevação */
+  aside.fixed {
+    box-shadow: var(--shadow-elevated-md);
+  }
+
+  header.h-16 {
+    box-shadow: var(--shadow-elevated-sm);
   }
 }

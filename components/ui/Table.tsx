@@ -25,7 +25,7 @@ export function Table<T>({
   onRowClick,
 }: TableProps<T>) {
   return (
-    <div className="w-full overflow-x-auto rounded-xl border border-border shadow-sm">
+    <div className="w-full overflow-x-auto rounded-xl border border-border bg-surface shadow-md">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border">

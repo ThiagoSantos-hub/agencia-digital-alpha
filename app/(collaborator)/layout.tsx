@@ -26,6 +26,8 @@ import { createClient } from '@/lib/supabase'
 import { useNotificacoes } from '@/hooks/useNotificacoes'
 import { PageFade } from '@/components/ui/Motion'
 import { CollaboratorNavLink } from '@/components/layout/CollaboratorNavLink'
+import { NotificationToasts } from '@/components/layout/NotificationToasts'
+import { NotificationPermissionPrompt } from '@/components/layout/NotificationPermissionPrompt'
 import { springSoft } from '@/lib/motion'
 
 const menuGroups = [
@@ -192,7 +194,7 @@ export default function CollaboratorLayout({
 
   return (
     <div className="h-screen bg-background text-text-main flex overflow-hidden">
-      <aside className="fixed left-0 top-0 h-screen w-64 bg-surface border-r border-border flex flex-col z-40">
+      <aside className="fixed left-0 top-0 h-screen w-64 bg-surface border-r border-border flex flex-col z-40 shadow-elevated-md">
         <div className="px-6 py-5 border-b border-border">
           <div className="flex items-center gap-2">
             <span className="text-text-main font-black text-lg tracking-tight">DIGITAL</span>
@@ -258,7 +260,7 @@ export default function CollaboratorLayout({
       </aside>
 
       <div className="flex-1 ml-64 flex flex-col h-full overflow-hidden">
-        <header className="h-16 border-b border-border bg-surface px-8 flex items-center justify-between shrink-0">
+        <header className="h-16 border-b border-border bg-surface px-8 flex items-center justify-between shrink-0 shadow-elevated-sm">
           <div>
             <h2 className="text-sm font-medium text-text-muted">Bem-vindo de volta,</h2>
             <p className="text-text-main font-bold">{profile.name || profile.email}</p>
@@ -270,7 +272,7 @@ export default function CollaboratorLayout({
                 onClick={() => setSinoAberto(prev => !prev)}
                 whileTap={{ scale: 0.92 }}
                 transition={springSoft}
-                className={`relative w-9 h-9 flex items-center justify-center rounded-xl ${
+                className={`relative w-9 h-9 flex items-center justify-center rounded-xl shadow-elevated-sm ${
                   naoLidas > 0 
                     ? 'text-amber-600 bg-amber-50 border border-amber-200' 
                     : 'text-text-muted hover:text-text-main hover:bg-hover-bg'
@@ -286,7 +288,7 @@ export default function CollaboratorLayout({
               </motion.button>
 
               {sinoAberto && (
-                <div className="absolute right-0 top-11 w-80 bg-surface border border-border rounded-xl shadow-2xl z-50 flex flex-col max-h-[480px]">
+                <div className="absolute right-0 top-11 w-80 bg-surface border border-border rounded-xl shadow-elevated-lg z-50 flex flex-col max-h-[480px]">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                     <div className="flex items-center gap-2">
                       <span className="text-text-main font-semibold text-sm">Notificações</span>
@@ -363,7 +365,7 @@ export default function CollaboratorLayout({
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center shadow-elevated-sm">
                 <span className="text-primary text-sm font-bold">{(profile.name || profile.email).charAt(0).toUpperCase()}</span>
               </div>
             </div>
@@ -376,6 +378,9 @@ export default function CollaboratorLayout({
           </PageFade>
         </main>
       </div>
+
+      <NotificationToasts />
+      <NotificationPermissionPrompt />
     </div>
   )
 }
