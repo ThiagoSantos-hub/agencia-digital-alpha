@@ -189,7 +189,6 @@ export default function CollaboratorLayout({
 
   return (
     <div className="h-screen bg-background text-text-main flex overflow-hidden">
-      {/* Sidebar */}
       <aside className="fixed left-0 top-0 h-screen w-64 bg-surface border-r border-border flex flex-col z-40">
         <div className="px-6 py-5 border-b border-border">
           <div className="flex items-center gap-2">
@@ -208,7 +207,7 @@ export default function CollaboratorLayout({
                   : 'text-text-muted hover:text-text-main hover:bg-hover-bg'
               }`}>
               <LayoutDashboard size={18} />
-              <span className="text-sm">Dashboard</span>
+              <span className="text-sm font-semibold">Dashboard</span>
             </Link>
           </div>
 
@@ -227,7 +226,7 @@ export default function CollaboratorLayout({
                   if (!item.ativo) return (
                     <div key={item.href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-text-disabled cursor-not-allowed opacity-50">
                       <Icon size={18} />
-                      <span className="text-sm">{item.label}</span>
+                      <span className="text-sm font-semibold">{item.label}</span>
                       <span className="ml-auto text-xs bg-hover-bg text-text-muted px-1.5 py-0.5 rounded-md">Em breve</span>
                     </div>
                   )
@@ -242,7 +241,7 @@ export default function CollaboratorLayout({
                             : 'text-text-muted hover:text-text-main hover:bg-hover-bg'
                       }`}>
                       <Icon size={18} className={showPulse ? 'fill-amber-500' : ''} />
-                      <span className={`text-sm font-medium ${showPulse ? 'text-amber-600' : ''}`}>{item.label}</span>
+                      <span className={`text-sm font-semibold ${showPulse ? 'text-amber-600' : ''}`}>{item.label}</span>
                     </Link>
                   )
                 })}
@@ -257,12 +256,11 @@ export default function CollaboratorLayout({
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors"
           >
             <LogOut size={18} />
-            <span className="text-sm font-medium">Sair do sistema</span>
+            <span className="text-sm font-semibold">Sair do sistema</span>
           </button>
         </div>
       </aside>
 
-      {/* Main Content */}
       <div className="flex-1 ml-64 flex flex-col h-full overflow-hidden">
         <header className="h-16 border-b border-border bg-surface px-8 flex items-center justify-between shrink-0">
           <div>

@@ -63,7 +63,6 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-4 custom-scrollbar">
-        {/* Dashboard isolado no topo */}
         <div className="mb-2">
           <Link href="/dashboard"
             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
@@ -88,7 +87,7 @@ export function Sidebar() {
                 if (!item.ativo) return (
                   <div key={item.href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-text-disabled cursor-not-allowed opacity-50">
                     <Icon size={18} />
-                    <span className="text-sm">{item.label}</span>
+                    <span className="text-sm font-semibold">{item.label}</span>
                     <span className="ml-auto text-[9px] bg-hover-bg text-text-disabled px-1.5 py-0.5 rounded-md font-bold uppercase">Em breve</span>
                   </div>
                 )
@@ -96,11 +95,11 @@ export function Sidebar() {
                   <Link key={item.href} href={item.href}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
                       isActive
-                        ? 'bg-active-bg text-primary border border-active-border font-semibold'
+                        ? 'bg-active-bg text-primary border border-active-border'
                         : 'text-text-muted hover:text-text-main hover:bg-hover-bg'
                     }`}>
                     <Icon size={18} />
-                    <span className="text-sm">{item.label}</span>
+                    <span className="text-sm font-semibold">{item.label}</span>
                   </Link>
                 )
               })}
@@ -113,7 +112,7 @@ export function Sidebar() {
         <button onClick={() => signOut()}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-600 hover:bg-red-50 transition-colors">
           <LogOut size={18} />
-          <span className="text-sm font-bold">Sair do sistema</span>
+          <span className="text-sm font-semibold">Sair do sistema</span>
         </button>
       </div>
     </aside>
