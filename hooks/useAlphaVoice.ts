@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useCallback } from 'react'
 import { loadNotes, stripAndApplySaves } from '@/lib/ai/secondBrain'
+import { loadAlphaSettings } from '@/lib/ai/alphaSettings'
 
 export type VoiceState = 'idle' | 'listening' | 'processing' | 'speaking'
 
@@ -73,10 +74,19 @@ export function useAlphaVoice() {
       }
 
       const notes = loadNotes()
+      const settings = loadAlphaSettings()
+
       const aiRes = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mensagem: texto.trim(), incluirVoz: true, notes }),
+        body: JSON.stringify({
+          mensagem: texto.trim(),
+          incluirVoz: true,
+          notes,
+          voiceSpeed: settings.voiceSpeed,
+          maxTokens: settings.maxTokens,
+          temperature: settings.temperature,
+        }),
       })
       if (!aiRes.ok) throw new Error('Erro ao consultar a Alpha')
       const data = await aiRes.json()

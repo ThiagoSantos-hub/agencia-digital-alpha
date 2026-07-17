@@ -2,6 +2,7 @@
 'use client'
 import { useState, useCallback, useRef } from 'react'
 import { loadNotes, stripAndApplySaves } from '@/lib/ai/secondBrain'
+import { loadAlphaSettings } from '@/lib/ai/alphaSettings'
 
 export type ChatRole = 'user' | 'assistant'
 
@@ -47,10 +48,19 @@ export function useAlphaAI(): UseAlphaAIReturn {
 
     try {
       const notes = loadNotes()
+      const settings = loadAlphaSettings()
+
       const res = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mensagem: texto, incluirVoz, notes }),
+        body: JSON.stringify({
+          mensagem: texto,
+          incluirVoz,
+          notes,
+          voiceSpeed: settings.voiceSpeed,
+          maxTokens: settings.maxTokens,
+          temperature: settings.temperature,
+        }),
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))

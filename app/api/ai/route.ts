@@ -1,4 +1,4 @@
-// app/api/ai/route.ts — v1.8.2 (latência menor)
+// app/api/ai/route.ts — v1.8.3 (settings do admin)
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
 import { alphaAI } from '@/lib/ai/AIService'
@@ -18,7 +18,10 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS_HEADERS })
 }
 
-/** Snapshot leve: só contagens (head), sem puxar linhas inteiras */
+function clamp(n: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, n))
+}
+
 async function buildCrmSnapshot(supabase: ReturnType<typeof createServerClient>): Promise<string> {
   try {
     const inicioMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
@@ -90,6 +93,10 @@ export async function POST(req: NextRequest) {
     const incluirVoz: boolean = body.incluirVoz ?? false
     const notes: BrainNote[] | undefined = Array.isArray(body.notes) ? body.notes : undefined
 
+    const voiceSpeed = clamp(Number(body.voiceSpeed) || 1.3, 0.8, 1.5)
+    const maxTokens = Math.round(clamp(Number(body.maxTokens) || 120, 60, 400))
+    const temperature = clamp(Number(body.temperature) || 0.3, 0.1, 0.9)
+
     if (!mensagem.trim()) {
       return NextResponse.json(
         { error: 'Mensagem vazia' },
@@ -97,13 +104,11 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Paralelo: histórico + snapshot CRM
     const [historicoRaw, crmSnapshot] = await Promise.all([
       memoryService.recuperar(user.id),
       buildCrmSnapshot(supabase),
     ])
 
-    // Só últimas 6 mensagens — menos tokens = resposta mais rápida
     const historico = historicoRaw
       .filter((m) => m.role === 'user' || (m.role === 'assistant' && !m.rawToolCalls))
       .slice(-6)
@@ -113,21 +118,20 @@ export async function POST(req: NextRequest) {
       { role: 'user', content: mensagem },
     ]
 
-    // Ferramentas só se a pergunta parece precisar de detalhe (não só contagem)
-    const precisaFerramenta = /\b(lista|nome|quais|quem|cadastr|ativ|inativ|métric|metric|campanha .*cliente|cliente .*campanha|tarefa|financeiro detalh|lançamento)\b/i.test(
-      mensagem
-    )
+    const precisaFerramenta =
+      /\b(lista|nome|quais|quem|cadastr|ativ|inativ|métric|metric|campanha .*cliente|cliente .*campanha|tarefa|financeiro detalh|lançamento)\b/i.test(
+        mensagem
+      )
     const tools = precisaFerramenta ? crmTools.getTools(supabase) : undefined
 
     const resposta = await alphaAI.chat(mensagensParaIA, tools, {
       notes,
       crmSnapshot,
-      maxTokens: 120,
-      temperature: 0.3,
+      maxTokens,
+      temperature,
     })
     const respostaTexto = resposta.text || 'Sem dados no momento, diretor.'
 
-    // Salva histórico em background — não bloqueia a resposta
     const historicoParaSalvar = [
       ...mensagensParaIA.filter(
         (m) => m.role === 'user' || (m.role === 'assistant' && !m.rawToolCalls)
@@ -140,7 +144,9 @@ export async function POST(req: NextRequest) {
     if (incluirVoz) {
       try {
         const textoFala = respostaTexto.replace(/\[\[SAVE:[\s\S]*?\]\]/gi, '').trim()
-        audioBase64 = await voiceService.sintetizarBase64(textoFala || respostaTexto)
+        audioBase64 = await voiceService.sintetizarBase64(textoFala || respostaTexto, 'openai', {
+          speed: voiceSpeed,
+        })
       } catch (e) {
         console.error('[API AI] Erro na síntese de voz:', e)
         audioBase64 = null

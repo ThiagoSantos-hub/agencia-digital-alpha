@@ -1,6 +1,4 @@
 // lib/ai/providers/openai-tts.provider.ts
-// Síntese de voz usando OpenAI TTS (tts-1)
-// Transcrição usando OpenAI Whisper
 import type { VoiceProvider } from '../types'
 
 export class OpenAITTSProvider implements VoiceProvider {
@@ -13,13 +11,15 @@ export class OpenAITTSProvider implements VoiceProvider {
     }
   }
 
-  async sintetizar(texto: string): Promise<Buffer> {
+  async sintetizar(texto: string, options?: { speed?: number }): Promise<Buffer> {
     if (!this.openAiKey) {
       throw new Error('[OpenAITTSProvider] OPENAI_API_KEY não configurada.')
     }
 
-    // Limita texto falado — evita áudio longo e lento
     const input = texto.length > 280 ? texto.slice(0, 277) + '…' : texto
+    let speed = typeof options?.speed === 'number' ? options.speed : 1.3
+    if (speed < 0.8) speed = 0.8
+    if (speed > 1.5) speed = 1.5
 
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
@@ -28,11 +28,10 @@ export class OpenAITTSProvider implements VoiceProvider {
         Authorization: `Bearer ${this.openAiKey}`,
       },
       body: JSON.stringify({
-        model: 'tts-1', // mais rápido que tts-1-hd
+        model: 'tts-1',
         input,
         voice: 'onyx',
-        // 1.3 = ritmo ágil e natural (usuário sentia 0.9/1.15 como "dormindo")
-        speed: 1.3,
+        speed,
       }),
     })
 

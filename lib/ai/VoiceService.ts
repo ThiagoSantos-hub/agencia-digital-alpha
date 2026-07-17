@@ -1,5 +1,4 @@
-// lib/ai/VoiceService.ts — v2.0.0
-// Suporta dois providers: 'openai' (padrão) e 'elevenlabs'
+// lib/ai/VoiceService.ts — v2.1.0 (speed configurável)
 import type { VoiceProvider } from './types'
 
 export type VoiceProviderName = 'openai' | 'elevenlabs'
@@ -20,12 +19,23 @@ export class VoiceService {
     return this.providers[nome]!
   }
 
-  async sintetizar(texto: string, provider: VoiceProviderName = 'openai'): Promise<Buffer> {
-    return this.getProvider(provider).sintetizar(texto)
+  async sintetizar(
+    texto: string,
+    provider: VoiceProviderName = 'openai',
+    options?: { speed?: number }
+  ): Promise<Buffer> {
+    const p = this.getProvider(provider) as VoiceProvider & {
+      sintetizar: (t: string, opts?: { speed?: number }) => Promise<Buffer>
+    }
+    return p.sintetizar(texto, options)
   }
 
-  async sintetizarBase64(texto: string, provider: VoiceProviderName = 'openai'): Promise<string> {
-    const buffer = await this.getProvider(provider).sintetizar(texto)
+  async sintetizarBase64(
+    texto: string,
+    provider: VoiceProviderName = 'openai',
+    options?: { speed?: number }
+  ): Promise<string> {
+    const buffer = await this.sintetizar(texto, provider, options)
     return buffer.toString('base64')
   }
 
