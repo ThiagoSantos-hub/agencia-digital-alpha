@@ -93,8 +93,8 @@ export default function PerfilAdminPage() {
     <div className="px-6 py-4 space-y-4">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="p-2 rounded-xl bg-[#00ff88]/10 border border-[#00ff88]/30">
-          <Shield size={20} className="text-[#00ff88]" />
+        <div className="p-2 rounded-xl bg-primary/10 border border-primary/30">
+          <Shield size={20} className="text-primary" />
         </div>
         <div>
           <h1 className="text-xl font-bold text-text-main">Meu Perfil</h1>
@@ -106,8 +106,8 @@ export default function PerfilAdminPage() {
       {message && (
         <div className={`fixed top-20 right-8 z-50 flex items-center gap-3 px-4 py-2.5 rounded-xl border shadow-2xl animate-in fade-in slide-in-from-right-4 ${
           message.type === 'success' 
-            ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' 
-            : 'bg-red-500/10 border-red-500/50 text-red-400'
+            ? 'bg-cta/10 border-cta/50 text-cta' 
+            : 'bg-red-50 border-red-200 text-red-500'
         }`}>
           {message.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
           <p className="text-sm font-medium">{message.text}</p>
@@ -118,7 +118,7 @@ export default function PerfilAdminPage() {
         {/* Dados Pessoais */}
         <section className="bg-background border border-border p-5 rounded-xl">
           <div className="flex items-center gap-2.5 mb-4">
-            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
+            <div className="p-1.5 rounded-lg bg-cta/10 text-cta">
               <User size={16} />
             </div>
             <h2 className="text-base font-bold text-text-main">Dados Pessoais</h2>
@@ -149,7 +149,7 @@ export default function PerfilAdminPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Seu nome"
-                  className="w-full bg-hover-bg border border-border rounded-xl pl-9 pr-3 py-2 text-sm text-text-main focus:outline-none focus:border-emerald-500/50 transition-all"
+                  className="w-full bg-hover-bg border border-border rounded-xl pl-9 pr-3 py-2 text-sm text-text-main focus:outline-none focus:border-primary/50 transition-all"
                 />
               </div>
             </div>
@@ -164,7 +164,7 @@ export default function PerfilAdminPage() {
             <button 
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-[#0a0f0c] font-bold rounded-xl transition-all disabled:opacity-50 text-sm"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-cta hover:bg-cta-hover text-white font-bold rounded-xl transition-all disabled:opacity-50 text-sm"
             >
               <Save size={16} />
               {loading ? 'Salvando...' : 'Salvar Alterações'}
@@ -192,7 +192,7 @@ export default function PerfilAdminPage() {
                   value={passwordData.newPassword}
                   onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
                   placeholder="Mínimo 6 caracteres"
-                  className="w-full bg-hover-bg border border-border rounded-xl pl-9 pr-10 py-2 text-sm text-text-main focus:outline-none focus:border-emerald-500/50 transition-all"
+                  className="w-full bg-hover-bg border border-border rounded-xl pl-9 pr-10 py-2 text-sm text-text-main focus:outline-none focus:border-primary/50 transition-all"
                 />
                 <button
                   type="button"
@@ -214,7 +214,7 @@ export default function PerfilAdminPage() {
                   value={passwordData.confirmNewPassword}
                   onChange={(e) => setPasswordData({...passwordData, confirmNewPassword: e.target.value})}
                   placeholder="Repita a nova senha"
-                  className="w-full bg-hover-bg border border-border rounded-xl pl-9 pr-10 py-2 text-sm text-text-main focus:outline-none focus:border-emerald-500/50 transition-all"
+                  className="w-full bg-hover-bg border border-border rounded-xl pl-9 pr-10 py-2 text-sm text-text-main focus:outline-none focus:border-primary/50 transition-all"
                 />
                 <button
                   type="button"
@@ -229,7 +229,7 @@ export default function PerfilAdminPage() {
             <button 
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-gray-100 text-[#0a0f0c] font-bold rounded-xl transition-all disabled:opacity-50 text-sm"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-surface hover:bg-hover-bg text-text-main border border-border font-bold rounded-xl transition-all disabled:opacity-50 text-sm"
             >
               <KeyRound size={16} />
               {loading ? 'Processando...' : 'Atualizar Senha'}
