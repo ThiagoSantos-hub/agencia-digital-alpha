@@ -81,29 +81,28 @@ function AlphaButton({ userName }: { userName: string }) {
   return (
     <div className="fixed bottom-6 right-6 z-[60] flex flex-col items-end gap-3 pointer-events-none">
       {active && (
-        <div className="bg-[#0f1a14] border border-[#00ff88]/30 rounded-2xl p-4 shadow-2xl w-48 pointer-events-auto">
+        <div className="bg-surface border border-ai/30 rounded-xl p-4 shadow-2xl w-48 pointer-events-auto">
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-2 h-2 rounded-full bg-[#00ff88] animate-pulse" />
-            <span className="text-[#00ff88] text-sm font-semibold">Alpha ativa</span>
+            <div className="w-2 h-2 rounded-full bg-ai animate-pulse" />
+            <span className="text-ai text-sm font-semibold">Alpha ativa</span>
           </div>
-          <p className="text-gray-400 text-xs">Pode falar!</p>
+          <p className="text-text-muted text-xs">Pode falar!</p>
         </div>
       )}
       <button
         onClick={handleClick}
         disabled={loading}
-        className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all disabled:opacity-50 pointer-events-auto hover:scale-110 active:scale-95"
-        style={{
-          backgroundColor: active ? '#0f1a14' : '#00ff88',
-          border: '2px solid #00ff88',
-          boxShadow: active ? '0 0 20px rgba(0,255,136,0.4)' : '0 0 10px rgba(0,255,136,0.2)',
-        }}
+        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all disabled:opacity-50 pointer-events-auto hover:scale-110 active:scale-95 border-2 ${
+          active
+            ? 'bg-ai border-ai text-white shadow-ai/40'
+            : 'bg-primary border-primary text-white shadow-primary/20'
+        }`}
       >
         {loading
-          ? <div className="w-5 h-5 border-2 border-[#00ff88] border-t-transparent rounded-full animate-spin" />
+          ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
           : active
-            ? <MicOff size={22} color="#00ff88" />
-            : <Mic size={22} color="#0a0f0c" />
+            ? <MicOff size={22} />
+            : <Mic size={22} />
         }
       </button>
     </div>
@@ -144,7 +143,6 @@ export function AlphaWidget() {
     }
   }, [userId, supabase])
 
-  // Proteção: captura erro do SDK sem deixar crashar
   const handleError = useCallback((error: any) => {
     const tipo = error?.error_type ?? error?.type ?? 'desconhecido'
     console.warn('[Alpha] Erro SDK:', tipo)

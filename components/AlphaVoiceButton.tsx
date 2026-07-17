@@ -1,10 +1,6 @@
 'use client'
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useAlphaVoice, VoiceState } from '@/hooks/useAlphaVoice'
-
-// ── PATCH v1.1 — sincroniza com extensão Chrome via localStorage ──────────────
-// Quando o usuário ativa/desativa no botão, seta localStorage.alphaAtiva
-// A extensão escuta esse evento e espelha o estado em todas as abas do Chrome
 
 function IconMic() {
   return (
@@ -30,7 +26,7 @@ function WaveIcon() {
       {[0, 1, 2, 3, 4].map(i => (
         <span key={i} className="alpha-wave-bar" style={{
           display: 'block', width: 3, borderRadius: 2,
-          background: '#00ff88',
+          background: '#4C3ABF',
           animationName: 'alphaWave',
           animationDuration: '0.9s',
           animationTimingFunction: 'ease-in-out',
@@ -45,7 +41,7 @@ function Spinner() {
   return (
     <span style={{
       width: 20, height: 20,
-      border: '2.5px solid #00ff88',
+      border: '2.5px solid #4C3ABF',
       borderTopColor: 'transparent',
       borderRadius: '50%',
       display: 'inline-block',
@@ -58,7 +54,6 @@ export function AlphaVoiceButton() {
   const { voiceState, startListening, stopListening } = useAlphaVoice()
   const isActive = voiceState !== 'idle'
 
-  // ── Sincroniza com extensão Chrome ────────────────────────────────────────
   useEffect(() => {
     localStorage.setItem('alphaAtiva', isActive ? 'true' : 'false')
     window.dispatchEvent(new StorageEvent('storage', {
@@ -72,11 +67,12 @@ export function AlphaVoiceButton() {
     else startListening()
   }
 
+  // idle = primary, listening/processing/speaking = Índigo IA
   const btnBg: Record<VoiceState, string> = {
-    idle:       '#0f1a14',
-    listening:  '#ef4444',
-    processing: '#0f1a14',
-    speaking:   '#0f1a14',
+    idle:       '#1A56DB',
+    listening:  '#4C3ABF',
+    processing: '#4C3ABF',
+    speaking:   '#4C3ABF',
   }
 
   return (
@@ -89,9 +85,9 @@ export function AlphaVoiceButton() {
         @keyframes alphaSpin {
           to { transform: rotate(360deg); }
         }
-        @keyframes alphaPulseRed {
-          0%, 100% { box-shadow: 0 0 0 0   rgba(239,68,68,0.5), 0 4px 20px rgba(0,0,0,0.4); }
-          50%       { box-shadow: 0 0 0 10px rgba(239,68,68,0),   0 4px 20px rgba(0,0,0,0.4); }
+        @keyframes alphaPulseAi {
+          0%, 100% { box-shadow: 0 0 0 0   rgba(76,58,191,0.45), 0 4px 20px rgba(0,0,0,0.15); }
+          50%       { box-shadow: 0 0 0 10px rgba(76,58,191,0),   0 4px 20px rgba(0,0,0,0.15); }
         }
         .alpha-wave-bar { height: 5px; }
       `}</style>
@@ -106,18 +102,18 @@ export function AlphaVoiceButton() {
           width:          48,
           height:         48,
           borderRadius:   '50%',
-          border:         '2px solid #00ff88',
+          border:         `2px solid ${btnBg[voiceState]}`,
           cursor:         'pointer',
           background:     btnBg[voiceState],
-          color:          '#00ff88',
+          color:          '#FFFFFF',
           display:        'flex',
           alignItems:     'center',
           justifyContent: 'center',
-          transition:     'background 0.2s, transform 0.15s',
+          transition:     'background 0.2s, transform 0.15s, border-color 0.2s',
           animation:      voiceState === 'listening'
-            ? 'alphaPulseRed 1.4s ease-in-out infinite'
+            ? 'alphaPulseAi 1.4s ease-in-out infinite'
             : 'none',
-          boxShadow:      '0 4px 20px rgba(0,0,0,0.4)',
+          boxShadow:      '0 4px 20px rgba(0,0,0,0.15)',
         }}
         onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
         onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}

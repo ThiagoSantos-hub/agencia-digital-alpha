@@ -37,13 +37,13 @@ export function KanbanColumn({
   const { setNodeRef } = useDroppable({ id })
 
   return (
-    <div className="flex-1 min-w-[250px] max-w-[350px] bg-[#0f1a14]/40 border border-[#1a3a24] rounded-xl flex flex-col overflow-hidden">
-      <div className="p-3 border-b border-[#1a3a24] flex items-center justify-between bg-[#0f1a14]/60">
+    <div className="flex-1 min-w-[250px] max-w-[350px] bg-surface/40 border border-border rounded-xl flex flex-col overflow-hidden">
+      <div className="p-3 border-b border-border flex items-center justify-between bg-surface/60">
         <div className="flex items-center gap-2">
           <Icon size={16} className={color} />
-          <h2 className="text-white font-bold text-[11px] uppercase tracking-wider truncate">{label}</h2>
+          <h2 className="text-text-main font-bold text-[11px] uppercase tracking-wider truncate">{label}</h2>
         </div>
-        <span className="bg-[#1a3a24] text-gray-400 text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+        <span className="bg-hover-bg text-text-muted text-[9px] font-bold px-1.5 py-0.5 rounded-full">
           {tasks.length}
         </span>
       </div>

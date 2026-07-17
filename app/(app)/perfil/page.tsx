@@ -93,12 +93,12 @@ export default function PerfilAdminPage() {
     <div className="px-6 py-4 space-y-4">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="p-2 rounded-xl bg-[#00ff88]/10 border border-[#00ff88]/30">
-          <Shield size={20} className="text-[#00ff88]" />
+        <div className="p-2 rounded-xl bg-primary/10 border border-primary/30">
+          <Shield size={20} className="text-primary" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-white">Meu Perfil</h1>
-          <p className="text-gray-400 text-xs">Gerencie suas informações e segurança da conta.</p>
+          <h1 className="text-xl font-bold text-text-main">Meu Perfil</h1>
+          <p className="text-text-muted text-xs">Gerencie suas informações e segurança da conta.</p>
         </div>
       </div>
 
@@ -106,8 +106,8 @@ export default function PerfilAdminPage() {
       {message && (
         <div className={`fixed top-20 right-8 z-50 flex items-center gap-3 px-4 py-2.5 rounded-xl border shadow-2xl animate-in fade-in slide-in-from-right-4 ${
           message.type === 'success' 
-            ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' 
-            : 'bg-red-500/10 border-red-500/50 text-red-400'
+            ? 'bg-cta/10 border-cta/50 text-cta' 
+            : 'bg-red-50 border-red-200 text-red-500'
         }`}>
           {message.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
           <p className="text-sm font-medium">{message.text}</p>
@@ -116,47 +116,47 @@ export default function PerfilAdminPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Dados Pessoais */}
-        <section className="bg-[#0a0f0c] border border-[#1a3a24] p-5 rounded-2xl">
+        <section className="bg-surface border border-border p-5 rounded-xl shadow-sm">
           <div className="flex items-center gap-2.5 mb-4">
-            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
+            <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
               <User size={16} />
             </div>
-            <h2 className="text-base font-bold text-white">Dados Pessoais</h2>
+            <h2 className="text-base font-bold text-text-main">Dados Pessoais</h2>
           </div>
 
           <form onSubmit={handleUpdateName} className="space-y-3">
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">E-mail</label>
+              <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">E-mail</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" size={14} />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-text-disabled" size={14} />
                 <input 
                   type="email" 
                   disabled
                   value={user?.email || ''}
-                  className="w-full bg-[#1a3a24]/10 border border-[#1a3a24] rounded-xl pl-9 pr-3 py-2 text-sm text-gray-500 cursor-not-allowed"
+                  className="w-full bg-hover-bg/10 border border-border rounded-xl pl-9 pr-3 py-2 text-sm text-text-muted cursor-not-allowed"
                 />
               </div>
-              <p className="text-[10px] text-amber-500/70 font-medium">O email não pode ser alterado.</p>
+              <p className="text-[10px] text-amber-600 font-medium">O email não pode ser alterado.</p>
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Nome de exibição</label>
+              <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">Nome de exibição</label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={14} />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={14} />
                 <input 
                   type="text" 
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Seu nome"
-                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                  className="w-full bg-background border border-border rounded-xl pl-9 pr-3 py-2 text-sm text-text-main focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                 />
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Cargo</label>
-              <div className="bg-[#1a3a24]/10 border border-[#1a3a24] rounded-xl px-3 py-2 text-sm text-gray-400 font-medium">
+              <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">Cargo</label>
+              <div className="bg-background border border-border rounded-xl px-3 py-2 text-sm text-text-muted font-medium">
                 {profile?.role === 'admin' ? 'Administrador' : 'Gestor'}
               </div>
             </div>
@@ -164,7 +164,7 @@ export default function PerfilAdminPage() {
             <button 
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-[#0a0f0c] font-bold rounded-xl transition-all disabled:opacity-50 text-sm"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl transition-all disabled:opacity-50 text-sm shadow-sm"
             >
               <Save size={16} />
               {loading ? 'Salvando...' : 'Salvar Alterações'}
@@ -173,31 +173,31 @@ export default function PerfilAdminPage() {
         </section>
 
         {/* Segurança / Senha */}
-        <section className="bg-[#0a0f0c] border border-[#1a3a24] p-5 rounded-2xl">
+        <section className="bg-surface border border-border p-5 rounded-xl shadow-sm">
           <div className="flex items-center gap-2.5 mb-4">
-            <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
+            <div className="p-1.5 rounded-lg bg-amber-50 text-amber-600 border border-amber-200">
               <Lock size={16} />
             </div>
-            <h2 className="text-base font-bold text-white">Segurança</h2>
+            <h2 className="text-base font-bold text-text-main">Segurança</h2>
           </div>
 
           <form onSubmit={handleUpdatePassword} className="space-y-3">
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Nova Senha</label>
+              <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">Nova Senha</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={14} />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={14} />
                 <input 
                   type={showPassword ? 'text' : 'password'} 
                   required
                   value={passwordData.newPassword}
                   onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
                   placeholder="Mínimo 6 caracteres"
-                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl pl-9 pr-10 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                  className="w-full bg-background border border-border rounded-xl pl-9 pr-10 py-2 text-sm text-text-main focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition-colors"
                 >
                   {showPassword ? <AlertCircle size={14} className="rotate-45" /> : <KeyRound size={14} />}
                 </button>
@@ -205,21 +205,21 @@ export default function PerfilAdminPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Confirmar Senha</label>
+              <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">Confirmar Senha</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={14} />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={14} />
                 <input 
                   type={showConfirm ? 'text' : 'password'} 
                   required
                   value={passwordData.confirmNewPassword}
                   onChange={(e) => setPasswordData({...passwordData, confirmNewPassword: e.target.value})}
                   placeholder="Repita a nova senha"
-                  className="w-full bg-[#1a3a24]/20 border border-[#1a3a24] rounded-xl pl-9 pr-10 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                  className="w-full bg-background border border-border rounded-xl pl-9 pr-10 py-2 text-sm text-text-main focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition-colors"
                 >
                   {showConfirm ? <AlertCircle size={14} className="rotate-45" /> : <KeyRound size={14} />}
                 </button>
@@ -229,7 +229,7 @@ export default function PerfilAdminPage() {
             <button 
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-gray-100 text-[#0a0f0c] font-bold rounded-xl transition-all disabled:opacity-50 text-sm"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl transition-all disabled:opacity-50 text-sm shadow-sm"
             >
               <KeyRound size={16} />
               {loading ? 'Processando...' : 'Atualizar Senha'}
