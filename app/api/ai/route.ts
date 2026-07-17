@@ -1,4 +1,4 @@
-// app/api/ai/route.ts — v1.8.1 (snapshot CRM + voz)
+// app/api/ai/route.ts — v1.8.2 (latência menor)
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
 import { alphaAI } from '@/lib/ai/AIService'
@@ -18,56 +18,54 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS_HEADERS })
 }
 
+/** Snapshot leve: só contagens (head), sem puxar linhas inteiras */
 async function buildCrmSnapshot(supabase: ReturnType<typeof createServerClient>): Promise<string> {
   try {
-    const [clientes, campanhas, tarefas, alertas, financeiro] = await Promise.all([
-      supabase.from('clients').select('id, name, status, monthly_fee'),
-      supabase.from('campaigns').select('id, name, status'),
-      supabase.from('tasks').select('id, title, status').limit(20),
-      supabase.from('alerts').select('id, ativo').eq('ativo', true),
+    const inicioMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+      .toISOString()
+      .slice(0, 10)
+
+    const [
+      clientesTotal,
+      clientesAtivos,
+      clientesAtrasados,
+      campanhasTotal,
+      campanhasAtivas,
+      tarefasPend,
+      alertas,
+      financas,
+    ] = await Promise.all([
+      supabase.from('clients').select('id', { count: 'exact', head: true }),
+      supabase.from('clients').select('id', { count: 'exact', head: true }).eq('status', 'ativo'),
+      supabase.from('clients').select('id', { count: 'exact', head: true }).eq('status', 'atrasado'),
+      supabase.from('campaigns').select('id', { count: 'exact', head: true }),
+      supabase.from('campaigns').select('id', { count: 'exact', head: true }).eq('status', 'ativa'),
       supabase
-        .from('finances')
-        .select('tipo, valor, status')
-        .gte('data_vencimento', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10)),
+        .from('tasks')
+        .select('id', { count: 'exact', head: true })
+        .in('status', ['a_fazer', 'pendente']),
+      supabase.from('alerts').select('id', { count: 'exact', head: true }).eq('ativo', true),
+      supabase.from('finances').select('tipo, valor').gte('data_vencimento', inicioMes),
     ])
-
-    const c = clientes.data ?? []
-    const camp = campanhas.data ?? []
-    const t = tarefas.data ?? []
-    const a = alertas.data ?? []
-    const f = financeiro.data ?? []
-
-    const ativos = c.filter((x: any) => x.status === 'ativo')
-    const atrasados = c.filter((x: any) => x.status === 'atrasado')
-    const campAtivas = camp.filter((x: any) => x.status === 'ativa')
-    const tarefasPend = t.filter((x: any) => x.status === 'a_fazer' || x.status === 'pendente')
 
     let receita = 0
     let gasto = 0
-    for (const l of f as any[]) {
-      if (l.tipo === 'receita') receita += Number(l.valor) || 0
-      if (l.tipo === 'gasto' || l.tipo === 'investimento') gasto += Number(l.valor) || 0
+    for (const l of financas.data ?? []) {
+      const v = Number((l as any).valor) || 0
+      if ((l as any).tipo === 'receita') receita += v
+      else if ((l as any).tipo === 'gasto' || (l as any).tipo === 'investimento') gasto += v
     }
 
-    const topClientes = ativos
-      .slice(0, 8)
-      .map((x: any) => x.name)
-      .filter(Boolean)
-      .join(', ')
-
     return [
-      `Clientes: total ${c.length}, ativos ${ativos.length}, atrasados ${atrasados.length}.`,
-      topClientes ? `Alguns ativos: ${topClientes}.` : '',
-      `Campanhas: total ${camp.length}, ativas ${campAtivas.length}.`,
-      `Tarefas recentes: ${t.length} (pendentes/a fazer: ${tarefasPend.length}).`,
-      `Alertas ativos: ${a.length}.`,
-      `Financeiro do mês: receita R$ ${receita.toFixed(2)}, saídas R$ ${gasto.toFixed(2)}, saldo R$ ${(receita - gasto).toFixed(2)}.`,
-    ]
-      .filter(Boolean)
-      .join(' ')
+      `Clientes: total ${clientesTotal.count ?? 0}, ativos ${clientesAtivos.count ?? 0}, atrasados ${clientesAtrasados.count ?? 0}.`,
+      `Campanhas: total ${campanhasTotal.count ?? 0}, ativas ${campanhasAtivas.count ?? 0}.`,
+      `Tarefas pendentes: ${tarefasPend.count ?? 0}.`,
+      `Alertas ativos: ${alertas.count ?? 0}.`,
+      `Financeiro do mês: receita R$ ${receita.toFixed(0)}, saídas R$ ${gasto.toFixed(0)}, saldo R$ ${(receita - gasto).toFixed(0)}.`,
+    ].join(' ')
   } catch (e) {
     console.error('[API AI] snapshot CRM:', e)
-    return 'Snapshot CRM indisponível no momento.'
+    return 'Snapshot CRM indisponível.'
   }
 }
 
@@ -99,31 +97,44 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const historicoRaw: Message[] = await memoryService.recuperar(user.id)
-    const historico = historicoRaw.filter(
-      (m) => m.role === 'user' || (m.role === 'assistant' && !m.rawToolCalls)
-    )
+    // Paralelo: histórico + snapshot CRM
+    const [historicoRaw, crmSnapshot] = await Promise.all([
+      memoryService.recuperar(user.id),
+      buildCrmSnapshot(supabase),
+    ])
 
-    const novaMensagem: Message = { role: 'user', content: mensagem }
-    const mensagensParaIA: Message[] = [...historico, novaMensagem]
-    const tools = crmTools.getTools(supabase)
-    const crmSnapshot = await buildCrmSnapshot(supabase)
+    // Só últimas 6 mensagens — menos tokens = resposta mais rápida
+    const historico = historicoRaw
+      .filter((m) => m.role === 'user' || (m.role === 'assistant' && !m.rawToolCalls))
+      .slice(-6)
+
+    const mensagensParaIA: Message[] = [
+      ...historico,
+      { role: 'user', content: mensagem },
+    ]
+
+    // Ferramentas só se a pergunta parece precisar de detalhe (não só contagem)
+    const precisaFerramenta = /\b(lista|nome|quais|quem|cadastr|ativ|inativ|métric|metric|campanha .*cliente|cliente .*campanha|tarefa|financeiro detalh|lançamento)\b/i.test(
+      mensagem
+    )
+    const tools = precisaFerramenta ? crmTools.getTools(supabase) : undefined
 
     const resposta = await alphaAI.chat(mensagensParaIA, tools, {
       notes,
       crmSnapshot,
+      maxTokens: 120,
+      temperature: 0.3,
     })
-    const respostaTexto = resposta.text
+    const respostaTexto = resposta.text || 'Sem dados no momento, diretor.'
 
-    const mensagemAssistente: Message = { role: 'assistant', content: respostaTexto }
+    // Salva histórico em background — não bloqueia a resposta
     const historicoParaSalvar = [
       ...mensagensParaIA.filter(
         (m) => m.role === 'user' || (m.role === 'assistant' && !m.rawToolCalls)
       ),
-      mensagemAssistente,
+      { role: 'assistant' as const, content: respostaTexto },
     ].slice(-50)
-
-    await memoryService.salvar(user.id, historicoParaSalvar)
+    void memoryService.salvar(user.id, historicoParaSalvar)
 
     let audioBase64: string | null = null
     if (incluirVoz) {

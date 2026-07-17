@@ -18,6 +18,9 @@ export class OpenAITTSProvider implements VoiceProvider {
       throw new Error('[OpenAITTSProvider] OPENAI_API_KEY não configurada.')
     }
 
+    // Limita texto falado — evita áudio longo e lento
+    const input = texto.length > 280 ? texto.slice(0, 277) + '…' : texto
+
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
       headers: {
@@ -25,11 +28,11 @@ export class OpenAITTSProvider implements VoiceProvider {
         Authorization: `Bearer ${this.openAiKey}`,
       },
       body: JSON.stringify({
-        model: 'tts-1',
-        input: texto,
-        voice: 'onyx', // masculina
-        // 1.0 = normal | 1.15 = ritmo natural de conversa (não arrastado)
-        speed: 1.15,
+        model: 'tts-1', // mais rápido que tts-1-hd
+        input,
+        voice: 'onyx',
+        // 1.3 = ritmo ágil e natural (usuário sentia 0.9/1.15 como "dormindo")
+        speed: 1.3,
       }),
     })
 

@@ -1,4 +1,4 @@
-// lib/ai/AIService.ts — v1.5.2 (voz natural + CRM snapshot)
+// lib/ai/AIService.ts — v1.5.3 (menos rodadas de tool)
 import type { AIProvider, AIRequest, AIResponse, CRMTool, Message } from './types'
 import { buildSystemPersonaBlock, DEFAULT_NOTES, type BrainNote } from './alphaPersona'
 
@@ -19,23 +19,10 @@ export class AIService {
     const brain = buildSystemPersonaBlock(notes?.length ? notes : DEFAULT_NOTES)
 
     const crmBlock = crmSnapshot
-      ? `
-SNAPSHOT CRM AGORA (dados reais — use estes números quando perguntarem resumo/contagens):
-${crmSnapshot}
+      ? `CRM AGORA: ${crmSnapshot}\nUse estes números para perguntas de contagem/resumo. Só use ferramenta se precisar de lista ou ação.`
+      : `Para dados do CRM use as ferramentas. Não invente.`
 
-Se a pergunta exigir lista detalhada, nomes específicos ou ação (cadastrar/ativar),
-USE a ferramenta correspondente. Não invente nomes nem valores.
-`
-      : `
-Para qualquer pergunta sobre clientes, campanhas, tarefas, financeiro ou integrações,
-USE sempre a ferramenta do CRM. Nunca invente dados.
-`
-
-    return `${brain}
-
-${crmBlock.trim()}
-
-DATA E HORA (Brasília): ${dataHoraBrasilia}`
+    return `${brain}\n\n${crmBlock}\n\nDATA (Brasília): ${dataHoraBrasilia}`
   }
 
   async chat(
@@ -59,14 +46,15 @@ DATA E HORA (Brasília): ${dataHoraBrasilia}`
     const request: AIRequest = {
       messages: fullMessages,
       tools: tools,
-      maxTokens: options?.maxTokens ?? 180,
-      temperature: options?.temperature ?? 0.35,
+      maxTokens: options?.maxTokens ?? 120,
+      temperature: options?.temperature ?? 0.3,
     }
 
     let response = await provider.chat(request)
 
+    // Máximo 2 rodadas de tool (antes 5) — menos latência
     let iterations = 0
-    while (response.toolCalls && response.toolCalls.length > 0 && iterations < 5) {
+    while (response.toolCalls && response.toolCalls.length > 0 && iterations < 2) {
       iterations++
 
       const assistantMessage: Message = {
@@ -83,7 +71,7 @@ DATA E HORA (Brasília): ${dataHoraBrasilia}`
           try {
             result = await tool.execute(toolCall.args)
           } catch (err: any) {
-            result = `Erro ao executar ${toolCall.name}: ${err.message}`
+            result = `Erro: ${err.message}`
           }
         } else {
           result = `Ferramenta "${toolCall.name}" não encontrada.`
