@@ -134,7 +134,7 @@ export default function ChecklistsPage() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 text-[#00ff88] animate-spin" />
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
           <p className="text-text-muted text-xs font-black uppercase tracking-[0.2em]">Sincronizando Alpha...</p>
         </div>
       </div>
@@ -142,7 +142,7 @@ export default function ChecklistsPage() {
   }
 
   return (
-    <div className="p-8 min-h-screen bg-background text-text-main selection:bg-[#00ff88]/30">
+    <div className="p-8 min-h-screen bg-background text-text-main selection:bg-cta/30">
       {/* HEADER MINIMALISTA */}
       <div className="flex justify-between items-center mb-10">
         <h1 className="text-xl font-bold text-text-main uppercase tracking-wider">Checklists</h1>
@@ -150,7 +150,7 @@ export default function ChecklistsPage() {
         {!isCreating && (
           <button 
             onClick={() => setIsCreating(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-[#00ff88] hover:bg-[#00dd77] text-[#0a0f0c] rounded-xl transition-all font-bold uppercase text-[11px] tracking-wider"
+            className="flex items-center gap-2 px-5 py-2.5 bg-cta hover:bg-cta-hover text-white rounded-xl transition-all font-bold uppercase text-[11px] tracking-wider"
           >
             <Plus size={16} />
             Nova Lista
@@ -169,13 +169,13 @@ export default function ChecklistsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="group">
-                <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2 group-focus-within:text-[#00ff88] transition-colors">Título da Rotina</label>
+                <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2 group-focus-within:text-primary transition-colors">Título da Rotina</label>
                 <input
                   type="text"
                   value={newListTitle}
                   onChange={(e) => setNewListTitle(e.target.value)}
                   placeholder="Ex: Checklist de Tráfego Pago"
-                  className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:border-[#00ff88] focus:ring-2 focus:ring-[#00ff88]/10 transition-all"
+                  className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
                 />
               </div>
 
@@ -188,8 +188,8 @@ export default function ChecklistsPage() {
                       onClick={() => toggleDay(day.id, newListDays, setNewListDays)}
                       className={`flex-1 rounded-lg text-[10px] font-black transition-all duration-300 border flex items-center justify-center h-8 ${
                         newListDays.includes(day.id)
-                          ? 'bg-[#00ff88] text-[#0a0f0c] border-[#00ff88] shadow-[0_0_20px_rgba(0,255,136,0.3)]'
-                          : 'bg-background text-text-muted border-border hover:border-gray-600'
+                          ? 'bg-cta text-white border-primary shadow-sm'
+                          : 'bg-background text-text-muted border-border hover:border-primary/50'
                       }`}
                       title={DIAS_LABELS[day.id]}
                     >
@@ -209,16 +209,16 @@ export default function ChecklistsPage() {
                   onChange={(e) => setCurrentNewItem(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addLocalItem()}
                   placeholder="Pressione Enter para adicionar..."
-                  className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:border-[#00ff88] pr-12"
+                  className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:border-primary pr-12"
                 />
-                <button onClick={addLocalItem} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-[#00ff88]/10 text-[#00ff88] rounded-lg hover:bg-[#00ff88] hover:text-[#0a0f0c] transition-all">
+                <button onClick={addLocalItem} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-cta/10 text-primary rounded-lg hover:bg-cta hover:text-white transition-all">
                   <Plus size={16} />
                 </button>
               </div>
 
               <div className="space-y-1.5 max-h-36 overflow-y-auto custom-scrollbar pr-2">
                 {newListItems.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between p-2.5 bg-background/50 border border-border rounded-lg group hover:border-gray-700 transition-all">
+                  <div key={index} className="flex items-center justify-between p-2.5 bg-background/50 border border-border rounded-lg group hover:border-border transition-all">
                     <span className="text-xs text-text-muted font-medium">{item}</span>
                     <button onClick={() => setNewListItems(newListItems.filter((_, i) => i !== index))} className="text-text-disabled hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
                       <Trash2 size={16} />
@@ -234,7 +234,7 @@ export default function ChecklistsPage() {
             <button 
               onClick={handleCreateList}
               disabled={!newListTitle.trim() || newListItems.length === 0}
-              className="px-5 py-1.5 bg-[#00ff88] hover:bg-[#00dd77] disabled:opacity-50 text-[#0a0f0c] rounded-lg font-bold uppercase text-[9px] tracking-wider transition-all"
+              className="px-5 py-1.5 bg-cta hover:bg-cta-hover disabled:opacity-50 text-white rounded-lg font-bold uppercase text-[9px] tracking-wider transition-all"
             >
               Salvar Lista
             </button>
@@ -315,13 +315,13 @@ export default function ChecklistsPage() {
         </section>
 
         {/* REALIZADOS */}
-        <section className="pt-8 border-t border-[#1a1a1a]">
+        <section className="pt-8 border-t border-border">
           <div className="flex items-center justify-between mb-6 px-2">
             <div className="flex items-center gap-4">
-              <div className="w-2 h-2 rounded-full bg-[#00ff88] shadow-[0_0_8px_rgba(0,255,136,0.4)]" />
+              <div className="w-2 h-2 rounded-full bg-cta shadow-sm" />
               <h2 className="text-base font-bold text-text-main uppercase tracking-wider">Concluídas</h2>
             </div>
-            <span className="text-[10px] font-bold text-[#00ff88]/30 uppercase tracking-widest">{completedLists.length} Feitas</span>
+            <span className="text-[10px] font-bold text-primary/30 uppercase tracking-widest">{completedLists.length} Feitas</span>
           </div>
           
           <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
@@ -341,7 +341,7 @@ export default function ChecklistsPage() {
               </div>
             ))}
             {completedLists.length === 0 && (
-              <div className="w-full py-10 flex flex-col items-center justify-center text-gray-800">
+              <div className="w-full py-10 flex flex-col items-center justify-center text-text-disabled">
                 <p className="text-[10px] font-bold uppercase tracking-widest italic">Nenhuma lista finalizada ainda</p>
               </div>
             )}
@@ -375,13 +375,13 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
   return (
     <div className={`bg-surface border rounded-xl overflow-hidden transition-all duration-300 flex flex-col ${
       list.status === 'completed' 
-        ? 'border-[#00ff88]/10 opacity-50' 
+        ? 'border-primary/10 opacity-50' 
         : 'border-border hover:border-border'
     }`}>
       {/* BARRA DE PROGRESSO SIMPLES */}
       <div className="h-0.5 bg-hover-bg w-full">
         <div 
-          className="h-full bg-[#00ff88] transition-all duration-500" 
+          className="h-full bg-cta transition-all duration-500" 
           style={{ width: `${progress}%` }} 
         />
       </div>
@@ -395,7 +395,7 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full bg-background border border-[#00ff88]/40 rounded-xl px-4 py-2 text-sm text-text-main focus:outline-none"
+                  className="w-full bg-background border border-primary/40 rounded-xl px-4 py-2 text-sm text-text-main focus:outline-none"
                   autoFocus
                 />
                 <div className="flex flex-wrap gap-1">
@@ -407,7 +407,7 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
                         else setDays([...days, day.id].sort())
                       }}
                       className={`w-7 h-7 rounded-lg text-[10px] font-black border transition-all ${
-                        days.includes(day.id) ? 'bg-[#00ff88] text-[#0a0f0c] border-[#00ff88]' : 'bg-background text-text-disabled border-border'
+                        days.includes(day.id) ? 'bg-cta text-white border-primary' : 'bg-background text-text-disabled border-border'
                       }`}
                     >
                       {day.label}
@@ -420,18 +420,18 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
                       await updateChecklist(list.id, { title, recurrence_days: days, recurrence: days.length > 0 ? 'daily' : 'once' });
                       setIsEditing(false);
                     }} 
-                    className="px-4 py-1.5 bg-[#00ff88] text-[#0a0f0c] text-[10px] font-black uppercase rounded-lg shadow-lg shadow-[#00ff88]/20"
+                    className="px-4 py-1.5 bg-cta text-white text-[10px] font-black uppercase rounded-lg shadow-lg shadow-primary/20"
                   >
                     Salvar
                   </button>
-                  <button onClick={() => setIsEditing(false)} className="px-4 py-1.5 bg-white/5 text-text-muted text-[10px] font-black uppercase rounded-lg">Sair</button>
+                  <button onClick={() => setIsEditing(false)} className="px-4 py-1.5 bg-hover-bg text-text-muted text-[10px] font-black uppercase rounded-lg">Sair</button>
                 </div>
               </div>
             ) : (
               <div className="space-y-2">
                 <div className="flex items-center gap-2 group/title">
                   <h3 className="font-bold text-text-main text-sm tracking-tight truncate uppercase">{list.title}</h3>
-                  <button onClick={() => setIsEditing(true)} className="opacity-0 group-hover/title:opacity-100 text-text-disabled hover:text-[#00ff88] transition-all">
+                  <button onClick={() => setIsEditing(true)} className="opacity-0 group-hover/title:opacity-100 text-text-disabled hover:text-primary transition-all">
                     <Edit2 size={12} />
                   </button>
                 </div>
@@ -439,7 +439,7 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
                   {list.recurrence_days?.length > 0 ? (
                     <div className="flex gap-1">
                       {list.recurrence_days.map((d: number) => (
-                        <span key={d} className="text-[8px] font-black text-[#00ff88] uppercase bg-[#00ff88]/10 px-1.5 py-0.5 rounded-md border border-[#00ff88]/10">
+                        <span key={d} className="text-[8px] font-black text-primary uppercase bg-cta/10 px-1.5 py-0.5 rounded-md border border-primary/10">
                           {DIAS_SEMANA.find(day => day.id === d)?.label}
                         </span>
                       ))}
@@ -454,7 +454,7 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
           
           <button 
             onClick={() => confirm('Remover esta rotina permanentemente?') && deleteChecklist(list.id)}
-            className="p-2 text-gray-800 hover:text-red-500 hover:bg-red-500/5 rounded-xl transition-all"
+            className="p-2 text-text-disabled hover:text-red-500 hover:bg-red-500/5 rounded-xl transition-all"
           >
             <Trash2 size={16} />
           </button>
@@ -468,11 +468,11 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
                 onClick={() => toggleItem(item.id, item.completed)}
                 className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center cursor-pointer transition-all duration-300 ${
                   item.completed 
-                    ? 'bg-[#00ff88] border-[#00ff88] shadow-[0_0_10px_rgba(0,255,136,0.3)]' 
-                    : 'border-border bg-background hover:border-gray-600'
+                    ? 'bg-cta border-primary shadow-sm' 
+                    : 'border-border bg-background hover:border-primary/50'
                 }`}
               >
-                {item.completed && <Check size={14} className="text-[#0a0f0c] stroke-[4px]" />}
+                {item.completed && <Check size={14} className="text-white stroke-[4px]" />}
               </div>
               
               {editingItemId === item.id ? (
@@ -481,7 +481,7 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
                     type="text"
                     value={editingItemText}
                     onChange={(e) => setEditingItemText(e.target.value)}
-                    className="flex-1 bg-background border border-[#00ff88]/30 rounded-lg px-3 py-1 text-xs text-text-main outline-none"
+                    className="flex-1 bg-background border border-primary/30 rounded-lg px-3 py-1 text-xs text-text-main outline-none"
                     autoFocus
                     onBlur={() => setEditingItemId(null)}
                     onKeyDown={(e) => {
@@ -502,7 +502,7 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
                   >
                     {item.text}
                   </span>
-                  <button onClick={() => deleteItem(item.id)} className="opacity-0 group-hover/item:opacity-100 text-gray-800 hover:text-red-500 transition-all">
+                  <button onClick={() => deleteItem(item.id)} className="opacity-0 group-hover/item:opacity-100 text-text-disabled hover:text-red-500 transition-all">
                     <X size={14} />
                   </button>
                 </div>
@@ -511,7 +511,7 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
           ))}
 
           {/* ADD ITEM INLINE */}
-          <div className="flex items-center gap-4 pt-4 mt-2 border-t border-white/5">
+          <div className="flex items-center gap-4 pt-4 mt-2 border-t border-border">
             <div className="w-6 h-6 flex items-center justify-center text-text-disabled">
               <Plus size={16} />
             </div>
@@ -526,14 +526,14 @@ function ChecklistCard({ list, updateChecklist, deleteChecklist, addItem, update
                   setNewItemText('');
                 }
               }}
-              className="flex-1 bg-transparent text-xs font-bold text-text-disabled focus:outline-none focus:text-[#00ff88] transition-colors"
+              className="flex-1 bg-transparent text-xs font-bold text-text-disabled focus:outline-none focus:text-primary transition-colors"
             />
           </div>
         </div>
       </div>
 
       {/* FOOTER DO CARD */}
-      <div className="px-6 py-3 bg-background/40 border-t border-white/5 flex justify-between items-center">
+      <div className="px-6 py-3 bg-surface border-t border-border flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Clock size={10} className="text-text-disabled" />
           <span className="text-[8px] font-bold text-text-disabled uppercase tracking-widest">
