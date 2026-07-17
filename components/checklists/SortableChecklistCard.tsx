@@ -5,8 +5,6 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { 
   GripHorizontal, Trash2, Edit2, Plus, Copy,
-  CheckSquare, Calendar, Clock, ChevronDown, 
-  ChevronUp, ListChecks, ExternalLink
 } from 'lucide-react'
 import { 
   DndContext, 
@@ -22,7 +20,7 @@ import {
   sortableKeyboardCoordinates, 
   verticalListSortingStrategy 
 } from '@dnd-kit/sortable'
-import { Checklist, ChecklistItem } from '@/hooks/useChecklists'
+import { Checklist } from '@/hooks/useChecklists'
 import { SortableChecklistItem } from './SortableChecklistItem'
 
 interface SortableChecklistCardProps {
@@ -112,8 +110,8 @@ export function SortableChecklistCard({
       style={style}
       className={`bg-surface border rounded-xl overflow-hidden transition-transform duration-300 flex flex-col w-full max-w-[260px] ${
         list.status === 'completed' 
-          ? 'border-primary/20 opacity-60' 
-          : 'border-border hover:border-border'
+          ? 'border-cta/30 opacity-70' 
+          : 'border-border hover:border-primary/30'
       }`}
     >
       <div className="h-0.5 bg-hover-bg w-full">
@@ -134,11 +132,11 @@ export function SortableChecklistCard({
           </button>
           
           <div className="flex gap-0.5">
-            <button onClick={() => setIsEditing(true)} className="p-1 text-text-disabled hover:text-amber-400">
+            <button onClick={() => setIsEditing(true)} className="p-1 text-text-disabled hover:text-amber-600">
               <Edit2 size={12} />
             </button>
             {duplicateChecklist && (
-              <button onClick={() => duplicateChecklist(list.id)} className="p-1 text-text-disabled hover:text-emerald-400" title="Duplicar checklist">
+              <button onClick={() => duplicateChecklist(list.id)} className="p-1 text-text-disabled hover:text-cta" title="Duplicar checklist">
                 <Copy size={12} />
               </button>
             )}
@@ -179,11 +177,11 @@ export function SortableChecklistCard({
                   await updateChecklist(list.id, { title, recurrence_days: days, recurrence: days.length > 0 ? 'daily' : 'once' });
                   setIsEditing(false);
                 }} 
-                className="flex-1 py-1 bg-cta text-white text-[8px] font-black uppercase rounded-lg"
+                className="flex-1 py-1 bg-primary text-white text-[8px] font-black uppercase rounded-lg"
               >
                 Salvar
               </button>
-              <button onClick={() => setIsEditing(false)} className="flex-1 py-1 bg-white/5 text-text-muted text-[8px] font-black uppercase rounded-lg">Sair</button>
+              <button onClick={() => setIsEditing(false)} className="flex-1 py-1 bg-hover-bg text-text-muted text-[8px] font-black uppercase rounded-lg">Sair</button>
             </div>
           </div>
         ) : (
@@ -196,7 +194,7 @@ export function SortableChecklistCard({
                 </span>
               ))}
               {(!list.recurrence_days || list.recurrence_days.length === 0) && (
-                <span className="px-1.5 py-0.5 bg-white/5 text-text-muted text-[8px] font-black rounded-md uppercase border border-white/5">Única</span>
+                <span className="px-1.5 py-0.5 bg-hover-bg text-text-muted text-[8px] font-black rounded-md uppercase border border-border">Única</span>
               )}
             </div>
           </div>
