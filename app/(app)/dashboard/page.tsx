@@ -94,21 +94,38 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
   )
 }
 
-function BarChart({ data, color }: { data: number[], color: string }) {
-  const max = Math.max(...data, 1)
+/** Todas as barras sempre renderizam — inclusive valor 0 */
+function BarChart({ items }: { items: { value: number; color: string; label: string }[] }) {
+  const max = Math.max(...items.map((i) => i.value), 1)
+
   return (
-    <div className="flex items-end justify-between h-full w-full gap-1 px-2 pt-2 pb-1">
-      {data.map((v, i) => {
-        const height = (v / max) * 100
+    <div className="flex items-stretch justify-between h-full w-full gap-2 px-1">
+      {items.map((item, i) => {
+        // Escala: 0 = 12% (barra mínima visível), valor máximo = 100%
+        const heightPct = item.value <= 0 ? 12 : Math.max((item.value / max) * 100, 18)
         return (
-          <div key={i} className="flex-1 group relative flex flex-col items-center h-full justify-end">
-            <div 
-              className="w-full rounded-t-sm transition-all duration-500 hover:brightness-90"
-              style={{ height: `${height}%`, backgroundColor: color, opacity: 0.6 + (height / 250) }}
-            />
-            <div className="absolute -top-4 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] text-text-main font-bold bg-surface px-1 rounded border border-border z-10 shadow-sm">
-              {v}
+          <div key={i} className="flex-1 flex flex-col items-center min-w-0 h-full">
+            {/* Valor numérico */}
+            <span className="text-[11px] text-text-main font-black leading-none tabular-nums mb-1.5 select-none">
+              {item.value}
+            </span>
+
+            {/* Área da barra */}
+            <div className="flex-1 w-full flex items-end min-h-0">
+              <div
+                className="w-full rounded-t-md transition-all duration-500"
+                style={{
+                  height: `${heightPct}%`,
+                  backgroundColor: item.value <= 0 ? `${item.color}22` : item.color,
+                  border: item.value <= 0 ? `1.5px dashed ${item.color}66` : 'none',
+                }}
+              />
             </div>
+
+            {/* Rótulo embaixo */}
+            <span className="mt-1.5 text-[8px] font-bold uppercase tracking-tight text-text-muted text-center leading-tight truncate w-full">
+              {item.label}
+            </span>
           </div>
         )
       })}
@@ -156,7 +173,6 @@ export default function DashboardPage() {
         supabase.from('report_history').select('id', { count: 'exact', head: true })
           .eq('status', 'enviado')
           .gte('enviado_em', dataInicio).lte('enviado_em', dataFim + 'T23:59:59'),
-        // BUG FIX: antes usava a mesma query de relatórios
         supabase.from('alerts').select('id', { count: 'exact', head: true }).eq('ativo', true),
         supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('status', 'a_fazer'),
         supabase.from('checklist_items').select('id', { count: 'exact', head: true }).eq('completed', false),
@@ -204,9 +220,18 @@ export default function DashboardPage() {
     { label: 'Checklists Pendentes', valor: stats.checklistsPendentes, icon: ListChecks,   cor: '#16A34A' },
   ]
 
+  // SEMPRE 6 indicadores — nunca filtra zeros
+  const barItems = [
+    { value: stats.totalClientesAtivos ?? 0, color: '#1A56DB', label: 'Clientes' },
+    { value: stats.campanhasAtivas ?? 0,     color: '#4C3ABF', label: 'Campanhas' },
+    { value: stats.relatoriosEnviados ?? 0,  color: '#f59e0b', label: 'Relatórios' },
+    { value: stats.alertasAtivos ?? 0,       color: '#ef4444', label: 'Alertas' },
+    { value: stats.tarefasAFazer ?? 0,       color: '#3b82f6', label: 'Tarefas' },
+    { value: stats.checklistsPendentes ?? 0, color: '#16A34A', label: 'Checklists' },
+  ]
+
   return (
     <div className="h-[calc(100vh-100px)] flex flex-col gap-4 overflow-hidden">
-      
       <div className="h-16 flex flex-shrink-0 items-center gap-4">
         <div className="bg-surface border border-border rounded-xl px-5 h-full flex items-center gap-4 flex-1 min-w-0 shadow-sm">
           <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
@@ -264,37 +289,14 @@ export default function DashboardPage() {
         </div>
 
         <div className="col-span-6 row-span-4 bg-surface border border-border rounded-xl p-4 flex flex-col min-h-0 shadow-sm">
-          <div className="flex items-center justify-between mb-4 flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <TrendingUp size={14} className="text-primary" />
-              <h2 className="text-text-main font-black text-[10px] uppercase tracking-widest">Desempenho Geral</h2>
-            </div>
-            <div className="flex gap-3">
-              <span className="flex items-center gap-1 text-[9px] text-text-disabled font-bold uppercase">
-                <span className="w-1.5 h-1.5 rounded-full bg-ai" /> CAMPANHAS
-              </span>
-              <span className="flex items-center gap-1 text-[9px] text-text-disabled font-bold uppercase">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary" /> CLIENTES
-              </span>
-            </div>
+          <div className="flex items-center gap-2 mb-3 flex-shrink-0">
+            <TrendingUp size={14} className="text-primary" />
+            <h2 className="text-text-main font-black text-[10px] uppercase tracking-widest">Desempenho Geral</h2>
           </div>
-          <div className="flex-1 min-h-0 w-full overflow-hidden">
-            {/* Placeholder visual até haver série temporal real */}
-            <BarChart 
-              data={[
-                stats.totalClientesAtivos || 1,
-                stats.campanhasAtivas || 1,
-                stats.relatoriosEnviados || 1,
-                stats.alertasAtivos || 1,
-                stats.tarefasAFazer || 1,
-                stats.checklistsPendentes || 1,
-                stats.totalClientesAtivos + stats.campanhasAtivas || 1,
-                stats.relatoriosEnviados + stats.alertasAtivos || 1,
-              ]} 
-              color="#1A56DB" 
-            />
+          <div className="flex-1 min-h-0 w-full">
+            <BarChart items={barItems} />
           </div>
-          <div className="mt-3 pt-3 border-t border-border flex items-center justify-between flex-shrink-0">
+          <div className="mt-2 pt-2 border-t border-border flex items-center justify-between flex-shrink-0">
             <div className="text-[9px] text-text-muted font-medium uppercase">Indicadores do período filtrado</div>
             <div className="text-[9px] text-text-disabled italic font-bold">DADOS CONSOLIDADOS</div>
           </div>
@@ -307,9 +309,9 @@ export default function DashboardPage() {
           </div>
           <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center overflow-hidden">
             <DonutChart data={[
-              { label: 'Meta Ads', value: Math.max(stats.campanhasAtivas, 1), color: '#4C3ABF' },
-              { label: 'Clientes', value: Math.max(stats.totalClientesAtivos, 1), color: '#1A56DB' },
-              { label: 'Tarefas', value: Math.max(stats.tarefasAFazer, 1), color: '#f59e0b' },
+              { label: 'Meta Ads', value: Math.max(stats.campanhasAtivas, 0), color: '#4C3ABF' },
+              { label: 'Clientes', value: Math.max(stats.totalClientesAtivos, 0), color: '#1A56DB' },
+              { label: 'Tarefas', value: Math.max(stats.tarefasAFazer, 0), color: '#3b82f6' },
             ]} />
           </div>
         </div>

@@ -93,21 +93,32 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
   )
 }
 
-function BarChart({ data, color }: { data: number[], color: string }) {
-  const max = Math.max(...data, 1)
+/** Todas as barras sempre renderizam — inclusive valor 0 */
+function BarChart({ items }: { items: { value: number; color: string; label: string }[] }) {
+  const max = Math.max(...items.map((i) => i.value), 1)
+
   return (
-    <div className="flex items-end justify-between h-full w-full gap-1 px-2 pt-2 pb-1">
-      {data.map((v, i) => {
-        const height = (v / max) * 100
+    <div className="flex items-stretch justify-between h-full w-full gap-2 px-1">
+      {items.map((item, i) => {
+        const heightPct = item.value <= 0 ? 12 : Math.max((item.value / max) * 100, 18)
         return (
-          <div key={i} className="flex-1 group relative flex flex-col items-center h-full justify-end">
-            <div 
-              className="w-full rounded-t-sm transition-all duration-500 hover:brightness-90"
-              style={{ height: `${height}%`, backgroundColor: color, opacity: 0.55 + (height / 250) }}
-            />
-            <div className="absolute -top-4 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] text-text-main font-bold bg-surface px-1 rounded border border-border z-10 shadow-sm">
-              {v}
+          <div key={i} className="flex-1 flex flex-col items-center min-w-0 h-full">
+            <span className="text-[11px] text-text-main font-black leading-none tabular-nums mb-1.5 select-none">
+              {item.value}
+            </span>
+            <div className="flex-1 w-full flex items-end min-h-0">
+              <div
+                className="w-full rounded-t-md transition-all duration-500"
+                style={{
+                  height: `${heightPct}%`,
+                  backgroundColor: item.value <= 0 ? `${item.color}22` : item.color,
+                  border: item.value <= 0 ? `1.5px dashed ${item.color}66` : 'none',
+                }}
+              />
             </div>
+            <span className="mt-1.5 text-[8px] font-bold uppercase tracking-tight text-text-muted text-center leading-tight truncate w-full">
+              {item.label}
+            </span>
           </div>
         )
       })}
@@ -183,6 +194,15 @@ export default function CollaboratorDashboardPage() {
     { label: 'Checklists Pendentes', valor: stats.checklistsPendentes, icon: ListChecks,  cor: '#16A34A' },
   ]
 
+  const barItems = [
+    { value: stats.totalClientesAtivos ?? 0, color: '#1A56DB', label: 'Clientes' },
+    { value: stats.campanhasAtivas ?? 0,     color: '#4C3ABF', label: 'Campanhas' },
+    { value: stats.relatoriosEnviados ?? 0,  color: '#f59e0b', label: 'Relatórios' },
+    { value: stats.alertasAtivos ?? 0,       color: '#ef4444', label: 'Alertas' },
+    { value: stats.tarefasAFazer ?? 0,       color: '#3b82f6', label: 'Tarefas' },
+    { value: stats.checklistsPendentes ?? 0, color: '#16A34A', label: 'Checklists' },
+  ]
+
   return (
     <div className="h-[calc(100vh-100px)] flex flex-col gap-4 overflow-hidden p-1">
       <div className="h-16 flex flex-shrink-0 items-center gap-4">
@@ -242,33 +262,14 @@ export default function CollaboratorDashboardPage() {
         </div>
 
         <div className="col-span-6 row-span-4 bg-surface border border-border rounded-xl p-4 flex flex-col min-h-0 shadow-sm">
-          <div className="flex items-center justify-between mb-4 flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <TrendingUp size={14} className="text-primary" />
-              <h2 className="text-text-main font-bold text-xs uppercase tracking-wide">Meu Histórico</h2>
-            </div>
-            <div className="flex gap-3">
-              <span className="flex items-center gap-1 text-[9px] text-text-muted font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary" /> TAREFAS CONCLUÍDAS
-              </span>
-            </div>
+          <div className="flex items-center gap-2 mb-3 flex-shrink-0">
+            <TrendingUp size={14} className="text-primary" />
+            <h2 className="text-text-main font-bold text-xs uppercase tracking-wide">Meu Histórico</h2>
           </div>
-          <div className="flex-1 min-h-0 w-full overflow-hidden">
-            <BarChart 
-              data={[
-                Math.max(stats.tarefasAFazer, 1),
-                Math.max(stats.checklistsPendentes, 1),
-                Math.max(stats.campanhasAtivas, 1),
-                Math.max(stats.totalClientesAtivos, 1),
-                Math.max(stats.relatoriosEnviados, 1),
-                Math.max(stats.alertasAtivos, 1),
-                Math.max(stats.tarefasAFazer + stats.checklistsPendentes, 1),
-                Math.max(stats.campanhasAtivas + stats.totalClientesAtivos, 1),
-              ]} 
-              color="#1A56DB" 
-            />
+          <div className="flex-1 min-h-0 w-full">
+            <BarChart items={barItems} />
           </div>
-          <div className="mt-3 pt-3 border-t border-border flex items-center justify-between flex-shrink-0">
+          <div className="mt-2 pt-2 border-t border-border flex items-center justify-between flex-shrink-0">
             <div className="text-[9px] text-text-muted">Indicadores do período filtrado</div>
             <div className="text-[9px] text-text-muted italic">Atualizado agora</div>
           </div>
@@ -281,7 +282,7 @@ export default function CollaboratorDashboardPage() {
           </div>
           <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center overflow-hidden">
             <DonutChart data={[
-              { label: 'Tarefas', value: Math.max(stats.tarefasAFazer, 0), color: '#1A56DB' },
+              { label: 'Tarefas', value: Math.max(stats.tarefasAFazer, 0), color: '#3b82f6' },
               { label: 'Checklists', value: Math.max(stats.checklistsPendentes, 0), color: '#16A34A' },
               { label: 'Campanhas', value: Math.max(stats.campanhasAtivas, 0), color: '#4C3ABF' },
             ]} />
