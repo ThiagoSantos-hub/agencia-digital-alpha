@@ -173,7 +173,8 @@ export function useAlphaVoice() {
 
       const dataArr = new Uint8Array(analyser.frequencyBinCount)
       const THRESHOLD = 25
-      const SILENCE_MS = 1500
+      // Antes 1500ms — usuário sentia “pensando demais” só esperando silêncio
+      const SILENCE_MS = 900
       let silenceStart: number | null = null
       let faleiAlgo = false
 

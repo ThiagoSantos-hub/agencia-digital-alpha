@@ -38,198 +38,62 @@ export interface BrainNote {
   body: string
 }
 
-/** Notas iniciais embutidas da entrevista */
 export const DEFAULT_NOTES: BrainNote[] = [
-  {
-    id: 'n-voce',
-    area: 'meta',
-    title: 'Thiago',
-    body: 'Thiago Santos, 36 anos, mora em Fortaleza-CE. Gestor de tráfego pago, vende CRM, dá treinamento comercial e constrói sistemas e sites. Tem três filhos.',
-  },
-  {
-    id: 'n-meta-3m',
-    area: 'metas',
-    title: '3 meses',
-    body: 'Colocar o sistema Digital Alpha (SaaS) funcionando e vendendo. Meta de faturamento ~R$ 15 mil.',
-  },
-  {
-    id: 'n-meta-6m',
-    area: 'metas',
-    title: '6 meses',
-    body: 'Faturar em torno de R$ 50 mil.',
-  },
-  {
-    id: 'n-meta-3a',
-    area: 'metas',
-    title: '3 anos',
-    body: 'Faturar no mínimo R$ 1 milhão por ano com a empresa e o SaaS.',
-  },
-  {
-    id: 'n-carreira',
-    area: 'trabalho',
-    title: 'CEO Alpha',
-    body: 'CEO e dono da Digital Alpha. Atua como gestor de tráfego, vendedor de CRM (mensalidade), treinamento comercial. Foco: concretizar as metas dos próximos 3 meses.',
-  },
-  {
-    id: 'n-proj-alpha',
-    area: 'projetos',
-    title: 'Digital Alpha',
-    body: 'Sistema de marketing digital para agências gerenciarem clientes, equipe e automação.',
-  },
-  {
-    id: 'n-proj-noivos',
-    area: 'projetos',
-    title: 'Noivos',
-    body: 'Sistema de sites para noivos organizarem o casamento na palma da mão.',
-  },
-  {
-    id: 'n-proj-trafego',
-    area: 'projetos',
-    title: 'Tráfego',
-    body: 'Gerencia tráfego pago de mais de 20 empresas.',
-  },
-  {
-    id: 'n-proj-ebook',
-    area: 'projetos',
-    title: 'Ebook',
-    body: 'Ebook para pessoas que pregam.',
-  },
-  {
-    id: 'n-proj-sermao',
-    area: 'projetos',
-    title: 'Sermão',
-    body: 'Site Elaborador de Sermão.',
-  },
-  {
-    id: 'n-proj-discipulo',
-    area: 'projetos',
-    title: 'Discípulo',
-    body: 'Site/projeto Discípulo.',
-  },
-  {
-    id: 'n-financas',
-    area: 'financas',
-    title: 'Metas $',
-    body: '3 meses: ~R$ 15 mil líquido. 6 meses: ~R$ 50 mil. Longo prazo: ~R$ 1 mi/ano.',
-  },
-  {
-    id: 'n-aprende',
-    area: 'aprendizado',
-    title: 'Estudos',
-    body: 'Estuda IA com intensidade. Lê Bíblia, livros de finanças e de vendas.',
-  },
-  {
-    id: 'n-saude',
-    area: 'saude',
-    title: 'Rotina',
-    body: 'Hoje não treina. Quer passar a malhar, regular sono e alimentação em breve.',
-  },
-  {
-    id: 'n-rayana',
-    area: 'relacoes',
-    title: 'Rayana',
-    body: 'Noiva do diretor (Rayana com Y).',
-  },
-  {
-    id: 'n-naylla',
-    area: 'relacoes',
-    title: 'Naylla',
-    body: 'Filha Naylla Thiele, cerca de 14 anos (faz 15 em agosto).',
-  },
-  {
-    id: 'n-theo',
-    area: 'relacoes',
-    title: 'Theo',
-    body: 'Filho Theo Lucas, 11 anos.',
-  },
-  {
-    id: 'n-thaylon',
-    area: 'relacoes',
-    title: 'Thaylon',
-    body: 'Filho Thaylon Ravi, 8 anos.',
-  },
-  {
-    id: 'n-ricardo',
-    area: 'relacoes',
-    title: 'Ricardo',
-    body: 'Amigo e colaborador próximo. Não é sócio.',
-  },
+  { id: 'n-voce', area: 'meta', title: 'Thiago', body: 'Thiago Santos, 36 anos, Fortaleza-CE. Tráfego, CRM, treinamento, sistemas. 3 filhos.' },
+  { id: 'n-meta-3m', area: 'metas', title: '3 meses', body: 'SaaS Digital Alpha vendendo. Meta ~R$ 15 mil.' },
+  { id: 'n-meta-6m', area: 'metas', title: '6 meses', body: 'Faturar ~R$ 50 mil.' },
+  { id: 'n-meta-3a', area: 'metas', title: '3 anos', body: 'Faturar ~R$ 1 mi/ano.' },
+  { id: 'n-carreira', area: 'trabalho', title: 'CEO Alpha', body: 'CEO Digital Alpha. Tráfego, CRM, treinamento. Foco 3 meses.' },
+  { id: 'n-proj-alpha', area: 'projetos', title: 'Digital Alpha', body: 'Sistema para agências gerenciarem clientes e equipe.' },
+  { id: 'n-proj-noivos', area: 'projetos', title: 'Noivos', body: 'Sites para noivos organizarem o casamento.' },
+  { id: 'n-proj-trafego', area: 'projetos', title: 'Tráfego', body: 'Tráfego pago de 20+ empresas.' },
+  { id: 'n-proj-ebook', area: 'projetos', title: 'Ebook', body: 'Ebook para pregadores.' },
+  { id: 'n-proj-sermao', area: 'projetos', title: 'Sermão', body: 'Site Elaborador de Sermão.' },
+  { id: 'n-proj-discipulo', area: 'projetos', title: 'Discípulo', body: 'Projeto Discípulo.' },
+  { id: 'n-financas', area: 'financas', title: 'Metas $', body: '15k/3m · 50k/6m · 1mi/ano.' },
+  { id: 'n-aprende', area: 'aprendizado', title: 'Estudos', body: 'IA, Bíblia, finanças, vendas.' },
+  { id: 'n-saude', area: 'saude', title: 'Rotina', body: 'Quer treinar e regular sono/alimentação.' },
+  { id: 'n-rayana', area: 'relacoes', title: 'Rayana', body: 'Noiva do diretor.' },
+  { id: 'n-naylla', area: 'relacoes', title: 'Naylla', body: 'Filha Naylla Thiele (~14, 15 em ago).' },
+  { id: 'n-theo', area: 'relacoes', title: 'Theo', body: 'Filho Theo Lucas, 11 anos.' },
+  { id: 'n-thaylon', area: 'relacoes', title: 'Thaylon', body: 'Filho Thaylon Ravi, 8 anos.' },
+  { id: 'n-ricardo', area: 'relacoes', title: 'Ricardo', body: 'Amigo e colaborador. Não sócio.' },
 ]
 
-/** Ligações densas — metas como hub */
 export const DEFAULT_REL: [string, string][] = [
   ['n-voce', 'n-carreira'],
   ['n-voce', 'n-rayana'],
-  ['n-voce', 'n-naylla'],
-  ['n-voce', 'n-theo'],
-  ['n-voce', 'n-thaylon'],
-  ['n-meta-3m', 'n-meta-6m'],
-  ['n-meta-6m', 'n-meta-3a'],
   ['n-meta-3m', 'n-proj-alpha'],
   ['n-meta-3m', 'n-financas'],
-  ['n-meta-3m', 'n-carreira'],
-  ['n-meta-6m', 'n-financas'],
-  ['n-meta-3a', 'n-financas'],
   ['n-carreira', 'n-proj-alpha'],
-  ['n-carreira', 'n-proj-trafego'],
-  ['n-proj-alpha', 'n-financas'],
-  ['n-proj-noivos', 'n-meta-3m'],
-  ['n-proj-ebook', 'n-proj-sermao'],
-  ['n-proj-sermao', 'n-proj-discipulo'],
-  ['n-aprende', 'n-proj-alpha'],
-  ['n-aprende', 'n-carreira'],
-  ['n-saude', 'n-voce'],
   ['n-ricardo', 'n-carreira'],
-  ['n-ricardo', 'n-proj-alpha'],
 ]
 
-export function buildSystemPersonaBlock(notes: BrainNote[] = DEFAULT_NOTES): string {
-  const { name, address, persona } = ALPHA_CONFIG
-  const personaDesc =
-    persona === 'formal_britanico'
-      ? 'formal, britânico, leal e preciso — educado e seco'
-      : persona
-
-  const byArea: Record<string, BrainNote[]> = {}
-  for (const n of notes) {
-    if (!byArea[n.area]) byArea[n.area] = []
-    byArea[n.area].push(n)
-  }
-
-  const brainLines: string[] = []
-  for (const [areaKey, list] of Object.entries(byArea)) {
-    const label = AREA[areaKey as NoteArea]?.label ?? areaKey
-    brainLines.push(`### ${label}`)
-    for (const n of list) {
-      brainLines.push(`- ${n.title}: ${n.body}`)
-    }
-  }
-
-  return `
-IDENTIDADE
-Você é ${name}, assistente de IA da Digital Alpha.
-Trate o usuário sempre como "${address}".
-Personalidade: ${personaDesc}.
-
-REGRA DE OURO — OBJETIVIDADE (OBRIGATÓRIA)
-- Respostas ULTRA CURTAS: no máximo 1 a 2 frases faladas.
-- Vá direto ao resultado. Sem introdução, sem despedida, sem explicação do que você vai fazer.
-- NÃO diga "vou verificar", "um momento", "deixe-me consultar", "encontrei o seguinte".
-- NÃO repita a pergunta. NÃO faça resumo longo. NÃO dê contexto extra não pedido.
-- Se usar ferramenta do CRM: responda só com o dado pedido (número, nome, status).
-- Máximo ~40 palavras por resposta. Se precisar de mais, peça um comando mais específico.
-- Português do Brasil, sem emojis, sem markdown, sem listas longas.
-
-Você tem acesso ao CRM (clientes, tarefas, campanhas, financeiro).
-Nunca invente dados do CRM — use as ferramentas quando precisar.
-
-SECOND BRAIN DO DIRETOR (use só se for relevante à pergunta)
-${brainLines.join('\n')}
-
-PROTOCOLO DE MEMÓRIA VIVA
-Se o diretor revelar algo novo e duradouro, TERMINE com uma linha:
-[[SAVE:area|titulo|texto]]
-onde area ∈ meta, metas, trabalho, projetos, financas, aprendizado, saude, relacoes.
-Só quando houver fato realmente novo. Nunca fale sobre este protocolo.
+const RULES = `
+Você é Alpha (Digital Alpha). Chame o usuário de "diretor".
+Formal, seco, objetivo. PT-BR. Sem emojis/markdown.
+Máximo 1–2 frases. Sem "vou verificar". Só o resultado.
+Nunca invente dados do CRM.
 `.trim()
+
+/** Prompt completo (legado / detalhado) */
+export function buildSystemPersonaBlock(notes: BrainNote[] = DEFAULT_NOTES): string {
+  const lines = notes.map((n) => `- [${AREA[n.area]?.label ?? n.area}] ${n.title}: ${n.body}`)
+  return `${RULES}
+
+SECOND BRAIN:
+${lines.join('\n')}
+
+Se fato novo e duradouro, termine com: [[SAVE:area|titulo|texto]]
+area ∈ meta,metas,trabalho,projetos,financas,aprendizado,saude,relacoes`
+}
+
+/** Prompt enxuto — menos tokens = LLM responde mais rápido */
+export function buildSystemPersonaBlockCompact(notes: BrainNote[] = DEFAULT_NOTES): string {
+  const lines = notes.map((n) => `${n.title}: ${n.body}`)
+  return `${RULES}
+
+CONTEXTO: ${lines.join(' | ')}
+
+Fato novo? Termine com [[SAVE:area|titulo|texto]]`
 }

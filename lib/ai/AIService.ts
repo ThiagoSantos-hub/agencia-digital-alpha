@@ -1,6 +1,11 @@
-// lib/ai/AIService.ts — v1.5.3 (menos rodadas de tool)
+// lib/ai/AIService.ts — v1.5.4 (modo compacto = menos tokens no system)
 import type { AIProvider, AIRequest, AIResponse, CRMTool, Message } from './types'
-import { buildSystemPersonaBlock, DEFAULT_NOTES, type BrainNote } from './alphaPersona'
+import {
+  buildSystemPersonaBlock,
+  buildSystemPersonaBlockCompact,
+  DEFAULT_NOTES,
+  type BrainNote,
+} from './alphaPersona'
 
 export class AIService {
   private provider: AIProvider | null = null
@@ -13,16 +18,27 @@ export class AIService {
     return this.provider!
   }
 
-  private getDynamicSystemPrompt(notes?: BrainNote[], crmSnapshot?: string): string {
+  private getDynamicSystemPrompt(
+    notes?: BrainNote[],
+    crmSnapshot?: string,
+    compact?: boolean
+  ): string {
     const agora = new Date()
-    const dataHoraBrasilia = agora.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })
-    const brain = buildSystemPersonaBlock(notes?.length ? notes : DEFAULT_NOTES)
+    const dataHoraBrasilia = agora.toLocaleString('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+    const list = notes?.length ? notes : DEFAULT_NOTES
+    const brain = compact
+      ? buildSystemPersonaBlockCompact(list)
+      : buildSystemPersonaBlock(list)
 
     const crmBlock = crmSnapshot
-      ? `CRM AGORA: ${crmSnapshot}\nUse estes números para perguntas de contagem/resumo. Só use ferramenta se precisar de lista ou ação.`
-      : `Para dados do CRM use as ferramentas. Não invente.`
+      ? `CRM: ${crmSnapshot}`
+      : ''
 
-    return `${brain}\n\n${crmBlock}\n\nDATA (Brasília): ${dataHoraBrasilia}`
+    return `${brain}\n${crmBlock}\nHora: ${dataHoraBrasilia}`.trim()
   }
 
   async chat(
@@ -33,12 +49,17 @@ export class AIService {
       temperature?: number
       notes?: BrainNote[]
       crmSnapshot?: string
+      compact?: boolean
     }
   ): Promise<AIResponse> {
     const provider = this.getProvider()
     const systemMessage: Message = {
       role: 'system',
-      content: this.getDynamicSystemPrompt(options?.notes, options?.crmSnapshot),
+      content: this.getDynamicSystemPrompt(
+        options?.notes,
+        options?.crmSnapshot,
+        options?.compact
+      ),
     }
 
     let fullMessages: Message[] = [systemMessage, ...messages]
@@ -52,7 +73,6 @@ export class AIService {
 
     let response = await provider.chat(request)
 
-    // Máximo 2 rodadas de tool (antes 5) — menos latência
     let iterations = 0
     while (response.toolCalls && response.toolCalls.length > 0 && iterations < 2) {
       iterations++
