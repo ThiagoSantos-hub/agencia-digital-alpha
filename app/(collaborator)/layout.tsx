@@ -3,7 +3,6 @@
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
 import { 
   LayoutDashboard, 
   Users,
@@ -22,8 +21,12 @@ import {
   BarChart2,
   List
 } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase'
 import { useNotificacoes } from '@/hooks/useNotificacoes'
+import { PageFade } from '@/components/ui/Motion'
+import { CollaboratorNavLink } from '@/components/layout/CollaboratorNavLink'
+import { springSoft } from '@/lib/motion'
 
 const menuGroups = [
   {
@@ -200,15 +203,13 @@ export default function CollaboratorLayout({
 
         <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-4 custom-scrollbar">
           <div className="mb-2">
-            <Link href="/colaborador/dashboard"
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
-                pathname === '/colaborador/dashboard' || pathname.startsWith('/colaborador/dashboard/')
-                  ? 'bg-primary/10 text-primary border border-primary/30'
-                  : 'text-text-muted hover:text-text-main hover:bg-hover-bg'
-              }`}>
+            <CollaboratorNavLink
+              href="/colaborador/dashboard"
+              active={pathname === '/colaborador/dashboard' || pathname.startsWith('/colaborador/dashboard/')}
+            >
               <LayoutDashboard size={18} />
               <span className="text-sm font-semibold">Dashboard</span>
-            </Link>
+            </CollaboratorNavLink>
           </div>
 
           {menuGroups.map((group) => (
@@ -231,18 +232,10 @@ export default function CollaboratorLayout({
                     </div>
                   )
                   return (
-                    <Link key={item.href} href={item.href}
-                      prefetch={false}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
-                        isActive
-                          ? 'bg-primary/10 text-primary border border-primary/30'
-                          : showPulse
-                            ? 'text-amber-600 bg-amber-50 border border-amber-200 animate-pulse'
-                            : 'text-text-muted hover:text-text-main hover:bg-hover-bg'
-                      }`}>
+                    <CollaboratorNavLink key={item.href} href={item.href} active={isActive} pulse={showPulse}>
                       <Icon size={18} className={showPulse ? 'fill-amber-500' : ''} />
                       <span className={`text-sm font-semibold ${showPulse ? 'text-amber-600' : ''}`}>{item.label}</span>
-                    </Link>
+                    </CollaboratorNavLink>
                   )
                 })}
               </div>
@@ -251,13 +244,16 @@ export default function CollaboratorLayout({
         </nav>
 
         <div className="px-3 py-4 border-t border-border">
-          <button
+          <motion.button
             onClick={() => signOut()}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+            whileHover={{ x: 2 }}
+            whileTap={{ scale: 0.98 }}
+            transition={springSoft}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:text-red-600 hover:bg-red-50"
           >
             <LogOut size={18} />
             <span className="text-sm font-semibold">Sair do sistema</span>
-          </button>
+          </motion.button>
         </div>
       </aside>
 
@@ -270,9 +266,11 @@ export default function CollaboratorLayout({
 
           <div className="flex items-center gap-4">
             <div ref={sinoRef} className="relative">
-              <button
+              <motion.button
                 onClick={() => setSinoAberto(prev => !prev)}
-                className={`relative w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-300 ${
+                whileTap={{ scale: 0.92 }}
+                transition={springSoft}
+                className={`relative w-9 h-9 flex items-center justify-center rounded-xl ${
                   naoLidas > 0 
                     ? 'text-amber-600 bg-amber-50 border border-amber-200' 
                     : 'text-text-muted hover:text-text-main hover:bg-hover-bg'
@@ -285,7 +283,7 @@ export default function CollaboratorLayout({
                     {naoLidas > 99 ? '99+' : naoLidas}
                   </span>
                 )}
-              </button>
+              </motion.button>
 
               {sinoAberto && (
                 <div className="absolute right-0 top-11 w-80 bg-surface border border-border rounded-xl shadow-2xl z-50 flex flex-col max-h-[480px]">
@@ -373,7 +371,9 @@ export default function CollaboratorLayout({
         </header>
 
         <main className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-background">
-          {children}
+          <PageFade key={pathname}>
+            {children}
+          </PageFade>
         </main>
       </div>
     </div>
