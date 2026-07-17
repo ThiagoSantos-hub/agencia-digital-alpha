@@ -8,6 +8,7 @@ interface WhatsAppStatus {
   qrcode?: string | null
   instance_name?: string
   error?: string
+  grupos_visiveis_colaboradores?: boolean
 }
 
 interface WhatsAppGroup {
@@ -35,13 +36,22 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
 
   const fetchStatus = useCallback(async () => {
     try {
-      const res = await fetch('/api/whatsapp/instance')
+      const res = await fetch('/api/whatsapp/instance', { cache: 'no-store' })
       const data = await res.json()
       if (!res.ok) {
         setState({ status: 'error', error: data.error })
         return
       }
-      setState({ status: data.status, qrcode: data.qrcode, instance_name: data.instance_name })
+      setState({
+        status: data.status,
+        qrcode: data.qrcode,
+        instance_name: data.instance_name,
+        grupos_visiveis_colaboradores: data.grupos_visiveis_colaboradores,
+      })
+      // Restaura toggle salvo no banco
+      if (typeof data.grupos_visiveis_colaboradores === 'boolean') {
+        setGruposVisiveis(data.grupos_visiveis_colaboradores)
+      }
       return data.status
     } catch {
       setState({ status: 'error', error: 'Erro de rede' })
@@ -51,10 +61,11 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
   const fetchGroups = useCallback(async () => {
     setLoadingGroups(true)
     try {
-      const res = await fetch('/api/whatsapp/groups')
+      // force=1 garante sync fresco com a Evolution API
+      const res = await fetch('/api/whatsapp/groups?force=1', { cache: 'no-store' })
       if (res.ok) {
         const data = await res.json()
-        setGroups(data)
+        setGroups(Array.isArray(data) ? data : [])
       }
     } finally {
       setLoadingGroups(false)
@@ -81,26 +92,10 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
     }
   }, [state.status])
 
-  useEffect(() => {
-    if (state.status !== 'connected') return
-    let cancelled = false
-    const fetchGruposVisiveis = async () => {
-      try {
-        const res = await fetch('/api/whatsapp/instance')
-        if (res.ok) {
-          const data = await res.json()
-          if (!cancelled && typeof data.grupos_visiveis_colaboradores === 'boolean') {
-            setGruposVisiveis(data.grupos_visiveis_colaboradores)
-          }
-        }
-      } catch { /* silencioso */ }
-    }
-    fetchGruposVisiveis()
-    return () => { cancelled = true }
-  }, [state.status])
-
   const handleToggleGruposVisiveis = useCallback(async (enabled: boolean) => {
     setSavingGruposVisiveis(true)
+    // Optimistic UI
+    setGruposVisiveis(enabled)
     try {
       const res = await fetch('/api/whatsapp/instance', {
         method: 'PATCH',
@@ -108,10 +103,18 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
         body: JSON.stringify({ grupos_visiveis_colaboradores: enabled }),
       })
       if (res.ok) {
-        setGruposVisiveis(enabled)
+        const data = await res.json()
+        if (typeof data.grupos_visiveis_colaboradores === 'boolean') {
+          setGruposVisiveis(data.grupos_visiveis_colaboradores)
+        }
         setShowSavedFeedback(true)
         setTimeout(() => setShowSavedFeedback(false), 2000)
+      } else {
+        // Reverte se falhou
+        setGruposVisiveis(!enabled)
       }
+    } catch {
+      setGruposVisiveis(!enabled)
     } finally {
       setSavingGruposVisiveis(false)
     }
@@ -242,8 +245,9 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
               </div>
               <button
                 onClick={() => {
-                  setShowGroups(!showGroups)
-                  if (!showGroups) fetchGroups()
+                  const next = !showGroups
+                  setShowGroups(next)
+                  if (next) fetchGroups()
                 }}
                 disabled={loadingGroups}
                 className="text-xs px-3 py-1.5 rounded-lg flex items-center gap-1 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors"
@@ -261,11 +265,11 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
                 {loadingGroups ? (
                   <div className="flex items-center gap-2 py-2">
                     <Loader2 size={14} className="animate-spin text-text-muted" />
-                    <span className="text-xs text-text-muted">Carregando grupos...</span>
+                    <span className="text-xs text-text-muted">Sincronizando grupos...</span>
                   </div>
                 ) : groups.length === 0 ? (
                   <p className="text-xs text-text-muted py-2">
-                    Nenhum grupo encontrado. Verifique se seu WhatsApp está em algum grupo.
+                    Nenhum grupo encontrado. Clique em Atualizar ou verifique se o WhatsApp está em grupos.
                   </p>
                 ) : (
                   <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
