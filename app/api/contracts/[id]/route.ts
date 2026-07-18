@@ -17,11 +17,11 @@ async function requireManager() {
   const { data: { user } } = await session.auth.getUser()
   if (!user) return { error: NextResponse.json({ error: 'Não autenticado' }, { status: 401 }) }
 
-  const { data: profile } = await session.from('profiles').select('role').eq('id', user.id).single()
-  if (profile?.role === 'collaborator') {
+  const { data: profile } = await session.from('profiles').select('role, company_id').eq('id', user.id).single()
+  if (!profile || profile.role === 'collaborator') {
     return { error: NextResponse.json({ error: 'Acesso negado' }, { status: 403 }) }
   }
-  return { userId: user.id }
+  return { companyId: profile.company_id as string }
 }
 
 export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
@@ -32,6 +32,7 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
     .from('contracts')
     .select('*')
     .eq('id', params.id)
+    .eq('company_id', auth.companyId)
     .single()
 
   if (error || !contract) return NextResponse.json({ error: 'Contrato não encontrado' }, { status: 404 })
@@ -57,13 +58,14 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       .from('contracts')
       .select('*')
       .eq('id', params.id)
+      .eq('company_id', auth.companyId)
       .single()
 
     if (error || !contract) return NextResponse.json({ error: 'Contrato não encontrado' }, { status: 404 })
 
     if (action === 'cancel') {
       if (contract.esignature_document_id) {
-        await cancelSignatureRequest(contract.esignature_document_id)
+        await cancelSignatureRequest(contract.esignature_document_id, contract.company_id)
       }
       const { data, error: updateError } = await supabase
         .from('contracts')
@@ -76,73 +78,49 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
 
     if (action === 'resend') {
+      const { data: company } = await supabase.from('companies').select('*').eq('id', contract.company_id).single()
+      if (!company) return NextResponse.json({ error: 'Empresa não encontrada' }, { status: 500 })
+
       if (contract.status === 'rascunho') {
-        const { data: template } = await supabase
-          .from('contract_templates')
-          .select('*')
-          .eq('type', contract.contract_type)
-          .single()
-        const extra = (template?.extra_config ?? contract.extra_config_snapshot) as Record<string, number>
+        const { data: template } = await supabase.from('contract_templates').select('name').eq('id', contract.template_id).single()
         const dataDoDia = formatDataDoDia()
 
-        const pdfBuffer = contract.contract_type === 'completo'
-          ? await renderContractPdf('completo', {
-              razaoSocial: contract.razao_social || '',
-              cnpj: contract.cnpj || '',
-              cpf: contract.cpf || '',
-              endereco: contract.endereco,
-              cidadeEstado: `${contract.cidade}-${contract.estado}`,
-              cep: contract.cep || '',
-              nomeCompleto: contract.nome_completo,
-              email: contract.email,
-              telefone: contract.telefone,
-              dataDoDia,
-              currency: contract.currency_snapshot,
-              setupFee: Number(contract.setup_fee_snapshot),
-              monthlyFee: Number(contract.monthly_fee_snapshot),
-              monthlyTrafego: Number(extra.monthly_trafego ?? 0),
-              monthlyCrm: Number(extra.monthly_crm ?? 0),
-              prazoMeses: Number(extra.prazo_meses ?? 3),
-            })
-          : contract.contract_type === 'crm'
-          ? await renderContractPdf('crm', {
-              cpf: contract.cpf || '',
-              endereco: contract.endereco,
-              cidadeEstado: `${contract.cidade}/${contract.estado}`,
-              nomeCompleto: contract.nome_completo,
-              dataDoDia,
-              currency: contract.currency_snapshot,
-              setupFee: Number(contract.setup_fee_snapshot),
-              monthlyFee: Number(contract.monthly_fee_snapshot),
-              funisMax: Number(extra.funis_max ?? 0),
-              automacoesMax: Number(extra.automacoes_max ?? 0),
-              prazoImplantacaoDias: Number(extra.prazo_implantacao_dias ?? 0),
-              prazoContratoMeses: Number(extra.prazo_meses ?? 3),
-              treinamentoH1: Number(extra.treinamento_h_mes1 ?? 0),
-              treinamentoH2: Number(extra.treinamento_h_apartir_mes2 ?? 0),
-            })
-          : await renderContractPdf('trafego', {
-              nomeCompleto: contract.nome_completo,
-              cnpj: contract.cnpj || '',
-              cpf: contract.cpf || '',
-              endereco: contract.endereco,
-              cidadeEstado: `${contract.cidade}/${contract.estado}`,
-              dataDoDia,
-              currency: contract.currency_snapshot,
-              valorPlano: Number(contract.setup_fee_snapshot),
-              prazoDias: Number(extra.prazo_dias ?? 30),
-              parcelamentoMaxCartao: Number(extra.parcelamento_max_cartao ?? 6),
-            })
+        // Usa o clauses_snapshot/pricing_snapshot já congelados no contrato — não relê
+        // o template ao vivo, que pode ter sido editado entre o rascunho e o reenvio.
+        const fieldValues = contract.field_values as Record<string, string>
+        const contractantFieldRows = Object.entries(fieldValues)
+          .filter(([, v]) => v?.trim())
+          .map(([k, v]) => ({ label: k, value: v }))
 
-        const draftPath = `${contract.id}/draft.pdf`
+        const pdfBuffer = await renderContractPdf({
+          templateName: template?.name ?? 'Contrato',
+          companyIdentity: {
+            nomeFantasia: company.name,
+            nomeCompleto: company.contract_signer_name ?? company.name,
+            cpf: company.contract_signer_cpf ?? '',
+            endereco: company.contract_signer_address ?? '',
+            email: company.contract_signer_email ?? '',
+            telefone: company.contract_signer_phone ?? '',
+          },
+          contractantFieldRows,
+          clauses: contract.clauses_snapshot,
+          pricingItems: contract.pricing_snapshot,
+          currency: contract.currency_snapshot,
+          dataDoDia,
+          signerName: contract.nome_completo,
+        })
+
+        const draftPath = `${contract.company_id}/${contract.id}/draft.pdf`
         await supabase.storage.from('contracts').upload(draftPath, pdfBuffer, { contentType: 'application/pdf', upsert: true })
 
         const signature = await createSignatureRequest({
+          companyId: contract.company_id,
           contractId: contract.id,
           pdfBuffer,
           clientName: contract.nome_completo,
           clientEmail: contract.email,
           clientPhone: contract.telefone,
+          companySignerEmail: company.contract_signer_email,
         })
 
         const { data, error: updateError } = await supabase
@@ -161,7 +139,6 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         return NextResponse.json(data)
       }
 
-      // Já enviado — apenas atualiza sent_at como registro do reenvio manual.
       const { data, error: updateError } = await supabase
         .from('contracts')
         .update({ sent_at: new Date().toISOString() })

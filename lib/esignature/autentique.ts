@@ -9,15 +9,16 @@ const AUTENTIQUE_GRAPHQL_URL = 'https://api.autentique.com.br/v2/graphql'
 
 export class AutentiqueNotConfiguredError extends Error {
   constructor() {
-    super('Autentique não está configurado. Cadastre a API key em /integracoes.')
+    super('Autentique não está configurado. Cadastre a API key da sua empresa em /integracoes.')
     this.name = 'AutentiqueNotConfiguredError'
   }
 }
 
-async function getAutentiqueConfig(): Promise<{ accessToken: string; webhookSecret: string | null }> {
+async function getAutentiqueConfig(companyId: string): Promise<{ accessToken: string; webhookSecret: string | null }> {
   const { data } = await supabase
     .from('integrations')
     .select('access_token, config')
+    .eq('company_id', companyId)
     .eq('type', 'autentique')
     .eq('status', 'connected')
     .maybeSingle()
@@ -60,11 +61,13 @@ async function autentiqueGraphQL(accessToken: string, query: string, variables: 
 }
 
 export interface CreateSignatureRequestInput {
+  companyId: string
   contractId: string
   pdfBuffer: Buffer
   clientName: string
   clientEmail: string
   clientPhone: string
+  companySignerEmail: string
 }
 
 export interface CreateSignatureRequestResult {
@@ -85,11 +88,11 @@ const CREATE_DOCUMENT_MUTATION = `
   }
 `
 
-// Cliente assina primeiro, Thiago (CONTRATADO) assina em seguida.
+// Cliente assina primeiro, o representante da empresa (CONTRATADO) assina em seguida.
 export async function createSignatureRequest(
   input: CreateSignatureRequestInput
 ): Promise<CreateSignatureRequestResult> {
-  const { accessToken } = await getAutentiqueConfig()
+  const { accessToken } = await getAutentiqueConfig(input.companyId)
 
   const data = await autentiqueGraphQL(
     accessToken,
@@ -98,7 +101,7 @@ export async function createSignatureRequest(
       document: { name: `Contrato ${input.contractId}` },
       signers: [
         { email: input.clientEmail, action: 'SIGN' },
-        { email: 'thiagogestorbm@gmail.com', action: 'SIGN' },
+        { email: input.companySignerEmail, action: 'SIGN' },
       ],
     },
     input.pdfBuffer,
@@ -121,9 +124,10 @@ const DOCUMENT_STATUS_QUERY = `
 `
 
 export async function getSignatureStatus(
-  documentId: string
+  documentId: string,
+  companyId: string
 ): Promise<{ status: string; signers: Array<{ email: string; status: string }> }> {
-  const { accessToken } = await getAutentiqueConfig()
+  const { accessToken } = await getAutentiqueConfig(companyId)
   const data = await autentiqueGraphQL(accessToken, DOCUMENT_STATUS_QUERY, { id: documentId })
 
   const signers = (data.document.signatures ?? []).map((s: { email: string; signed?: { created_at: string } }) => ({
@@ -141,12 +145,12 @@ const DELETE_DOCUMENT_MUTATION = `
   }
 `
 
-export async function cancelSignatureRequest(documentId: string): Promise<void> {
-  const { accessToken } = await getAutentiqueConfig()
+export async function cancelSignatureRequest(documentId: string, companyId: string): Promise<void> {
+  const { accessToken } = await getAutentiqueConfig(companyId)
   await autentiqueGraphQL(accessToken, DELETE_DOCUMENT_MUTATION, { id: documentId })
 }
 
-export async function getAutentiqueWebhookSecret(): Promise<string | null> {
-  const { webhookSecret } = await getAutentiqueConfig()
+export async function getAutentiqueWebhookSecret(companyId: string): Promise<string | null> {
+  const { webhookSecret } = await getAutentiqueConfig(companyId)
   return webhookSecret
 }

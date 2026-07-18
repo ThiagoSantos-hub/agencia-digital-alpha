@@ -1,162 +1,183 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react'
+import { Modal } from '@/components/ui/Modal'
+import { Plus, Copy, Trash2, Loader2, FileText, Sparkles } from 'lucide-react'
 
-interface ContractTemplate {
-  type: 'completo' | 'crm' | 'trafego'
-  label: string
+interface Template {
+  id: string
+  name: string
+  slug: string
   currency: 'BRL' | 'USD'
-  setup_fee: number
-  monthly_fee: number
-  extra_config: Record<string, number>
+  active: boolean
+  is_gallery_template: boolean
+  created_at: string
 }
 
-const inputCls = 'w-full px-3 py-2 bg-background border border-border rounded-lg text-text-main text-sm focus:outline-none focus:border-primary/50 transition-colors'
-const labelCls = 'block text-[11px] font-medium text-text-muted mb-1'
-
-const extraFieldLabels: Record<string, string> = {
-  monthly_trafego: 'Mensal — Tráfego Pago',
-  monthly_crm: 'Mensal — CRM',
-  funis_max: 'Funis de vendas (máx.)',
-  automacoes_max: 'Automações (máx.)',
-  prazo_implantacao_dias: 'Prazo de implantação (dias úteis)',
-  prazo_meses: 'Duração do contrato (meses)',
-  treinamento_h_mes1: 'Treinamento — horas/semana (1º mês)',
-  treinamento_h_apartir_mes2: 'Treinamento — horas/semana (a partir do 2º mês)',
-  prazo_dias: 'Prazo do plano (dias)',
-  parcelamento_max_cartao: 'Parcelamento máximo no cartão (x)',
-}
-
-function TemplateCard({ template, onSaved }: { template: ContractTemplate; onSaved: () => void }) {
-  const [form, setForm] = useState(template)
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
-
-  const setField = (field: keyof ContractTemplate, value: unknown) =>
-    setForm((prev) => ({ ...prev, [field]: value }))
-
-  const setExtra = (key: string, value: number) =>
-    setForm((prev) => ({ ...prev, extra_config: { ...prev.extra_config, [key]: value } }))
-
-  const handleSave = async () => {
-    setSaving(true)
-    setSaved(false)
-    const res = await fetch('/api/contract-templates', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: form.type,
-        setup_fee: form.setup_fee,
-        monthly_fee: form.monthly_fee,
-        currency: form.currency,
-        extra_config: form.extra_config,
-      }),
-    })
-    setSaving(false)
-    if (res.ok) {
-      setSaved(true)
-      onSaved()
-      setTimeout(() => setSaved(false), 2000)
-    }
-  }
-
-  return (
-    <Card padding="md" animate={false}>
-      <CardHeader title={template.label} description={`Tipo: ${template.type}`} />
-
-      <div className="space-y-3">
-        <div className="grid grid-cols-3 gap-3">
-          <div>
-            <label className={labelCls}>Moeda</label>
-            <select className={inputCls} value={form.currency} onChange={(e) => setField('currency', e.target.value)}>
-              <option value="BRL">BRL (R$)</option>
-              <option value="USD">USD (US$)</option>
-            </select>
-          </div>
-          <div>
-            <label className={labelCls}>{form.type === 'trafego' ? 'Valor do plano' : 'Setup (implementação)'}</label>
-            <input type="number" min="0" step="0.01" className={inputCls} value={form.setup_fee} onChange={(e) => setField('setup_fee', parseFloat(e.target.value) || 0)} />
-          </div>
-          {form.type !== 'trafego' && (
-            <div>
-              <label className={labelCls}>Mensalidade total</label>
-              <input type="number" min="0" step="0.01" className={inputCls} value={form.monthly_fee} onChange={(e) => setField('monthly_fee', parseFloat(e.target.value) || 0)} />
-            </div>
-          )}
-        </div>
-
-        {Object.keys(form.extra_config).length > 0 && (
-          <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border">
-            {Object.entries(form.extra_config).map(([key, value]) => (
-              <div key={key}>
-                <label className={labelCls}>{extraFieldLabels[key] ?? key}</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  className={inputCls}
-                  value={value}
-                  onChange={(e) => setExtra(key, parseFloat(e.target.value) || 0)}
-                />
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="flex items-center gap-3 pt-2">
-          <Button onClick={handleSave} disabled={saving} icon={saving ? <Loader2 size={14} className="animate-spin" /> : undefined}>
-            {saving ? 'Salvando...' : 'Salvar alterações'}
-          </Button>
-          {saved && (
-            <span className="flex items-center gap-1 text-cta text-sm font-medium">
-              <CheckCircle2 size={15} /> Salvo
-            </span>
-          )}
-        </div>
-      </div>
-    </Card>
-  )
+interface GalleryTemplate extends Template {
+  clause_count: number
 }
 
 export default function ModelosDeContratoPage() {
-  const [templates, setTemplates] = useState<ContractTemplate[]>([])
+  const router = useRouter()
+  const [templates, setTemplates] = useState<Template[]>([])
+  const [gallery, setGallery] = useState<GalleryTemplate[]>([])
   const [loading, setLoading] = useState(true)
+  const [galleryOpen, setGalleryOpen] = useState(false)
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const [creatingBlank, setCreatingBlank] = useState(false)
 
-  const fetchTemplates = async () => {
+  const fetchAll = async () => {
     setLoading(true)
     const res = await fetch('/api/contract-templates')
     if (res.ok) setTemplates(await res.json())
     setLoading(false)
   }
 
-  useEffect(() => { fetchTemplates() }, [])
+  const fetchGallery = async () => {
+    const res = await fetch('/api/contract-templates/gallery')
+    if (res.ok) setGallery(await res.json())
+  }
+
+  useEffect(() => { fetchAll() }, [])
+
+  const handleOpenGallery = async () => {
+    setGalleryOpen(true)
+    if (gallery.length === 0) await fetchGallery()
+  }
+
+  const handleUseTemplate = async (id: string) => {
+    setBusyId(id)
+    const res = await fetch(`/api/contract-templates/${id}/duplicate`, { method: 'POST' })
+    const data = await res.json()
+    setBusyId(null)
+    if (res.ok) router.push(`/contratos/modelos/${data.id}`)
+  }
+
+  const handleStartBlank = async () => {
+    setCreatingBlank(true)
+    const res = await fetch('/api/contract-templates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Novo modelo', currency: 'BRL' }),
+    })
+    const data = await res.json()
+    setCreatingBlank(false)
+    if (res.ok) router.push(`/contratos/modelos/${data.id}`)
+  }
+
+  const handleDuplicateOwn = async (id: string) => {
+    setBusyId(id)
+    const res = await fetch(`/api/contract-templates/${id}/duplicate`, { method: 'POST' })
+    setBusyId(null)
+    if (res.ok) fetchAll()
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Excluir este modelo? Contratos já gerados a partir dele não são afetados.')) return
+    setBusyId(id)
+    await fetch(`/api/contract-templates/${id}`, { method: 'DELETE' })
+    setBusyId(null)
+    fetchAll()
+  }
 
   return (
     <div className="space-y-8 pb-20">
-      <div>
-        <Link href="/contratos" className="inline-flex items-center gap-1.5 text-text-muted hover:text-text-main text-sm mb-2">
-          <ArrowLeft size={14} /> Voltar para Contratos
-        </Link>
-        <h1 className="text-text-main text-2xl font-bold">Modelos de Contrato</h1>
-        <p className="text-text-muted text-sm mt-1">
-          O texto das cláusulas é fixo — aqui você ajusta apenas valores, moeda e os números de escopo de cada modelo.
-          Contratos já gerados não são afetados por mudanças aqui (cada um guarda seu próprio snapshot de valores).
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-text-main text-2xl font-bold">Modelos de Contrato</h1>
+          <p className="text-text-muted text-sm mt-1">Crie e edite os contratos que você usa com seus clientes.</p>
+        </div>
+        <Button onClick={handleOpenGallery} icon={<Plus size={16} />}>Novo modelo</Button>
       </div>
 
-      {loading ? (
-        <p className="text-text-muted text-sm">Carregando...</p>
-      ) : (
-        <div className="grid md:grid-cols-2 gap-4">
-          {templates.map((t) => (
-            <TemplateCard key={t.type} template={t} onSaved={fetchTemplates} />
-          ))}
+      <Card padding="sm" animate={false}>
+        <CardHeader title="Seus modelos" description={`${templates.length} modelo(s)`} />
+        {loading ? (
+          <p className="text-text-muted text-sm p-3">Carregando...</p>
+        ) : templates.length === 0 ? (
+          <div className="text-center py-10">
+            <FileText size={28} className="text-text-disabled mx-auto mb-2" />
+            <p className="text-text-muted text-sm">Você ainda não tem nenhum modelo. Clique em "Novo modelo" para começar.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {templates.map((t) => (
+              <div key={t.id} className="flex items-center justify-between py-3 px-1">
+                <button onClick={() => router.push(`/contratos/modelos/${t.id}`)} className="text-left flex-1">
+                  <p className="text-text-main text-sm font-semibold">{t.name}</p>
+                  <p className="text-text-muted text-xs">{t.currency} · {t.active ? 'Ativo' : 'Inativo'} · /{t.slug}</p>
+                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => handleDuplicateOwn(t.id)}
+                    disabled={busyId === t.id}
+                    title="Duplicar"
+                    className="p-2 text-text-muted hover:text-primary hover:bg-hover-bg rounded-xl disabled:opacity-50"
+                  >
+                    {busyId === t.id ? <Loader2 size={15} className="animate-spin" /> : <Copy size={15} />}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(t.id)}
+                    disabled={busyId === t.id}
+                    title="Excluir"
+                    className="p-2 text-text-muted hover:text-red-500 hover:bg-red-50 rounded-xl disabled:opacity-50"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <Modal open={galleryOpen} onClose={() => setGalleryOpen(false)} title="Novo modelo de contrato" description="Comece de um exemplo pronto e adapte, ou comece do zero." size="lg">
+        <div className="space-y-4">
+          <button
+            onClick={handleStartBlank}
+            disabled={creatingBlank}
+            className="w-full flex items-center gap-3 p-3 rounded-xl border border-dashed border-border hover:border-primary/50 hover:bg-hover-bg transition-colors text-left disabled:opacity-50"
+          >
+            {creatingBlank ? <Loader2 size={18} className="animate-spin text-primary" /> : <Plus size={18} className="text-primary" />}
+            <div>
+              <p className="text-text-main text-sm font-semibold">Começar do zero</p>
+              <p className="text-text-muted text-xs">Um modelo vazio, você monta do seu jeito.</p>
+            </div>
+          </button>
+
+          <div>
+            <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-text-disabled mb-2">
+              <Sparkles size={12} /> Exemplos prontos
+            </p>
+            <div className="space-y-2">
+              {gallery.length === 0 ? (
+                <p className="text-text-muted text-sm">Carregando exemplos...</p>
+              ) : (
+                gallery.map((g) => (
+                  <div key={g.id} className="flex items-center justify-between p-3 rounded-xl border border-border bg-background">
+                    <div>
+                      <p className="text-text-main text-sm font-semibold">{g.name}</p>
+                      <p className="text-text-muted text-xs">{g.clause_count} cláusulas · {g.currency}</p>
+                    </div>
+                    <Button
+                      variant="secondary"
+                      onClick={() => handleUseTemplate(g.id)}
+                      disabled={busyId === g.id}
+                      icon={busyId === g.id ? <Loader2 size={14} className="animate-spin" /> : undefined}
+                    >
+                      {busyId === g.id ? 'Copiando...' : 'Usar este modelo'}
+                    </Button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
-      )}
+      </Modal>
     </div>
   )
 }

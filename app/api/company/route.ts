@@ -3,7 +3,7 @@ import { createServerClient } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 
-export async function requireManager() {
+async function requireManager() {
   const session = createServerClient()
   const { data: { user } } = await session.auth.getUser()
   if (!user) return { error: NextResponse.json({ error: 'Não autenticado' }, { status: 401 }) }
@@ -12,42 +12,36 @@ export async function requireManager() {
   if (!profile || profile.role === 'collaborator') {
     return { error: NextResponse.json({ error: 'Acesso negado' }, { status: 403 }) }
   }
-  return { session, userId: user.id, companyId: profile.company_id as string }
+  return { session, companyId: profile.company_id as string }
 }
 
-// GET — lista os modelos da própria empresa
+// GET — dados da própria empresa (usados como identidade CONTRATADO nos contratos)
 export async function GET() {
   const auth = await requireManager()
   if (auth.error) return auth.error
 
-  const { data, error } = await auth.session!
-    .from('contract_templates')
-    .select('*')
-    .eq('company_id', auth.companyId)
-    .order('created_at', { ascending: false })
-
+  const { data, error } = await auth.session!.from('companies').select('*').eq('id', auth.companyId).single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
 }
 
-// POST — cria um modelo novo (vazio, "Começar do zero")
-export async function POST(request: NextRequest) {
+// PATCH — atualiza os dados de identidade CONTRATADO da própria empresa
+export async function PATCH(request: NextRequest) {
   const auth = await requireManager()
   if (auth.error) return auth.error
 
   try {
-    const { name, slug, currency } = await request.json()
-    if (!name?.trim()) return NextResponse.json({ error: 'Nome é obrigatório.' }, { status: 400 })
+    const body = await request.json()
+    const { contract_signer_name, contract_signer_cpf, contract_signer_email, contract_signer_phone, contract_signer_address } = body
 
     const { data, error } = await auth.session!
-      .from('contract_templates')
-      .insert({
-        company_id: auth.companyId,
-        name: name.trim(),
-        slug: slug?.trim() || name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
-        currency: currency || 'BRL',
-        updated_by: auth.userId,
+      .from('companies')
+      .update({
+        contract_signer_name, contract_signer_cpf, contract_signer_email,
+        contract_signer_phone, contract_signer_address,
+        updated_at: new Date().toISOString(),
       })
+      .eq('id', auth.companyId)
       .select()
       .single()
 

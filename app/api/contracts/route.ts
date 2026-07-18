@@ -3,11 +3,10 @@ import { createClient } from '@supabase/supabase-js'
 import { createServerClient } from '@/lib/supabase-server'
 import { renderContractPdf, formatDataDoDia } from '@/lib/pdf/renderContractPdf'
 import { createSignatureRequest } from '@/lib/esignature/autentique'
-import { isValidCPF, isValidCNPJ, isValidCEP } from '@/lib/validators'
+import { substituteTokens } from '@/lib/tokens'
+import { isValidCPF, isValidCNPJ, isValidCEP, isValidEmail, isValidPhone } from '@/lib/validators'
 
 export const runtime = 'nodejs'
-// Evita que o GET (listagem para o painel) fique preso no Data Cache do Next.js
-// entre deploys — sem isso, contratos novos podem nunca aparecer na resposta cacheada.
 export const dynamic = 'force-dynamic'
 
 const supabase = createClient(
@@ -15,95 +14,110 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-interface ContractBody {
-  contract_type: 'completo' | 'crm' | 'trafego'
-  razao_social?: string
-  cnpj?: string
-  cpf?: string
-  endereco: string
-  cidade: string
-  estado: string
-  cep?: string
-  nome_completo: string
-  email: string
-  telefone: string
+interface TemplateField {
+  field_key: string
+  label: string
+  field_type: 'text' | 'number' | 'email' | 'phone' | 'cpf' | 'cnpj' | 'cep' | 'select' | 'date'
+  required: boolean
+  display_order: number
 }
 
-function validateBody(body: ContractBody): string | null {
-  if (!['completo', 'crm', 'trafego'].includes(body.contract_type)) {
-    return 'Tipo de contrato inválido.'
-  }
-  if (!body.nome_completo?.trim()) return 'Nome completo é obrigatório.'
-  if (!body.email?.trim()) return 'E-mail é obrigatório.'
-  if (!body.telefone?.trim()) return 'Telefone é obrigatório.'
-  if (!body.endereco?.trim()) return 'Endereço é obrigatório.'
-  if (!body.cidade?.trim()) return 'Cidade é obrigatória.'
-  if (!body.estado?.trim()) return 'Estado é obrigatório.'
+function validateFieldValue(field: TemplateField, value: string | undefined): string | null {
+  const trimmed = value?.trim() ?? ''
+  if (field.required && !trimmed) return `${field.label} é obrigatório.`
+  if (!trimmed) return null
 
-  if (body.contract_type === 'completo') {
-    const hasCnpj = !!body.cnpj?.trim()
-    const hasCpf = !!body.cpf?.trim()
-    if (!body.razao_social?.trim()) return 'Razão social é obrigatória.'
-    if (!hasCnpj && !hasCpf) return 'Informe CNPJ ou CPF.'
-    if (hasCnpj && !isValidCNPJ(body.cnpj!)) return 'CNPJ inválido.'
-    if (hasCpf && !isValidCPF(body.cpf!)) return 'CPF inválido.'
-    if (body.cep && !isValidCEP(body.cep)) return 'CEP inválido.'
-  } else if (body.contract_type === 'crm') {
-    if (!body.cpf?.trim()) return 'CPF é obrigatório.'
-    if (!isValidCPF(body.cpf)) return 'CPF inválido.'
-  } else {
-    const hasCnpj = !!body.cnpj?.trim()
-    const hasCpf = !!body.cpf?.trim()
-    if (!hasCnpj && !hasCpf) return 'Informe CNPJ ou CPF.'
-    if (hasCnpj && !isValidCNPJ(body.cnpj!)) return 'CNPJ inválido.'
-    if (hasCpf && !isValidCPF(body.cpf!)) return 'CPF inválido.'
+  switch (field.field_type) {
+    case 'cpf': return isValidCPF(trimmed) ? null : `${field.label} inválido.`
+    case 'cnpj': return isValidCNPJ(trimmed) ? null : `${field.label} inválido.`
+    case 'cep': return isValidCEP(trimmed) ? null : `${field.label} inválido.`
+    case 'email': return isValidEmail(trimmed) ? null : `${field.label} inválido.`
+    case 'phone': return isValidPhone(trimmed) ? null : `${field.label} inválido.`
+    default: return null
   }
-
-  return null
 }
 
 export async function POST(request: NextRequest) {
   let contractId: string | null = null
 
   try {
-    const body: ContractBody = await request.json()
-    const validationError = validateBody(body)
-    if (validationError) {
-      return NextResponse.json({ error: validationError }, { status: 400 })
+    const body: { templateId: string; fieldValues: Record<string, string> } = await request.json()
+    const { templateId, fieldValues } = body
+
+    if (!templateId || !fieldValues) {
+      return NextResponse.json({ error: 'Dados incompletos.' }, { status: 400 })
     }
 
     const { data: template, error: templateError } = await supabase
       .from('contract_templates')
       .select('*')
-      .eq('type', body.contract_type)
+      .eq('id', templateId)
+      .eq('active', true)
       .single()
 
     if (templateError || !template) {
-      return NextResponse.json({ error: 'Modelo de contrato não encontrado.' }, { status: 500 })
+      return NextResponse.json({ error: 'Modelo de contrato não encontrado.' }, { status: 404 })
+    }
+
+    const [{ data: fields }, { data: clauses }, { data: pricingItems }, { data: company }] = await Promise.all([
+      supabase.from('contract_template_fields').select('*').eq('template_id', templateId).order('display_order'),
+      supabase.from('contract_template_clauses').select('*').eq('template_id', templateId).order('display_order'),
+      supabase.from('contract_template_pricing_items').select('*').eq('template_id', templateId).order('display_order'),
+      supabase.from('companies').select('*').eq('id', template.company_id).single(),
+    ])
+
+    if (!fields || !company) {
+      return NextResponse.json({ error: 'Modelo de contrato incompleto.' }, { status: 500 })
+    }
+
+    for (const field of fields as TemplateField[]) {
+      const validationError = validateFieldValue(field, fieldValues[field.field_key])
+      if (validationError) return NextResponse.json({ error: validationError }, { status: 400 })
+    }
+
+    if (!fieldValues.nome_completo?.trim() || !fieldValues.email?.trim() || !fieldValues.telefone?.trim()) {
+      return NextResponse.json({ error: 'Nome, e-mail e telefone são obrigatórios.' }, { status: 400 })
+    }
+
+    if (!company.contract_signer_email) {
+      return NextResponse.json({ error: 'Esta empresa ainda não configurou os dados de assinatura do contrato.' }, { status: 500 })
     }
 
     const ipAddress = request.headers.get('x-forwarded-for') ?? null
     const userAgent = request.headers.get('user-agent') ?? null
+    const dataDoDia = formatDataDoDia()
+
+    const tokenValues: Record<string, string> = {
+      ...Object.fromEntries(Object.entries(fieldValues).map(([k, v]) => [k, String(v ?? '').trim()])),
+      data_do_dia: dataDoDia,
+      contratado_nome: company.contract_signer_name ?? '',
+      contratado_cpf: company.contract_signer_cpf ?? '',
+      contratado_endereco: company.contract_signer_address ?? '',
+      contratado_email: company.contract_signer_email ?? '',
+      contratado_telefone: company.contract_signer_phone ?? '',
+    }
+
+    const clausesSnapshot = (clauses ?? []).map((c) => ({
+      title: substituteTokens(c.title, tokenValues),
+      body: substituteTokens(c.body, tokenValues),
+    }))
+    const pricingSnapshot = (pricingItems ?? []).map((p) => ({
+      label: p.label, amount: Number(p.amount), frequency: p.frequency,
+    }))
 
     const { data: contract, error: insertError } = await supabase
       .from('contracts')
       .insert({
-        contract_type: body.contract_type,
+        company_id: template.company_id,
+        template_id: template.id,
         status: 'rascunho',
-        razao_social: body.razao_social?.trim() || null,
-        cnpj: body.cnpj?.trim() || null,
-        cpf: body.cpf?.trim() || null,
-        endereco: body.endereco.trim(),
-        cidade: body.cidade.trim(),
-        estado: body.estado.trim(),
-        cep: body.cep?.trim() || null,
-        nome_completo: body.nome_completo.trim(),
-        email: body.email.trim(),
-        telefone: body.telefone.trim(),
+        field_values: fieldValues,
+        clauses_snapshot: clausesSnapshot,
+        pricing_snapshot: pricingSnapshot,
         currency_snapshot: template.currency,
-        setup_fee_snapshot: template.setup_fee,
-        monthly_fee_snapshot: template.monthly_fee,
-        extra_config_snapshot: template.extra_config,
+        nome_completo: fieldValues.nome_completo.trim(),
+        email: fieldValues.email.trim(),
+        telefone: fieldValues.telefone.trim(),
         ip_address: ipAddress,
         user_agent: userAgent,
       })
@@ -115,59 +129,30 @@ export async function POST(request: NextRequest) {
     }
 
     contractId = contract.id
-    const dataDoDia = formatDataDoDia()
-    const extra = template.extra_config as Record<string, number>
 
-    const pdfBuffer = body.contract_type === 'completo'
-      ? await renderContractPdf('completo', {
-          razaoSocial: body.razao_social?.trim() || '',
-          cnpj: body.cnpj?.trim() || '',
-          cpf: body.cpf?.trim() || '',
-          endereco: body.endereco.trim(),
-          cidadeEstado: `${body.cidade.trim()}-${body.estado.trim()}`,
-          cep: body.cep?.trim() || '',
-          nomeCompleto: body.nome_completo.trim(),
-          email: body.email.trim(),
-          telefone: body.telefone.trim(),
-          dataDoDia,
-          currency: template.currency,
-          setupFee: Number(template.setup_fee),
-          monthlyFee: Number(template.monthly_fee),
-          monthlyTrafego: Number(extra.monthly_trafego ?? 0),
-          monthlyCrm: Number(extra.monthly_crm ?? 0),
-          prazoMeses: Number(extra.prazo_meses ?? 3),
-        })
-      : body.contract_type === 'crm'
-      ? await renderContractPdf('crm', {
-          cpf: body.cpf?.trim() || '',
-          endereco: body.endereco.trim(),
-          cidadeEstado: `${body.cidade.trim()}/${body.estado.trim()}`,
-          nomeCompleto: body.nome_completo.trim(),
-          dataDoDia,
-          currency: template.currency,
-          setupFee: Number(template.setup_fee),
-          monthlyFee: Number(template.monthly_fee),
-          funisMax: Number(extra.funis_max ?? 0),
-          automacoesMax: Number(extra.automacoes_max ?? 0),
-          prazoImplantacaoDias: Number(extra.prazo_implantacao_dias ?? 0),
-          prazoContratoMeses: Number(extra.prazo_meses ?? 3),
-          treinamentoH1: Number(extra.treinamento_h_mes1 ?? 0),
-          treinamentoH2: Number(extra.treinamento_h_apartir_mes2 ?? 0),
-        })
-      : await renderContractPdf('trafego', {
-          nomeCompleto: body.nome_completo.trim(),
-          cnpj: body.cnpj?.trim() || '',
-          cpf: body.cpf?.trim() || '',
-          endereco: body.endereco.trim(),
-          cidadeEstado: `${body.cidade.trim()}/${body.estado.trim()}`,
-          dataDoDia,
-          currency: template.currency,
-          valorPlano: Number(template.setup_fee),
-          prazoDias: Number(extra.prazo_dias ?? 30),
-          parcelamentoMaxCartao: Number(extra.parcelamento_max_cartao ?? 6),
-        })
+    const contractantFieldRows = (fields as TemplateField[])
+      .filter((f) => fieldValues[f.field_key]?.trim())
+      .map((f) => ({ label: f.label, value: fieldValues[f.field_key].trim() }))
 
-    const draftPath = `${contract.id}/draft.pdf`
+    const pdfBuffer = await renderContractPdf({
+      templateName: template.name,
+      companyIdentity: {
+        nomeFantasia: company.name,
+        nomeCompleto: company.contract_signer_name ?? company.name,
+        cpf: company.contract_signer_cpf ?? '',
+        endereco: company.contract_signer_address ?? '',
+        email: company.contract_signer_email,
+        telefone: company.contract_signer_phone ?? '',
+      },
+      contractantFieldRows,
+      clauses: clausesSnapshot,
+      pricingItems: pricingSnapshot,
+      currency: template.currency,
+      dataDoDia,
+      signerName: fieldValues.nome_completo.trim(),
+    })
+
+    const draftPath = `${template.company_id}/${contract.id}/draft.pdf`
     const { error: uploadError } = await supabase.storage
       .from('contracts')
       .upload(draftPath, pdfBuffer, { contentType: 'application/pdf', upsert: true })
@@ -177,11 +162,13 @@ export async function POST(request: NextRequest) {
     }
 
     const signature = await createSignatureRequest({
+      companyId: template.company_id,
       contractId: contract.id,
       pdfBuffer,
-      clientName: body.nome_completo.trim(),
-      clientEmail: body.email.trim(),
-      clientPhone: body.telefone.trim(),
+      clientName: fieldValues.nome_completo.trim(),
+      clientEmail: fieldValues.email.trim(),
+      clientPhone: fieldValues.telefone.trim(),
+      companySignerEmail: company.contract_signer_email,
     })
 
     await supabase
@@ -198,25 +185,31 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error: unknown) {
     console.error('Erro ao processar contrato:', error)
-    // Se o insert já aconteceu, a row fica em 'rascunho' pro gestor reenviar manualmente.
     const message = error instanceof Error ? error.message : 'Erro interno'
     return NextResponse.json({ error: message, contractId }, { status: 500 })
   }
 }
 
-export async function GET() {
+async function requireManager() {
   const session = createServerClient()
   const { data: { user } } = await session.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+  if (!user) return { error: NextResponse.json({ error: 'Não autenticado' }, { status: 401 }) }
 
-  const { data: profile } = await session.from('profiles').select('role').eq('id', user.id).single()
-  if (profile?.role === 'collaborator') {
-    return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
+  const { data: profile } = await session.from('profiles').select('role, company_id').eq('id', user.id).single()
+  if (!profile || profile.role === 'collaborator') {
+    return { error: NextResponse.json({ error: 'Acesso negado' }, { status: 403 }) }
   }
+  return { companyId: profile.company_id as string }
+}
+
+export async function GET() {
+  const auth = await requireManager()
+  if (auth.error) return auth.error
 
   const { data, error } = await supabase
     .from('contracts')
-    .select('*')
+    .select('*, contract_templates(name)')
+    .eq('company_id', auth.companyId)
     .order('created_at', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

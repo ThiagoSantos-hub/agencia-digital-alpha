@@ -7,20 +7,19 @@ import { Button } from '@/components/ui/Button'
 import { Table, Column } from '@/components/ui/Table'
 import { Settings2, Download, RotateCcw, Ban, Loader2 } from 'lucide-react'
 
+interface PricingItem { label: string; amount: number; frequency: 'unico' | 'mensal' }
+
 interface Contract {
   id: string
-  contract_type: 'completo' | 'crm' | 'trafego'
   status: 'rascunho' | 'aguardando_assinatura' | 'assinado' | 'expirado' | 'cancelado'
   nome_completo: string
-  razao_social: string | null
   email: string
   currency_snapshot: 'BRL' | 'USD'
-  setup_fee_snapshot: number
-  monthly_fee_snapshot: number
-  extra_config_snapshot: Record<string, number>
+  pricing_snapshot: PricingItem[]
   created_at: string
   sent_at: string | null
   signed_at: string | null
+  contract_templates: { name: string } | null
 }
 
 const statusConfig: Record<Contract['status'], { label: string; className: string }> = {
@@ -31,10 +30,12 @@ const statusConfig: Record<Contract['status'], { label: string; className: strin
   cancelado:             { label: 'Cancelado',              className: 'text-text-disabled bg-slate-100 border-slate-200' },
 }
 
-const typeLabel: Record<Contract['contract_type'], string> = {
-  completo: 'Completo',
-  crm: 'CRM',
-  trafego: 'Tráfego Pago',
+function summarizePricing(items: PricingItem[], currency: 'BRL' | 'USD'): string {
+  if (!items || items.length === 0) return '—'
+  const cifrao = currency === 'USD' ? 'US$' : 'R$'
+  const first = items[0]
+  const suffix = items.length > 1 ? ` +${items.length - 1}` : ''
+  return `${cifrao} ${Number(first.amount).toFixed(2)}${first.frequency === 'mensal' ? '/mês' : ''}${suffix}`
 }
 
 export default function ContratosPage() {
@@ -85,18 +86,12 @@ export default function ContratosPage() {
   const columns: Column<Contract>[] = [
     { key: 'nome', header: 'Cliente', render: (c) => (
       <div>
-        <p className="font-semibold">{c.razao_social || c.nome_completo}</p>
+        <p className="font-semibold">{c.nome_completo}</p>
         <p className="text-xs text-text-muted">{c.email}</p>
       </div>
     )},
-    { key: 'contract_type', header: 'Tipo', render: (c) => typeLabel[c.contract_type] },
-    { key: 'valor', header: 'Valor', render: (c) => {
-      const cifrao = c.currency_snapshot === 'USD' ? 'US$' : 'R$'
-      if (c.contract_type === 'trafego') {
-        return <span>{cifrao} {Number(c.setup_fee_snapshot).toFixed(2)} ({Number(c.extra_config_snapshot?.prazo_dias ?? 30)} dias)</span>
-      }
-      return <span>{cifrao} {Number(c.monthly_fee_snapshot).toFixed(2)}/mês</span>
-    }},
+    { key: 'template', header: 'Modelo', render: (c) => c.contract_templates?.name ?? '—' },
+    { key: 'valor', header: 'Valor', render: (c) => summarizePricing(c.pricing_snapshot, c.currency_snapshot) },
     { key: 'status', header: 'Status', render: (c) => (
       <span className={`inline-block px-2 py-1 rounded-lg border text-xs font-semibold ${statusConfig[c.status].className}`}>
         {statusConfig[c.status].label}

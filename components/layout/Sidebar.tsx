@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, Megaphone, BarChart2, Bell,
   CheckSquare, List, Wallet, UserCog, Bot, Plug,
   Sparkles, MessageSquare, UserCircle, LogOut, Settings,
-  FileSignature
+  FileSignature, Building2
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/hooks/useAuth'
@@ -83,7 +83,16 @@ function NavLink({
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { signOut } = useAuth()
+  const { signOut, profile } = useAuth()
+
+  const groups = profile?.is_super_admin
+    ? [...menuGroups, {
+        label: 'PLATAFORMA',
+        items: [
+          { label: 'Empresas', href: '/superadmin/empresas', icon: Building2, ativo: true },
+        ],
+      }]
+    : menuGroups
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-surface border-r border-border flex flex-col shadow-md z-40">
@@ -105,7 +114,7 @@ export function Sidebar() {
           </NavLink>
         </div>
 
-        {menuGroups.map((group) => (
+        {groups.map((group) => (
           <div key={group.label}>
             <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-text-disabled">
               {group.label}

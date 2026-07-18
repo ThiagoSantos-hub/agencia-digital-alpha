@@ -43,6 +43,15 @@ export function isValidCEP(value: string): boolean {
   return onlyDigits(value).length === 8
 }
 
+export function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+}
+
+export function isValidPhone(value: string): boolean {
+  const digits = onlyDigits(value)
+  return digits.length === 10 || digits.length === 11
+}
+
 export function isValidCPF(value: string): boolean {
   const cpf = onlyDigits(value)
   if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false

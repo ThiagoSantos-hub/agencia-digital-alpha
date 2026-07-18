@@ -34,22 +34,15 @@ async function fireN8nWebhook(payload: Record<string, unknown>) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Validação por shared-secret (integrations.config.webhook_secret) já que este
-    // endpoint precisa ficar público para a Autentique conseguir chamá-lo.
-    const secret = await getAutentiqueWebhookSecret()
-    if (secret) {
-      const provided = request.headers.get('x-autentique-webhook-secret') ?? new URL(request.url).searchParams.get('secret')
-      if (provided !== secret) {
-        return NextResponse.json({ error: 'Assinatura de webhook inválida' }, { status: 401 })
-      }
-    }
-
     const payload: AutentiqueWebhookPayload = await request.json()
     const documentId = payload.document.id
 
+    // Localiza o contrato primeiro (esignature_document_id é globalmente único,
+    // não precisa de filtro de empresa) — só depois de saber a empresa dele é
+    // que dá pra validar o segredo do webhook daquela empresa especificamente.
     const { data: contract, error } = await supabase
       .from('contracts')
-      .select('*')
+      .select('*, companies:company_id (id, contract_signer_email)')
       .eq('esignature_document_id', documentId)
       .single()
 
@@ -57,30 +50,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Contrato não encontrado para este documento' }, { status: 404 })
     }
 
+    const secret = await getAutentiqueWebhookSecret(contract.company_id)
+    if (secret) {
+      const provided = request.headers.get('x-autentique-webhook-secret') ?? new URL(request.url).searchParams.get('secret')
+      if (provided !== secret) {
+        return NextResponse.json({ error: 'Assinatura de webhook inválida' }, { status: 401 })
+      }
+    }
+
     if (contract.status === 'assinado' || contract.status === 'cancelado') {
       // Já processado — evita reprocessar em reentregas do webhook.
       return NextResponse.json({ ok: true })
     }
 
+    const companySignerEmail = contract.companies?.contract_signer_email
     const clientSigner = payload.document.signatures?.find((s) => s.email === contract.email)
-    const thiagoSigner = payload.document.signatures?.find((s) => s.email === 'thiagogestorbm@gmail.com')
+    const companySigner = payload.document.signatures?.find((s) => s.email === companySignerEmail)
 
     const signerClientStatus = clientSigner?.signed ? 'assinado' : contract.signer_client_status
-    const signerThiagoStatus = thiagoSigner?.signed ? 'assinado' : contract.signer_thiago_status
+    const signerCompanyStatus = companySigner?.signed ? 'assinado' : contract.signer_company_status
 
     const updates: Record<string, unknown> = {
       signer_client_status: signerClientStatus,
-      signer_thiago_status: signerThiagoStatus,
+      signer_company_status: signerCompanyStatus,
       webhook_payload_raw: payload,
     }
 
-    const bothSigned = signerClientStatus === 'assinado' && signerThiagoStatus === 'assinado'
+    const bothSigned = signerClientStatus === 'assinado' && signerCompanyStatus === 'assinado'
     const signedFileUrl = payload.document.files?.signed
 
     if (bothSigned && signedFileUrl) {
       const fileRes = await fetch(signedFileUrl)
       const fileBuffer = Buffer.from(await fileRes.arrayBuffer())
-      const signedPath = `${contract.id}/signed.pdf`
+      const signedPath = `${contract.company_id}/${contract.id}/signed.pdf`
       await supabase.storage.from('contracts').upload(signedPath, fileBuffer, { contentType: 'application/pdf', upsert: true })
 
       updates.pdf_signed_path = signedPath
@@ -100,10 +102,8 @@ export async function POST(request: NextRequest) {
     if (updatedContract.status === 'assinado' && !updatedContract.n8n_notified_at) {
       await fireN8nWebhook({
         contract_id: updatedContract.id,
-        contract_type: updatedContract.contract_type,
-        razao_social: updatedContract.razao_social,
-        cnpj: updatedContract.cnpj,
-        cpf: updatedContract.cpf,
+        company_id: updatedContract.company_id,
+        template_id: updatedContract.template_id,
         nome_completo: updatedContract.nome_completo,
         email: updatedContract.email,
         telefone: updatedContract.telefone,
