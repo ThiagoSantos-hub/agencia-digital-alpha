@@ -6,6 +6,9 @@ import { createSignatureRequest } from '@/lib/esignature/autentique'
 import { isValidCPF, isValidCNPJ, isValidCEP } from '@/lib/validators'
 
 export const runtime = 'nodejs'
+// Evita que o GET (listagem para o painel) fique preso no Data Cache do Next.js
+// entre deploys — sem isso, contratos novos podem nunca aparecer na resposta cacheada.
+export const dynamic = 'force-dynamic'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
 
+// Sem isso, o fetch interno do Supabase fica preso no Data Cache do Next.js
+// entre deploys, servindo sempre a primeira resposta já vista em produção.
+export const dynamic = 'force-dynamic'
+
 async function requireManager() {
   const session = createServerClient()
   const { data: { user } } = await session.auth.getUser()

@@ -5,6 +5,7 @@ import { renderContractPdf, formatDataDoDia } from '@/lib/pdf/renderContractPdf'
 import { createSignatureRequest, cancelSignatureRequest } from '@/lib/esignature/autentique'
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
