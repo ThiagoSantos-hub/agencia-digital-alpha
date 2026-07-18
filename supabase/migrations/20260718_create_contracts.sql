@@ -45,7 +45,7 @@ INSERT INTO contract_templates (type, label, currency, setup_fee, monthly_fee, e
     '{"monthly_trafego": 600, "monthly_crm": 600}'),
   ('crm', 'CRM Digital Alpha (Standalone)', 'USD', 250.00, 200.00,
     '{"funis_max": 4, "automacoes_max": 5, "prazo_implantacao_dias": 10, "treinamento_h_mes1": 2, "treinamento_h_apartir_mes2": 1}'),
-  ('trafego', 'Gestão de Tráfego Pago (Plano Mensal)', 'BRL', 0.00, 0.00,
+  ('trafego', 'Gestão de Tráfego Pago (Plano Mensal)', 'BRL', 1500.00, 0.00,
     '{"prazo_dias": 30, "parcelamento_max_cartao": 6}')
 ON CONFLICT (type) DO NOTHING;
 
