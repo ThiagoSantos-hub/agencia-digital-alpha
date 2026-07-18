@@ -135,6 +135,7 @@ export async function POST(request: NextRequest) {
           monthlyFee: Number(template.monthly_fee),
           monthlyTrafego: Number(extra.monthly_trafego ?? 0),
           monthlyCrm: Number(extra.monthly_crm ?? 0),
+          prazoMeses: Number(extra.prazo_meses ?? 3),
         })
       : body.contract_type === 'crm'
       ? await renderContractPdf('crm', {
@@ -149,6 +150,7 @@ export async function POST(request: NextRequest) {
           funisMax: Number(extra.funis_max ?? 0),
           automacoesMax: Number(extra.automacoes_max ?? 0),
           prazoImplantacaoDias: Number(extra.prazo_implantacao_dias ?? 0),
+          prazoContratoMeses: Number(extra.prazo_meses ?? 3),
           treinamentoH1: Number(extra.treinamento_h_mes1 ?? 0),
           treinamentoH2: Number(extra.treinamento_h_apartir_mes2 ?? 0),
         })

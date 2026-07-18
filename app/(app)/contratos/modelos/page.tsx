@@ -24,6 +24,7 @@ const extraFieldLabels: Record<string, string> = {
   funis_max: 'Funis de vendas (máx.)',
   automacoes_max: 'Automações (máx.)',
   prazo_implantacao_dias: 'Prazo de implantação (dias úteis)',
+  prazo_meses: 'Duração do contrato (meses)',
   treinamento_h_mes1: 'Treinamento — horas/semana (1º mês)',
   treinamento_h_apartir_mes2: 'Treinamento — horas/semana (a partir do 2º mês)',
   prazo_dias: 'Prazo do plano (dias)',

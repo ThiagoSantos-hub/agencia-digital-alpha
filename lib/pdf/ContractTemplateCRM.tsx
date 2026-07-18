@@ -12,6 +12,7 @@ export interface ContractTemplateCRMProps {
   funisMax: number
   automacoesMax: number
   prazoImplantacaoDias: number
+  prazoContratoMeses: number
   treinamentoH1: number
   treinamentoH2: number
 }
@@ -45,7 +46,7 @@ export function ContractTemplateCRM(props: ContractTemplateCRMProps) {
   const {
     cpf, endereco, cidadeEstado, nomeCompleto, dataDoDia,
     currency, setupFee, monthlyFee, funisMax, automacoesMax,
-    prazoImplantacaoDias, treinamentoH1, treinamentoH2,
+    prazoImplantacaoDias, prazoContratoMeses, treinamentoH1, treinamentoH2,
   } = props
 
   return (
@@ -93,7 +94,7 @@ export function ContractTemplateCRM(props: ContractTemplateCRMProps) {
         </Text>
 
         <Text style={styles.clauseTitle}>4. PRAZO DO CONTRATO</Text>
-        <Text style={styles.paragraph}>Duração de 3 (três) meses, podendo ser renovado mediante acordo entre as partes.</Text>
+        <Text style={styles.paragraph}>Duração de {prazoContratoMeses} {prazoContratoMeses === 1 ? 'mês' : 'meses'}, podendo ser renovado mediante acordo entre as partes.</Text>
 
         <Text style={styles.clauseTitle}>5. VALORES E CONDIÇÕES DE PAGAMENTO</Text>
         <Text style={styles.bullet}>• Implantação: {fmtMoney(setupFee, currency)} (pagamento único)</Text>

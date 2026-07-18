@@ -16,6 +16,7 @@ export interface ContractTemplateCompletoProps {
   monthlyFee: number
   monthlyTrafego: number
   monthlyCrm: number
+  prazoMeses: number
 }
 
 const CONTRATADO = {
@@ -49,7 +50,7 @@ export function ContractTemplateCompleto(props: ContractTemplateCompletoProps) {
   const {
     razaoSocial, cnpj, cpf, endereco, cidadeEstado, cep,
     nomeCompleto, email, telefone, dataDoDia,
-    currency, setupFee, monthlyFee, monthlyTrafego, monthlyCrm,
+    currency, setupFee, monthlyFee, monthlyTrafego, monthlyCrm, prazoMeses,
   } = props
 
   return (
@@ -117,11 +118,11 @@ export function ContractTemplateCompleto(props: ContractTemplateCompletoProps) {
 
         <Text style={styles.clauseTitle}>CLÁUSULA 5ª - DO PRAZO E DA RESCISÃO</Text>
         <Text style={styles.paragraph}>
-          5.1. O presente contrato tem vigência inicial de 3 (três) meses, a contar da data de sua assinatura. Após este período, poderá ser renovado automaticamente, caso não haja manifestação contrária de nenhuma das partes.
+          5.1. O presente contrato tem vigência inicial de {prazoMeses} {prazoMeses === 1 ? 'mês' : 'meses'}, a contar da data de sua assinatura. Após este período, poderá ser renovado automaticamente, caso não haja manifestação contrária de nenhuma das partes.
         </Text>
         <Text style={styles.paragraph}>5.2. Qualquer das partes poderá rescindir este contrato, sem qualquer ônus, mediante aviso prévio formal de 30 (trinta) dias.</Text>
         <Text style={styles.paragraph}>
-          5.3. Caso o CONTRATANTE opte por rescindir o contrato antes do término do prazo inicial de 3 meses, os valores já pagos não serão reembolsados, servindo como compensação pelos serviços já prestados e pelo planejamento executado.
+          5.3. Caso o CONTRATANTE opte por rescindir o contrato antes do término do prazo inicial de {prazoMeses} {prazoMeses === 1 ? 'mês' : 'meses'}, os valores já pagos não serão reembolsados, servindo como compensação pelos serviços já prestados e pelo planejamento executado.
         </Text>
 
         <Text style={styles.clauseTitle}>CLÁUSULA 6ª - DA COMUNICAÇÃO, SUPORTE E ALINHAMENTO</Text>
