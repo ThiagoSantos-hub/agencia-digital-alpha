@@ -3,7 +3,7 @@ import { createServerClient } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 
-export async function requireManager() {
+async function requireManager() {
   const session = createServerClient()
   const { data: { user } } = await session.auth.getUser()
   if (!user) return { error: NextResponse.json({ error: 'Não autenticado' }, { status: 401 }) }
