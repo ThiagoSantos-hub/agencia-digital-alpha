@@ -123,7 +123,3 @@ supabase/
 - **collaborator** → painel restrito em `/colaborador/*`
 
 O middleware redireciona automaticamente de acordo com a role do usuário.
-
----
-
-Feito para a Agência Digital Alpha.
