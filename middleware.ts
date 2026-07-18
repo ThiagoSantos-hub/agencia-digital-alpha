@@ -65,7 +65,8 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/ai') ||
     request.nextUrl.pathname.startsWith('/perfil') ||
     request.nextUrl.pathname.startsWith('/checklists') ||
-    request.nextUrl.pathname.startsWith('/tarefas')
+    request.nextUrl.pathname.startsWith('/tarefas') ||
+    request.nextUrl.pathname.startsWith('/contratos')
 
   if (isAdminRoute && user) {
     const { data: profile } = await supabase
@@ -95,6 +96,7 @@ export const config = {
     '/ai/:path*',
     '/perfil/:path*',
     '/checklists/:path*',
+    '/contratos/:path*',
     '/login',
   ],
 }

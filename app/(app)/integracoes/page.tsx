@@ -42,6 +42,7 @@ const INTEGRATION_ICONS: Record<string, string> = {
   evolution_api: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/200px-WhatsApp.svg.png',
   n8n: 'https://n8n.io/favicon.ico',
   elevenlabs: 'https://elevenlabs.io/favicon.ico',
+  autentique: 'https://www.autentique.com.br/favicon.ico',
 }
 
 const INTEGRATION_EMOJI: Record<string, string> = {
