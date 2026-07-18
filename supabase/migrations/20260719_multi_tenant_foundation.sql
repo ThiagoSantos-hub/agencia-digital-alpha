@@ -1,6 +1,8 @@
 -- Fundação multi-tenant: empresas isoladas compartilhando o mesmo deploy/banco.
--- Escopo: profiles, clients, campaigns, campaign_metrics, integrations, agency_settings.
--- (As ~15 tabelas restantes ficam fora desta fase — ver plano.)
+-- Escopo: profiles, clients, campaigns, campaign_metrics, integrations.
+-- (agency_settings não existe no banco de produção real — a feature de cores
+-- customizadas nunca chegou a ser migrada lá, o app já usa defaults em silêncio.
+-- As ~15 tabelas restantes ficam fora desta fase — ver plano.)
 
 -- ─── COMPANIES ──────────────────────────────────────────────────────────────
 
@@ -68,7 +70,6 @@ ALTER TABLE clients          ADD COLUMN company_id UUID REFERENCES companies(id)
 ALTER TABLE campaigns        ADD COLUMN company_id UUID REFERENCES companies(id);
 ALTER TABLE campaign_metrics ADD COLUMN company_id UUID REFERENCES companies(id);
 ALTER TABLE integrations     ADD COLUMN company_id UUID REFERENCES companies(id);
-ALTER TABLE agency_settings  ADD COLUMN company_id UUID REFERENCES companies(id);
 
 -- ─── Backfill: dados existentes viram a empresa "Digital Alpha" ────────────
 
@@ -85,7 +86,6 @@ BEGIN
   UPDATE campaigns SET company_id = digital_alpha_id WHERE company_id IS NULL;
   UPDATE campaign_metrics SET company_id = digital_alpha_id WHERE company_id IS NULL;
   UPDATE integrations SET company_id = digital_alpha_id WHERE company_id IS NULL;
-  UPDATE agency_settings SET company_id = digital_alpha_id WHERE company_id IS NULL;
 
   UPDATE profiles SET is_super_admin = true
     WHERE role = 'admin' AND company_id = digital_alpha_id;
@@ -96,15 +96,10 @@ ALTER TABLE clients          ALTER COLUMN company_id SET NOT NULL;
 ALTER TABLE campaigns        ALTER COLUMN company_id SET NOT NULL;
 ALTER TABLE campaign_metrics ALTER COLUMN company_id SET NOT NULL;
 ALTER TABLE integrations     ALTER COLUMN company_id SET NOT NULL;
-ALTER TABLE agency_settings  ALTER COLUMN company_id SET NOT NULL;
 
 -- integrations: UNIQUE(type) -> UNIQUE(company_id, type)
 ALTER TABLE integrations DROP CONSTRAINT IF EXISTS integrations_type_key;
 ALTER TABLE integrations ADD CONSTRAINT integrations_company_type_key UNIQUE (company_id, type);
-
--- agency_settings: UNIQUE(key) -> UNIQUE(company_id, key)
-ALTER TABLE agency_settings DROP CONSTRAINT IF EXISTS agency_settings_key_key;
-ALTER TABLE agency_settings ADD CONSTRAINT agency_settings_company_key_key UNIQUE (company_id, key);
 
 -- ─── RLS: limpa TODAS as policies antigas das tabelas em escopo ────────────
 -- (Várias migrations ao longo do tempo redefiniram policies nessas tabelas com
@@ -119,7 +114,7 @@ DECLARE
   pol RECORD;
   tbl TEXT;
 BEGIN
-  FOREACH tbl IN ARRAY ARRAY['profiles','clients','campaigns','campaign_metrics','integrations','agency_settings']
+  FOREACH tbl IN ARRAY ARRAY['profiles','clients','campaigns','campaign_metrics','integrations']
   LOOP
     FOR pol IN SELECT policyname FROM pg_policies WHERE schemaname = 'public' AND tablename = tbl
     LOOP
@@ -179,11 +174,3 @@ CREATE POLICY "integrations_select_company" ON integrations FOR SELECT
   USING (company_id = public.get_current_company_id());
 CREATE POLICY "integrations_update_company_admin" ON integrations FOR UPDATE
   USING (company_id = public.get_current_company_id() AND public.is_admin());
-
--- ─── agency_settings ────────────────────────────────────────────────────────
-
-CREATE POLICY "agency_settings_select_company" ON agency_settings FOR SELECT
-  USING (company_id = public.get_current_company_id());
-CREATE POLICY "agency_settings_admin_company" ON agency_settings FOR ALL
-  USING (company_id = public.get_current_company_id() AND public.is_admin())
-  WITH CHECK (company_id = public.get_current_company_id() AND public.is_admin());
