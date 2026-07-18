@@ -102,7 +102,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
               monthlyTrafego: Number(extra.monthly_trafego ?? 0),
               monthlyCrm: Number(extra.monthly_crm ?? 0),
             })
-          : await renderContractPdf('crm', {
+          : contract.contract_type === 'crm'
+          ? await renderContractPdf('crm', {
               cpf: contract.cpf || '',
               endereco: contract.endereco,
               cidadeEstado: `${contract.cidade}/${contract.estado}`,
@@ -116,6 +117,18 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
               prazoImplantacaoDias: Number(extra.prazo_implantacao_dias ?? 0),
               treinamentoH1: Number(extra.treinamento_h_mes1 ?? 0),
               treinamentoH2: Number(extra.treinamento_h_apartir_mes2 ?? 0),
+            })
+          : await renderContractPdf('trafego', {
+              nomeCompleto: contract.nome_completo,
+              cnpj: contract.cnpj || '',
+              cpf: contract.cpf || '',
+              endereco: contract.endereco,
+              cidadeEstado: `${contract.cidade}/${contract.estado}`,
+              dataDoDia,
+              currency: contract.currency_snapshot,
+              valorPlano: Number(contract.setup_fee_snapshot),
+              prazoDias: Number(extra.prazo_dias ?? 30),
+              parcelamentoMaxCartao: Number(extra.parcelamento_max_cartao ?? 6),
             })
 
         const draftPath = `${contract.id}/draft.pdf`

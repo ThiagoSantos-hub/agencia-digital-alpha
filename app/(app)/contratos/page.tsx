@@ -9,14 +9,15 @@ import { Settings2, Download, RotateCcw, Ban, Loader2 } from 'lucide-react'
 
 interface Contract {
   id: string
-  contract_type: 'completo' | 'crm'
+  contract_type: 'completo' | 'crm' | 'trafego'
   status: 'rascunho' | 'aguardando_assinatura' | 'assinado' | 'expirado' | 'cancelado'
   nome_completo: string
   razao_social: string | null
   email: string
-  currency_snapshot: string
+  currency_snapshot: 'BRL' | 'USD'
   setup_fee_snapshot: number
   monthly_fee_snapshot: number
+  extra_config_snapshot: Record<string, number>
   created_at: string
   sent_at: string | null
   signed_at: string | null
@@ -33,6 +34,7 @@ const statusConfig: Record<Contract['status'], { label: string; className: strin
 const typeLabel: Record<Contract['contract_type'], string> = {
   completo: 'Completo',
   crm: 'CRM',
+  trafego: 'Tráfego Pago',
 }
 
 export default function ContratosPage() {
@@ -88,9 +90,13 @@ export default function ContratosPage() {
       </div>
     )},
     { key: 'contract_type', header: 'Tipo', render: (c) => typeLabel[c.contract_type] },
-    { key: 'valor', header: 'Valor', render: (c) => (
-      <span>{c.currency_snapshot === 'USD' ? 'US$' : 'R$'} {Number(c.monthly_fee_snapshot).toFixed(2)}/mês</span>
-    )},
+    { key: 'valor', header: 'Valor', render: (c) => {
+      const cifrao = c.currency_snapshot === 'USD' ? 'US$' : 'R$'
+      if (c.contract_type === 'trafego') {
+        return <span>{cifrao} {Number(c.setup_fee_snapshot).toFixed(2)} ({Number(c.extra_config_snapshot?.prazo_dias ?? 30)} dias)</span>
+      }
+      return <span>{cifrao} {Number(c.monthly_fee_snapshot).toFixed(2)}/mês</span>
+    }},
     { key: 'status', header: 'Status', render: (c) => (
       <span className={`inline-block px-2 py-1 rounded-lg border text-xs font-semibold ${statusConfig[c.status].className}`}>
         {statusConfig[c.status].label}

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react'
 
 interface ContractTemplate {
-  type: 'completo' | 'crm'
+  type: 'completo' | 'crm' | 'trafego'
   label: string
   currency: 'BRL' | 'USD'
   setup_fee: number
@@ -26,6 +26,8 @@ const extraFieldLabels: Record<string, string> = {
   prazo_implantacao_dias: 'Prazo de implantação (dias úteis)',
   treinamento_h_mes1: 'Treinamento — horas/semana (1º mês)',
   treinamento_h_apartir_mes2: 'Treinamento — horas/semana (a partir do 2º mês)',
+  prazo_dias: 'Prazo do plano (dias)',
+  parcelamento_max_cartao: 'Parcelamento máximo no cartão (x)',
 }
 
 function TemplateCard({ template, onSaved }: { template: ContractTemplate; onSaved: () => void }) {
@@ -75,13 +77,15 @@ function TemplateCard({ template, onSaved }: { template: ContractTemplate; onSav
             </select>
           </div>
           <div>
-            <label className={labelCls}>Setup (implementação)</label>
+            <label className={labelCls}>{form.type === 'trafego' ? 'Valor do plano' : 'Setup (implementação)'}</label>
             <input type="number" min="0" step="0.01" className={inputCls} value={form.setup_fee} onChange={(e) => setField('setup_fee', parseFloat(e.target.value) || 0)} />
           </div>
-          <div>
-            <label className={labelCls}>Mensalidade total</label>
-            <input type="number" min="0" step="0.01" className={inputCls} value={form.monthly_fee} onChange={(e) => setField('monthly_fee', parseFloat(e.target.value) || 0)} />
-          </div>
+          {form.type !== 'trafego' && (
+            <div>
+              <label className={labelCls}>Mensalidade total</label>
+              <input type="number" min="0" step="0.01" className={inputCls} value={form.monthly_fee} onChange={(e) => setField('monthly_fee', parseFloat(e.target.value) || 0)} />
+            </div>
+          )}
         </div>
 
         {Object.keys(form.extra_config).length > 0 && (

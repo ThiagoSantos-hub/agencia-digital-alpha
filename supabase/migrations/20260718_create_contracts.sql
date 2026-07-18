@@ -2,7 +2,7 @@
 
 CREATE TABLE contract_templates (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  type            TEXT UNIQUE NOT NULL CHECK (type IN ('completo','crm')),
+  type            TEXT UNIQUE NOT NULL CHECK (type IN ('completo','crm','trafego')),
   label           TEXT NOT NULL,
   currency        TEXT NOT NULL DEFAULT 'BRL' CHECK (currency IN ('BRL','USD')),
   setup_fee       NUMERIC(10,2) NOT NULL,
@@ -44,12 +44,14 @@ INSERT INTO contract_templates (type, label, currency, setup_fee, monthly_fee, e
   ('completo', 'Tráfego Pago + CRM (Completo)', 'BRL', 1000.00, 1200.00,
     '{"monthly_trafego": 600, "monthly_crm": 600}'),
   ('crm', 'CRM Digital Alpha (Standalone)', 'USD', 250.00, 200.00,
-    '{"funis_max": 4, "automacoes_max": 5, "prazo_implantacao_dias": 10, "treinamento_h_mes1": 2, "treinamento_h_apartir_mes2": 1}')
+    '{"funis_max": 4, "automacoes_max": 5, "prazo_implantacao_dias": 10, "treinamento_h_mes1": 2, "treinamento_h_apartir_mes2": 1}'),
+  ('trafego', 'Gestão de Tráfego Pago (Plano Mensal)', 'BRL', 0.00, 0.00,
+    '{"prazo_dias": 30, "parcelamento_max_cartao": 6}')
 ON CONFLICT (type) DO NOTHING;
 
 CREATE TABLE contracts (
   id                       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  contract_type            TEXT NOT NULL CHECK (contract_type IN ('completo','crm')),
+  contract_type            TEXT NOT NULL CHECK (contract_type IN ('completo','crm','trafego')),
   status                   TEXT NOT NULL DEFAULT 'rascunho'
                             CHECK (status IN ('rascunho','aguardando_assinatura','assinado','expirado','cancelado')),
   -- CONTRATANTE (do formulário público; razao_social/cnpj só se aplicam ao tipo 'completo')

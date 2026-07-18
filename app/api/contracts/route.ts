@@ -13,7 +13,7 @@ const supabase = createClient(
 )
 
 interface ContractBody {
-  contract_type: 'completo' | 'crm'
+  contract_type: 'completo' | 'crm' | 'trafego'
   razao_social?: string
   cnpj?: string
   cpf?: string
@@ -27,7 +27,7 @@ interface ContractBody {
 }
 
 function validateBody(body: ContractBody): string | null {
-  if (body.contract_type !== 'completo' && body.contract_type !== 'crm') {
+  if (!['completo', 'crm', 'trafego'].includes(body.contract_type)) {
     return 'Tipo de contrato inválido.'
   }
   if (!body.nome_completo?.trim()) return 'Nome completo é obrigatório.'
@@ -45,9 +45,15 @@ function validateBody(body: ContractBody): string | null {
     if (hasCnpj && !isValidCNPJ(body.cnpj!)) return 'CNPJ inválido.'
     if (hasCpf && !isValidCPF(body.cpf!)) return 'CPF inválido.'
     if (body.cep && !isValidCEP(body.cep)) return 'CEP inválido.'
-  } else {
+  } else if (body.contract_type === 'crm') {
     if (!body.cpf?.trim()) return 'CPF é obrigatório.'
     if (!isValidCPF(body.cpf)) return 'CPF inválido.'
+  } else {
+    const hasCnpj = !!body.cnpj?.trim()
+    const hasCpf = !!body.cpf?.trim()
+    if (!hasCnpj && !hasCpf) return 'Informe CNPJ ou CPF.'
+    if (hasCnpj && !isValidCNPJ(body.cnpj!)) return 'CNPJ inválido.'
+    if (hasCpf && !isValidCPF(body.cpf!)) return 'CPF inválido.'
   }
 
   return null
@@ -127,7 +133,8 @@ export async function POST(request: NextRequest) {
           monthlyTrafego: Number(extra.monthly_trafego ?? 0),
           monthlyCrm: Number(extra.monthly_crm ?? 0),
         })
-      : await renderContractPdf('crm', {
+      : body.contract_type === 'crm'
+      ? await renderContractPdf('crm', {
           cpf: body.cpf?.trim() || '',
           endereco: body.endereco.trim(),
           cidadeEstado: `${body.cidade.trim()}/${body.estado.trim()}`,
@@ -141,6 +148,18 @@ export async function POST(request: NextRequest) {
           prazoImplantacaoDias: Number(extra.prazo_implantacao_dias ?? 0),
           treinamentoH1: Number(extra.treinamento_h_mes1 ?? 0),
           treinamentoH2: Number(extra.treinamento_h_apartir_mes2 ?? 0),
+        })
+      : await renderContractPdf('trafego', {
+          nomeCompleto: body.nome_completo.trim(),
+          cnpj: body.cnpj?.trim() || '',
+          cpf: body.cpf?.trim() || '',
+          endereco: body.endereco.trim(),
+          cidadeEstado: `${body.cidade.trim()}/${body.estado.trim()}`,
+          dataDoDia,
+          currency: template.currency,
+          valorPlano: Number(template.setup_fee),
+          prazoDias: Number(extra.prazo_dias ?? 30),
+          parcelamentoMaxCartao: Number(extra.parcelamento_max_cartao ?? 6),
         })
 
     const draftPath = `${contract.id}/draft.pdf`

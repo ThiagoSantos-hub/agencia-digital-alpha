@@ -1,6 +1,7 @@
 import { renderToBuffer } from '@react-pdf/renderer'
 import { ContractTemplateCompleto, ContractTemplateCompletoProps } from './ContractTemplateCompleto'
 import { ContractTemplateCRM, ContractTemplateCRMProps } from './ContractTemplateCRM'
+import { ContractTemplateTrafego, ContractTemplateTrafegoProps } from './ContractTemplateTrafego'
 
 export function formatDataDoDia(date = new Date()): string {
   return new Intl.DateTimeFormat('pt-BR', {
@@ -20,12 +21,18 @@ export async function renderContractPdf(
   props: ContractTemplateCRMProps
 ): Promise<Buffer>
 export async function renderContractPdf(
-  type: 'completo' | 'crm',
-  props: ContractTemplateCompletoProps | ContractTemplateCRMProps
+  type: 'trafego',
+  props: ContractTemplateTrafegoProps
+): Promise<Buffer>
+export async function renderContractPdf(
+  type: 'completo' | 'crm' | 'trafego',
+  props: ContractTemplateCompletoProps | ContractTemplateCRMProps | ContractTemplateTrafegoProps
 ): Promise<Buffer> {
   const doc = type === 'completo'
     ? ContractTemplateCompleto(props as ContractTemplateCompletoProps)
-    : ContractTemplateCRM(props as ContractTemplateCRMProps)
+    : type === 'crm'
+    ? ContractTemplateCRM(props as ContractTemplateCRMProps)
+    : ContractTemplateTrafego(props as ContractTemplateTrafegoProps)
 
   return renderToBuffer(doc)
 }
