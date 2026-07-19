@@ -83,6 +83,7 @@ function CreateEditReportContent() {
     periodo: 'ontem',
     recebedor_tipo: 'privado',
     recebedor_numero: '',
+    enviar_via_agencia: false,
     mensagem_template: 'Olá! Segue o relatório de <DATA>\nda conta <CA>:\n\nAlcance: <ALCAN>\nImpressões: <IMP>\nInvestimento: <INV>\nResultados: <RESULT>\nCusto por Resultado: <CPR>\nROAS: <ROAS>',
     horario_envio: '08:00',
     dias_semana: null,

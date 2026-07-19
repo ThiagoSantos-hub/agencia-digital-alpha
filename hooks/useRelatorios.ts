@@ -10,6 +10,7 @@ export interface Report {
   periodo: 'dia_anterior' | 'ontem' | 'ultima_semana' | 'ultimo_mes' | 'ultimos_3_dias' | 'ultimos_7_dias' | 'ultimos_30_dias' | 'personalizado';
   recebedor_tipo: 'privado' | 'grupo';
   recebedor_numero: string;
+  enviar_via_agencia: boolean;
   mensagem_template: string;
   horario_envio: string;
   dias_semana: string[] | null;

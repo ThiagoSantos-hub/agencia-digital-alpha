@@ -51,7 +51,6 @@ function CreateEditReportContent() {
   const id = searchParams.get('id')
   const { createRelatorio, updateRelatorio, reports } = useRelatorios()
   const supabase = createClient()
-  const { instance: wpInstance, groups: wpGroups, loadingGroups: wpLoadingGroups, fetchGroups: wpFetchGroups } = useWhatsApp()
 
   const [loading, setLoading] = useState(false)
   const [clients, setClients] = useState<{id: string, name: string}[]>([])
@@ -61,10 +60,12 @@ function CreateEditReportContent() {
 
   const [formData, setFormData] = useState<ReportInput>({
     nome: '', canal: 'meta', frequencia: 'diario', periodo: 'ontem',
-    recebedor_tipo: 'privado', recebedor_numero: '',
+    recebedor_tipo: 'privado', recebedor_numero: '', enviar_via_agencia: true,
     mensagem_template: 'Olá! Segue o relatório de <DATA>\nda conta <CA>:\n\nAlcance: <ALCAN>\nImpressões: <IMP>\nInvestimento: <INV>\nResultados: <RESULT>\nCusto por Resultado: <CPR>\nROAS: <ROAS>',
     horario_envio: '08:00', dias_semana: null, ativo: true, proximo_envio: null, client_id: null
   })
+
+  const { instance: wpInstance, groups: wpGroups, loadingGroups: wpLoadingGroups, fetchGroups: wpFetchGroups } = useWhatsApp(formData.enviar_via_agencia ? 'agency' : 'own')
 
   const toggleDia = (i: number) => {
     setDiasSelecionados(prev => {
@@ -175,10 +176,17 @@ function CreateEditReportContent() {
 
           <div className="space-y-3">
             <div className="space-y-2">
+              <label className="text-sm font-medium text-text-muted">Enviar via</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => setFormData({ ...formData, enviar_via_agencia: true, recebedor_numero: '' })} className={selectBtn(formData.enviar_via_agencia)}>WhatsApp da agência</button>
+                <button type="button" onClick={() => setFormData({ ...formData, enviar_via_agencia: false, recebedor_numero: '' })} className={selectBtn(!formData.enviar_via_agencia)}>Meu WhatsApp</button>
+              </div>
+            </div>
+            <div className="space-y-2">
               <label className="text-sm font-medium text-text-muted">Recebedor</label>
               <div className="grid grid-cols-2 gap-2">
                 <button type="button" onClick={() => setFormData({ ...formData, recebedor_tipo: 'privado', recebedor_numero: '' })} className={selectBtn(formData.recebedor_tipo === 'privado')}><Smartphone size={16} /> Privado</button>
-                <button type="button" onClick={() => { setFormData({ ...formData, recebedor_tipo: 'grupo', recebedor_numero: '' }); if (wpInstance.status === 'connected' && wpGroups.length === 0) wpFetchGroups() }} className={selectBtn(formData.recebedor_tipo === 'grupo')}><Users size={16} /> Grupo</button>
+                <button type="button" onClick={() => { setFormData({ ...formData, recebedor_tipo: 'grupo', recebedor_numero: '' }); if (wpGroups.length === 0) wpFetchGroups() }} className={selectBtn(formData.recebedor_tipo === 'grupo')}><Users size={16} /> Grupo</button>
               </div>
             </div>
             {formData.recebedor_tipo === 'privado' && (
@@ -190,11 +198,17 @@ function CreateEditReportContent() {
             {formData.recebedor_tipo === 'grupo' && (
               <div className="space-y-2">
                 <label className="text-sm font-medium text-text-muted">Grupo do WhatsApp *</label>
-                {wpInstance.status === 'connected' && wpGroups.length > 0 ? (
+                {wpLoadingGroups ? (
+                  <div className="rounded-xl px-4 py-3 text-xs bg-background border border-border text-text-muted">Carregando grupos...</div>
+                ) : wpGroups.length > 0 ? (
                   <select required value={formData.recebedor_numero} onChange={e => setFormData({ ...formData, recebedor_numero: e.target.value })} className={`${inputCls} appearance-none`}>
                     <option value="">Selecione...</option>
                     {wpGroups.map(g => <option key={g.group_id} value={g.group_id}>{g.name}</option>)}
                   </select>
+                ) : formData.enviar_via_agencia ? (
+                  <div className="rounded-xl px-4 py-3 text-xs bg-primary/5 border border-primary/20 text-primary">
+                    Nenhum grupo disponível ainda. Peça pro administrador ativar "Permitir que colaboradores vejam meus grupos" em Integrações.
+                  </div>
                 ) : (
                   <div className="rounded-xl px-4 py-3 text-xs bg-primary/5 border border-primary/20 text-primary">
                     WhatsApp não conectado. <a href="/colaborador/integracoes" className="underline font-semibold">Conecte em Integrações</a>
