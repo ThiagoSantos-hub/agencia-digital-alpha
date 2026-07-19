@@ -336,15 +336,22 @@ CREATE POLICY "checklist_items_delete" ON checklist_items FOR DELETE USING (auth
 -- ────────────────────────────────────────────────────────────────────────────
 
 -- Estas 4 não são chamadas por nenhum código do frontend (confirmado via grep
--- por .rpc(...) em todo o repo) — só fazem sentido via pg_cron/manutenção, que
--- não depende de EXECUTE de anon/authenticated.
-REVOKE EXECUTE ON FUNCTION public.cleanup_old_feedbacks() FROM anon, authenticated;
-REVOKE EXECUTE ON FUNCTION public.cleanup_old_finished_tasks() FROM anon, authenticated;
-REVOKE EXECUTE ON FUNCTION public.delete_old_ai_messages() FROM anon, authenticated;
-REVOKE EXECUTE ON FUNCTION public.reset_recurring_checklists() FROM anon, authenticated;
+-- por .rpc(...) em todo o repo) — só fazem sentido via pg_cron/manutenção.
+-- IMPORTANTE: Postgres concede EXECUTE a PUBLIC por padrão na criação da
+-- função, e todo role (inclusive anon/authenticated) herda privilégios de
+-- PUBLIC — revogar só de anon/authenticated especificamente NÃO TEM EFEITO
+-- NENHUM (validado em produção: a primeira tentativa desta migration revogou
+-- de anon/authenticated e o privilégio continuou ativo via PUBLIC; corrigido
+-- na migration zzz_20260719_hardening_part2.sql revogando de PUBLIC).
+REVOKE EXECUTE ON FUNCTION public.cleanup_old_feedbacks() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.cleanup_old_finished_tasks() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.delete_old_ai_messages() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.reset_recurring_checklists() FROM PUBLIC;
 
 -- Estas 2 SÃO chamadas direto pelo app (hooks/useTasks.ts e
 -- hooks/useChecklists.ts via supabase.rpc(...) com sessão do usuário) — revoga
--- só de anon (usuário nunca logado), mantém authenticated pra não quebrar o app.
-REVOKE EXECUTE ON FUNCTION public.auto_escalate_task_priority() FROM anon;
-REVOKE EXECUTE ON FUNCTION public.reset_recurring_checklists_by_day() FROM anon;
+-- de PUBLIC e concede de volta só pra authenticated (anon nunca deveria chamar).
+REVOKE EXECUTE ON FUNCTION public.auto_escalate_task_priority() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.auto_escalate_task_priority() TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.reset_recurring_checklists_by_day() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.reset_recurring_checklists_by_day() TO authenticated;

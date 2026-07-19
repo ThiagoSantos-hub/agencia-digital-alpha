@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
+import { useAuth } from './useAuth'
 
 // ============================================================
 // TIPOS
@@ -222,6 +223,7 @@ function vencimentoProximoMes(dataAtual: string, dia: number): string {
 
 export function useFinanceiro(filtrosIniciais?: Partial<FiltrosFinanceiro>) {
   const supabase = createClient()
+  const { profile } = useAuth()
 
   const [lancamentos, setLancamentos] = useState<Lancamento[]>([])
   const [totais,      setTotais]      = useState<Totais>({ 
@@ -316,12 +318,18 @@ export function useFinanceiro(filtrosIniciais?: Partial<FiltrosFinanceiro>) {
     }
   }, [filtros])
 
-  useEffect(() => { 
-    fetchLancamentos() 
+  useEffect(() => {
+    fetchLancamentos()
 
+    if (!profile?.company_id) return
+
+    // Filtra por empresa — sem isso, qualquer mudança em finances de QUALQUER
+    // empresa disparava refetch em todos os navegadores conectados. Canal com
+    // nome único por instância (evita erro de subscribe duplicado quando mais
+    // de um componente usa este hook ao mesmo tempo).
     const channel = supabase
-      .channel('public:finances')
-      .on('postgres_changes', { event: '*', table: 'finances', schema: 'public' }, () => {
+      .channel(`finances-${Math.random().toString(36).slice(2)}`)
+      .on('postgres_changes', { event: '*', table: 'finances', schema: 'public', filter: `company_id=eq.${profile.company_id}` }, () => {
         fetchLancamentos()
       })
       .subscribe()
@@ -329,7 +337,7 @@ export function useFinanceiro(filtrosIniciais?: Partial<FiltrosFinanceiro>) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [fetchLancamentos, supabase])
+  }, [fetchLancamentos, supabase, profile?.company_id])
 
   // ── CREATE ─────────────────────────────────────────────────
   /**

@@ -80,7 +80,8 @@ export async function POST(request: Request) {
         email: email,
         name: name,
         role: 'collaborator',
-        company_id: companyId
+        company_id: companyId,
+        must_change_password: true
       })
 
     if (profileError) {
