@@ -42,8 +42,6 @@ const INTEGRATION_ICONS: Record<string, string> = {
   evolution_api: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/200px-WhatsApp.svg.png',
   n8n: 'https://n8n.io/favicon.ico',
   elevenlabs: 'https://elevenlabs.io/favicon.ico',
-  autentique: 'https://www.autentique.com.br/favicon.ico',
-  assinafy: 'https://www.assinafy.com.br/favicon.ico',
 }
 
 const INTEGRATION_EMOJI: Record<string, string> = {
@@ -60,8 +58,6 @@ const INTEGRATION_EMOJI: Record<string, string> = {
   evolution_api: '💬',
   n8n: '⚡',
   elevenlabs: '🎙️',
-  autentique: '🖊️',
-  assinafy: '🖊️',
 }
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://agencia-digital-alpha.vercel.app'
@@ -163,77 +159,6 @@ function ElevenLabsCard({
   )
 }
 
-function AssinafyCard({
-  integration,
-  onSave,
-  onDisconnect,
-  saving,
-}: {
-  integration: Integration
-  onSave: (apiKey: string, accountId: string) => void
-  onDisconnect: () => void
-  saving: boolean
-}) {
-  const [apiKey, setApiKey] = useState('')
-  const [accountId, setAccountId] = useState(integration.config?.account_id || '')
-
-  return (
-    <div className="rounded-xl p-4 bg-surface border border-border">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-background">
-            <IntegrationIcon type="assinafy" />
-          </div>
-          <div>
-            <p className="text-text-main text-sm font-medium">{integration.label}</p>
-            <p className={`text-xs ${integration.status === "connected" ? "text-cta" : "text-text-disabled"}`}>
-              {integration.status === 'connected' ? 'Conectado' : 'Desconectado'}
-            </p>
-          </div>
-        </div>
-        {integration.status === 'connected' && (
-          <button
-            onClick={onDisconnect}
-            className="text-xs px-3 py-1.5 rounded-lg bg-red-50 text-red-500 border border-red-200 hover:bg-red-100 transition-colors"
-          >
-            Remover
-          </button>
-        )}
-      </div>
-
-      {integration.status !== 'connected' ? (
-        <div className="space-y-2">
-          <input
-            type="password"
-            placeholder="API Key da Assinafy"
-            value={apiKey}
-            onChange={e => setApiKey(e.target.value)}
-            className="w-full text-sm px-3 py-2 rounded-lg outline-none bg-background text-text-main border border-border focus:border-primary"
-          />
-          <input
-            type="text"
-            placeholder="Account ID (painel da Assinafy)"
-            value={accountId}
-            onChange={e => setAccountId(e.target.value)}
-            className="w-full text-sm px-3 py-2 rounded-lg outline-none bg-background text-text-main border border-border focus:border-primary"
-          />
-          <button
-            onClick={() => onSave(apiKey, accountId)}
-            disabled={saving || !apiKey || !accountId}
-            className="w-full text-xs px-4 py-2 rounded-lg font-medium disabled:opacity-50 bg-primary text-white hover:bg-primary-hover transition-colors"
-          >
-            {saving ? 'Salvando...' : 'Salvar e conectar'}
-          </button>
-        </div>
-      ) : (
-        <p className="text-xs text-text-muted">
-          Account ID: <span className="text-text-main">{integration.config?.account_id}</span>
-        </p>
-      )}
-    </div>
-  )
-}
-
 const WEBHOOK_EVENTS = [
   'cliente.criado',
   'cliente.atualizado',
@@ -265,10 +190,8 @@ function IntegrationIcon({ type }: { type: string }) {
 export default function IntegracoesPage() {
   const [integrations, setIntegrations] = useState<Integration[]>([])
   const [webhooks, setWebhooks] = useState<Webhook[]>([])
-  const [esignatureProvider, setEsignatureProvider] = useState<'autentique' | 'assinafy'>('autentique')
   const [loading, setLoading] = useState(true)
   const [savingKey, setSavingKey] = useState<string | null>(null)
-  const [savingProvider, setSavingProvider] = useState(false)
   const [apiKeys, setApiKeys] = useState<Record<string, string>>({})
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -293,34 +216,13 @@ export default function IntegracoesPage() {
 
   async function fetchData() {
     setLoading(true)
-    const [intRes, whRes, companyRes] = await Promise.all([
+    const [intRes, whRes] = await Promise.all([
       fetch('/api/integrations'),
       fetch('/api/webhooks'),
-      fetch('/api/company'),
     ])
     if (intRes.ok) setIntegrations(await intRes.json())
     if (whRes.ok) setWebhooks(await whRes.json())
-    if (companyRes.ok) {
-      const company = await companyRes.json()
-      setEsignatureProvider(company.esignature_provider === 'assinafy' ? 'assinafy' : 'autentique')
-    }
     setLoading(false)
-  }
-
-  async function saveEsignatureProvider(provider: 'autentique' | 'assinafy') {
-    setSavingProvider(true)
-    const res = await fetch('/api/company', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ esignature_provider: provider }),
-    })
-    if (res.ok) {
-      setEsignatureProvider(provider)
-      setSuccessMsg(`Provedor de assinatura eletrônica alterado para ${provider === 'assinafy' ? 'Assinafy' : 'Autentique'}.`)
-    } else {
-      setErrorMsg('Erro ao trocar o provedor de assinatura.')
-    }
-    setSavingProvider(false)
   }
 
   async function saveApiKey(type: string) {
@@ -359,22 +261,6 @@ export default function IntegracoesPage() {
       fetchData()
     } else {
       setErrorMsg('Erro ao salvar ElevenLabs.')
-    }
-    setSavingKey(null)
-  }
-
-  async function saveAssinafy(apiKey: string, accountId: string) {
-    setSavingKey('assinafy')
-    const res = await fetch('/api/integrations', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'assinafy', access_token: apiKey, config: { account_id: accountId } }),
-    })
-    if (res.ok) {
-      setSuccessMsg('Assinafy conectado com sucesso!')
-      fetchData()
-    } else {
-      setErrorMsg('Erro ao salvar Assinafy.')
     }
     setSavingKey(null)
   }
@@ -477,29 +363,6 @@ export default function IntegracoesPage() {
       </section>
 
       <section>
-        <h2 className="text-text-main text-lg font-semibold mb-1">Assinatura eletrônica</h2>
-        <p className="text-xs mb-4 text-text-muted">
-          Conecte o provedor que sua empresa já usa e escolha qual deles envia os contratos gerados pelo formulário público.
-        </p>
-        <div className="flex items-center gap-2 mb-4">
-          {(['autentique', 'assinafy'] as const).map(provider => (
-            <button
-              key={provider}
-              onClick={() => saveEsignatureProvider(provider)}
-              disabled={savingProvider || esignatureProvider === provider}
-              className={`text-xs px-4 py-2 rounded-lg font-medium border transition-colors disabled:cursor-default ${
-                esignatureProvider === provider
-                  ? 'bg-primary text-white border-primary'
-                  : 'bg-surface text-text-muted border-border hover:border-primary'
-              }`}
-            >
-              {esignatureProvider === provider ? '✓ ' : ''}{provider === 'assinafy' ? 'Assinafy' : 'Autentique'} {esignatureProvider === provider ? '(ativo)' : ''}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section>
         <h2 className="text-text-main text-lg font-semibold mb-4">Chaves de API</h2>
         <div className="space-y-3">
           {integrations
@@ -514,18 +377,7 @@ export default function IntegracoesPage() {
               />
             ))}
           {integrations
-            .filter(i => i.type === 'assinafy')
-            .map(integration => (
-              <AssinafyCard
-                key={integration.type}
-                integration={integration}
-                onSave={saveAssinafy}
-                onDisconnect={() => disconnect('assinafy')}
-                saving={savingKey === 'assinafy'}
-              />
-            ))}
-          {integrations
-            .filter(i => !OAUTH_INTEGRATIONS.includes(i.type) && i.type !== 'elevenlabs' && i.type !== 'assinafy' && i.type !== 'whatsapp' && i.type !== 'evolution_api')
+            .filter(i => !OAUTH_INTEGRATIONS.includes(i.type) && i.type !== 'elevenlabs' && i.type !== 'whatsapp' && i.type !== 'evolution_api')
             .map(integration => (
               <div
                 key={integration.type}
