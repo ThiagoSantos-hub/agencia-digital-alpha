@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase';
+import { calcularProximoEnvio } from '@/lib/reportSchedule';
 
 export interface Report {
   id: string;
@@ -41,48 +42,6 @@ export const useRelatorios = () => {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const calcularProximoEnvio = (frequencia: string, horario: string, diasSemana?: string[] | null): string | null => {
-    if (frequencia === 'manual') return null;
-    
-    const agora = new Date();
-    const [horas, minutos] = (horario || '08:00').split(':').map(Number);
-
-    // Se tem dias da semana selecionados, calcular o próximo dia correto
-    if (diasSemana && Array.isArray(diasSemana) && diasSemana.length > 0) {
-      const diasNums = diasSemana.map(Number).sort((a, b) => a - b);
-      let base = new Date();
-      base.setHours(horas, minutos, 0, 0);
-
-      // Tentar os próximos 8 dias para garantir que pegamos o próximo (incluindo hoje se for mais tarde)
-      for (let i = 0; i <= 8; i++) {
-        const tentativa = new Date(base);
-        tentativa.setDate(base.getDate() + i);
-        if (diasNums.includes(tentativa.getDay())) {
-          if (tentativa > agora) {
-            return tentativa.toISOString();
-          }
-        }
-      }
-    }
-
-    // Fallback: lógica padrão por frequência
-    let proximo = new Date();
-    proximo.setHours(horas, minutos, 0, 0);
-    
-    if (proximo <= agora) {
-      if (frequencia === 'diario') {
-        proximo.setDate(proximo.getDate() + 1);
-      } else if (frequencia === 'semanal') {
-        proximo.setDate(proximo.getDate() + 7);
-      } else if (frequencia === 'mensal') {
-        proximo.setMonth(proximo.getMonth() + 1);
-      } else {
-        proximo.setDate(proximo.getDate() + 1);
-      }
-    }
-    return proximo.toISOString();
-  };
 
   const fetchRelatorios = async () => {
     try {

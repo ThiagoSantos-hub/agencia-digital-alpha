@@ -71,6 +71,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: updateError.message }, { status: 400 })
     }
 
+    await supabaseAdmin.from('profiles').update({ must_change_password: true }).eq('id', userId)
+
     console.log('✅ Senha atualizada para:', email)
 
     // 3. Enviar email de confirmação via Brevo

@@ -28,6 +28,7 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   const isAuthRoute = request.nextUrl.pathname.startsWith('/login')
+  const isTrocarSenhaRoute = request.nextUrl.pathname.startsWith('/trocar-senha')
   const isCollaboratorRoute = request.nextUrl.pathname.startsWith('/colaborador/')
 
   // Usuário não autenticado tentando acessar app → redireciona para login
@@ -42,9 +43,23 @@ export async function middleware(request: NextRequest) {
       .select('role')
       .eq('id', user.id)
       .single()
-    
+
     const dest = profile?.role === 'collaborator' ? '/colaborador/dashboard' : '/dashboard'
     return NextResponse.redirect(new URL(dest, request.url))
+  }
+
+  // Usuário com senha temporária (convite, reset de admin, nova empresa) —
+  // trava em /trocar-senha até definir uma senha própria.
+  if (user && !isTrocarSenhaRoute && !isAuthRoute) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('must_change_password')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.must_change_password) {
+      return NextResponse.redirect(new URL('/trocar-senha', request.url))
+    }
   }
 
   // Rota do colaborador — PERMITE acesso para qualquer usuário autenticado

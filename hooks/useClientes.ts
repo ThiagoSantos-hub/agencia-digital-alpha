@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
+import { useAuth } from './useAuth'
 
 export interface Client {
   id: string
@@ -41,6 +42,7 @@ function calcularDiasAtrasoPorPaymentDay(paymentDay: number): number {
 }
 
 export function useClientes() {
+  const { profile } = useAuth()
   const [clients, setClients] = useState<Client[]>([])
   const lastFetchTime = useRef<number>(0)
   const CACHE_DURATION = 5 * 60 * 1000 // 5 minutos
@@ -124,10 +126,14 @@ export function useClientes() {
   useEffect(() => {
     fetchClients(true)
 
+    if (!profile?.company_id) return
+
+    // Filtra por empresa — sem isso, qualquer mudança em clients de QUALQUER
+    // empresa disparava refetch em todos os navegadores conectados.
     const channelName = `clients-${Math.random().toString(36).slice(2)}`
     const channel = supabase
       .channel(channelName)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'clients', filter: `company_id=eq.${profile.company_id}` }, () => {
         fetchClients(true)
       })
       .subscribe()
@@ -135,7 +141,7 @@ export function useClientes() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [supabase])
+  }, [supabase, profile?.company_id])
 
   const createCliente = async (input: ClientInput) => {
     const payload = { ...input }

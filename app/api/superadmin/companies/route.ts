@@ -70,7 +70,7 @@ export async function POST(request: Request) {
 
     await supabaseAdmin
       .from('profiles')
-      .upsert({ id: authData.user.id, email: adminEmail, name: adminName, role: 'admin', company_id: company.id })
+      .upsert({ id: authData.user.id, email: adminEmail, name: adminName, role: 'admin', company_id: company.id, must_change_password: true })
 
     // As rotas de assinatura eletrônica só fazem UPDATE (não upsert) em integrations,
     // então toda empresa nova precisa nascer com essas linhas já existindo (desconectadas),
