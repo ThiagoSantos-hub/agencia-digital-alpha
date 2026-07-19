@@ -15,6 +15,7 @@ import {
 import { useRelatorios, ReportInput } from '@/hooks/useRelatorios'
 import { useWhatsApp } from '@/hooks/useWhatsApp'
 import { createClient } from '@/lib/supabase'
+import { HourSelect } from '@/components/ui/HourSelect'
 
 const variables = [
   { label: 'Período', key: '<DATA>', example: '01/07 a 07/07' },
@@ -388,18 +389,11 @@ function CreateEditReportContent() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-text-muted">Horário de Envio</label>
-              <select
+              <HourSelect
                 value={formData.horario_envio}
-                onChange={e => setFormData({ ...formData, horario_envio: e.target.value })}
-                className={`${inputCls} appearance-none`}
-              >
-                {!/^\d{2}:00/.test(formData.horario_envio) && (
-                  <option value={formData.horario_envio}>{formData.horario_envio} (ajuste pra hora cheia)</option>
-                )}
-                {Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, '0')}:00`).map(hora => (
-                  <option key={hora} value={hora}>{hora}</option>
-                ))}
-              </select>
+                onChange={hora => setFormData({ ...formData, horario_envio: hora })}
+                className={inputCls}
+              />
             </div>
           </div>
 
