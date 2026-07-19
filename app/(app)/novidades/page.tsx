@@ -2,8 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
-import { useAuth } from '@/hooks/useAuth'
-import { 
+import {
   Sparkles, 
   Trash2, 
   Pencil, 
@@ -24,7 +23,6 @@ interface Novidade {
 }
 
 export default function NovidadesPage() {
-  const { user } = useAuth()
   const [novidades, setNovidades] = useState<Novidade[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -77,12 +75,14 @@ export default function NovidadesPage() {
     } else {
       const { error } = await supabase
         .from('novidades')
-        .insert([{ titulo, descricao, created_by: user?.id }])
-      
+        .insert([{ titulo, descricao }])
+
       if (!error) {
         setTitulo('')
         setDescricao('')
         fetchNovidades()
+      } else {
+        alert(`Erro ao publicar novidade: ${error.message}`)
       }
     }
     setSaving(false)
