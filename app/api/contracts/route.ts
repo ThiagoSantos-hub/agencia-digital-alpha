@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createServerClient } from '@/lib/supabase-server'
 import { renderContractPdf, formatDataDoDia } from '@/lib/pdf/renderContractPdf'
-import { createSignatureRequest } from '@/lib/esignature/autentique'
+import { getEsignatureClient } from '@/lib/esignature/provider'
 import { substituteTokens } from '@/lib/tokens'
 import { isValidCPF, isValidCNPJ, isValidCEP, isValidEmail, isValidPhone } from '@/lib/validators'
 
@@ -105,6 +105,8 @@ export async function POST(request: NextRequest) {
       label: p.label, amount: Number(p.amount), frequency: p.frequency,
     }))
 
+    const esignatureProvider = company.esignature_provider ?? 'autentique'
+
     const { data: contract, error: insertError } = await supabase
       .from('contracts')
       .insert({
@@ -115,6 +117,7 @@ export async function POST(request: NextRequest) {
         clauses_snapshot: clausesSnapshot,
         pricing_snapshot: pricingSnapshot,
         currency_snapshot: template.currency,
+        esignature_provider: esignatureProvider,
         nome_completo: fieldValues.nome_completo.trim(),
         email: fieldValues.email.trim(),
         telefone: fieldValues.telefone.trim(),
@@ -161,7 +164,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Erro ao gerar PDF do contrato.' }, { status: 500 })
     }
 
-    const signature = await createSignatureRequest({
+    const signature = await getEsignatureClient(esignatureProvider).createSignatureRequest({
       companyId: template.company_id,
       contractId: contract.id,
       pdfBuffer,

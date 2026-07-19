@@ -32,15 +32,22 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { contract_signer_name, contract_signer_cpf, contract_signer_email, contract_signer_phone, contract_signer_address } = body
+    const { contract_signer_name, contract_signer_cpf, contract_signer_email, contract_signer_phone, contract_signer_address, esignature_provider } = body
+
+    if (esignature_provider !== undefined && !['autentique', 'assinafy'].includes(esignature_provider)) {
+      return NextResponse.json({ error: 'Provedor de assinatura inválido.' }, { status: 400 })
+    }
+
+    const updates: Record<string, unknown> = {
+      contract_signer_name, contract_signer_cpf, contract_signer_email,
+      contract_signer_phone, contract_signer_address,
+      updated_at: new Date().toISOString(),
+    }
+    if (esignature_provider !== undefined) updates.esignature_provider = esignature_provider
 
     const { data, error } = await auth.session!
       .from('companies')
-      .update({
-        contract_signer_name, contract_signer_cpf, contract_signer_email,
-        contract_signer_phone, contract_signer_address,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updates)
       .eq('id', auth.companyId)
       .select()
       .single()

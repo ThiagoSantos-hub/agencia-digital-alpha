@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createServerClient } from '@/lib/supabase-server'
 import { renderContractPdf, formatDataDoDia } from '@/lib/pdf/renderContractPdf'
-import { createSignatureRequest, cancelSignatureRequest } from '@/lib/esignature/autentique'
+import { getEsignatureClient } from '@/lib/esignature/provider'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -65,7 +65,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
     if (action === 'cancel') {
       if (contract.esignature_document_id) {
-        await cancelSignatureRequest(contract.esignature_document_id, contract.company_id)
+        await getEsignatureClient(contract.esignature_provider).cancelSignatureRequest(contract.esignature_document_id, contract.company_id)
       }
       const { data, error: updateError } = await supabase
         .from('contracts')
@@ -113,7 +113,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         const draftPath = `${contract.company_id}/${contract.id}/draft.pdf`
         await supabase.storage.from('contracts').upload(draftPath, pdfBuffer, { contentType: 'application/pdf', upsert: true })
 
-        const signature = await createSignatureRequest({
+        const signature = await getEsignatureClient(contract.esignature_provider).createSignatureRequest({
           companyId: contract.company_id,
           contractId: contract.id,
           pdfBuffer,

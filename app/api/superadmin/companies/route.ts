@@ -72,6 +72,14 @@ export async function POST(request: Request) {
       .from('profiles')
       .upsert({ id: authData.user.id, email: adminEmail, name: adminName, role: 'admin', company_id: company.id })
 
+    // As rotas de assinatura eletrônica só fazem UPDATE (não upsert) em integrations,
+    // então toda empresa nova precisa nascer com essas linhas já existindo (desconectadas),
+    // senão "conectar" o Autentique/Assinafy pela primeira vez falha silenciosamente.
+    await supabaseAdmin.from('integrations').insert([
+      { company_id: company.id, type: 'autentique', label: 'Autentique', status: 'disconnected' },
+      { company_id: company.id, type: 'assinafy', label: 'Assinafy', status: 'disconnected' },
+    ])
+
     const brevoApiKey = process.env.BREVO_API_KEY
     const brevoSenderEmail = process.env.BREVO_SENDER_EMAIL
 
