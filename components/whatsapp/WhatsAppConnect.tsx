@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Smartphone, RefreshCw, Loader2, Users, Check } from 'lucide-react'
+import { Smartphone, RefreshCw, Loader2, Users, Check, X } from 'lucide-react'
 
 interface WhatsAppStatus {
   status: 'connected' | 'connecting' | 'disconnected' | 'loading' | 'error'
@@ -70,6 +70,11 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
     } finally {
       setLoadingGroups(false)
     }
+  }, [])
+
+  const hideGroup = useCallback(async (groupId: string) => {
+    setGroups(prev => prev.filter(g => g.group_id !== groupId))
+    await fetch(`/api/whatsapp/groups?group_id=${encodeURIComponent(groupId)}`, { method: 'DELETE' })
   }, [])
 
   useEffect(() => {
@@ -276,15 +281,25 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
                     {groups.map(g => (
                       <div key={g.group_id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-hover-bg border border-border">
                         <span className="text-sm text-text-main truncate">{g.name}</span>
-                        {g.participant_count > 0 && (
-                          <span className="text-xs text-text-muted ml-2 shrink-0">{g.participant_count} membros</span>
-                        )}
+                        <div className="flex items-center gap-2 shrink-0">
+                          {g.participant_count > 0 && (
+                            <span className="text-xs text-text-muted">{g.participant_count} membros</span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => hideGroup(g.group_id)}
+                            title="Esse grupo não existe mais / já saí dele"
+                            className="p-1 rounded-md text-text-disabled hover:text-red-600 hover:bg-red-50 transition-colors"
+                          >
+                            <X size={13} />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
                 )}
                 <p className="text-xs mt-3 text-text-disabled">
-                  Esses grupos aparecem automaticamente ao criar um relatório do tipo "Grupo".
+                  Esses grupos aparecem automaticamente ao criar um relatório do tipo "Grupo". Se algum não existir mais, clica no "x" pra escondê-lo.
                 </p>
               </>
             )}
