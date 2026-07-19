@@ -38,11 +38,6 @@ export function useChecklists() {
     if (!user) return
     setLoading(true)
     try {
-      // Chamar a função de reset em background (não bloqueia a busca)
-      Promise.resolve(supabase.rpc('reset_recurring_checklists_by_day')).catch(rpcErr => {
-        console.warn('Função RPC de reset ainda não existe ou falhou:', rpcErr)
-      })
-
       const { data, error } = await supabase
         .from('checklists')
         .select('*, checklist_items(*)')
@@ -67,8 +62,15 @@ export function useChecklists() {
   }, [user, supabase])
 
   useEffect(() => {
+    if (!user) return
+    // Reset de recorrência só precisa rodar uma vez por sessão aberta, não a
+    // cada create/update/delete/toggle (antes rodava dentro de fetchChecklists,
+    // que é chamada por todo CRUD do hook).
+    Promise.resolve(supabase.rpc('reset_recurring_checklists_by_day')).catch(rpcErr => {
+      console.warn('Função RPC de reset ainda não existe ou falhou:', rpcErr)
+    })
     fetchChecklists()
-  }, [fetchChecklists])
+  }, [user, fetchChecklists, supabase])
 
   const createChecklist = async (title: string, recurrence: string = 'once', recurrence_days: number[] = []) => {
     if (!user) return
@@ -176,16 +178,16 @@ export function useChecklists() {
     if (!newList) return
 
     const items = source.checklist_items || []
-    for (let i = 0; i < items.length; i++) {
+    if (items.length > 0) {
       await supabase
         .from('checklist_items')
-        .insert({
+        .insert(items.map((item, i) => ({
           checklist_id: newList.id,
-          text: items[i].text,
+          text: item.text,
           user_id: user.id,
           completed: false,
-          position: i
-        })
+          position: i,
+        })))
     }
 
     await fetchChecklists()
@@ -220,21 +222,14 @@ export function useChecklists() {
       }
     })
 
-    // 2. Persistir no banco de dados (atualizar cada registro individualmente para garantir que o UPDATE funcione)
-    let hasError = false
-    for (const item of items) {
-      const { error } = await supabase
-        .from(table)
-        .update({ position: item.position })
-        .eq('id', item.id)
-      if (error) {
-        console.error(`Erro ao atualizar posição ${item.id}:`, error)
-        hasError = true
-      }
-    }
+    // 2. Persistir no banco de dados em lote (upsert por id, um único round-trip
+    // em vez de um UPDATE sequencial por item)
+    const { error } = await supabase
+      .from(table)
+      .upsert(items.map(item => ({ id: item.id, position: item.position })), { onConflict: 'id' })
 
-    if (hasError) {
-      console.error(`Erro ao atualizar posições de ${type}: reverter para dados do banco`)
+    if (error) {
+      console.error(`Erro ao atualizar posições de ${type}:`, error)
       await fetchChecklists()
     }
   }

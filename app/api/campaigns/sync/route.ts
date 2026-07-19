@@ -1,20 +1,79 @@
 import { createServerClient } from '@/lib/supabase-server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
+// GET — lista os clientes com Meta Ads conectado, pra um workflow (n8n) decidir
+// quais chamadas de POST fazer em seguida. Protegida por CRON_SECRET, igual ao POST.
+export async function GET(req: Request) {
+  const authHeader = req.headers.get('authorization')
+  const cronSecret = process.env.CRON_SECRET
+  if (!cronSecret) {
+    return NextResponse.json({ error: 'Configuração ausente' }, { status: 500 })
+  }
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  }
+
+  const supabase = createAdminClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+
+  const { data, error } = await supabase
+    .from('clients')
+    .select('id, meta_ad_account_id, company_id')
+    .not('meta_ad_account_id', 'is', null)
+    .neq('status', 'inativo')
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  return NextResponse.json({
+    clients: (data ?? []).map(c => ({ clientId: c.id, adAccountId: c.meta_ad_account_id, companyId: c.company_id })),
+  })
+}
+
+// Chamada tanto pelo navegador (sessão de admin, sync manual de um cliente) quanto
+// pelo n8n via Schedule Trigger (sem sessão) — mesmo padrão de app/api/integrations/meta/refresh.
 export async function POST(req: Request) {
   try {
-    const { clientId, adAccountId } = await req.json()
+    const { clientId, adAccountId, companyId: bodyCompanyId } = await req.json()
 
     if (!clientId || !adAccountId) {
       return NextResponse.json({ error: 'clientId e adAccountId são obrigatórios' }, { status: 400 })
     }
 
-    const supabase = createServerClient()
+    const authHeader = req.headers.get('authorization')
+    const cronSecret = process.env.CRON_SECRET
+    const isCronCall = !!cronSecret && authHeader === `Bearer ${cronSecret}`
 
-    // 1. Buscar token do Meta Ads
+    let supabase
+    let companyId: string | null
+
+    if (isCronCall) {
+      // Chamada automatizada (n8n) — sem sessão de navegador, precisa vir com o
+      // company_id do cliente já resolvido (o workflow busca isso antes de chamar).
+      if (!bodyCompanyId) {
+        return NextResponse.json({ error: 'companyId é obrigatório em chamadas automatizadas' }, { status: 400 })
+      }
+      supabase = createAdminClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+      companyId = bodyCompanyId
+    } else {
+      // Chamada manual do navegador — exige sessão, resolve a empresa por ela (nunca
+      // confia em companyId vindo do body de um usuário comum).
+      supabase = createServerClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+      }
+      const { data: profile } = await supabase.from('profiles').select('company_id').eq('id', user.id).single()
+      if (!profile) {
+        return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
+      }
+      companyId = profile.company_id
+    }
+
+    // 1. Buscar token do Meta Ads da MESMA empresa do cliente que está sincronizando
     const { data: integration } = await supabase
       .from('integrations')
       .select('access_token')
+      .eq('company_id', companyId)
       .eq('type', 'meta_ads')
       .eq('status', 'connected')
       .maybeSingle()
@@ -64,6 +123,7 @@ export async function POST(req: Request) {
 
       const { error: upsertError } = await supabase.from('campaigns').upsert({
         client_id:          clientId,
+        company_id:         companyId,
         meta_campaign_id:   camp.id,
         name:               camp.name,
         status:             statusMap[camp.status] || 'rascunho',

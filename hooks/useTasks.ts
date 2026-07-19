@@ -24,7 +24,7 @@ export interface Task {
 }
 
 export function useTasks() {
-  const { user, role } = useAuth()
+  const { user, role, profile } = useAuth()
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -36,10 +36,6 @@ export function useTasks() {
     setError(null)
 
     try {
-      Promise.resolve(supabase.rpc('auto_escalate_task_priority')).catch(() => {
-        console.warn('RPC auto_escalate_task_priority falhou')
-      })
-
       let query = supabase
         .from('tasks')
         .select(`
@@ -67,13 +63,28 @@ export function useTasks() {
   }, [user, role, supabase])
 
   useEffect(() => {
-    fetchTasks()
+    if (!user) return
 
+    // A escalada automática de prioridade só precisa rodar uma vez por sessão
+    // aberta, não a cada create/update/delete/evento realtime (antes rodava
+    // dentro de fetchTasks, que é chamada por todo CRUD do hook).
+    Promise.resolve(supabase.rpc('auto_escalate_task_priority')).catch(() => {
+      console.warn('RPC auto_escalate_task_priority falhou')
+    })
+
+    fetchTasks()
+  }, [user, fetchTasks, supabase])
+
+  useEffect(() => {
+    if (!user || !profile?.company_id) return
+
+    // Filtra por empresa — sem isso, qualquer mudança em qualquer tarefa de
+    // QUALQUER empresa disparava refetch em todos os navegadores conectados.
     const channel = supabase
       .channel('tasks_realtime')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'tasks' },
+        { event: '*', schema: 'public', table: 'tasks', filter: `company_id=eq.${profile.company_id}` },
         () => {
           fetchTasks()
         }
@@ -83,7 +94,7 @@ export function useTasks() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [fetchTasks, supabase])
+  }, [user, profile?.company_id, fetchTasks, supabase])
 
   const createTask = async (task: Partial<Task>) => {
     if (!user) {

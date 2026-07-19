@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { createServerClient } from '@/lib/supabase-server'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,6 +9,23 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: Request) {
   try {
+    // 0. Exigir sessão de admin da MESMA empresa do colaborador alvo
+    const session = createServerClient()
+    const { data: { user: caller } } = await session.auth.getUser()
+    if (!caller) {
+      return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 })
+    }
+
+    const { data: callerProfile } = await session
+      .from('profiles')
+      .select('role, company_id, is_super_admin')
+      .eq('id', caller.id)
+      .single()
+
+    if (!callerProfile || (callerProfile.role !== 'admin' && !callerProfile.is_super_admin)) {
+      return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
+    }
+
     const { email, password, name } = await request.json()
 
     if (!email || !password) {
@@ -16,7 +34,7 @@ export async function POST(request: Request) {
 
     // 1. Buscar o usuário pelo email
     const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers()
-    
+
     if (listError) {
       console.error('❌ Erro ao listar usuários Auth:', listError)
       return NextResponse.json({ error: listError.message }, { status: 400 })
@@ -29,6 +47,19 @@ export async function POST(request: Request) {
     }
 
     const userId = user.id
+
+    // 1b. Garantir que o alvo é da mesma empresa do admin (a menos que seja super admin da plataforma)
+    if (!callerProfile.is_super_admin) {
+      const { data: targetProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('company_id')
+        .eq('id', userId)
+        .single()
+
+      if (!targetProfile || targetProfile.company_id !== callerProfile.company_id) {
+        return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
+      }
+    }
 
     // 2. Atualizar senha no Supabase Auth
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(userId, {

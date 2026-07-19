@@ -1,14 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase'
+import { createServerClient } from '@/lib/supabase-server'
 
-// GET — lista todos os webhooks
+async function requireAdmin() {
+  const session = createServerClient()
+  const { data: { user } } = await session.auth.getUser()
+  if (!user) return { error: NextResponse.json({ error: 'Não autenticado' }, { status: 401 }) }
+
+  const { data: profile } = await session.from('profiles').select('role, company_id').eq('id', user.id).single()
+  if (!profile || profile.role !== 'admin') {
+    return { error: NextResponse.json({ error: 'Acesso negado' }, { status: 403 }) }
+  }
+  return { session, companyId: profile.company_id as string }
+}
+
+// GET — lista os webhooks da própria empresa
 export async function GET() {
-  try {
-    const supabase = createClient()
+  const auth = await requireAdmin()
+  if (auth.error) return auth.error
 
-    const { data, error } = await supabase
+  try {
+    const { data, error } = await auth.session!
       .from('webhooks')
       .select('*')
+      .eq('company_id', auth.companyId)
       .order('slot')
 
     if (error) {
@@ -21,8 +35,11 @@ export async function GET() {
   }
 }
 
-// PATCH — atualiza um slot de webhook
+// PATCH — atualiza um slot de webhook da própria empresa
 export async function PATCH(request: NextRequest) {
+  const auth = await requireAdmin()
+  if (auth.error) return auth.error
+
   try {
     const body = await request.json()
     const { slot, name, url, event, active } = body
@@ -30,8 +47,6 @@ export async function PATCH(request: NextRequest) {
     if (!slot) {
       return NextResponse.json({ error: 'slot é obrigatório' }, { status: 400 })
     }
-
-    const supabase = createClient()
 
     const updates: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
@@ -42,10 +57,9 @@ export async function PATCH(request: NextRequest) {
     if (event !== undefined) updates.event = event
     if (active !== undefined) updates.active = active
 
-    const { data, error } = await supabase
+    const { data, error } = await auth.session!
       .from('webhooks')
-      .update(updates)
-      .eq('slot', slot)
+      .upsert({ company_id: auth.companyId, slot, ...updates }, { onConflict: 'company_id,slot' })
       .select()
       .single()
 
@@ -59,8 +73,11 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
-// DELETE — limpa um slot de webhook
+// DELETE — limpa um slot de webhook da própria empresa
 export async function DELETE(request: NextRequest) {
+  const auth = await requireAdmin()
+  if (auth.error) return auth.error
+
   try {
     const { searchParams } = new URL(request.url)
     const slot = searchParams.get('slot')
@@ -69,9 +86,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'slot é obrigatório' }, { status: 400 })
     }
 
-    const supabase = createClient()
-
-    const { error } = await supabase
+    const { error } = await auth.session!
       .from('webhooks')
       .update({
         name: null,
@@ -80,6 +95,7 @@ export async function DELETE(request: NextRequest) {
         active: false,
         updated_at: new Date().toISOString(),
       })
+      .eq('company_id', auth.companyId)
       .eq('slot', Number(slot))
 
     if (error) {

@@ -4,7 +4,8 @@ import { useState, useRef, useMemo } from 'react'
 import { useClientes, Client } from '@/hooks/useClientes'
 import { useAuth } from '@/hooks/useAuth'
 import { Search, UserPlus, X, Loader2, Pencil, Trash2, Download, Upload, Clock, CheckCircle2, Ban, Target, Eye, EyeOff } from 'lucide-react'
-import * as XLSX from 'xlsx'
+// xlsx (~1MB) só é carregado quando o usuário realmente exporta/importa uma planilha,
+// em vez de ir no bundle JS de toda visita a esta página.
 
 type ClienteForm = {
   name: string
@@ -309,7 +310,8 @@ export default function ClientesPage() {
        (c.email ?? '').toLowerCase().includes(search.toLowerCase()))
     ), [clients, search])
 
-  const handleExport = () => {
+  const handleExport = async () => {
+    const XLSX = await import('xlsx')
     const data = clients.map(c => ({
       Nome: c.name,
       Empresa: c.company || '',
@@ -331,7 +333,8 @@ export default function ClientesPage() {
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = (evt) => {
+    reader.onload = async (evt) => {
+      const XLSX = await import('xlsx')
       const bstr = evt.target?.result
       const wb = XLSX.read(bstr, { type: 'binary' })
       const wsname = wb.SheetNames[0]

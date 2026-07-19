@@ -41,7 +41,18 @@ export async function POST(request: Request) {
     const found = existingUsers?.users?.find(u => u.email === email)
 
     if (found) {
-      // Usuário já existe, apenas capturamos o ID
+      // Usuário já existe — garantir que não pertence a OUTRA empresa antes de
+      // reaproveitar o id (senão o upsert de profiles abaixo trocaria a empresa dele).
+      const { data: existingProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('company_id')
+        .eq('id', found.id)
+        .maybeSingle()
+
+      if (existingProfile && existingProfile.company_id && existingProfile.company_id !== companyId) {
+        return NextResponse.json({ error: 'Este e-mail já está em uso por um usuário de outra empresa.' }, { status: 409 })
+      }
+
       userId = found.id
       console.log('✅ Usuário já existente no Auth:', userId)
     } else {
