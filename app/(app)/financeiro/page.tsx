@@ -158,6 +158,15 @@ export default function FinanceiroPage() {
     atualizarFiltros({ escopo: escopoAtivo })
   }, [escopoAtivo])
 
+  // Sem isso, navegar de mês (setMesAtivo/setAnoAtivo) só refiltrava localmente
+  // os lançamentos já carregados na memória (do mês em que a página abriu) —
+  // nunca buscava do banco o mês pro qual o usuário navegou. Um lançamento com
+  // vencimento em um mês diferente do que estava na tela quando ela carregou
+  // nunca aparecia, mesmo navegando até o mês certo.
+  useEffect(() => {
+    atualizarFiltros({ dataInicio: periodoInicio, dataFim: periodoFim })
+  }, [periodoInicio, periodoFim])
+
   useEffect(() => {
     async function checkPerfil() {
       const { data: { user } } = await supabase.auth.getUser()
