@@ -220,7 +220,14 @@ function CreateEditReportContent() {
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-text-muted">Horário de Envio</label>
-            <input type="time" value={formData.horario_envio} onChange={e => setFormData({ ...formData, horario_envio: e.target.value })} className={inputCls} />
+            <select value={formData.horario_envio} onChange={e => setFormData({ ...formData, horario_envio: e.target.value })} className={`${inputCls} appearance-none`}>
+              {!/^\d{2}:00/.test(formData.horario_envio) && (
+                <option value={formData.horario_envio}>{formData.horario_envio} (ajuste pra hora cheia)</option>
+              )}
+              {Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, '0')}:00`).map(hora => (
+                <option key={hora} value={hora}>{hora}</option>
+              ))}
+            </select>
           </div>
 
           <div className="space-y-2">
