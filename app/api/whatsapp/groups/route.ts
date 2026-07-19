@@ -94,19 +94,21 @@ export async function GET(request: NextRequest) {
             updated_at: new Date().toISOString(),
           }))
 
-          // Sempre substitui o cache local pelo resultado fresco da API
-          await supabase
-            .from('whatsapp_groups')
-            .delete()
-            .eq('user_id', targetUserId)
-
+          // Upsert (não delete+insert): a Evolution API às vezes continua devolvendo
+          // grupos "fantasma" (que o usuário já saiu, mas o cache dela não atualizou).
+          // Upsert preserva a flag is_ghost de grupos que o usuário já escondeu
+          // manualmente — um delete+insert como antes apagava essa marcação a cada sync.
+          let upserted: { group_id: string; name: string; participant_count: number; is_ghost: boolean | null }[] = []
           if (rows.length > 0) {
-            await supabase
+            const { data } = await supabase
               .from('whatsapp_groups')
-              .insert(rows)
+              .upsert(rows, { onConflict: 'user_id,group_id' })
+              .select('group_id, name, participant_count, is_ghost')
+            upserted = data ?? []
           }
 
-          return NextResponse.json(rows.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')))
+          const visible = upserted.filter(g => !g.is_ghost)
+          return NextResponse.json(visible.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')))
         }
       }
     } catch (err) {
@@ -120,7 +122,30 @@ export async function GET(request: NextRequest) {
     .from('whatsapp_groups')
     .select('group_id, name, participant_count')
     .eq('user_id', targetUserId)
+    .eq('is_ghost', false)
     .order('name')
-    
+
   return NextResponse.json(cached || [])
+}
+
+// Esconde um grupo "fantasma" (que a Evolution API continua devolvendo mesmo depois
+// do usuário sair dele de verdade no WhatsApp). Não apaga a linha — só marca is_ghost,
+// pra sobreviver ao próximo upsert de sincronização.
+export async function DELETE(request: NextRequest) {
+  const supabase = createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+
+  const { searchParams } = new URL(request.url)
+  const groupId = searchParams.get('group_id')
+  if (!groupId) return NextResponse.json({ error: 'group_id é obrigatório' }, { status: 400 })
+
+  const { error } = await supabase
+    .from('whatsapp_groups')
+    .update({ is_ghost: true })
+    .eq('user_id', user.id)
+    .eq('group_id', groupId)
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ success: true })
 }
