@@ -73,16 +73,19 @@ export default function NovidadesPage() {
         fetchNovidades()
       }
     } else {
-      const { error } = await supabase
-        .from('novidades')
-        .insert([{ titulo, descricao }])
+      const res = await fetch('/api/novidades', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ titulo, descricao }),
+      })
 
-      if (!error) {
+      if (res.ok) {
         setTitulo('')
         setDescricao('')
         fetchNovidades()
       } else {
-        alert(`Erro ao publicar novidade: ${error.message}`)
+        const data = await res.json().catch(() => null)
+        alert(`Erro ao publicar novidade: ${data?.error || 'Erro desconhecido'}`)
       }
     }
     setSaving(false)
