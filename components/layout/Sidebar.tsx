@@ -4,8 +4,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, Megaphone, BarChart2, Bell,
   CheckSquare, List, Wallet, UserCog, Bot, Plug,
-  Sparkles, MessageSquare, UserCircle, LogOut, Settings,
-  FileSignature, Building2
+  Sparkles, MessageSquare, UserCircle, LogOut, Settings
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/hooks/useAuth'
@@ -31,11 +30,10 @@ const menuGroups = [
   {
     label: 'GESTÃO',
     items: [
-      { label: 'Tarefas',       href: '/tarefas',       icon: CheckSquare,   ativo: true },
-      { label: 'Checklists',    href: '/checklists',    icon: List,          ativo: true },
-      { label: 'Contratos',     href: '/contratos',     icon: FileSignature, ativo: true },
-      { label: 'Financeiro',    href: '/financeiro',    icon: Wallet,        ativo: true },
-      { label: 'Colaboradores', href: '/colaboradores', icon: UserCog,       ativo: true },
+      { label: 'Tarefas',       href: '/tarefas',       icon: CheckSquare, ativo: true },
+      { label: 'Checklists',    href: '/checklists',    icon: List,        ativo: true },
+      { label: 'Financeiro',    href: '/financeiro',    icon: Wallet,      ativo: true },
+      { label: 'Colaboradores', href: '/colaboradores', icon: UserCog,     ativo: true },
     ],
   },
   {
@@ -83,16 +81,7 @@ function NavLink({
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { signOut, profile } = useAuth()
-
-  const groups = profile?.is_super_admin
-    ? [...menuGroups, {
-        label: 'PLATAFORMA',
-        items: [
-          { label: 'Empresas', href: '/superadmin/empresas', icon: Building2, ativo: true },
-        ],
-      }]
-    : menuGroups
+  const { signOut } = useAuth()
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-surface border-r border-border flex flex-col shadow-md z-40">
@@ -114,7 +103,7 @@ export function Sidebar() {
           </NavLink>
         </div>
 
-        {groups.map((group) => (
+        {menuGroups.map((group) => (
           <div key={group.label}>
             <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-text-disabled">
               {group.label}

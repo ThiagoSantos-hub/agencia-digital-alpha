@@ -65,8 +65,7 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/ai') ||
     request.nextUrl.pathname.startsWith('/perfil') ||
     request.nextUrl.pathname.startsWith('/checklists') ||
-    request.nextUrl.pathname.startsWith('/tarefas') ||
-    request.nextUrl.pathname.startsWith('/contratos')
+    request.nextUrl.pathname.startsWith('/tarefas')
 
   if (isAdminRoute && user) {
     const { data: profile } = await supabase
@@ -74,23 +73,9 @@ export async function middleware(request: NextRequest) {
       .select('role')
       .eq('id', user.id)
       .single()
-
+    
     if (profile?.role === 'collaborator') {
       return NextResponse.redirect(new URL('/colaborador/dashboard', request.url))
-    }
-  }
-
-  // Rota de super admin (gestão de empresas) — só quem tem is_super_admin
-  const isSuperAdminRoute = request.nextUrl.pathname.startsWith('/superadmin')
-  if (isSuperAdminRoute && user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_super_admin')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile?.is_super_admin) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }
 
@@ -110,8 +95,6 @@ export const config = {
     '/ai/:path*',
     '/perfil/:path*',
     '/checklists/:path*',
-    '/contratos/:path*',
-    '/superadmin/:path*',
     '/login',
   ],
 }

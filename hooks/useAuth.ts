@@ -9,8 +9,6 @@ interface Profile {
   email: string
   name: string | null
   role: 'admin' | 'manager' | 'collaborator'
-  company_id: string
-  is_super_admin: boolean
 }
 
 // Cache global simples para o perfil durante a sessão

@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase-server'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,23 +8,6 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: Request) {
   try {
-    // Resolve a empresa de quem está convidando — sem isso o colaborador novo
-    // nasceria com company_id nulo e ficaria invisível pra própria empresa (RLS).
-    const session = createServerClient()
-    const { data: { user: callingUser } } = await session.auth.getUser()
-    if (!callingUser) {
-      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
-    }
-    const { data: callingProfile } = await session
-      .from('profiles')
-      .select('company_id, role')
-      .eq('id', callingUser.id)
-      .single()
-    if (!callingProfile || callingProfile.role === 'collaborator') {
-      return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
-    }
-    const companyId = callingProfile.company_id
-
     const { name, email, password, cargo } = await request.json()
 
     let userId: string
@@ -50,7 +32,7 @@ export async function POST(request: Request) {
         email,
         password,
         email_confirm: true,
-        user_metadata: { name, role: 'collaborator', company_id: companyId }
+        user_metadata: { name, role: 'collaborator' }
       })
 
       if (authError) {
@@ -68,8 +50,7 @@ export async function POST(request: Request) {
         id: userId,
         email: email,
         name: name,
-        role: 'collaborator',
-        company_id: companyId
+        role: 'collaborator'
       })
 
     if (profileError) {
