@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
+import { createClient } from '@supabase/supabase-js';
 
 const EVO_URL = process.env.EVOLUTION_API_URL || '';
 const EVO_KEY = process.env.EVOLUTION_API_KEY || '';
@@ -8,9 +8,17 @@ function instanceName(userId: string) {
   return `alpha_${userId.replace(/-/g, '').slice(0, 16)}`;
 }
 
-export async function POST(request: Request) {
-  const supabase = createServerClient();
+// Client de serviço (não de sessão): esta rota é chamada tanto pelo navegador (envio manual,
+// com sessão) quanto pelo cron do Postgres em 020_reports_cron.sql (net.http_post, sem sessão
+// nenhuma). Usar o client de sessão aqui fazia o RLS bloquear silenciosamente toda leitura de
+// `reports` nas chamadas do cron — por isso os relatórios automáticos nunca disparavam, só o
+// envio manual (que tinha sessão de navegador) funcionava.
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
+export async function POST(request: Request) {
   try {
     const { report_id } = await request.json();
     if (!report_id) {
@@ -212,10 +220,20 @@ export async function POST(request: Request) {
 
     if (evoCan) {
       try {
+        let senderId = report.user_id;
+        if (report.enviar_via_agencia) {
+          const { data: adminProfile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('role', 'admin')
+            .maybeSingle();
+          if (adminProfile) senderId = adminProfile.id;
+        }
+
         const { data: wpInstance } = await supabase
           .from('whatsapp_instances')
           .select('instance_name, status')
-          .eq('user_id', report.user_id)
+          .eq('user_id', senderId)
           .maybeSingle();
 
         if (wpInstance?.status === 'connected' && wpInstance.instance_name) {
