@@ -68,7 +68,17 @@ async function sendWhatsApp(userId: string, recebedorNumero: string, mensagem: s
 // de confiar cegamente no alerta de saldo mínimo (mesmo cuidado já sinalizado pra Autentique
 // e Assinafy nesta sessão: comportamento de API de terceiro que não dá pra testar sem uma
 // conta real).
-export async function POST() {
+export async function POST(request: Request) {
+  const authHeader = request.headers.get('authorization')
+  const cronSecret = process.env.CRON_SECRET
+  if (!cronSecret) {
+    console.error('[alerts/check] CRON_SECRET não configurado')
+    return NextResponse.json({ error: 'Configuração ausente' }, { status: 500 })
+  }
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  }
+
   const { data: alerts, error } = await supabase
     .from('alerts')
     .select('*')

@@ -30,9 +30,19 @@ export async function POST(request: Request) {
       report.data_fim
     );
 
+    // Mesma correção aplicada em app/api/reports/send: resolve a empresa dona
+    // do relatório antes de buscar a integração, pra não pegar a de outra empresa.
+    const { data: reportOwner } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', report.user_id)
+      .single();
+    const reportCompanyId = reportOwner?.company_id ?? null;
+
     const { data: integration } = await supabase
       .from('integrations')
       .select('access_token')
+      .eq('company_id', reportCompanyId)
       .eq('type', 'meta_ads')
       .eq('status', 'connected')
       .maybeSingle();

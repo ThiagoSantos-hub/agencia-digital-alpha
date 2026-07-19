@@ -50,12 +50,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Contrato não encontrado para este documento' }, { status: 404 })
     }
 
+    // Falha fechado: sem segredo configurado pra essa empresa, o webhook é rejeitado
+    // (antes aceitava qualquer POST não assinado quando webhook_secret estava vazio).
     const secret = await getAutentiqueWebhookSecret(contract.company_id)
-    if (secret) {
-      const provided = request.headers.get('x-autentique-webhook-secret') ?? new URL(request.url).searchParams.get('secret')
-      if (provided !== secret) {
-        return NextResponse.json({ error: 'Assinatura de webhook inválida' }, { status: 401 })
-      }
+    const provided = request.headers.get('x-autentique-webhook-secret') ?? new URL(request.url).searchParams.get('secret')
+    if (!secret || provided !== secret) {
+      return NextResponse.json({ error: 'Assinatura de webhook inválida' }, { status: 401 })
     }
 
     if (contract.status === 'assinado' || contract.status === 'cancelado') {

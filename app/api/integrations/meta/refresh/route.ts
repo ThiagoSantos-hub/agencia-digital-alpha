@@ -122,13 +122,16 @@ export async function POST(request: NextRequest) {
           console.error(`[meta/refresh] Erro no slot ${slot}:`, errorMsg)
 
           // Se o token antigo já estiver inválido, marca como erro
+          // (filtra por id da integração, não por slot — várias empresas podem
+          // compartilhar o mesmo slot 'meta_ads', e usar .eq('type', slot) sobrescreveria
+          // a integração de outra empresa)
           await supabase
             .from('integrations')
             .update({
               status: 'error',
               updated_at: new Date().toISOString(),
             })
-            .eq('type', slot)
+            .eq('id', integration.id)
 
           results.push({
             slot,
@@ -150,7 +153,7 @@ export async function POST(request: NextRequest) {
             status: 'connected',
             updated_at: new Date().toISOString(),
           })
-          .eq('type', slot)
+          .eq('id', integration.id)
 
         if (updateError) {
           console.error(`[meta/refresh] Erro ao atualizar slot ${slot}:`, updateError)

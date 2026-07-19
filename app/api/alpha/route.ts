@@ -16,6 +16,18 @@ function verificarSecret(req: NextRequest): boolean {
   return secret === process.env.ALPHA_API_SECRET
 }
 
+// A Alpha (assistente de voz do ElevenLabs) é uma ferramenta interna do dono
+// da plataforma, não uma feature multi-tenant — trava toda consulta na empresa
+// dona da plataforma (is_platform_owner = true), nunca em outras empresas,
+// mesmo que o segredo compartilhado (ALPHA_API_SECRET) algum dia vaze.
+let platformCompanyIdCache: string | null = null
+async function getPlatformCompanyId(): Promise<string | null> {
+  if (platformCompanyIdCache) return platformCompanyIdCache
+  const { data } = await supabase.from('companies').select('id').eq('is_platform_owner', true).maybeSingle()
+  platformCompanyIdCache = data?.id ?? null
+  return platformCompanyIdCache
+}
+
 function hoje(): string {
   return new Date().toISOString().split('T')[0]
 }
@@ -45,9 +57,11 @@ function fmtBRL(v: number): string {
 }
 
 async function getClientes() {
+  const companyId = await getPlatformCompanyId()
   const { data, error } = await supabase
     .from('clients')
     .select('id, name, company, status, monthly_fee, payment_day, phone, email, inactive_at')
+    .eq('company_id', companyId)
     .order('name')
 
   if (error) return { erro: error.message }
@@ -88,9 +102,12 @@ async function getClientes() {
 }
 
 async function getFinanceiro() {
+  const companyId = await getPlatformCompanyId()
+
   const { data: mesAtual } = await supabase
     .from('finances')
     .select('tipo, valor, status, categoria, descricao, data_vencimento')
+    .eq('company_id', companyId)
     .eq('escopo', 'agencia')
     .gte('data_vencimento', inicioMes(0))
     .lte('data_vencimento', fimMes(0))
@@ -98,6 +115,7 @@ async function getFinanceiro() {
   const { data: mesPassado } = await supabase
     .from('finances')
     .select('tipo, valor, status')
+    .eq('company_id', companyId)
     .eq('escopo', 'agencia')
     .gte('data_vencimento', inicioMes(1))
     .lte('data_vencimento', fimMes(1))
@@ -124,6 +142,7 @@ async function getFinanceiro() {
   const { data: vencendo } = await supabase
     .from('finances')
     .select('descricao, valor, data_vencimento, status')
+    .eq('company_id', companyId)
     .eq('escopo', 'agencia')
     .eq('status', 'pendente')
     .gte('data_vencimento', hoje())
@@ -167,6 +186,7 @@ async function getFinanceiro() {
 
 async function getCampanhas(params: { periodo?: string; cliente?: string } = {}) {
   const { cliente } = params
+  const companyId = await getPlatformCompanyId()
 
   const { data, error } = await supabase
     .from('campaigns')
@@ -176,6 +196,7 @@ async function getCampanhas(params: { periodo?: string; cliente?: string } = {})
       clients(id, name, company),
       campaign_metrics(metric_key, metric_label, metric_value)
     `)
+    .eq('company_id', companyId)
     .order('created_at', { ascending: false })
 
   if (error) return { erro: error.message }
@@ -216,9 +237,11 @@ async function getCampanhas(params: { periodo?: string; cliente?: string } = {})
 }
 
 async function getIntegracoes() {
+  const companyId = await getPlatformCompanyId()
   const { data, error } = await supabase
     .from('integrations')
     .select('type, label, status, connected_at')
+    .eq('company_id', companyId)
     .order('label')
 
   if (error) return { erro: error.message }

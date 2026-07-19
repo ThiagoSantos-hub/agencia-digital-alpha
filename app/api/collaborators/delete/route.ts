@@ -15,11 +15,11 @@ export async function DELETE(request: NextRequest) {
     // Verificar se é admin
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('role, company_id, is_super_admin')
       .eq('id', user.id)
       .single()
 
-    if (profile?.role !== 'admin') {
+    if (profile?.role !== 'admin' && !profile?.is_super_admin) {
       return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
     }
 
@@ -42,6 +42,22 @@ export async function DELETE(request: NextRequest) {
     }
 
     const userId = collabData.user_id
+
+    // 2b. Garantir que o colaborador é da MESMA empresa do admin (a menos que seja super admin)
+    if (!profile.is_super_admin) {
+      if (!userId) {
+        return NextResponse.json({ error: 'Colaborador não encontrado.' }, { status: 404 })
+      }
+      const { data: targetProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('company_id')
+        .eq('id', userId)
+        .single()
+
+      if (!targetProfile || targetProfile.company_id !== profile.company_id) {
+        return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
+      }
+    }
     const collabEmail = collabData.email || email
 
     // 3. Remover do Supabase Auth (se tiver user_id)

@@ -37,9 +37,20 @@ export async function POST(request: Request) {
 
     const { dateStart, dateEnd, diasAtivo } = calcularPeriodo(report.periodo, report.data_inicio, report.data_fim);
 
+    // Resolve a empresa dona do relatório — sem isso a busca abaixo pegaria a
+    // integração 'meta_ads' de QUALQUER empresa conectada no sistema (a primeira
+    // que o Postgres retornasse), vazando token/gasto de uma empresa pro relatório de outra.
+    const { data: reportOwner } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', report.user_id)
+      .single();
+    const reportCompanyId = reportOwner?.company_id ?? null;
+
     const { data: integration } = await supabase
       .from('integrations')
       .select('access_token')
+      .eq('company_id', reportCompanyId)
       .eq('type', 'meta_ads')
       .eq('status', 'connected')
       .maybeSingle();
@@ -222,10 +233,14 @@ export async function POST(request: Request) {
       try {
         let senderId = report.user_id;
         if (report.enviar_via_agencia) {
+          // Filtra pela MESMA empresa do relatório — sem isso pegava "o primeiro
+          // admin encontrado no sistema inteiro", podendo disparar pelo WhatsApp
+          // do admin de outra empresa.
           const { data: adminProfile } = await supabase
             .from('profiles')
             .select('id')
             .eq('role', 'admin')
+            .eq('company_id', reportCompanyId)
             .maybeSingle();
           if (adminProfile) senderId = adminProfile.id;
         }
