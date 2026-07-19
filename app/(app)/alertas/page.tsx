@@ -18,10 +18,12 @@ import {
   Loader2
 } from 'lucide-react'
 import { useAlertas, Alert, AlertInput } from '@/hooks/useAlertas'
+import { useWhatsApp } from '@/hooks/useWhatsApp'
 
 export default function AlertasPage() {
   const { alerts, loading, createAlerta, updateAlerta, deleteAlerta, toggleAtivo } = useAlertas()
-  
+  const { groups: wpGroups, loadingGroups: wpLoadingGroups, fetchGroups: wpFetchGroups } = useWhatsApp()
+
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingAlert, setEditingAlert] = useState<Alert | null>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -317,7 +319,10 @@ export default function AlertasPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setFormData({...formData, recebedor_tipo: 'grupo'})}
+                      onClick={() => {
+                        setFormData({...formData, recebedor_tipo: 'grupo', recebedor_numero: ''})
+                        if (wpGroups.length === 0) wpFetchGroups()
+                      }}
                       className={`flex items-center justify-center p-2 rounded-xl border transition-all ${
                         formData.recebedor_tipo === 'grupo' ? 'bg-primary/10 border-primary text-primary' : 'bg-background border-border text-text-muted'
                       }`}
@@ -327,15 +332,37 @@ export default function AlertasPage() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-text-muted uppercase">WhatsApp</label>
-                  <input 
-                    required
-                    type="text"
-                    value={formData.recebedor_numero}
-                    onChange={e => setFormData({...formData, recebedor_numero: e.target.value.replace(/\D/g, '')})}
-                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors text-sm text-text-main"
-                    placeholder="5511999999999"
-                  />
+                  <label className="text-xs font-bold text-text-muted uppercase">
+                    {formData.recebedor_tipo === 'grupo' ? 'Grupo do WhatsApp' : 'WhatsApp'}
+                  </label>
+                  {formData.recebedor_tipo === 'grupo' ? (
+                    wpLoadingGroups ? (
+                      <div className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-xs text-text-muted">Carregando grupos...</div>
+                    ) : wpGroups.length > 0 ? (
+                      <select
+                        required
+                        value={formData.recebedor_numero}
+                        onChange={e => setFormData({...formData, recebedor_numero: e.target.value})}
+                        className="w-full bg-background border border-border rounded-xl px-4 py-2.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors text-sm text-text-main appearance-none"
+                      >
+                        <option value="">Selecione...</option>
+                        {wpGroups.map(g => <option key={g.group_id} value={g.group_id}>{g.name}</option>)}
+                      </select>
+                    ) : (
+                      <div className="w-full bg-primary/5 border border-primary/20 rounded-xl px-4 py-2.5 text-xs text-primary">
+                        Nenhum grupo encontrado. Conecte o WhatsApp em Integrações.
+                      </div>
+                    )
+                  ) : (
+                    <input
+                      required
+                      type="text"
+                      value={formData.recebedor_numero}
+                      onChange={e => setFormData({...formData, recebedor_numero: e.target.value.replace(/\D/g, '')})}
+                      className="w-full bg-background border border-border rounded-xl px-4 py-2.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors text-sm text-text-main"
+                      placeholder="5511999999999"
+                    />
+                  )}
                 </div>
               </div>
 
