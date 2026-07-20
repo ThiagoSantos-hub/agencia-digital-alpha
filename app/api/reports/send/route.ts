@@ -405,30 +405,34 @@ async function getInstagramMetrics(
       return fallback;
     }
 
-    // follower_count = variação diária de seguidores (positiva ou negativa), não o
-    // total da conta — somado no período dá os "novos seguidores" do intervalo do
-    // relatório. metric_type=time_series é exigido pelas versões mais novas da API
-    // quando se usa since/until com period=day (sem isso, o Instagram retornava
-    // vazio sem erro explícito).
-    const insightsRes = await fetch(
-      `https://graph.facebook.com/v19.0/${igAccountId}/insights?metric=follower_count,profile_views&period=day&metric_type=time_series&since=${dateStart}&until=${dateEnd}&access_token=${accessToken}`
-    );
-    const insightsData = await insightsRes.json();
+    // follower_count e profile_views exigem metric_type diferentes — combinar os
+    // dois numa única chamada faz o Instagram recusar a requisição inteira com
+    // erro #100 ("metric incompatible with the metric type"), aí caía tudo pro
+    // fallback silenciosamente. follower_count = novos seguidores por dia
+    // (time_series, soma no período); profile_views só aceita total_value
+    // (já vem somado pro período inteiro, sem precisar somar dia a dia).
+    const [followerRes, viewsRes] = await Promise.all([
+      fetch(`https://graph.facebook.com/v19.0/${igAccountId}/insights?metric=follower_count&period=day&metric_type=time_series&since=${dateStart}&until=${dateEnd}&access_token=${accessToken}`),
+      fetch(`https://graph.facebook.com/v19.0/${igAccountId}/insights?metric=profile_views&period=day&metric_type=total_value&since=${dateStart}&until=${dateEnd}&access_token=${accessToken}`),
+    ]);
+    const followerData = await followerRes.json();
+    const viewsData = await viewsRes.json();
 
-    if (insightsData?.error) {
-      console.error(`[getInstagramMetrics] erro ao buscar insights de ${igAccountId}:`, insightsData.error.message ?? insightsData.error);
-      return fallback;
+    if (followerData?.error) {
+      console.error(`[getInstagramMetrics] erro ao buscar follower_count de ${igAccountId}:`, followerData.error.message ?? followerData.error);
+    }
+    if (viewsData?.error) {
+      console.error(`[getInstagramMetrics] erro ao buscar profile_views de ${igAccountId}:`, viewsData.error.message ?? viewsData.error);
     }
 
-    const somaMetrica = (nome: string): number | null => {
-      const item = insightsData?.data?.find((d: { name?: string }) => d.name === nome);
-      if (!item) return null;
-      const valores: Array<{ value?: number }> = item.values ?? [];
-      return valores.reduce((soma, v) => soma + (v.value ?? 0), 0);
-    };
+    const valoresFollower: Array<{ value?: number }> = followerData?.data?.[0]?.values ?? [];
+    const novosSeguidores = followerData?.data
+      ? valoresFollower.reduce((soma, v) => soma + (v.value ?? 0), 0)
+      : null;
 
-    const novosSeguidores = somaMetrica('follower_count');
-    const visitasTotal = somaMetrica('profile_views');
+    const visitasTotal = typeof viewsData?.data?.[0]?.total_value?.value === 'number'
+      ? viewsData.data[0].total_value.value
+      : null;
 
     const seguidores = novosSeguidores !== null ? novosSeguidores.toLocaleString('pt-BR') : '—';
     const visitas = visitasTotal !== null ? visitasTotal.toLocaleString('pt-BR') : '—';
