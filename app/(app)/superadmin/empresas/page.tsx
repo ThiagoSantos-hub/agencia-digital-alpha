@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Loader2, Building2, ExternalLink, Eye, Pencil, Power, X } from 'lucide-react'
+import { PLAN_LABELS, type Plan } from '@/lib/planLimits'
 
 interface Company {
   id: string
@@ -19,10 +20,18 @@ interface Company {
   user_count: number
   admin_emails: string[]
   phone: string | null
+  plan: Plan | null
   payment_method: 'card' | 'pix' | null
   subscription_status: string | null
   access_expires_at: string | null
 }
+
+const PLAN_OPTIONS: { value: Plan | ''; label: string }[] = [
+  { value: '', label: 'Sem plano' },
+  { value: 'basico', label: PLAN_LABELS.basico },
+  { value: 'pro', label: PLAN_LABELS.pro },
+  { value: 'premium', label: PLAN_LABELS.premium },
+]
 
 const inputCls = 'w-full px-3 py-2 bg-background border border-border rounded-lg text-text-main text-sm focus:outline-none focus:border-primary/50 transition-colors'
 const labelCls = 'block text-[11px] font-medium text-text-muted mb-1'
@@ -39,13 +48,13 @@ export default function SuperAdminEmpresasPage() {
   const { profile, loading: authLoading } = useAuth()
   const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState({ companyName: '', companySlug: '', adminName: '', adminEmail: '', adminPassword: '', metaTesterProfile: '' })
+  const [form, setForm] = useState({ companyName: '', companySlug: '', adminName: '', adminEmail: '', adminPassword: '', metaTesterProfile: '', plan: '' as Plan | '' })
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [viewCompany, setViewCompany] = useState<Company | null>(null)
   const [editCompany, setEditCompany] = useState<Company | null>(null)
-  const [editForm, setEditForm] = useState({ name: '', slug: '', metaTesterProfile: '' })
+  const [editForm, setEditForm] = useState({ name: '', slug: '', metaTesterProfile: '', plan: '' as Plan | '' })
   const [savingEdit, setSavingEdit] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
 
@@ -58,12 +67,13 @@ export default function SuperAdminEmpresasPage() {
 
   useEffect(() => { fetchCompanies() }, [])
 
-  const set = (field: keyof typeof form, value: string) =>
+  const set = (field: Exclude<keyof typeof form, 'plan'>, value: string) =>
     setForm((prev) => ({
       ...prev,
       [field]: value,
       ...(field === 'companyName' ? { companySlug: slugify(value) } : {}),
     }))
+  const setPlan = (value: Plan | '') => setForm((prev) => ({ ...prev, plan: value }))
 
   const handleCreate = async () => {
     setCreating(true)
@@ -78,7 +88,7 @@ export default function SuperAdminEmpresasPage() {
     setCreating(false)
     if (!res.ok) { setError(data.error || 'Erro ao criar empresa.'); return }
     setSuccess(`Empresa "${form.companyName}" criada com sucesso.`)
-    setForm({ companyName: '', companySlug: '', adminName: '', adminEmail: '', adminPassword: '', metaTesterProfile: '' })
+    setForm({ companyName: '', companySlug: '', adminName: '', adminEmail: '', adminPassword: '', metaTesterProfile: '', plan: '' })
     fetchCompanies()
   }
 
@@ -93,7 +103,7 @@ export default function SuperAdminEmpresasPage() {
 
   const openEdit = (c: Company) => {
     setEditError(null)
-    setEditForm({ name: c.name, slug: c.slug, metaTesterProfile: c.meta_tester_profile ?? '' })
+    setEditForm({ name: c.name, slug: c.slug, metaTesterProfile: c.meta_tester_profile ?? '', plan: c.plan ?? '' })
     setEditCompany(c)
   }
 
@@ -109,6 +119,7 @@ export default function SuperAdminEmpresasPage() {
         name: editForm.name,
         slug: editForm.slug,
         metaTesterProfile: editForm.metaTesterProfile,
+        plan: editForm.plan,
       }),
     })
     setSavingEdit(false)
@@ -183,6 +194,13 @@ export default function SuperAdminEmpresasPage() {
             />
           </div>
 
+          <div>
+            <label className={labelCls}>Plano</label>
+            <select className={inputCls} value={form.plan} onChange={(e) => setPlan(e.target.value as Plan | '')}>
+              {PLAN_OPTIONS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+            </select>
+          </div>
+
           <div className="bg-primary/5 border border-primary/20 rounded-lg px-3 py-2.5 text-xs text-text-muted space-y-1">
             <p className="font-medium text-text-main">Antes desse admin conseguir conectar o Meta Ads/Instagram:</p>
             <p>1. Vá em <span className="font-mono">developers.facebook.com</span> → seu App → Funções do app → Testadores</p>
@@ -221,7 +239,7 @@ export default function SuperAdminEmpresasPage() {
                   )}
                   {c.payment_method && (
                     <p className="text-text-muted text-xs mt-0.5">
-                      {c.payment_method === 'pix' ? 'Pix' : 'Cartão'} — {c.subscription_status ?? '—'}
+                      {c.plan ? PLAN_LABELS[c.plan] : 'Sem plano'} · {c.payment_method === 'pix' ? 'Pix' : 'Cartão'} — {c.subscription_status ?? '—'}
                     </p>
                   )}
                 </div>
@@ -280,6 +298,7 @@ export default function SuperAdminEmpresasPage() {
                 <p><span className="text-text-muted">Perfil do Facebook:</span> <span className="text-text-main">{viewCompany.meta_tester_profile || '—'}</span></p>
                 <p><span className="text-text-muted">Testador Meta adicionado:</span> <span className="text-text-main">{viewCompany.meta_tester_added ? 'Sim' : 'Não'}</span></p>
                 <p><span className="text-text-muted">Telefone:</span> <span className="text-text-main">{viewCompany.phone || '—'}</span></p>
+                <p><span className="text-text-muted">Plano:</span> <span className="text-text-main">{viewCompany.plan ? PLAN_LABELS[viewCompany.plan] : '—'}</span></p>
                 <p><span className="text-text-muted">Pagamento:</span> <span className="text-text-main">{viewCompany.payment_method === 'pix' ? 'Pix' : viewCompany.payment_method === 'card' ? 'Cartão' : '— (cadastro manual)'}</span></p>
                 <p><span className="text-text-muted">Status da assinatura:</span> <span className="text-text-main">{viewCompany.subscription_status || '—'}</span></p>
                 {viewCompany.payment_method === 'pix' && (
@@ -312,6 +331,12 @@ export default function SuperAdminEmpresasPage() {
                 <div>
                   <label className={labelCls}>Perfil do Facebook do admin</label>
                   <input className={inputCls} value={editForm.metaTesterProfile} onChange={(e) => setEditForm({ ...editForm, metaTesterProfile: e.target.value })} />
+                </div>
+                <div>
+                  <label className={labelCls}>Plano</label>
+                  <select className={inputCls} value={editForm.plan} onChange={(e) => setEditForm({ ...editForm, plan: e.target.value as Plan | '' })}>
+                    {PLAN_OPTIONS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+                  </select>
                 </div>
                 {editError && <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-red-600 text-sm">{editError}</div>}
                 <div className="flex gap-3 pt-2">

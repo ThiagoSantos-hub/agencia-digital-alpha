@@ -7,6 +7,12 @@ import { maskPhone } from '@/lib/validators'
 const inputCls = 'w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-text-main text-sm placeholder:text-text-disabled focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors'
 const labelCls = 'block text-sm font-medium text-text-main mb-1.5'
 
+const PLANOS = [
+  { value: 'basico', label: 'Básico', price: 'R$ 47/mês', desc: 'até 5 clientes' },
+  { value: 'pro', label: 'Pro', price: 'R$ 97/mês', desc: 'até 15 clientes' },
+  { value: 'premium', label: 'Premium', price: 'R$ 147/mês', desc: 'clientes ilimitados' },
+] as const
+
 export default function AssinarPage() {
   const [form, setForm] = useState({
     companyName: '',
@@ -16,6 +22,7 @@ export default function AssinarPage() {
     facebookProfile: '',
   })
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'pix'>('card')
+  const [plan, setPlan] = useState<'basico' | 'pro' | 'premium'>('basico')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -35,7 +42,7 @@ export default function AssinarPage() {
       const res = await fetch('/api/public/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, paymentMethod }),
+        body: JSON.stringify({ ...form, paymentMethod, plan }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -78,6 +85,26 @@ export default function AssinarPage() {
               <label className={labelCls}>Perfil do Facebook *</label>
               <input className={inputCls} value={form.facebookProfile} onChange={(e) => setField('facebookProfile', e.target.value)} placeholder="facebook.com/seuperfil" />
               <p className="text-xs text-text-muted mt-1">Precisamos disso pra liberar seu acesso ao Meta Ads/Instagram depois.</p>
+            </div>
+
+            <div>
+              <label className={labelCls}>Escolha seu plano</label>
+              <div className="grid grid-cols-3 gap-3">
+                {PLANOS.map((p) => (
+                  <button
+                    key={p.value}
+                    type="button"
+                    onClick={() => setPlan(p.value)}
+                    className={`flex flex-col items-center justify-center gap-0.5 py-3 rounded-xl border text-center transition-colors ${
+                      plan === p.value ? 'bg-primary/10 border-primary text-primary' : 'bg-background border-border text-text-muted hover:border-primary/40'
+                    }`}
+                  >
+                    <span className="text-sm font-semibold">{p.label}</span>
+                    <span className="text-xs">{p.price}</span>
+                    <span className="text-[10px] text-text-muted">{p.desc}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div>

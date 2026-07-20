@@ -53,13 +53,14 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     if (existing) return
   }
 
-  const { companyName, adminName, adminEmail, phone, facebookProfile, paymentMethod } = metadata as Record<string, string>
+  const { companyName, adminName, adminEmail, phone, facebookProfile, paymentMethod, plan } = metadata as Record<string, string>
   const tempPassword = generateTempPassword()
 
   const provisionInput = paymentMethod === 'pix'
     ? {
         companyName, adminName, adminEmail, phone, adminPassword: tempPassword,
         metaTesterProfile: facebookProfile,
+        plan: plan as 'basico' | 'pro' | 'premium',
         paymentMethod: 'pix' as const,
         stripeCustomerId,
         subscriptionStatus: 'pix_ativo',
@@ -68,6 +69,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     : {
         companyName, adminName, adminEmail, phone, adminPassword: tempPassword,
         metaTesterProfile: facebookProfile,
+        plan: plan as 'basico' | 'pro' | 'premium',
         paymentMethod: 'card' as const,
         stripeCustomerId,
         stripeSubscriptionId: typeof session.subscription === 'string' ? session.subscription : session.subscription?.id,

@@ -107,7 +107,7 @@ function ModalNovoCliente({ onClose }: { onClose: () => void }) {
       manager_id: profile?.id ?? null, inativo_em: null,
       meta_ad_account_id: form.meta_ad_account_id.trim() || null, show_campaigns: form.show_campaigns
     })
-    if (clientError) { setError('Erro ao salvar cliente.'); setLoading(false); return }
+    if (clientError) { setError(clientError.message || 'Erro ao salvar cliente.'); setLoading(false); return }
     if (form.monthly_fee) {
       await createFinance({ type: 'receita', description: `Cliente: ${form.name.trim()}`, amount: parseFloat(form.monthly_fee), date: new Date().toISOString().split('T')[0] })
     }
