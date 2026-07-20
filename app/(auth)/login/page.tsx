@@ -104,15 +104,15 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden flex items-center justify-center px-4 py-10">
+    <div className="h-screen bg-background relative overflow-hidden flex items-center justify-center px-4 py-4">
       {/* Glows decorativos suaves com a cor da marca */}
       <div className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full bg-primary/5 blur-3xl" />
       <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-ai/5 blur-3xl" />
 
-      <div className="relative z-10 w-full max-w-6xl grid lg:grid-cols-2 gap-12 items-center">
+      <div className="relative z-10 w-full max-w-6xl grid lg:grid-cols-2 gap-10 items-center max-h-full">
         {/* Lado esquerdo — branding */}
         <div className="hidden lg:block">
-          <div className="flex items-center gap-2 mb-8">
+          <div className="flex items-center gap-2 mb-5">
             <span className="text-text-main font-black text-2xl tracking-tight">DIGITAL</span>
             <span className="text-primary font-black text-2xl tracking-tight">ALPHA</span>
           </div>
@@ -120,27 +120,27 @@ function LoginForm() {
           <p className="text-text-muted text-sm font-medium tracking-wide mb-1">
             PLATAFORMA INTELIGENTE PARA
           </p>
-          <p className="text-primary text-lg font-bold tracking-wide mb-6">
+          <p className="text-primary text-lg font-bold tracking-wide mb-4">
             GESTÃO DE AGÊNCIAS
           </p>
 
-          <p className="text-text-muted leading-relaxed mb-8 max-w-md">
+          <p className="text-text-muted leading-relaxed mb-5 max-w-md text-sm">
             O sistema operacional de agência com IA embutida. Controle total de campanhas, clientes, equipe e financeiro, de onde você estiver.
           </p>
 
-          <div className="w-10 h-0.5 bg-primary mb-8" />
+          <div className="w-10 h-0.5 bg-primary mb-5" />
 
-          <div className="space-y-5">
+          <div className="space-y-3">
             {features.map((f) => {
               const Icon = f.icon
               return (
                 <div key={f.title} className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
-                    <Icon size={18} className="text-primary" />
+                  <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
+                    <Icon size={16} className="text-primary" />
                   </div>
                   <div>
                     <p className="text-text-main font-semibold text-sm">{f.title}</p>
-                    <p className="text-text-muted text-sm">{f.desc}</p>
+                    <p className="text-text-muted text-xs">{f.desc}</p>
                   </div>
                 </div>
               )
@@ -149,19 +149,18 @@ function LoginForm() {
         </div>
 
         {/* Lado direito — formulário */}
-        <div className="w-full max-w-md mx-auto">
-          <div className="bg-surface border border-border rounded-xl p-8 shadow-sm">
-            <div className="flex flex-col items-center text-center mb-6">
+        <div className="w-full max-w-md mx-auto max-h-full overflow-y-auto">
+          <div className="bg-surface border border-border rounded-xl p-6 shadow-sm">
+            <div className="flex flex-col items-center text-center mb-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={LOGO_URL} alt="Digital Alpha" className="h-14 object-contain mb-3" />
-              <h1 className="text-text-main text-2xl font-bold">Bem-vindo de volta</h1>
-              <div className="w-10 h-0.5 bg-primary my-3" />
-              <p className="text-text-muted text-sm">Entre para acessar sua plataforma.</p>
+              <img src={LOGO_URL} alt="Digital Alpha" className="h-10 object-contain mb-2" />
+              <h1 className="text-text-main text-xl font-bold">Bem-vindo de volta</h1>
+              <p className="text-text-muted text-xs mt-1">Entre para acessar sua plataforma.</p>
             </div>
 
-            <form onSubmit={handleLogin} className="space-y-5">
+            <form onSubmit={handleLogin} className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-text-main mb-1.5">E-mail</label>
+                <label className="block text-sm font-medium text-text-main mb-1">E-mail</label>
                 <div className="relative">
                   <Mail size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-disabled" />
                   <input
@@ -170,13 +169,13 @@ function LoginForm() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="seu@email.com"
                     required
-                    className="w-full pl-11 pr-4 py-3 bg-background border border-border rounded-xl text-text-main placeholder:text-text-disabled focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+                    className="w-full pl-11 pr-4 py-2.5 bg-background border border-border rounded-xl text-text-main placeholder:text-text-disabled focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-text-main mb-1.5">Senha</label>
+                <label className="block text-sm font-medium text-text-main mb-1">Senha</label>
                 <div className="relative">
                   <Lock size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-disabled" />
                   <input
@@ -185,7 +184,7 @@ function LoginForm() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
-                    className="w-full pl-11 pr-11 py-3 bg-background border border-border rounded-xl text-text-main placeholder:text-text-disabled focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+                    className="w-full pl-11 pr-11 py-2.5 bg-background border border-border rounded-xl text-text-main placeholder:text-text-disabled focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
                   />
                   <button
                     type="button"
@@ -199,13 +198,13 @@ function LoginForm() {
               </div>
 
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">
                   <p className="text-red-600 text-sm">{error}</p>
                 </div>
               )}
 
               {resetSent && (
-                <div className="bg-cta/10 border border-cta/20 rounded-xl px-4 py-3">
+                <div className="bg-cta/10 border border-cta/20 rounded-xl px-4 py-2.5">
                   <p className="text-cta text-sm">E-mail de redefinição enviado! Verifique sua caixa de entrada.</p>
                 </div>
               )}
@@ -213,7 +212,7 @@ function LoginForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm"
+                className="w-full py-3 bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm"
               >
                 {loading ? 'Entrando...' : (
                   <>
@@ -223,7 +222,7 @@ function LoginForm() {
               </button>
             </form>
 
-            <div className="flex items-center gap-3 my-5">
+            <div className="flex items-center gap-3 my-3">
               <div className="flex-1 h-px bg-border" />
               <span className="text-xs text-text-disabled uppercase tracking-wide">ou</span>
               <div className="flex-1 h-px bg-border" />
@@ -233,7 +232,7 @@ function LoginForm() {
               type="button"
               onClick={handleGoogleLogin}
               disabled={googleLoading}
-              className="w-full py-3 bg-surface hover:bg-hover-bg disabled:opacity-50 text-text-main font-medium rounded-xl transition-colors flex items-center justify-center gap-3 border border-border shadow-sm"
+              className="w-full py-2.5 bg-surface hover:bg-hover-bg disabled:opacity-50 text-text-main font-medium rounded-xl transition-colors flex items-center justify-center gap-3 border border-border shadow-sm"
             >
               <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
                 <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.13-.84 2.09-1.79 2.73v2.27h2.9c1.7-1.56 2.69-3.87 2.69-6.64z"/>
@@ -244,8 +243,8 @@ function LoginForm() {
               {googleLoading ? 'Conectando...' : 'Continuar com Google'}
             </button>
 
-            <div className="mt-6 flex flex-col items-center gap-2">
-              <ShieldCheck size={16} className="text-text-disabled" />
+            <div className="mt-4 flex flex-col items-center gap-1.5">
+              <ShieldCheck size={14} className="text-text-disabled" />
               <button
                 onClick={handleResetPassword}
                 className="text-sm text-text-muted hover:text-primary transition-colors"
@@ -255,7 +254,7 @@ function LoginForm() {
             </div>
           </div>
 
-          <p className="text-center text-text-disabled text-xs mt-6">
+          <p className="text-center text-text-disabled text-xs mt-3">
             © 2026 <span className="text-primary font-medium">Digital Alpha</span>. Todos os direitos reservados.
           </p>
         </div>
