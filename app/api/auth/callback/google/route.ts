@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase'
+import { createServerClient } from '@/lib/supabase-server'
 
 const VALID_TYPES = ['google_ads', 'gmail', 'google_drive', 'google_calendar']
 
@@ -49,9 +49,17 @@ export async function GET(request: NextRequest) {
     }
 
     const expiryDate = new Date(Date.now() + tokens.expires_in * 1000)
-    const supabase = createClient()
 
-    const { error: dbError } = await supabase
+    // Mesmo motivo do callback do Meta: precisa da sessão de quem clicou em
+    // "Conectar", senão a RLS de integrations bloqueia o UPDATE em silêncio e a
+    // rota redirecionava pra "sucesso" mesmo sem salvar nada.
+    const supabase = createServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    const { data: updated, error: dbError } = await supabase
       .from('integrations')
       .update({
         status: 'connected',
@@ -62,9 +70,10 @@ export async function GET(request: NextRequest) {
         config: connectedEmail ? { connected_email: connectedEmail } : {},
         updated_at: new Date().toISOString(),
       })
-      .eq('type', type) // <- só atualiza o serviço específico, não os 4 juntos
+      .eq('type', type) // <- a RLS já restringe à própria empresa
+      .select('id')
 
-    if (dbError) {
+    if (dbError || !updated || updated.length === 0) {
       return NextResponse.redirect(new URL('/integracoes?error=google_db_failed', request.url))
     }
 

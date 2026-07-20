@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase'
+import { createServerClient } from '@/lib/supabase-server'
 
 const VALID_SLOTS = ['meta_ads', 'meta_ads_2', 'meta_ads_3', 'meta_ads_4']
 
@@ -46,8 +46,18 @@ export async function GET(request: NextRequest) {
     const expiresIn = longLivedTokens.expires_in ?? tokens.expires_in ?? 5184000
     const expiryDate = new Date(Date.now() + expiresIn * 1000)
 
-    const supabase = createClient()
-    const { error: dbError } = await supabase
+    // Precisa da sessão de quem clicou em "Conectar" — sem ela o Supabase trata a
+    // chamada como anônima, a RLS de integrations bloqueia o UPDATE em silêncio
+    // (0 linhas afetadas, sem erro nenhum) e a rota redirecionava pra "sucesso"
+    // mesmo sem ter salvo nada (era isso que causava "Facebook diz conectado,
+    // mas não aparece no sistema").
+    const supabase = createServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    const { data: updated, error: dbError } = await supabase
       .from('integrations')
       .update({
         status: 'connected',
@@ -57,9 +67,10 @@ export async function GET(request: NextRequest) {
         connected_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
-      .eq('type', slot) // salva no slot correto (meta_ads, meta_ads_2, etc.)
+      .eq('type', slot) // a RLS (company_id = get_current_company_id()) já restringe à própria empresa
+      .select('id')
 
-    if (dbError) {
+    if (dbError || !updated || updated.length === 0) {
       return NextResponse.redirect(new URL('/integracoes?error=meta_db_failed', request.url))
     }
 
