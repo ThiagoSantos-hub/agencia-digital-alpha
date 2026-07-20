@@ -53,7 +53,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     if (existing) return
   }
 
-  const { companyName, adminName, adminEmail, phone, facebookProfile, paymentMethod, plan } = metadata as Record<string, string>
+  const { companyName, adminName, adminEmail, phone, facebookProfile, paymentMethod, plan, trialDays } = metadata as Record<string, string>
   const tempPassword = generateTempPassword()
 
   const provisionInput = paymentMethod === 'pix'
@@ -87,7 +87,15 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return
   }
 
-  await sendWelcomeEmail({ companyName, adminName, adminEmail, tempPassword })
+  await sendWelcomeEmail({
+    companyName,
+    adminName,
+    adminEmail,
+    tempPassword,
+    plan: plan as 'basico' | 'pro' | 'premium',
+    paymentMethod: paymentMethod as 'card' | 'pix',
+    trialDays: trialDays ? parseInt(trialDays, 10) : 0,
+  })
 }
 
 async function handleSubscriptionChange(subscription: Stripe.Subscription) {

@@ -1,7 +1,8 @@
 // Envio de e-mail via Brevo. Extraído do fetch inline que existia em
 // app/api/superadmin/companies/route.ts (usado também pelo webhook do Stripe
-// agora) — os outros 2 usos duplicados (collaborators/invite,
+// agora). Os outros 2 usos duplicados (collaborators/invite,
 // collaborators/update-password) ficam como estão, fora de escopo.
+import { PLAN_LABELS, PLAN_CLIENT_LIMITS, type Plan } from './planLimits'
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY
 const BREVO_SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL
@@ -34,39 +35,165 @@ async function sendBrevoEmail(payload: {
   }
 }
 
+function planDetalhesHtml(plan: Plan | null, paymentMethod: 'card' | 'pix' | null, trialDays: number): string {
+  if (!plan) return ''
+
+  const precoBase: Record<Plan, number> = { basico: 47, pro: 97, premium: 147 }
+  const preco = paymentMethod === 'pix' ? precoBase[plan] * 1.1 : precoBase[plan]
+  const limite = PLAN_CLIENT_LIMITS[plan]
+  const limiteTexto = limite === null ? 'Clientes ilimitados' : `Até ${limite} clientes cadastrados`
+
+  const cobrancaTexto = paymentMethod === 'pix'
+    ? 'Pagamento único via Pix, válido por 30 dias. Para continuar usando depois desse prazo, é só pagar de novo dentro do sistema, em "Assinatura".'
+    : trialDays > 0
+      ? `Você está com ${trialDays} dias de teste grátis. Depois desse período, a cobrança de R$ ${preco.toFixed(2).replace('.', ',')} por mês começa automaticamente no cartão cadastrado.`
+      : `Assinatura mensal recorrente de R$ ${preco.toFixed(2).replace('.', ',')}, cobrada automaticamente todo mês no cartão cadastrado.`
+
+  return `
+    <table role="presentation" width="100%" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; margin: 24px 0;">
+      <tr>
+        <td style="padding: 20px 24px;">
+          <p style="margin: 0 0 10px 0; font-size: 15px; font-weight: bold; color: #065f46;">Plano ${PLAN_LABELS[plan]}</p>
+          <p style="margin: 0 0 6px 0; font-size: 14px; color: #374151;">${limiteTexto}</p>
+          <p style="margin: 0; font-size: 14px; color: #374151;">${cobrancaTexto}</p>
+        </td>
+      </tr>
+    </table>
+  `
+}
+
 export async function sendWelcomeEmail(params: {
   companyName: string
   adminName: string
   adminEmail: string
   tempPassword: string
+  plan?: Plan | null
+  paymentMethod?: 'card' | 'pix' | null
+  trialDays?: number
 }): Promise<{ ok: boolean }> {
-  const { companyName, adminName, adminEmail, tempPassword } = params
+  const { companyName, adminName, adminEmail, tempPassword, plan = null, paymentMethod = null, trialDays = 0 } = params
+
   return sendBrevoEmail({
     toEmail: adminEmail,
     toName: adminName,
-    senderName: companyName,
-    subject: `Seu acesso ao ${companyName} foi criado!`,
+    senderName: 'Digital Alpha',
+    subject: `Seu acesso à Digital Alpha foi criado`,
     htmlContent: `
       <!DOCTYPE html>
-      <html><head><meta charset="utf-8"></head>
-      <body style="font-family: sans-serif; background-color: #ffffff; margin: 0; padding: 20px;">
-        <div style="max-width: 600px; margin: 0 auto; background: #ffffff;">
-          <h2 style="color: #10b981;">Olá, ${adminName}!</h2>
-          <p>Seu acesso à plataforma ${companyName} foi criado com sucesso.</p>
-          <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <p style="margin: 0;"><strong>E-mail:</strong> ${adminEmail}</p>
-            <p style="margin: 10px 0 0 0;"><strong>Senha temporária:</strong> ${tempPassword}</p>
-          </div>
-          <p><a href="${APP_URL}/login" style="display: inline-block; background: #10b981; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">Acessar o Sistema</a></p>
-          <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 30px 0;" />
-          <p style="color: #6b7280; font-size: 12px;">Recomendamos trocar sua senha após o primeiro acesso.</p>
-        </div>
-      </body></html>
+      <html>
+      <head><meta charset="utf-8"></head>
+      <body style="font-family: -apple-system, Segoe UI, Roboto, sans-serif; background-color: #f9fafb; margin: 0; padding: 32px 16px;">
+        <table role="presentation" width="100%" style="max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e5e7eb;">
+          <tr>
+            <td style="background: #111827; padding: 24px 32px;">
+              <span style="color: #ffffff; font-size: 18px; font-weight: 800;">DIGITAL <span style="color: #34d399;">ALPHA</span></span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px;">
+              <h1 style="margin: 0 0 8px 0; font-size: 20px; color: #111827;">Olá, ${adminName}!</h1>
+              <p style="margin: 0 0 16px 0; font-size: 14px; color: #4b5563; line-height: 1.6;">
+                O acesso da empresa <strong>${companyName}</strong> à plataforma foi criado com sucesso.
+              </p>
+
+              ${planDetalhesHtml(plan, paymentMethod, trialDays)}
+
+              <table role="presentation" width="100%" style="background: #f3f4f6; border-radius: 10px; margin: 8px 0 24px 0;">
+                <tr>
+                  <td style="padding: 18px 20px;">
+                    <p style="margin: 0 0 6px 0; font-size: 13px; color: #6b7280;">E-mail de acesso</p>
+                    <p style="margin: 0 0 14px 0; font-size: 14px; color: #111827; font-weight: 600;">${adminEmail}</p>
+                    <p style="margin: 0 0 6px 0; font-size: 13px; color: #6b7280;">Senha temporária</p>
+                    <p style="margin: 0; font-size: 14px; color: #111827; font-weight: 600; font-family: monospace;">${tempPassword}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <table role="presentation">
+                <tr>
+                  <td style="border-radius: 10px; background: #10b981;">
+                    <a href="${APP_URL}/login" style="display: inline-block; padding: 14px 28px; color: #ffffff; font-weight: 700; font-size: 14px; text-decoration: none;">Acessar o sistema</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 24px 0 0 0; font-size: 13px; color: #6b7280; line-height: 1.6;">
+                No primeiro acesso, o sistema vai pedir pra você trocar essa senha temporária por uma definitiva.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 20px 32px; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0 0 8px 0; font-size: 12px; color: #9ca3af;">Se você não fez essa compra, cancele imediatamente entrando em contato com nosso suporte.</p>
+              <p style="margin: 0; font-size: 12px; color: #9ca3af;">Suporte: (85) 99230-7273 . thiagogestorbm@gmail.com</p>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
     `,
   })
 }
 
-// Alerta interno pro dono da plataforma -- usado quando um pagamento no Stripe
+export async function sendPasswordResetEmail(params: {
+  toEmail: string
+  toName: string
+  token: string
+  motivo: 'esqueci' | 'troca_no_painel'
+}): Promise<{ ok: boolean }> {
+  const link = `${APP_URL}/redefinir-senha?token=${params.token}`
+  const titulo = params.motivo === 'esqueci' ? 'Redefinir sua senha' : 'Confirmar troca de senha'
+  const explicacao = params.motivo === 'esqueci'
+    ? 'Recebemos um pedido para redefinir a senha da sua conta.'
+    : 'Você pediu pra trocar sua senha dentro do sistema. Por segurança, confirme clicando no botão abaixo.'
+
+  return sendBrevoEmail({
+    toEmail: params.toEmail,
+    toName: params.toName,
+    senderName: 'Digital Alpha',
+    subject: `Digital Alpha: ${titulo}`,
+    htmlContent: `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="utf-8"></head>
+      <body style="font-family: -apple-system, Segoe UI, Roboto, sans-serif; background-color: #f9fafb; margin: 0; padding: 32px 16px;">
+        <table role="presentation" width="100%" style="max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e5e7eb;">
+          <tr>
+            <td style="background: #111827; padding: 24px 32px;">
+              <span style="color: #ffffff; font-size: 18px; font-weight: 800;">DIGITAL <span style="color: #34d399;">ALPHA</span></span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px;">
+              <h1 style="margin: 0 0 8px 0; font-size: 20px; color: #111827;">${titulo}</h1>
+              <p style="margin: 0 0 20px 0; font-size: 14px; color: #4b5563; line-height: 1.6;">${explicacao}</p>
+
+              <table role="presentation">
+                <tr>
+                  <td style="border-radius: 10px; background: #10b981;">
+                    <a href="${link}" style="display: inline-block; padding: 14px 28px; color: #ffffff; font-weight: 700; font-size: 14px; text-decoration: none;">${params.motivo === 'esqueci' ? 'Redefinir senha' : 'Confirmar troca'}</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 24px 0 0 0; font-size: 13px; color: #6b7280; line-height: 1.6;">
+                Esse link expira em 1 hora. Se você não pediu isso, ignore este e-mail e sua senha continua a mesma.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 20px 32px; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0; font-size: 12px; color: #9ca3af;">Suporte: (85) 99230-7273 . thiagogestorbm@gmail.com</p>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `,
+  })
+}
+
+// Alerta interno pro dono da plataforma, usado quando um pagamento no Stripe
 // foi confirmado mas o provisionamento da empresa falhou (ex: corrida rara de
 // e-mail duplicado), pra ele resolver na mão.
 export async function sendInternalAlert(params: { subject: string; message: string }): Promise<{ ok: boolean }> {

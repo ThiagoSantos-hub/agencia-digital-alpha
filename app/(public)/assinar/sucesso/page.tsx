@@ -8,7 +8,7 @@ export default function AssinarSucessoPage() {
           <CheckCircle2 size={40} className="text-cta mx-auto mb-4" />
           <h1 className="text-xl font-bold text-text-main mb-2">Pagamento confirmado!</h1>
           <p className="text-sm text-text-muted">
-            Estamos preparando seu acesso — você vai receber um e-mail em instantes com seu login e senha temporária.
+            Estamos preparando seu acesso. Você vai receber um e-mail em instantes com seu login e senha temporária.
             Se não chegar em alguns minutos, verifique o spam ou fale com o suporte.
           </p>
         </div>

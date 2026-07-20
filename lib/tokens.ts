@@ -6,5 +6,5 @@ export function substituteTokens(text: string, values: Record<string, string>): 
   for (const [key, value] of Object.entries(values)) {
     result = result.replaceAll(`%%${key}%%`, value)
   }
-  return result.replace(/%%[a-z0-9_]+%%/gi, '—')
+  return result.replace(/%%[a-z0-9_]+%%/gi, '-')
 }

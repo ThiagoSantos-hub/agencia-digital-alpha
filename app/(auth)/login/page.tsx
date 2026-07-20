@@ -79,9 +79,10 @@ function LoginForm() {
       setError('Digite seu e-mail acima para redefinir a senha.')
       return
     }
-    const supabase = createClient()
-    await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/dashboard`,
+    await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
     })
     setResetSent(true)
   }

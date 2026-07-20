@@ -49,7 +49,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Não foi possível completar o cadastro. Entre em contato com o suporte.' }, { status: 400 })
     }
 
-    const metadata = { companyName, adminName, adminEmail, phone, facebookProfile, paymentMethod, plan }
     const successUrl = `${APP_URL}/assinar/sucesso?session_id={CHECKOUT_SESSION_ID}`
     const cancelUrl = `${APP_URL}/assinar`
     const priceId = priceIdForPlan(plan as Plan)
@@ -63,12 +62,12 @@ export async function POST(request: Request) {
         customer_email: adminEmail,
         success_url: successUrl,
         cancel_url: cancelUrl,
-        metadata,
+        metadata: { companyName, adminName, adminEmail, phone, facebookProfile, paymentMethod, plan, trialDays: String(trialDays) },
       })
       return NextResponse.json({ url: session.url })
     }
 
-    // Pix: pagamento avulso (não é Pix Automático — sem mandato recorrente),
+    // Pix: pagamento avulso (não é Pix Automático, sem mandato recorrente),
     // preço do plano escolhido + 10%, libera 30 dias, sem trial.
     const basePrice = await stripe.prices.retrieve(priceId)
     const pixAmount = Math.round((basePrice.unit_amount ?? 0) * 1.1)
@@ -80,7 +79,7 @@ export async function POST(request: Request) {
       line_items: [{
         price_data: {
           currency: basePrice.currency,
-          product_data: { name: `Assinatura Digital Alpha — 1 mês (Pix, plano ${plan})` },
+          product_data: { name: `Assinatura Digital Alpha, 1 mês (Pix, plano ${plan})` },
           unit_amount: pixAmount,
         },
         quantity: 1,
@@ -88,7 +87,7 @@ export async function POST(request: Request) {
       customer_email: adminEmail,
       success_url: successUrl,
       cancel_url: cancelUrl,
-      metadata,
+      metadata: { companyName, adminName, adminEmail, phone, facebookProfile, paymentMethod, plan },
     })
     return NextResponse.json({ url: session.url })
   } catch (error: unknown) {
