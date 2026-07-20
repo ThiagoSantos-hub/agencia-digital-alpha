@@ -453,30 +453,33 @@ async function getInstagramMetrics(
       return fallback;
     }
 
-    const [followersRes, insightsRes] = await Promise.all([
-      fetch(`https://graph.facebook.com/v19.0/${igAccountId}?fields=followers_count&access_token=${accessToken}`),
-      fetch(
-        `https://graph.facebook.com/v19.0/${igAccountId}/insights?metric=profile_views&period=day&since=${dateStart}&until=${dateEnd}&access_token=${accessToken}`
-      ),
-    ]);
-
-    const followersData = await followersRes.json();
+    // follower_count = variação diária de seguidores (positiva ou negativa), não o
+    // total da conta — somado no período dá os "novos seguidores" do intervalo do
+    // relatório. metric_type=time_series é exigido pelas versões mais novas da API
+    // quando se usa since/until com period=day (sem isso, o Instagram retornava
+    // vazio sem erro explícito).
+    const insightsRes = await fetch(
+      `https://graph.facebook.com/v19.0/${igAccountId}/insights?metric=follower_count,profile_views&period=day&metric_type=time_series&since=${dateStart}&until=${dateEnd}&access_token=${accessToken}`
+    );
     const insightsData = await insightsRes.json();
 
-    if (followersData?.error) {
-      console.error(`[getInstagramMetrics] erro ao buscar followers_count de ${igAccountId}:`, followersData.error.message ?? followersData.error);
-    }
     if (insightsData?.error) {
-      console.error(`[getInstagramMetrics] erro ao buscar profile_views de ${igAccountId}:`, insightsData.error.message ?? insightsData.error);
+      console.error(`[getInstagramMetrics] erro ao buscar insights de ${igAccountId}:`, insightsData.error.message ?? insightsData.error);
+      return fallback;
     }
 
-    const seguidores = typeof followersData?.followers_count === 'number'
-      ? followersData.followers_count.toLocaleString('pt-BR')
-      : '—';
+    const somaMetrica = (nome: string): number | null => {
+      const item = insightsData?.data?.find((d: { name?: string }) => d.name === nome);
+      if (!item) return null;
+      const valores: Array<{ value?: number }> = item.values ?? [];
+      return valores.reduce((soma, v) => soma + (v.value ?? 0), 0);
+    };
 
-    const valores: Array<{ value?: number }> = insightsData?.data?.[0]?.values ?? [];
-    const visitasTotal = valores.reduce((soma, v) => soma + (v.value ?? 0), 0);
-    const visitas = insightsData?.data ? visitasTotal.toLocaleString('pt-BR') : '—';
+    const novosSeguidores = somaMetrica('follower_count');
+    const visitasTotal = somaMetrica('profile_views');
+
+    const seguidores = novosSeguidores !== null ? novosSeguidores.toLocaleString('pt-BR') : '—';
+    const visitas = visitasTotal !== null ? visitasTotal.toLocaleString('pt-BR') : '—';
 
     return { seguidores, visitas };
   } catch (err) {
