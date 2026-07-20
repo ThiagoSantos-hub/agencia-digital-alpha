@@ -15,6 +15,7 @@ import {
 import { useRelatorios, ReportInput } from '@/hooks/useRelatorios'
 import { useWhatsApp } from '@/hooks/useWhatsApp'
 import { createClient } from '@/lib/supabase'
+import { calcularPeriodo } from '@/lib/reportSchedule'
 import { HourSelect } from '@/components/ui/HourSelect'
 
 const variables = [
@@ -66,7 +67,7 @@ function CreateEditReportContent() {
 
   const [loading, setLoading] = useState(false)
   const [clients, setClients] = useState<{id: string, name: string}[]>([])
-  const [campanhasDoCliente, setCampanhasDoCliente] = useState<{name: string}[]>([])
+  const [campanhasDoCliente, setCampanhasDoCliente] = useState<{name: string; start_date: string | null; end_date: string | null}[]>([])
   const [diasSelecionados, setDiasSelecionados] = useState<number[]>([])
 
   const toggleDia = (i: number) => {
@@ -109,14 +110,22 @@ function CreateEditReportContent() {
       setCampanhasDoCliente([])
       return
     }
+    const { dateStart, dateEnd } = calcularPeriodo(formData.periodo, formData.data_inicio, formData.data_fim)
     supabase
       .from('campaigns')
-      .select('name')
+      .select('name, start_date, end_date')
       .eq('client_id', formData.client_id)
       .order('created_at', { ascending: true })
-      .limit(10)
-      .then(({ data }) => setCampanhasDoCliente(data ?? []))
-  }, [formData.client_id])
+      .then(({ data }) => {
+        // Só entra na referência quem esteve ativo em algum trecho do período
+        // selecionado — sem data definida é tratado como "sem limite" (segue valendo).
+        const relevantes = (data ?? []).filter(c =>
+          (!c.start_date || c.start_date <= dateEnd) &&
+          (!c.end_date || c.end_date >= dateStart)
+        )
+        setCampanhasDoCliente(relevantes.slice(0, 10))
+      })
+  }, [formData.client_id, formData.periodo, formData.data_inicio, formData.data_fim])
 
   useEffect(() => {
     if (id && reports.length > 0) {
