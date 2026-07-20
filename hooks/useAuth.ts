@@ -106,6 +106,14 @@ export function useAuth() {
     return { error }
   }
 
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    })
+    return { error }
+  }
+
   const signOut = async () => {
     cachedProfile = null
     setProfile(null)
@@ -114,5 +122,5 @@ export function useAuth() {
 
   const role = profile?.role ?? null
 
-  return { user, profile, role, loading, signIn, signOut }
+  return { user, profile, role, loading, signIn, signInWithGoogle, signOut }
 }
