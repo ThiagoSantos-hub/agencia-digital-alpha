@@ -35,6 +35,7 @@ export default function RelatoriosPage() {
   const [historyData, setHistoryData] = useState<ReportHistory[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [sendingId, setSendingId] = useState<string | null>(null)
+  const [confirmSendReport, setConfirmSendReport] = useState<Report | null>(null)
 
   const formatDate = (dateString: string) => {
     return new Intl.DateTimeFormat('pt-BR', {
@@ -118,6 +119,7 @@ export default function RelatoriosPage() {
   }
 
   const handleSendNow = async (report: Report) => {
+    setConfirmSendReport(null)
     setSendingId(report.id)
     try {
       const response = await fetch('/api/reports/send', {
@@ -279,7 +281,7 @@ export default function RelatoriosPage() {
                   <td className="p-4">
                     <div className="flex items-center justify-end gap-1.5">
                       <button
-                        onClick={() => handleSendNow(report)}
+                        onClick={() => setConfirmSendReport(report)}
                         disabled={sendingId === report.id}
                         title="Enviar agora"
                         className={btnAction}
@@ -364,7 +366,7 @@ export default function RelatoriosPage() {
                         {formatHistoryDate(item.enviado_em)}
                       </span>
                     </div>
-                    {item.erro_detalhe && (
+                    {item.status === 'erro' && item.erro_detalhe && (
                       <p className="text-xs text-red-600 mt-1 bg-red-50 p-2 rounded border border-red-100">
                         {item.erro_detalhe}
                       </p>
@@ -375,6 +377,40 @@ export default function RelatoriosPage() {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {confirmSendReport && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+            onClick={() => setConfirmSendReport(null)}
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-surface border border-border rounded-xl shadow-2xl w-full max-w-sm p-6">
+              <h2 className="text-lg font-bold text-text-main mb-1">Enviar relatório agora?</h2>
+              <p className="text-sm text-text-muted mb-4">Confirme o que será enviado antes de disparar.</p>
+              <div className="bg-hover-bg border border-border rounded-lg p-3 text-sm space-y-1 mb-5">
+                <p><span className="text-text-muted">Relatório:</span> <span className="font-medium text-text-main">{confirmSendReport.nome}</span></p>
+                <p><span className="text-text-muted">Canal:</span> <span className="font-medium text-text-main">{confirmSendReport.canal === 'meta' ? 'Meta Ads' : 'Google Ads'}</span></p>
+                <p><span className="text-text-muted">Enviar para:</span> <span className="font-medium text-text-main">{confirmSendReport.recebedor_tipo === 'grupo' ? 'Grupo' : 'Contato privado'} — {confirmSendReport.recebedor_numero}</span></p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmSendReport(null)}
+                  className="flex-1 px-4 py-2 rounded-lg border border-border text-text-main hover:bg-hover-bg transition-colors text-sm font-medium"
+                >
+                  Não
+                </button>
+                <button
+                  onClick={() => handleSendNow(confirmSendReport)}
+                  className="flex-1 px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white transition-colors text-sm font-medium"
+                >
+                  Sim, enviar
+                </button>
+              </div>
             </div>
           </div>
         </>
