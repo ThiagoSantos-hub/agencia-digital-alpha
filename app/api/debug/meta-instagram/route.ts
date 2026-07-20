@@ -47,5 +47,16 @@ export async function GET(request: NextRequest) {
     adAccountRes.json(),
   ])
 
-  return NextResponse.json({ adAccountId, permissions, igAccounts, adAccount })
+  let insights: unknown = null
+  const igAccountId = igAccounts?.data?.[0]?.id
+  if (igAccountId) {
+    const since = searchParams.get('since') ?? '2026-07-13'
+    const until = searchParams.get('until') ?? '2026-07-19'
+    const insightsRes = await fetch(
+      `https://graph.facebook.com/v19.0/${igAccountId}/insights?metric=follower_count,profile_views&period=day&metric_type=time_series&since=${since}&until=${until}&access_token=${token}`
+    )
+    insights = await insightsRes.json()
+  }
+
+  return NextResponse.json({ adAccountId, permissions, igAccounts, adAccount, insights })
 }
