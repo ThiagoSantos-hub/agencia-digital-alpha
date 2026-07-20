@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
 
+export const dynamic = 'force-dynamic'
+
 // Rota temporária de diagnóstico — usa o token já salvo no sistema pra checar
 // permissões reais e a resposta bruta de instagram_accounts, sem precisar
 // configurar nada no Graph API Explorer. Remover depois de resolver o caso
