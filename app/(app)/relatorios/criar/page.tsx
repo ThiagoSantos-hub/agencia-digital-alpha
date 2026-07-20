@@ -15,7 +15,6 @@ import {
 import { useRelatorios, ReportInput } from '@/hooks/useRelatorios'
 import { useWhatsApp } from '@/hooks/useWhatsApp'
 import { createClient } from '@/lib/supabase'
-import { calcularPeriodo } from '@/lib/reportSchedule'
 import { HourSelect } from '@/components/ui/HourSelect'
 
 const variables = [
@@ -67,7 +66,8 @@ function CreateEditReportContent() {
 
   const [loading, setLoading] = useState(false)
   const [clients, setClients] = useState<{id: string, name: string}[]>([])
-  const [campanhasDoCliente, setCampanhasDoCliente] = useState<{name: string; start_date: string | null; end_date: string | null}[]>([])
+  const [campanhasDoCliente, setCampanhasDoCliente] = useState<string[]>([])
+  const [loadingCampanhas, setLoadingCampanhas] = useState(false)
   const [diasSelecionados, setDiasSelecionados] = useState<number[]>([])
 
   const toggleDia = (i: number) => {
@@ -110,21 +110,17 @@ function CreateEditReportContent() {
       setCampanhasDoCliente([])
       return
     }
-    const { dateStart, dateEnd } = calcularPeriodo(formData.periodo, formData.data_inicio, formData.data_fim)
-    supabase
-      .from('campaigns')
-      .select('name, start_date, end_date')
-      .eq('client_id', formData.client_id)
-      .order('created_at', { ascending: true })
-      .then(({ data }) => {
-        // Só entra na referência quem esteve ativo em algum trecho do período
-        // selecionado — sem data definida é tratado como "sem limite" (segue valendo).
-        const relevantes = (data ?? []).filter(c =>
-          (!c.start_date || c.start_date <= dateEnd) &&
-          (!c.end_date || c.end_date >= dateStart)
-        )
-        setCampanhasDoCliente(relevantes.slice(0, 10))
-      })
+    // Chama a mesma checagem usada no envio real (Meta Insights por campanha) —
+    // só entra aqui quem de fato teve resultado no período selecionado.
+    const params = new URLSearchParams({ client_id: formData.client_id, periodo: formData.periodo })
+    if (formData.data_inicio) params.set('data_inicio', formData.data_inicio)
+    if (formData.data_fim) params.set('data_fim', formData.data_fim)
+
+    setLoadingCampanhas(true)
+    fetch(`/api/reports/campanhas-periodo?${params.toString()}`)
+      .then(res => res.json())
+      .then(data => setCampanhasDoCliente(data.campanhas ?? []))
+      .finally(() => setLoadingCampanhas(false))
   }, [formData.client_id, formData.periodo, formData.data_inicio, formData.data_fim])
 
   useEffect(() => {
@@ -421,16 +417,22 @@ function CreateEditReportContent() {
             </select>
           </div>
 
-          {campanhasDoCliente.length > 0 && (
+          {loadingCampanhas && (
+            <div className="flex items-center gap-2 text-xs text-text-muted">
+              <Loader2 size={12} className="animate-spin" /> Verificando campanhas com resultado no período...
+            </div>
+          )}
+
+          {!loadingCampanhas && campanhasDoCliente.length > 0 && (
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
               <p className="text-xs text-primary font-semibold mb-2">
-                📋 Campanhas deste cliente (referência — não vai no WhatsApp):
+                📋 Campanhas com resultado neste período (referência — não vai no WhatsApp):
               </p>
-              {campanhasDoCliente.map((c, i) => (
+              {campanhasDoCliente.map((nome, i) => (
                 <p key={i} className="text-xs text-text-main py-0.5">
                   <span className="text-primary font-mono font-bold">&lt;CAMP_{i + 1}&gt;</span>
                   <span className="text-text-muted"> → </span>
-                  {c.name}
+                  {nome}
                 </p>
               ))}
             </div>

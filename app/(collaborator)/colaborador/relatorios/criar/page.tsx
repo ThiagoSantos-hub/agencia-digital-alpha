@@ -6,7 +6,6 @@ import { ArrowLeft, Facebook, Globe, Smartphone, Users, Save, Info, Loader2 } fr
 import { useRelatorios, ReportInput } from '@/hooks/useRelatorios'
 import { useWhatsApp } from '@/hooks/useWhatsApp'
 import { createClient } from '@/lib/supabase'
-import { calcularPeriodo } from '@/lib/reportSchedule'
 import { HourSelect } from '@/components/ui/HourSelect'
 
 const variables = [
@@ -58,7 +57,8 @@ function CreateEditReportContent() {
 
   const [loading, setLoading] = useState(false)
   const [clients, setClients] = useState<{id: string, name: string}[]>([])
-  const [campanhasDoCliente, setCampanhasDoCliente] = useState<{name: string; start_date: string | null; end_date: string | null}[]>([])
+  const [campanhasDoCliente, setCampanhasDoCliente] = useState<string[]>([])
+  const [loadingCampanhas, setLoadingCampanhas] = useState(false)
   const [diasSelecionados, setDiasSelecionados] = useState<number[]>([])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -85,15 +85,15 @@ function CreateEditReportContent() {
 
   useEffect(() => {
     if (!formData.client_id) { setCampanhasDoCliente([]); return }
-    const { dateStart, dateEnd } = calcularPeriodo(formData.periodo, formData.data_inicio, formData.data_fim)
-    supabase.from('campaigns').select('name, start_date, end_date').eq('client_id', formData.client_id).order('created_at', { ascending: true })
-      .then(({ data }) => {
-        const relevantes = (data ?? []).filter(c =>
-          (!c.start_date || c.start_date <= dateEnd) &&
-          (!c.end_date || c.end_date >= dateStart)
-        )
-        setCampanhasDoCliente(relevantes.slice(0, 10))
-      })
+    const params = new URLSearchParams({ client_id: formData.client_id, periodo: formData.periodo })
+    if (formData.data_inicio) params.set('data_inicio', formData.data_inicio)
+    if (formData.data_fim) params.set('data_fim', formData.data_fim)
+
+    setLoadingCampanhas(true)
+    fetch(`/api/reports/campanhas-periodo?${params.toString()}`)
+      .then(res => res.json())
+      .then(data => setCampanhasDoCliente(data.campanhas ?? []))
+      .finally(() => setLoadingCampanhas(false))
   }, [formData.client_id, formData.periodo, formData.data_inicio, formData.data_fim])
 
   useEffect(() => {
@@ -246,11 +246,17 @@ function CreateEditReportContent() {
             </select>
           </div>
 
-          {campanhasDoCliente.length > 0 && (
+          {loadingCampanhas && (
+            <div className="flex items-center gap-2 text-xs text-text-muted">
+              <Loader2 size={12} className="animate-spin" /> Verificando campanhas com resultado no período...
+            </div>
+          )}
+
+          {!loadingCampanhas && campanhasDoCliente.length > 0 && (
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
-              <p className="text-xs text-primary font-semibold mb-2">Campanhas deste cliente:</p>
-              {campanhasDoCliente.map((c, i) => (
-                <p key={i} className="text-xs text-text-main py-0.5"><span className="text-primary font-mono font-bold">&lt;CAMP_{i + 1}&gt;</span> → {c.name}</p>
+              <p className="text-xs text-primary font-semibold mb-2">Campanhas com resultado neste período:</p>
+              {campanhasDoCliente.map((nome, i) => (
+                <p key={i} className="text-xs text-text-main py-0.5"><span className="text-primary font-mono font-bold">&lt;CAMP_{i + 1}&gt;</span> → {nome}</p>
               ))}
             </div>
           )}
