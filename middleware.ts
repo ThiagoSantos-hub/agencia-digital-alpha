@@ -62,6 +62,31 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Empresa desativada pelo superadmin (toggle em /superadmin/empresas) — sem
+  // essa checagem o campo `companies.active` era só cosmético, ninguém era de
+  // fato bloqueado. Super admins ficam de fora (eles não pertencem a uma
+  // empresa-cliente).
+  if (user && !isAuthRoute) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_super_admin, company_id')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile?.is_super_admin && profile?.company_id) {
+      const { data: company } = await supabase
+        .from('companies')
+        .select('active')
+        .eq('id', profile.company_id)
+        .single()
+
+      if (company?.active === false) {
+        await supabase.auth.signOut()
+        return NextResponse.redirect(new URL('/login?error=empresa_inativa', request.url))
+      }
+    }
+  }
+
   // Rota do colaborador — PERMITE acesso para qualquer usuário autenticado
   // A validação de perfil é feita pelo layout.tsx do colaborador (client-side)
   // Isso evita race condition onde o profile não foi carregado a tempo
