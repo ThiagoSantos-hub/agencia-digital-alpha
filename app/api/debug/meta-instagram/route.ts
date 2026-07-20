@@ -49,16 +49,19 @@ export async function GET(request: NextRequest) {
     adAccountRes.json(),
   ])
 
-  let insights: unknown = null
+  let followerCount: unknown = null
+  let profileViews: unknown = null
   const igAccountId = igAccounts?.data?.[0]?.id
   if (igAccountId) {
     const since = searchParams.get('since') ?? '2026-07-13'
     const until = searchParams.get('until') ?? '2026-07-19'
-    const insightsRes = await fetch(
-      `https://graph.facebook.com/v19.0/${igAccountId}/insights?metric=follower_count,profile_views&period=day&metric_type=time_series&since=${since}&until=${until}&access_token=${token}`
-    )
-    insights = await insightsRes.json()
+    const [followerRes, viewsRes] = await Promise.all([
+      fetch(`https://graph.facebook.com/v19.0/${igAccountId}/insights?metric=follower_count&period=day&metric_type=time_series&since=${since}&until=${until}&access_token=${token}`),
+      fetch(`https://graph.facebook.com/v19.0/${igAccountId}/insights?metric=profile_views&period=day&metric_type=total_value&since=${since}&until=${until}&access_token=${token}`),
+    ])
+    followerCount = await followerRes.json()
+    profileViews = await viewsRes.json()
   }
 
-  return NextResponse.json({ adAccountId, permissions, igAccounts, adAccount, insights })
+  return NextResponse.json({ adAccountId, permissions, igAccounts, adAccount, followerCount, profileViews })
 }
