@@ -58,6 +58,7 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     let nomeConta = '—';
+    let clientAdAccountId: string | null = null;
     if (report.client_id) {
       const { data: client } = await supabase
         .from('clients')
@@ -66,6 +67,7 @@ export async function POST(request: Request) {
         .single();
       if (client) {
         nomeConta = client.name;
+        clientAdAccountId = client.meta_ad_account_id;
         if (integration?.access_token && client.meta_ad_account_id) {
           try {
             const metaContaUrl = `https://graph.facebook.com/v19.0/${client.meta_ad_account_id}?fields=name&access_token=${integration.access_token}`;
@@ -217,6 +219,14 @@ export async function POST(request: Request) {
           };
         }
       }
+    }
+
+    // Seguidores e visitas ao perfil do Instagram — independe de ter campanha
+    // ativa (por isso fica fora do bloco acima), usa a conta do Instagram
+    // vinculada à mesma conta de anúncios já conectada do cliente.
+    if (integration?.access_token && clientAdAccountId) {
+      const igMetrics = await getInstagramMetrics(clientAdAccountId, integration.access_token, dateStart, dateEnd);
+      metaValues = { ...metaValues, '<IG_SEGUIDORES>': igMetrics.seguidores, '<IG_VISITAS>': igMetrics.visitas };
     }
 
     let mensagemFinal = report.mensagem_template;
@@ -414,5 +424,49 @@ function calcularPeriodo(periodo: string, dataInicio?: string, dataFim?: string)
 function formatarDataBR(dateStr: string): string {
   const [ano, mes, dia] = dateStr.split('-');
   return `${dia}/${mes}/${ano}`;
+}
+
+// Seguidores e visitas ao perfil do Instagram, usando a conta do Instagram
+// vinculada à mesma conta de anúncios do Meta Ads já conectada — não precisa
+// de uma conexão separada. "Visitas ao perfil" é a métrica oficial do
+// Instagram profile_views.
+async function getInstagramMetrics(
+  adAccountId: string,
+  accessToken: string,
+  dateStart: string,
+  dateEnd: string
+): Promise<{ seguidores: string; visitas: string }> {
+  const fallback = { seguidores: '—', visitas: '—' };
+  try {
+    const igAccountsRes = await fetch(
+      `https://graph.facebook.com/v19.0/${adAccountId}/instagram_accounts?access_token=${accessToken}`
+    );
+    const igAccountsData = await igAccountsRes.json();
+    const igAccountId = igAccountsData?.data?.[0]?.id;
+    if (!igAccountId) return fallback;
+
+    const [followersRes, insightsRes] = await Promise.all([
+      fetch(`https://graph.facebook.com/v19.0/${igAccountId}?fields=followers_count&access_token=${accessToken}`),
+      fetch(
+        `https://graph.facebook.com/v19.0/${igAccountId}/insights?metric=profile_views&period=day&since=${dateStart}&until=${dateEnd}&access_token=${accessToken}`
+      ),
+    ]);
+
+    const followersData = await followersRes.json();
+    const insightsData = await insightsRes.json();
+
+    const seguidores = typeof followersData?.followers_count === 'number'
+      ? followersData.followers_count.toLocaleString('pt-BR')
+      : '—';
+
+    const valores: Array<{ value?: number }> = insightsData?.data?.[0]?.values ?? [];
+    const visitasTotal = valores.reduce((soma, v) => soma + (v.value ?? 0), 0);
+    const visitas = insightsData?.data ? visitasTotal.toLocaleString('pt-BR') : '—';
+
+    return { seguidores, visitas };
+  } catch (err) {
+    console.error('[getInstagramMetrics] falha ao buscar métricas do Instagram:', err);
+    return fallback;
+  }
 }
 

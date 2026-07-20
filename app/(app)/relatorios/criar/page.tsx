@@ -43,6 +43,8 @@ const variables = [
   { label: 'ROAS', key: '<ROAS>', example: '3,66x' },
   { label: 'Grana no Bolso', key: '<GRANA>', example: 'R$ 2.325,00' },
   { label: 'Taxa de Gancho', key: '<GANCHO>', example: '32,5%' },
+  { label: 'Seguidores Instagram', key: '<IG_SEGUIDORES>', example: '4.582' },
+  { label: 'Visitas ao Perfil (IG)', key: '<IG_VISITAS>', example: '312' },
   { label: 'Camp. 1 — Conversas', key: '<CAMP_1>', example: '12' },
   { label: 'Camp. 2 — Conversas', key: '<CAMP_2>', example: '8' },
   { label: 'Camp. 3 — Conversas', key: '<CAMP_3>', example: '5' },
