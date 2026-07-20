@@ -106,13 +106,15 @@ export async function POST(request: Request) {
           roas: 0,
           count: 0,
         };
+        // Só entra na lista quem realmente teve dado da Meta no período — sem
+        // reservar posição pra quem não tem meta_campaign_id ou não teve
+        // resultado, senão o <CAMP_N> de uma campanha não bate com o mesmo
+        // <CAMP_N> mostrado na prévia da tela de criação (que faz a mesma
+        // checagem via /api/reports/campanhas-periodo).
         const conversasPorCampanha: number[] = [];
 
         for (const campaign of campaigns) {
-          if (!campaign.meta_campaign_id) {
-            conversasPorCampanha.push(0);
-            continue;
-          }
+          if (!campaign.meta_campaign_id) continue;
           const fields = 'impressions,reach,clicks,ctr,spend,cpm,cpc,frequency,actions,cost_per_action_type,purchase_roas,conversion_values,video_30_sec_watched_actions';
           const metaUrl = new URL(`https://graph.facebook.com/v19.0/${campaign.meta_campaign_id}/insights`);
           metaUrl.searchParams.set('fields', fields);
