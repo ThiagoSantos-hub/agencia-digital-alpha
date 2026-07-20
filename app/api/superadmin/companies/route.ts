@@ -25,27 +25,49 @@ export async function GET() {
   const auth = await requireSuperAdmin()
   if (auth.error) return auth.error
 
-  const { data, error } = await supabaseAdmin
+  const { data: companies, error } = await supabaseAdmin
     .from('companies')
     .select('*')
     .order('created_at', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+
+  const [{ data: clientRows }, { data: profileRows }] = await Promise.all([
+    supabaseAdmin.from('clients').select('company_id'),
+    supabaseAdmin.from('profiles').select('company_id'),
+  ])
+
+  const countBy = (rows: { company_id: string | null }[] | null, id: string) =>
+    (rows ?? []).filter((r) => r.company_id === id).length
+
+  const withCounts = (companies ?? []).map((c) => ({
+    ...c,
+    client_count: countBy(clientRows, c.id),
+    user_count: countBy(profileRows, c.id),
+  }))
+
+  return NextResponse.json(withCounts)
 }
 
 export async function PATCH(request: Request) {
   const auth = await requireSuperAdmin()
   if (auth.error) return auth.error
 
-  const { companyId, metaTesterAdded } = await request.json()
+  const { companyId, metaTesterAdded, metaTesterProfile, name, slug, active } = await request.json()
   if (!companyId) {
     return NextResponse.json({ error: 'companyId é obrigatório.' }, { status: 400 })
   }
 
+  const update: Record<string, unknown> = {}
+  if (metaTesterAdded !== undefined) update.meta_tester_added = !!metaTesterAdded
+  if (metaTesterProfile !== undefined) update.meta_tester_profile = metaTesterProfile || null
+  if (name !== undefined) update.name = name
+  if (slug !== undefined) update.slug = slug
+  if (active !== undefined) update.active = !!active
+
   const { error } = await supabaseAdmin
     .from('companies')
-    .update({ meta_tester_added: !!metaTesterAdded })
+    .update(update)
     .eq('id', companyId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

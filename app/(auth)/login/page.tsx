@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { createClient } from '@/lib/supabase'
 import {
@@ -26,7 +26,7 @@ const features = [
 
 const LOGO_URL = 'https://automacaothiagosantos.com.br/wp-content/uploads/2026/06/Design-sem-nome-14.png'
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -35,7 +35,14 @@ export default function LoginPage() {
   const [resetSent, setResetSent] = useState(false)
   const { signIn } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
+
+  useEffect(() => {
+    if (searchParams.get('error') === 'empresa_inativa') {
+      setError('O acesso da sua empresa foi desativado. Fale com quem administra sua conta na plataforma.')
+    }
+  }, [searchParams])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -216,5 +223,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   )
 }
