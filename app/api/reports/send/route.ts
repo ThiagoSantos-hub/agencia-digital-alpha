@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { calcularProximoEnvio } from '@/lib/reportSchedule';
+import { dispatchWebhook } from '@/lib/webhookDispatch';
 
 const EVO_URL = process.env.EVOLUTION_API_URL || '';
 const EVO_KEY = process.env.EVOLUTION_API_KEY || '';
@@ -325,6 +326,14 @@ export async function POST(request: Request) {
     if (status === 'enviado') {
       const proximoEnvio = calcularProximoEnvio(report.frequencia, report.horario_envio, report.dias_semana);
       await supabase.from('reports').update({ proximo_envio: proximoEnvio }).eq('id', report_id);
+
+      if (reportCompanyId) {
+        dispatchWebhook(reportCompanyId, 'relatorio.gerado', {
+          report_id: report.id,
+          nome: report.nome,
+          client_id: report.client_id,
+        }).catch(() => {});
+      }
     }
 
     if (status === 'erro') {

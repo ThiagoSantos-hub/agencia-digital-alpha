@@ -4,6 +4,16 @@ import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useAuth } from './useAuth'
 
+// Dispara um evento de webhook configurado em Integrações — fire-and-forget,
+// nunca deve travar nem falhar a ação real (criar/atualizar cliente).
+function dispararEvento(event: string, data: Record<string, unknown>) {
+  fetch('/api/webhooks/dispatch', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ event, data }),
+  }).catch(() => { /* falha de webhook não deve incomodar o usuário */ })
+}
+
 export interface Client {
   id: string
   name: string
@@ -201,6 +211,8 @@ export function useClientes() {
           recorrencia: 'mensal'
         })
       }
+
+      dispararEvento('cliente.criado', { id: data.id, name: data.name, status: data.status })
     }
     return { data, error }
   }
@@ -227,9 +239,11 @@ export function useClientes() {
     
     if (!error && data) {
       // Atualização local imediata para feedback visual
-      setClients(prev => 
+      setClients(prev =>
         prev.map(c => c.id === id ? { ...data, dias_atraso: payload.status === 'ativo' ? 0 : c.dias_atraso } : c)
       )
+
+      dispararEvento('cliente.atualizado', { id: data.id, name: data.name, status: data.status })
 
       // Se marcou como ativo (pagou), atualizar o financeiro
       if (estaMarcandoComoPago) {

@@ -1,6 +1,7 @@
 import { createServerClient } from '@/lib/supabase-server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { dispatchWebhook } from '@/lib/webhookDispatch'
 
 // GET — lista os clientes com Meta Ads conectado, pra um workflow (n8n) decidir
 // quais chamadas de POST fazer em seguida. Protegida por CRON_SECRET, igual ao POST.
@@ -114,6 +115,16 @@ export async function POST(req: Request) {
 
     // 4. Sincronizar com o banco local
     // onConflict: 'meta_campaign_id' agora funciona pois a migration 008 criou a constraint UNIQUE
+
+    // Descobre de antemão quais já existem, pra saber se cada upsert abaixo é
+    // uma campanha nova ou uma atualização — dispara o evento de webhook certo
+    // (campanha.criada / campanha.atualizada) sem precisar de uma query por item.
+    const metaCampaignIds = campaigns.map((c: any) => c.id).filter(Boolean)
+    const { data: existentes } = metaCampaignIds.length > 0
+      ? await supabase.from('campaigns').select('meta_campaign_id').in('meta_campaign_id', metaCampaignIds)
+      : { data: [] as { meta_campaign_id: string }[] }
+    const idsExistentes = new Set((existentes ?? []).map(e => e.meta_campaign_id))
+
     for (const camp of campaigns) {
       const budget = camp.daily_budget
         ? parseFloat(camp.daily_budget) / 100
@@ -121,7 +132,9 @@ export async function POST(req: Request) {
           ? parseFloat(camp.lifetime_budget) / 100
           : null
 
-      const { error: upsertError } = await supabase.from('campaigns').upsert({
+      const eraNova = !idsExistentes.has(camp.id)
+
+      const { data: campSalva, error: upsertError } = await supabase.from('campaigns').upsert({
         client_id:          clientId,
         company_id:         companyId,
         meta_campaign_id:   camp.id,
@@ -131,9 +144,19 @@ export async function POST(req: Request) {
         budget:             budget,
         start_date:         camp.start_time ? camp.start_time.split('T')[0] : null,
         end_date:           camp.stop_time  ? camp.stop_time.split('T')[0]  : null,
-      }, { onConflict: 'meta_campaign_id' })
+      }, { onConflict: 'meta_campaign_id' }).select('id, name, status').single()
 
-      if (upsertError) console.error('Erro ao salvar campanha:', upsertError)
+      if (upsertError) {
+        console.error('Erro ao salvar campanha:', upsertError)
+        continue
+      }
+
+      // Fire-and-forget: não trava a sincronização esperando os webhooks configurados.
+      dispatchWebhook(companyId!, eraNova ? 'campanha.criada' : 'campanha.atualizada', {
+        id: campSalva.id,
+        name: campSalva.name,
+        status: campSalva.status,
+      }).catch(() => {})
     }
 
     return NextResponse.json({ success: true, count: campaigns.length })
