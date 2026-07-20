@@ -34,7 +34,7 @@ export async function GET() {
 
   const [{ data: clientRows }, { data: profileRows }] = await Promise.all([
     supabaseAdmin.from('clients').select('company_id'),
-    supabaseAdmin.from('profiles').select('company_id'),
+    supabaseAdmin.from('profiles').select('company_id, email, name, role'),
   ])
 
   const countBy = (rows: { company_id: string | null }[] | null, id: string) =>
@@ -44,6 +44,9 @@ export async function GET() {
     ...c,
     client_count: countBy(clientRows, c.id),
     user_count: countBy(profileRows, c.id),
+    admin_emails: (profileRows ?? [])
+      .filter((p) => p.company_id === c.id && p.role === 'admin')
+      .map((p) => p.email),
   }))
 
   return NextResponse.json(withCounts)

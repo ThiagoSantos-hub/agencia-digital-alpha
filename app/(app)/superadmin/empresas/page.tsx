@@ -17,6 +17,7 @@ interface Company {
   meta_tester_added: boolean
   client_count: number
   user_count: number
+  admin_emails: string[]
 }
 
 const inputCls = 'w-full px-3 py-2 bg-background border border-border rounded-lg text-text-main text-sm focus:outline-none focus:border-primary/50 transition-colors'
@@ -259,6 +260,7 @@ export default function SuperAdminEmpresasPage() {
               </div>
               <div className="space-y-2 text-sm">
                 <p><span className="text-text-muted">Slug:</span> <span className="text-text-main">/{viewCompany.slug}</span></p>
+                <p><span className="text-text-muted">E-mail do admin:</span> <span className="text-text-main">{viewCompany.admin_emails.length > 0 ? viewCompany.admin_emails.join(', ') : '—'}</span></p>
                 <p><span className="text-text-muted">Status:</span> <span className="text-text-main">{viewCompany.active ? 'Ativa' : 'Inativa'}</span></p>
                 <p><span className="text-text-muted">Criada em:</span> <span className="text-text-main">{new Date(viewCompany.created_at).toLocaleDateString('pt-BR')}</span></p>
                 <p><span className="text-text-muted">Clientes cadastrados:</span> <span className="text-text-main">{viewCompany.client_count}</span></p>
