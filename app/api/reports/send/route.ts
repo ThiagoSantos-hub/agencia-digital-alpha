@@ -442,8 +442,16 @@ async function getInstagramMetrics(
       `https://graph.facebook.com/v19.0/${adAccountId}/instagram_accounts?access_token=${accessToken}`
     );
     const igAccountsData = await igAccountsRes.json();
+
+    if (igAccountsData?.error) {
+      console.error(`[getInstagramMetrics] erro ao buscar instagram_accounts de ${adAccountId}:`, igAccountsData.error.message ?? igAccountsData.error);
+      return fallback;
+    }
     const igAccountId = igAccountsData?.data?.[0]?.id;
-    if (!igAccountId) return fallback;
+    if (!igAccountId) {
+      console.error(`[getInstagramMetrics] conta de anúncios ${adAccountId} não tem Instagram vinculado (instagram_accounts veio vazio)`);
+      return fallback;
+    }
 
     const [followersRes, insightsRes] = await Promise.all([
       fetch(`https://graph.facebook.com/v19.0/${igAccountId}?fields=followers_count&access_token=${accessToken}`),
@@ -454,6 +462,13 @@ async function getInstagramMetrics(
 
     const followersData = await followersRes.json();
     const insightsData = await insightsRes.json();
+
+    if (followersData?.error) {
+      console.error(`[getInstagramMetrics] erro ao buscar followers_count de ${igAccountId}:`, followersData.error.message ?? followersData.error);
+    }
+    if (insightsData?.error) {
+      console.error(`[getInstagramMetrics] erro ao buscar profile_views de ${igAccountId}:`, insightsData.error.message ?? insightsData.error);
+    }
 
     const seguidores = typeof followersData?.followers_count === 'number'
       ? followersData.followers_count.toLocaleString('pt-BR')
