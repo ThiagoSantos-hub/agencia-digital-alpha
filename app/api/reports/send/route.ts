@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { calcularProximoEnvio } from '@/lib/reportSchedule';
+import { dispatchWebhook } from '@/lib/webhookDispatch';
 
 const EVO_URL = process.env.EVOLUTION_API_URL || '';
 const EVO_KEY = process.env.EVOLUTION_API_KEY || '';
@@ -230,45 +231,49 @@ export async function POST(request: Request) {
     const evoCan = EVO_URL && EVO_KEY;
     let enviouViaEvo = false;
 
-    if (evoCan) {
+    // Resolve a instância de WhatsApp dona do envio ANTES de decidir o caminho —
+    // precisa estar disponível tanto pro envio direto (Evolution API) quanto pro
+    // fallback via n8n, senão o fallback não tem como saber de qual empresa é o
+    // envio e cai numa instância fixa (era exatamente esse o bug: o workflow
+    // "Disparo de Relatório WhatsApp" usava uma instância hardcoded, então
+    // relatório de qualquer empresa saía pelo WhatsApp da Digital Alpha).
+    let senderId = report.user_id;
+    if (report.enviar_via_agencia) {
+      // Filtra pela MESMA empresa do relatório — sem isso pegava "o primeiro
+      // admin encontrado no sistema inteiro", podendo disparar pelo WhatsApp
+      // do admin de outra empresa.
+      const { data: adminProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('role', 'admin')
+        .eq('company_id', reportCompanyId)
+        .maybeSingle();
+      if (adminProfile) senderId = adminProfile.id;
+    }
+
+    const { data: wpInstance } = await supabase
+      .from('whatsapp_instances')
+      .select('instance_name, status')
+      .eq('user_id', senderId)
+      .maybeSingle();
+
+    if (evoCan && wpInstance?.status === 'connected' && wpInstance.instance_name) {
       try {
-        let senderId = report.user_id;
-        if (report.enviar_via_agencia) {
-          // Filtra pela MESMA empresa do relatório — sem isso pegava "o primeiro
-          // admin encontrado no sistema inteiro", podendo disparar pelo WhatsApp
-          // do admin de outra empresa.
-          const { data: adminProfile } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('role', 'admin')
-            .eq('company_id', reportCompanyId)
-            .maybeSingle();
-          if (adminProfile) senderId = adminProfile.id;
-        }
+        const instName = wpInstance.instance_name;
+        const evoBody = { number: report.recebedor_numero, text: mensagemFinal };
 
-        const { data: wpInstance } = await supabase
-          .from('whatsapp_instances')
-          .select('instance_name, status')
-          .eq('user_id', senderId)
-          .maybeSingle();
+        const evoRes = await fetch(`${EVO_URL}/message/sendText/${instName}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': EVO_KEY },
+          body: JSON.stringify(evoBody),
+        });
 
-        if (wpInstance?.status === 'connected' && wpInstance.instance_name) {
-          const instName = wpInstance.instance_name;
-          const evoBody = { number: report.recebedor_numero, text: mensagemFinal };
+        const evoData = await evoRes.json();
 
-          const evoRes = await fetch(`${EVO_URL}/message/sendText/${instName}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'apikey': EVO_KEY },
-            body: JSON.stringify(evoBody),
-          });
-
-          const evoData = await evoRes.json();
-
-          if (evoRes.ok && !evoData.error) {
-            enviouViaEvo = true;
-          } else {
-            erroDetalhe = evoData?.message || 'Erro na Evolution API';
-          }
+        if (evoRes.ok && !evoData.error) {
+          enviouViaEvo = true;
+        } else {
+          erroDetalhe = evoData?.message || 'Erro na Evolution API';
         }
       } catch (evoErr: any) {
         erroDetalhe = evoErr.message;
@@ -287,6 +292,10 @@ export async function POST(request: Request) {
             recebedor_numero: report.recebedor_numero,
             recebedor_tipo: report.recebedor_tipo,
             mensagem: mensagemFinal,
+            // Instância da empresa dona do relatório — o workflow "Disparo de
+            // Relatório WhatsApp" precisa usar ESTE campo em vez de uma
+            // instância fixa, senão continua vazando pro WhatsApp errado.
+            instance_name: wpInstance?.instance_name ?? null,
           }),
         });
 
@@ -317,6 +326,14 @@ export async function POST(request: Request) {
     if (status === 'enviado') {
       const proximoEnvio = calcularProximoEnvio(report.frequencia, report.horario_envio, report.dias_semana);
       await supabase.from('reports').update({ proximo_envio: proximoEnvio }).eq('id', report_id);
+
+      if (reportCompanyId) {
+        dispatchWebhook(reportCompanyId, 'relatorio.gerado', {
+          report_id: report.id,
+          nome: report.nome,
+          client_id: report.client_id,
+        }).catch(() => {});
+      }
     }
 
     if (status === 'erro') {
