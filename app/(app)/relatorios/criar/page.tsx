@@ -113,7 +113,6 @@ function CreateEditReportContent() {
       .from('campaigns')
       .select('name')
       .eq('client_id', formData.client_id)
-      .eq('status', 'ativa')
       .order('created_at', { ascending: true })
       .limit(10)
       .then(({ data }) => setCampanhasDoCliente(data ?? []))

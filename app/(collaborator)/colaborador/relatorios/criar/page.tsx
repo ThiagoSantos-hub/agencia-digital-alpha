@@ -84,7 +84,7 @@ function CreateEditReportContent() {
 
   useEffect(() => {
     if (!formData.client_id) { setCampanhasDoCliente([]); return }
-    supabase.from('campaigns').select('name').eq('client_id', formData.client_id).eq('status', 'ativa').order('created_at', { ascending: true }).limit(10)
+    supabase.from('campaigns').select('name').eq('client_id', formData.client_id).order('created_at', { ascending: true }).limit(10)
       .then(({ data }) => setCampanhasDoCliente(data ?? []))
   }, [formData.client_id])
 

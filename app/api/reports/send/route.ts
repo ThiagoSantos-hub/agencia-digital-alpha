@@ -85,11 +85,14 @@ export async function POST(request: Request) {
     const debugActions: Record<string, string[]> = {};
 
     if (integration?.access_token && report.client_id) {
+      // Sem filtro de status: uma campanha pausada/finalizada depois do período
+      // do relatório ainda pode ter gerado resultados dentro da data selecionada
+      // — quem decide se ela entra é a própria chamada de insights abaixo (pula
+      // silenciosamente quem não tem dados no período).
       const { data: campaigns } = await supabase
         .from('campaigns')
         .select('id, meta_campaign_id')
         .eq('client_id', report.client_id)
-        .eq('status', 'ativa')
         .order('created_at', { ascending: true })
         .limit(10);
 
