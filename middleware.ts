@@ -106,7 +106,8 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/perfil') ||
     request.nextUrl.pathname.startsWith('/checklists') ||
     request.nextUrl.pathname.startsWith('/tarefas') ||
-    request.nextUrl.pathname.startsWith('/contratos')
+    request.nextUrl.pathname.startsWith('/contratos') ||
+    request.nextUrl.pathname.startsWith('/assinatura')
 
   if (isAdminRoute && user) {
     const { data: profile } = await supabase
@@ -152,6 +153,7 @@ export const config = {
     '/checklists/:path*',
     '/contratos/:path*',
     '/superadmin/:path*',
+    '/assinatura/:path*',
     '/login',
   ],
 }

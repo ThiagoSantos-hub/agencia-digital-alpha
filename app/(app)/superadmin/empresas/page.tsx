@@ -18,6 +18,10 @@ interface Company {
   client_count: number
   user_count: number
   admin_emails: string[]
+  phone: string | null
+  payment_method: 'card' | 'pix' | null
+  subscription_status: string | null
+  access_expires_at: string | null
 }
 
 const inputCls = 'w-full px-3 py-2 bg-background border border-border rounded-lg text-text-main text-sm focus:outline-none focus:border-primary/50 transition-colors'
@@ -210,6 +214,14 @@ export default function SuperAdminEmpresasPage() {
                   {c.meta_tester_profile && (
                     <p className="text-text-muted text-xs mt-0.5 flex items-center gap-1 truncate">
                       <ExternalLink size={11} className="shrink-0" /> {c.meta_tester_profile}
+                      {!c.meta_tester_added && (
+                        <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 whitespace-nowrap">aguardando testador Meta</span>
+                      )}
+                    </p>
+                  )}
+                  {c.payment_method && (
+                    <p className="text-text-muted text-xs mt-0.5">
+                      {c.payment_method === 'pix' ? 'Pix' : 'Cartão'} — {c.subscription_status ?? '—'}
                     </p>
                   )}
                 </div>
@@ -267,6 +279,12 @@ export default function SuperAdminEmpresasPage() {
                 <p><span className="text-text-muted">Usuários (admin/colaboradores):</span> <span className="text-text-main">{viewCompany.user_count}</span></p>
                 <p><span className="text-text-muted">Perfil do Facebook:</span> <span className="text-text-main">{viewCompany.meta_tester_profile || '—'}</span></p>
                 <p><span className="text-text-muted">Testador Meta adicionado:</span> <span className="text-text-main">{viewCompany.meta_tester_added ? 'Sim' : 'Não'}</span></p>
+                <p><span className="text-text-muted">Telefone:</span> <span className="text-text-main">{viewCompany.phone || '—'}</span></p>
+                <p><span className="text-text-muted">Pagamento:</span> <span className="text-text-main">{viewCompany.payment_method === 'pix' ? 'Pix' : viewCompany.payment_method === 'card' ? 'Cartão' : '— (cadastro manual)'}</span></p>
+                <p><span className="text-text-muted">Status da assinatura:</span> <span className="text-text-main">{viewCompany.subscription_status || '—'}</span></p>
+                {viewCompany.payment_method === 'pix' && (
+                  <p><span className="text-text-muted">Acesso válido até:</span> <span className="text-text-main">{viewCompany.access_expires_at ? new Date(viewCompany.access_expires_at).toLocaleDateString('pt-BR') : '—'}</span></p>
+                )}
               </div>
             </div>
           </div>
