@@ -17,17 +17,20 @@ import {
   Facebook
 } from 'lucide-react'
 import { useRelatorios, Report, ReportHistory } from '@/hooks/useRelatorios'
+import { useWhatsApp } from '@/hooks/useWhatsApp'
 
 export default function ColaboradorRelatoriosPage() {
   const router = useRouter()
-  const { 
-    reports, 
-    loading, 
-    toggleAtivo, 
-    deleteRelatorio, 
+  const {
+    reports,
+    loading,
+    toggleAtivo,
+    deleteRelatorio,
     createRelatorio,
-    fetchHistorico 
+    fetchHistorico
   } = useRelatorios()
+  const { groups: ownGroups } = useWhatsApp('own')
+  const { groups: agencyGroups } = useWhatsApp('agency')
 
   const [filterStatus, setFilterStatus] = useState<'todos' | 'ativo' | 'inativo'>('todos')
   const [filterCanal, setFilterCanal] = useState<'todos' | 'meta' | 'google'>('todos')
@@ -36,6 +39,33 @@ export default function ColaboradorRelatoriosPage() {
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [sendingId, setSendingId] = useState<string | null>(null)
   const [confirmSendReport, setConfirmSendReport] = useState<Report | null>(null)
+  const [previewMensagem, setPreviewMensagem] = useState<string | null>(null)
+  const [loadingPreview, setLoadingPreview] = useState(false)
+
+  const destinatarioLabel = (report: Report) => {
+    if (report.recebedor_tipo !== 'grupo') return report.recebedor_numero
+    const pool = report.enviar_via_agencia ? agencyGroups : ownGroups
+    return pool.find(g => g.group_id === report.recebedor_numero)?.name ?? report.recebedor_numero
+  }
+
+  const handleOpenConfirm = async (report: Report) => {
+    setConfirmSendReport(report)
+    setPreviewMensagem(null)
+    setLoadingPreview(true)
+    try {
+      const res = await fetch('/api/reports/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ report_id: report.id, preview: true })
+      })
+      const data = await res.json()
+      setPreviewMensagem(res.ok ? data.mensagem : 'Não foi possível gerar a pré-visualização.')
+    } catch {
+      setPreviewMensagem('Não foi possível gerar a pré-visualização.')
+    } finally {
+      setLoadingPreview(false)
+    }
+  }
 
   const formatDate = (dateString: string) => {
     return new Intl.DateTimeFormat('pt-BR', {
@@ -281,7 +311,7 @@ export default function ColaboradorRelatoriosPage() {
                   <td className="p-4">
                     <div className="flex items-center justify-end gap-1.5">
                       <button
-                        onClick={() => setConfirmSendReport(report)}
+                        onClick={() => handleOpenConfirm(report)}
                         disabled={sendingId === report.id}
                         title="Enviar agora"
                         className={btnAction}
@@ -389,10 +419,18 @@ export default function ColaboradorRelatoriosPage() {
             <div className="bg-surface border border-border rounded-xl shadow-2xl w-full max-w-sm p-6">
               <h2 className="text-lg font-bold text-text-main mb-1">Enviar relatório agora?</h2>
               <p className="text-sm text-text-muted mb-4">Confirme o que será enviado antes de disparar.</p>
-              <div className="bg-hover-bg border border-border rounded-lg p-3 text-sm space-y-1 mb-5">
+              <div className="bg-hover-bg border border-border rounded-lg p-3 text-sm space-y-1 mb-3">
                 <p><span className="text-text-muted">Relatório:</span> <span className="font-medium text-text-main">{confirmSendReport.nome}</span></p>
                 <p><span className="text-text-muted">Canal:</span> <span className="font-medium text-text-main">{confirmSendReport.canal === 'meta' ? 'Meta Ads' : 'Google Ads'}</span></p>
-                <p><span className="text-text-muted">Enviar para:</span> <span className="font-medium text-text-main">{confirmSendReport.recebedor_tipo === 'grupo' ? 'Grupo' : 'Contato privado'} — {confirmSendReport.recebedor_numero}</span></p>
+                <p><span className="text-text-muted">Enviar para:</span> <span className="font-medium text-text-main">{confirmSendReport.recebedor_tipo === 'grupo' ? 'Grupo' : 'Contato privado'} — {destinatarioLabel(confirmSendReport)}</span></p>
+              </div>
+              <div className="mb-5">
+                <p className="text-xs text-text-muted mb-1">Mensagem que será enviada:</p>
+                <div className="bg-hover-bg border border-border rounded-lg p-3 text-xs text-text-main whitespace-pre-wrap font-mono max-h-48 overflow-y-auto">
+                  {loadingPreview ? (
+                    <span className="flex items-center gap-2 text-text-muted"><Loader2 size={14} className="animate-spin" /> Gerando pré-visualização...</span>
+                  ) : previewMensagem}
+                </div>
               </div>
               <div className="flex gap-3">
                 <button
@@ -403,7 +441,8 @@ export default function ColaboradorRelatoriosPage() {
                 </button>
                 <button
                   onClick={() => handleSendNow(confirmSendReport.id)}
-                  className="flex-1 px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white transition-colors text-sm font-medium"
+                  disabled={loadingPreview}
+                  className="flex-1 px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white transition-colors text-sm font-medium disabled:opacity-50"
                 >
                   Sim, enviar
                 </button>

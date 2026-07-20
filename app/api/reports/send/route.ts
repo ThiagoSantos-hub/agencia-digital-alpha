@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { calcularProximoEnvio } from '@/lib/reportSchedule';
+import { calcularProximoEnvio, calcularPeriodo } from '@/lib/reportSchedule';
 import { dispatchWebhook } from '@/lib/webhookDispatch';
 
 const EVO_URL = process.env.EVOLUTION_API_URL || '';
@@ -22,7 +22,7 @@ const supabase = createClient(
 
 export async function POST(request: Request) {
   try {
-    const { report_id } = await request.json();
+    const { report_id, preview } = await request.json();
     if (!report_id) {
       return NextResponse.json({ error: 'report_id é obrigatório' }, { status: 400 });
     }
@@ -238,6 +238,17 @@ export async function POST(request: Request) {
     }
     mensagemFinal = mensagemFinal.replace(/<[A-Z_]+>/g, '—');
 
+    // Modo de pré-visualização: usado pelo pop-up de confirmação antes do envio
+    // manual — monta a mensagem real com os dados já buscados, mas não envia
+    // pro WhatsApp nem grava histórico.
+    if (preview) {
+      return NextResponse.json({
+        mensagem: mensagemFinal,
+        recebedor_tipo: report.recebedor_tipo,
+        recebedor_numero: report.recebedor_numero,
+      });
+    }
+
     let status: 'enviado' | 'erro' = 'enviado';
     let erroDetalhe = null;
 
@@ -361,68 +372,6 @@ export async function POST(request: Request) {
   }
 }
 
-function calcularPeriodo(periodo: string, dataInicio?: string, dataFim?: string): { dateStart: string; dateEnd: string; diasAtivo: number } {
-  const agoraBR = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
-  const hoje = agoraBR;
-  const fmt = (d: Date) => {
-    const ano = d.getFullYear();
-    const mes = String(d.getMonth() + 1).padStart(2, '0');
-    const dia = String(d.getDate()).padStart(2, '0');
-    return `${ano}-${mes}-${dia}`;
-  };
-
-  switch (periodo) {
-    case 'dia_anterior':
-    case 'ontem': {
-      const ontem = new Date(hoje);
-      ontem.setDate(hoje.getDate() - 1);
-      return { dateStart: fmt(ontem), dateEnd: fmt(ontem), diasAtivo: 1 };
-    }
-    case 'personalizado': {
-      if (dataInicio && dataFim) {
-        const inicio = new Date(dataInicio);
-        const fim = new Date(dataFim);
-        const dias = Math.round((fim.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-        return { dateStart: dataInicio, dateEnd: dataFim, diasAtivo: dias };
-      }
-      // fallback: ontem
-      const ontem = new Date(hoje);
-      ontem.setDate(hoje.getDate() - 1);
-      return { dateStart: fmt(ontem), dateEnd: fmt(ontem), diasAtivo: 1 };
-    }
-    case 'ultima_semana': {
-      const inicio = new Date(hoje);
-      inicio.setDate(hoje.getDate() - 7);
-      return { dateStart: fmt(inicio), dateEnd: fmt(hoje), diasAtivo: 7 };
-    }
-    case 'ultimos_3_dias': {
-      const ontem = new Date(hoje); ontem.setDate(hoje.getDate() - 1);
-      const inicio = new Date(hoje); inicio.setDate(hoje.getDate() - 3);
-      return { dateStart: fmt(inicio), dateEnd: fmt(ontem), diasAtivo: 3 };
-    }
-    case 'ultimos_7_dias': {
-      const ontem = new Date(hoje); ontem.setDate(hoje.getDate() - 1);
-      const inicio = new Date(hoje); inicio.setDate(hoje.getDate() - 7);
-      return { dateStart: fmt(inicio), dateEnd: fmt(ontem), diasAtivo: 7 };
-    }
-    case 'ultimos_30_dias': {
-      const ontem = new Date(hoje); ontem.setDate(hoje.getDate() - 1);
-      const inicio = new Date(hoje); inicio.setDate(hoje.getDate() - 30);
-      return { dateStart: fmt(inicio), dateEnd: fmt(ontem), diasAtivo: 30 };
-    }
-    case 'ultimo_mes': {
-      const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
-      const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
-      const dias = ultimoDia.getDate();
-      return { dateStart: fmt(primeiroDia), dateEnd: fmt(ultimoDia), diasAtivo: dias };
-    }
-    default: {
-      const inicio = new Date(hoje);
-      inicio.setDate(hoje.getDate() - 1);
-      return { dateStart: fmt(inicio), dateEnd: fmt(hoje), diasAtivo: 1 };
-    }
-  }
-}
 
 function formatarDataBR(dateStr: string): string {
   const [ano, mes, dia] = dateStr.split('-');
