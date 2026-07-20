@@ -132,7 +132,7 @@ export default function AssinarPage() {
               {paymentMethod === 'card' ? (
                 <p className="text-xs text-text-muted mt-2">Assinatura mensal recorrente. Se você nunca usou o sistema antes, ganha um período de teste grátis antes da primeira cobrança.</p>
               ) : (
-                <p className="text-xs text-text-muted mt-2">Pagamento único via Pix (com acréscimo de 10% sobre o valor do cartão), libera 30 dias de acesso. Sem teste grátis — pra continuar usando depois, é só pagar de novo dentro do sistema.</p>
+                <p className="text-xs text-text-muted mt-2">Pagamento único via Pix (com acréscimo de 10% sobre o valor do cartão), libera 30 dias de acesso. Sem teste grátis: pra continuar usando depois, é só pagar de novo dentro do sistema.</p>
               )}
             </div>
 

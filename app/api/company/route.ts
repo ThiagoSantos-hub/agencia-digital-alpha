@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
+import { stripe } from '@/lib/stripe'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,7 +23,21 @@ export async function GET() {
 
   const { data, error } = await auth.session!.from('companies').select('*').eq('id', auth.companyId).single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+
+  // Data de renovação vem direto do Stripe (não guardamos localmente pra não
+  // precisar sincronizar toda vez que o ciclo de cobrança muda).
+  let renewsAt: string | null = null
+  if (data.payment_method === 'card' && data.stripe_subscription_id) {
+    try {
+      const subscription = await stripe.subscriptions.retrieve(data.stripe_subscription_id)
+      const periodEnd = subscription.items.data[0]?.current_period_end
+      if (periodEnd) renewsAt = new Date(periodEnd * 1000).toISOString()
+    } catch {
+      // se a assinatura não existir mais no Stripe, só não mostra a data
+    }
+  }
+
+  return NextResponse.json({ ...data, renews_at: renewsAt })
 }
 
 // PATCH — atualiza os dados de identidade CONTRATADO da própria empresa

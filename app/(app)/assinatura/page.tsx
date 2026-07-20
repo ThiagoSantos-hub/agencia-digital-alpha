@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from 'react'
 import { Loader2, CreditCard, QrCode, CheckCircle2 } from 'lucide-react'
+import { PLAN_LABELS, PLAN_CLIENT_LIMITS, type Plan } from '@/lib/planLimits'
 
 interface CompanyBilling {
   name: string
+  plan: Plan | null
   payment_method: 'card' | 'pix' | null
   subscription_status: string | null
   access_expires_at: string | null
+  renews_at: string | null
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -18,6 +21,12 @@ const STATUS_LABELS: Record<string, string> = {
   canceled: 'Cancelada',
   pix_ativo: 'Ativa (Pix)',
   pix_expirado: 'Expirada (Pix)',
+}
+
+function limiteTexto(plan: Plan | null): string {
+  if (!plan) return ''
+  const limite = PLAN_CLIENT_LIMITS[plan]
+  return limite === null ? 'clientes ilimitados' : `até ${limite} clientes`
 }
 
 export default function AssinaturaPage() {
@@ -71,13 +80,30 @@ export default function AssinaturaPage() {
           {company?.payment_method === 'pix' ? <QrCode size={20} className="text-primary" /> : <CreditCard size={20} className="text-primary" />}
           <div>
             <p className="text-sm font-medium text-text-main">
-              {company?.payment_method === 'pix' ? 'Pagamento por Pix' : company?.payment_method === 'card' ? 'Assinatura por cartão' : 'Sem plano configurado'}
+              {company?.plan ? PLAN_LABELS[company.plan] : 'Sem plano configurado'}
             </p>
             <p className="text-xs text-text-muted">
-              {company?.subscription_status ? STATUS_LABELS[company.subscription_status] ?? company.subscription_status : '—'}
+              {company?.plan ? limiteTexto(company.plan) : ''}
+            </p>
+            <p className="text-xs text-text-muted mt-1">
+              {company?.subscription_status ? (STATUS_LABELS[company.subscription_status] ?? company.subscription_status) : '-'}
             </p>
           </div>
         </div>
+
+        {company?.payment_method === 'card' && (
+          <div className="border-t border-border pt-4">
+            <p className="text-sm text-text-muted">
+              Próxima cobrança em{' '}
+              <span className="text-text-main font-medium">
+                {company.renews_at ? new Date(company.renews_at).toLocaleDateString('pt-BR') : '-'}
+              </span>
+            </p>
+            <p className="text-xs text-text-muted mt-2">
+              Sua assinatura é renovada automaticamente todo mês nessa data. Se precisar cancelar ou trocar o cartão, entre em contato com o suporte.
+            </p>
+          </div>
+        )}
 
         {company?.payment_method === 'pix' && (
           <>
@@ -85,8 +111,11 @@ export default function AssinaturaPage() {
               <p className="text-sm text-text-muted">
                 Acesso válido até{' '}
                 <span className="text-text-main font-medium">
-                  {company.access_expires_at ? new Date(company.access_expires_at).toLocaleDateString('pt-BR') : '—'}
+                  {company.access_expires_at ? new Date(company.access_expires_at).toLocaleDateString('pt-BR') : '-'}
                 </span>
+              </p>
+              <p className="text-xs text-text-muted mt-2">
+                O pagamento por Pix não renova sozinho. Pra continuar usando depois dessa data, clica no botão abaixo e paga de novo.
               </p>
             </div>
 
@@ -101,12 +130,6 @@ export default function AssinaturaPage() {
               {renewing ? 'Gerando cobrança...' : 'Renovar agora (mais 30 dias)'}
             </button>
           </>
-        )}
-
-        {company?.payment_method === 'card' && (
-          <p className="text-xs text-text-muted border-t border-border pt-4">
-            Sua assinatura é renovada automaticamente todo mês. Se precisar cancelar ou trocar o cartão, entre em contato com o suporte.
-          </p>
         )}
       </div>
     </div>

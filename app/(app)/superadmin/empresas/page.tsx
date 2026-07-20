@@ -239,7 +239,7 @@ export default function SuperAdminEmpresasPage() {
                   )}
                   {c.payment_method && (
                     <p className="text-text-muted text-xs mt-0.5">
-                      {c.plan ? PLAN_LABELS[c.plan] : 'Sem plano'} · {c.payment_method === 'pix' ? 'Pix' : 'Cartão'} — {c.subscription_status ?? '—'}
+                      {c.plan ? PLAN_LABELS[c.plan] : 'Sem plano'} · {c.payment_method === 'pix' ? 'Pix' : 'Cartão'} · {c.subscription_status ?? '-'}
                     </p>
                   )}
                 </div>
@@ -290,19 +290,19 @@ export default function SuperAdminEmpresasPage() {
               </div>
               <div className="space-y-2 text-sm">
                 <p><span className="text-text-muted">Slug:</span> <span className="text-text-main">/{viewCompany.slug}</span></p>
-                <p><span className="text-text-muted">E-mail do admin:</span> <span className="text-text-main">{viewCompany.admin_emails.length > 0 ? viewCompany.admin_emails.join(', ') : '—'}</span></p>
+                <p><span className="text-text-muted">E-mail do admin:</span> <span className="text-text-main">{viewCompany.admin_emails.length > 0 ? viewCompany.admin_emails.join(', ') : '-'}</span></p>
                 <p><span className="text-text-muted">Status:</span> <span className="text-text-main">{viewCompany.active ? 'Ativa' : 'Inativa'}</span></p>
                 <p><span className="text-text-muted">Criada em:</span> <span className="text-text-main">{new Date(viewCompany.created_at).toLocaleDateString('pt-BR')}</span></p>
                 <p><span className="text-text-muted">Clientes cadastrados:</span> <span className="text-text-main">{viewCompany.client_count}</span></p>
                 <p><span className="text-text-muted">Usuários (admin/colaboradores):</span> <span className="text-text-main">{viewCompany.user_count}</span></p>
-                <p><span className="text-text-muted">Perfil do Facebook:</span> <span className="text-text-main">{viewCompany.meta_tester_profile || '—'}</span></p>
+                <p><span className="text-text-muted">Perfil do Facebook:</span> <span className="text-text-main">{viewCompany.meta_tester_profile || '-'}</span></p>
                 <p><span className="text-text-muted">Testador Meta adicionado:</span> <span className="text-text-main">{viewCompany.meta_tester_added ? 'Sim' : 'Não'}</span></p>
-                <p><span className="text-text-muted">Telefone:</span> <span className="text-text-main">{viewCompany.phone || '—'}</span></p>
-                <p><span className="text-text-muted">Plano:</span> <span className="text-text-main">{viewCompany.plan ? PLAN_LABELS[viewCompany.plan] : '—'}</span></p>
-                <p><span className="text-text-muted">Pagamento:</span> <span className="text-text-main">{viewCompany.payment_method === 'pix' ? 'Pix' : viewCompany.payment_method === 'card' ? 'Cartão' : '— (cadastro manual)'}</span></p>
-                <p><span className="text-text-muted">Status da assinatura:</span> <span className="text-text-main">{viewCompany.subscription_status || '—'}</span></p>
+                <p><span className="text-text-muted">Telefone:</span> <span className="text-text-main">{viewCompany.phone || '-'}</span></p>
+                <p><span className="text-text-muted">Plano:</span> <span className="text-text-main">{viewCompany.plan ? PLAN_LABELS[viewCompany.plan] : '-'}</span></p>
+                <p><span className="text-text-muted">Pagamento:</span> <span className="text-text-main">{viewCompany.payment_method === 'pix' ? 'Pix' : viewCompany.payment_method === 'card' ? 'Cartão' : '- (cadastro manual)'}</span></p>
+                <p><span className="text-text-muted">Status da assinatura:</span> <span className="text-text-main">{viewCompany.subscription_status || '-'}</span></p>
                 {viewCompany.payment_method === 'pix' && (
-                  <p><span className="text-text-muted">Acesso válido até:</span> <span className="text-text-main">{viewCompany.access_expires_at ? new Date(viewCompany.access_expires_at).toLocaleDateString('pt-BR') : '—'}</span></p>
+                  <p><span className="text-text-muted">Acesso válido até:</span> <span className="text-text-main">{viewCompany.access_expires_at ? new Date(viewCompany.access_expires_at).toLocaleDateString('pt-BR') : '-'}</span></p>
                 )}
               </div>
             </div>

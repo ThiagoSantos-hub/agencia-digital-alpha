@@ -37,7 +37,7 @@ export async function POST() {
     line_items: [{
       price_data: {
         currency: basePrice.currency,
-        product_data: { name: `Renovação Digital Alpha — 1 mês (Pix) — ${company.name}` },
+        product_data: { name: `Renovação Digital Alpha, 1 mês (Pix), ${company.name}` },
         unit_amount: pixAmount,
       },
       quantity: 1,
