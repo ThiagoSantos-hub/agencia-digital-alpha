@@ -34,12 +34,30 @@ export async function GET() {
   return NextResponse.json(data)
 }
 
+export async function PATCH(request: Request) {
+  const auth = await requireSuperAdmin()
+  if (auth.error) return auth.error
+
+  const { companyId, metaTesterAdded } = await request.json()
+  if (!companyId) {
+    return NextResponse.json({ error: 'companyId é obrigatório.' }, { status: 400 })
+  }
+
+  const { error } = await supabaseAdmin
+    .from('companies')
+    .update({ meta_tester_added: !!metaTesterAdded })
+    .eq('id', companyId)
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ success: true })
+}
+
 export async function POST(request: Request) {
   const auth = await requireSuperAdmin()
   if (auth.error) return auth.error
 
   try {
-    const { companyName, companySlug, adminName, adminEmail, adminPassword } = await request.json()
+    const { companyName, companySlug, adminName, adminEmail, adminPassword, metaTesterProfile } = await request.json()
 
     if (!companyName || !companySlug || !adminName || !adminEmail || !adminPassword) {
       return NextResponse.json({ error: 'Todos os campos são obrigatórios.' }, { status: 400 })
@@ -47,7 +65,7 @@ export async function POST(request: Request) {
 
     const { data: company, error: companyError } = await supabaseAdmin
       .from('companies')
-      .insert({ name: companyName, slug: companySlug })
+      .insert({ name: companyName, slug: companySlug, meta_tester_profile: metaTesterProfile || null })
       .select()
       .single()
 
