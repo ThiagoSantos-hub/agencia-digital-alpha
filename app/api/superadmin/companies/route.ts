@@ -115,12 +115,18 @@ export async function POST(request: Request) {
       .from('profiles')
       .upsert({ id: authData.user.id, email: adminEmail, name: adminName, role: 'admin', company_id: company.id, must_change_password: true })
 
-    // As rotas de assinatura eletrônica só fazem UPDATE (não upsert) em integrations,
-    // então toda empresa nova precisa nascer com essas linhas já existindo (desconectadas),
-    // senão "conectar" o Autentique/Assinafy pela primeira vez falha silenciosamente.
+    // A página de Integrações só exibe cartões de integrações que já existem no
+    // banco (não cria em tempo de exibição) — sem pré-criar essas linhas, uma
+    // empresa nova via superadmin nascia com a seção "Conexões OAuth"
+    // completamente vazia (Meta Ads/Google Ads simplesmente não apareciam).
     await supabaseAdmin.from('integrations').insert([
       { company_id: company.id, type: 'autentique', label: 'Autentique', status: 'disconnected' },
       { company_id: company.id, type: 'assinafy', label: 'Assinafy', status: 'disconnected' },
+      { company_id: company.id, type: 'meta_ads', label: 'Meta Ads', status: 'disconnected' },
+      { company_id: company.id, type: 'google_ads', label: 'Google Ads', status: 'disconnected' },
+      { company_id: company.id, type: 'gmail', label: 'Gmail', status: 'disconnected' },
+      { company_id: company.id, type: 'google_drive', label: 'Google Drive', status: 'disconnected' },
+      { company_id: company.id, type: 'google_calendar', label: 'Google Calendar', status: 'disconnected' },
     ])
 
     const brevoApiKey = process.env.BREVO_API_KEY

@@ -423,9 +423,13 @@ export default function IntegracoesPage() {
 
       <section>
         <h2 className="text-text-main text-lg font-semibold mb-4">Conexões OAuth</h2>
-        <p className="text-xs mb-4 text-text-muted">
+        <p className="text-xs mb-2 text-text-muted">
           Cada serviço do Google pode ser conectado com uma conta diferente. Ao clicar em "Conectar", o Google vai pedir para você escolher a conta.
         </p>
+        <div className="rounded-lg px-3 py-2.5 mb-4 text-xs bg-primary/5 border border-primary/20 text-text-muted">
+          <p className="font-medium text-text-main mb-1">Conectando o Meta Ads:</p>
+          <p>Ao clicar em "Conectar" você autoriza o acesso à sua conta de anúncios do Meta (e, se vinculado, ao Instagram da mesma conta). Escolha a conta certa quando o Facebook perguntar. Se aparecer um erro de permissão durante o processo, entre em contato com o suporte — pode ser necessário liberar seu acesso antes.</p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {integrations
             .filter(i => OAUTH_INTEGRATIONS.includes(i.type))
