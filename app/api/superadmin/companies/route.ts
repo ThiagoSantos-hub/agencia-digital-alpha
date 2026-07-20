@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
+import { provisionCompany } from '@/lib/companyProvisioning'
+import { sendWelcomeEmail } from '@/lib/email'
 
 export const dynamic = 'force-dynamic'
 
@@ -56,7 +58,7 @@ export async function PATCH(request: Request) {
   const auth = await requireSuperAdmin()
   if (auth.error) return auth.error
 
-  const { companyId, metaTesterAdded, metaTesterProfile, name, slug, active } = await request.json()
+  const { companyId, metaTesterAdded, metaTesterProfile, name, slug, active, plan } = await request.json()
   if (!companyId) {
     return NextResponse.json({ error: 'companyId é obrigatório.' }, { status: 400 })
   }
@@ -67,6 +69,7 @@ export async function PATCH(request: Request) {
   if (name !== undefined) update.name = name
   if (slug !== undefined) update.slug = slug
   if (active !== undefined) update.active = !!active
+  if (plan !== undefined) update.plan = plan || null
 
   const { error } = await supabaseAdmin
     .from('companies')
@@ -82,89 +85,20 @@ export async function POST(request: Request) {
   if (auth.error) return auth.error
 
   try {
-    const { companyName, companySlug, adminName, adminEmail, adminPassword, metaTesterProfile } = await request.json()
+    const { companyName, companySlug, adminName, adminEmail, adminPassword, metaTesterProfile, plan } = await request.json()
 
     if (!companyName || !companySlug || !adminName || !adminEmail || !adminPassword) {
       return NextResponse.json({ error: 'Todos os campos são obrigatórios.' }, { status: 400 })
     }
 
-    const { data: company, error: companyError } = await supabaseAdmin
-      .from('companies')
-      .insert({ name: companyName, slug: companySlug, meta_tester_profile: metaTesterProfile || null })
-      .select()
-      .single()
-
-    if (companyError || !company) {
-      return NextResponse.json({ error: companyError?.message || 'Erro ao criar empresa.' }, { status: 400 })
+    const result = await provisionCompany({ companyName, companySlug, adminName, adminEmail, adminPassword, metaTesterProfile, plan: plan || null })
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: result.status })
     }
 
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: adminEmail,
-      password: adminPassword,
-      email_confirm: true,
-      user_metadata: { name: adminName, role: 'admin', company_id: company.id },
-    })
+    await sendWelcomeEmail({ companyName, adminName, adminEmail, tempPassword: adminPassword })
 
-    if (authError || !authData.user) {
-      // Rollback: sem admin, a empresa fica órfã — remove pra permitir tentar de novo.
-      await supabaseAdmin.from('companies').delete().eq('id', company.id)
-      return NextResponse.json({ error: authError?.message || 'Erro ao criar usuário admin.' }, { status: 400 })
-    }
-
-    await supabaseAdmin
-      .from('profiles')
-      .upsert({ id: authData.user.id, email: adminEmail, name: adminName, role: 'admin', company_id: company.id, must_change_password: true })
-
-    // A página de Integrações só exibe cartões de integrações que já existem no
-    // banco (não cria em tempo de exibição) — sem pré-criar essas linhas, uma
-    // empresa nova via superadmin nascia com a seção "Conexões OAuth"
-    // completamente vazia (Meta Ads/Google Ads simplesmente não apareciam).
-    await supabaseAdmin.from('integrations').insert([
-      { company_id: company.id, type: 'autentique', label: 'Autentique', status: 'disconnected' },
-      { company_id: company.id, type: 'assinafy', label: 'Assinafy', status: 'disconnected' },
-      { company_id: company.id, type: 'meta_ads', label: 'Meta Ads', status: 'disconnected' },
-      { company_id: company.id, type: 'google_ads', label: 'Google Ads', status: 'disconnected' },
-      { company_id: company.id, type: 'gmail', label: 'Gmail', status: 'disconnected' },
-      { company_id: company.id, type: 'google_drive', label: 'Google Drive', status: 'disconnected' },
-      { company_id: company.id, type: 'google_calendar', label: 'Google Calendar', status: 'disconnected' },
-    ])
-
-    const brevoApiKey = process.env.BREVO_API_KEY
-    const brevoSenderEmail = process.env.BREVO_SENDER_EMAIL
-
-    if (brevoApiKey && brevoSenderEmail) {
-      const brevoPayload = {
-        sender: { name: companyName, email: brevoSenderEmail },
-        to: [{ email: adminEmail, name: adminName }],
-        replyTo: { name: companyName, email: brevoSenderEmail },
-        subject: `Seu acesso ao ${companyName} foi criado!`,
-        htmlContent: `
-          <!DOCTYPE html>
-          <html><head><meta charset="utf-8"></head>
-          <body style="font-family: sans-serif; background-color: #ffffff; margin: 0; padding: 20px;">
-            <div style="max-width: 600px; margin: 0 auto; background: #ffffff;">
-              <h2 style="color: #10b981;">Olá, ${adminName}!</h2>
-              <p>Seu acesso à plataforma ${companyName} foi criado com sucesso.</p>
-              <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <p style="margin: 0;"><strong>E-mail:</strong> ${adminEmail}</p>
-                <p style="margin: 10px 0 0 0;"><strong>Senha temporária:</strong> ${adminPassword}</p>
-              </div>
-              <p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://agencia-digital-alpha.vercel.app'}/login" style="display: inline-block; background: #10b981; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">Acessar o Sistema</a></p>
-              <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 30px 0;" />
-              <p style="color: #6b7280; font-size: 12px;">Recomendamos trocar sua senha após o primeiro acesso.</p>
-            </div>
-          </body></html>
-        `,
-      }
-
-      await fetch('https://api.brevo.com/v3/smtp/email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'api-key': brevoApiKey },
-        body: JSON.stringify(brevoPayload),
-      })
-    }
-
-    return NextResponse.json({ success: true, company })
+    return NextResponse.json({ success: true, company: result.company })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Erro interno'
     return NextResponse.json({ error: message }, { status: 500 })

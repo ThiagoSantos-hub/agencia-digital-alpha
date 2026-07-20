@@ -165,7 +165,7 @@ function ModalNovoCliente({ onClose, createCliente, refetch }: {
       meta_ad_account_id: form.meta_ad_account_id.trim() || null,
       show_campaigns: form.show_campaigns
     })
-    if (error) { setError('Erro ao salvar. Tente novamente.'); setLoading(false) }
+    if (error) { setError(error.message || 'Erro ao salvar. Tente novamente.'); setLoading(false) }
     else { await refetch(true); onClose() }
   }
 

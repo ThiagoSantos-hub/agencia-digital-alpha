@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, Megaphone, BarChart2, Bell,
   CheckSquare, List, Wallet, UserCog, Bot, Plug,
   Sparkles, MessageSquare, UserCircle, LogOut, Settings,
-  FileSignature, Building2
+  FileSignature, Building2, CreditCard
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/hooks/useAuth'
@@ -48,6 +48,7 @@ const menuGroups = [
   {
     label: 'OUTROS',
     items: [
+      { label: 'Assinatura',    href: '/assinatura',    icon: CreditCard, ativo: true },
       { label: 'Configurações', href: '/configuracoes', icon: Settings,   ativo: true },
       { label: 'Perfil',        href: '/perfil',        icon: UserCircle, ativo: true },
     ],
