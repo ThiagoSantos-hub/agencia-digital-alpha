@@ -30,12 +30,14 @@ export interface Lancamento {
   data_pagamento:   string | null   // preenchido só pelo sistema ao marcar como pago
   status:           StatusLancamento
   client_id:        string | null
+  collaborator_id:  string | null
   recorrente:       boolean
   recorrencia:      Recorrencia | null
   created_at:       string
   updated_at:       string
   // join opcional
   client_name?:     string
+  collaborator_name?: string
 }
 
 /**
@@ -54,6 +56,7 @@ export interface LancamentoInput {
   dia_vencimento:  number          // 1–31
   status?:         StatusLancamento
   client_id?:      string | null
+  collaborator_id?: string | null
   recorrente?:     boolean
   recorrencia?:    Recorrencia | null
 }
@@ -217,6 +220,16 @@ function vencimentoProximoMes(dataAtual: string, dia: number): string {
   return montarDataVencimento(dia, anoProx, mesProx)
 }
 
+/**
+ * Soma 7 dias a uma data ISO — usado na renovação de lançamentos semanais
+ * (ex.: salário de colaborador pago toda semana).
+ */
+function vencimentoProximaSemana(dataAtual: string): string {
+  const d = new Date(`${dataAtual}T00:00:00`)
+  d.setDate(d.getDate() + 7)
+  return d.toISOString().split('T')[0]
+}
+
 // ============================================================
 // HOOK PRINCIPAL
 // ============================================================
@@ -259,7 +272,8 @@ export function useFinanceiro(filtrosIniciais?: Partial<FiltrosFinanceiro>) {
         .from('finances')
         .select(`
           *,
-          clients (name)
+          clients (name),
+          collaborators (name)
         `)
         .gte('data_vencimento', inicio)
         .lte('data_vencimento', fim)
@@ -276,6 +290,7 @@ export function useFinanceiro(filtrosIniciais?: Partial<FiltrosFinanceiro>) {
       const lista: Lancamento[] = (data ?? []).map((row: any) => ({
         ...row,
         client_name: row.clients?.name ?? null,
+        collaborator_name: row.collaborators?.name ?? null,
       }))
 
       setLancamentos(lista)
@@ -363,6 +378,7 @@ export function useFinanceiro(filtrosIniciais?: Partial<FiltrosFinanceiro>) {
       data_pagamento:  null,
       status:          input.status ?? 'pendente',
       client_id:       input.client_id ?? null,
+      collaborator_id: input.collaborator_id ?? null,
       recorrente:      input.recorrente ?? true,    // padrão true — clientes recorrentes
       recorrencia:     input.recorrencia ?? 'mensal',
     })
@@ -432,23 +448,26 @@ export function useFinanceiro(filtrosIniciais?: Partial<FiltrosFinanceiro>) {
 
     if (updateErr) { setError(updateErr.message); return false }
 
-    // 2. Se for recorrente mensal, criar o do próximo mês automaticamente
-    if (lancamento.recorrente && lancamento.recorrencia === 'mensal') {
-      const proximaData = vencimentoProximoMes(
-        lancamento.data_vencimento,
-        lancamento.dia_vencimento
-      )
+    // 2. Se for recorrente (mensal ou semanal), criar o próximo automaticamente
+    if (lancamento.recorrente && (lancamento.recorrencia === 'mensal' || lancamento.recorrencia === 'semanal')) {
+      const proximaData = lancamento.recorrencia === 'mensal'
+        ? vencimentoProximoMes(lancamento.data_vencimento, lancamento.dia_vencimento)
+        : vencimentoProximaSemana(lancamento.data_vencimento)
 
-      // Verificar se já existe lançamento para esse cliente nessa data
-      // (evita duplicatas caso marcarComoPago seja chamado duas vezes)
-      const { data: existente } = await supabase
+      // Verificar se já existe lançamento pra esse mesmo cliente OU colaborador
+      // nessa data (evita duplicatas caso marcarComoPago seja chamado duas vezes)
+      let queryExistente = supabase
         .from('finances')
         .select('id')
         .eq('user_id',         lancamento.user_id)
-        .eq('client_id',       lancamento.client_id)
         .eq('data_vencimento', proximaData)
         .eq('escopo',          lancamento.escopo)
-        .maybeSingle()
+
+      queryExistente = lancamento.collaborator_id
+        ? queryExistente.eq('collaborator_id', lancamento.collaborator_id)
+        : queryExistente.eq('client_id', lancamento.client_id)
+
+      const { data: existente } = await queryExistente.maybeSingle()
 
       if (!existente) {
         const { error: insertErr } = await supabase.from('finances').insert({
@@ -463,8 +482,9 @@ export function useFinanceiro(filtrosIniciais?: Partial<FiltrosFinanceiro>) {
           data_pagamento:  null,
           status:          'pendente',
           client_id:       lancamento.client_id,
+          collaborator_id: lancamento.collaborator_id,
           recorrente:      true,
-          recorrencia:     'mensal',
+          recorrencia:     lancamento.recorrencia,
         })
 
         if (insertErr) {

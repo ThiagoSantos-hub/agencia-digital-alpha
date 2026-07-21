@@ -5,6 +5,8 @@ import { useColaboradores, ColaboradorInput } from '@/hooks/useColaboradores'
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, X } from 'lucide-react'
+import { createClient } from '@/lib/supabase'
+import { gerarOuAtualizarLancamentosSalario } from '@/lib/salaryFinance'
 
 interface ColaboradorFormInput extends ColaboradorInput {
   password?: string
@@ -97,6 +99,27 @@ export default function ColaboradoresPage() {
     setModalOpen(true)
   }
 
+  const tentarGerarFinanceiroSalario = async (collaboratorId: string, dados: ColaboradorFormInput) => {
+    if (!dados.salary || !dados.salary_frequency || !dados.salary_day || !profile?.company_id) return
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      await gerarOuAtualizarLancamentosSalario(supabase, {
+        collaboratorId,
+        collaboratorName: dados.name,
+        companyId: profile.company_id,
+        userId: user.id,
+        salary: dados.salary,
+        frequency: dados.salary_frequency,
+        day: dados.salary_day,
+      })
+    } catch (err) {
+      // Não bloqueia o cadastro do colaborador se o financeiro falhar — só loga.
+      console.error('Erro ao gerar lançamento de salário:', err)
+    }
+  }
+
   const handleSave = async () => {
     if (!form.name.trim()) { setFormError('Nome é obrigatório.'); return }
     if (!form.role.trim()) { setFormError('Cargo é obrigatório.'); return }
@@ -108,6 +131,7 @@ export default function ColaboradoresPage() {
       if (editingId) {
         const { password, ...updateData } = form
         await updateColaborador(editingId, updateData)
+        await tentarGerarFinanceiroSalario(editingId, form)
 
         if (password?.trim()) {
           const resp = await fetch('/api/collaborators/update-password', {
@@ -128,7 +152,8 @@ export default function ColaboradoresPage() {
         setToast({ message: 'Colaborador atualizado com sucesso!', type: 'success' })
       } else {
         const { password, ...dbData } = form
-        await createColaborador(dbData as ColaboradorInput)
+        const novoColaborador = await createColaborador(dbData as ColaboradorInput)
+        if (novoColaborador?.id) await tentarGerarFinanceiroSalario(novoColaborador.id, form)
 
         const inviteRes = await fetch('/api/collaborators/invite', {
           method: 'POST',
