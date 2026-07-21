@@ -41,6 +41,8 @@ export default function ColaboradorRelatoriosPage() {
   const [confirmSendReport, setConfirmSendReport] = useState<Report | null>(null)
   const [previewMensagem, setPreviewMensagem] = useState<string | null>(null)
   const [loadingPreview, setLoadingPreview] = useState(false)
+  const [deleteConfirmReport, setDeleteConfirmReport] = useState<Report | null>(null)
+  const [deletingReport, setDeletingReport] = useState(false)
 
   const destinatarioLabel = (report: Report) => {
     if (report.recebedor_tipo !== 'grupo') return report.recebedor_numero
@@ -142,10 +144,12 @@ export default function ColaboradorRelatoriosPage() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este relatório?')) {
-      await deleteRelatorio(id)
-    }
+  const confirmDeleteReport = async () => {
+    if (!deleteConfirmReport) return
+    setDeletingReport(true)
+    await deleteRelatorio(deleteConfirmReport.id)
+    setDeletingReport(false)
+    setDeleteConfirmReport(null)
   }
 
   const handleSendNow = async (reportId: string) => {
@@ -340,7 +344,7 @@ export default function ColaboradorRelatoriosPage() {
                         <Clock size={15} />
                       </button>
                       <button
-                        onClick={() => handleDelete(report.id)}
+                        onClick={() => setDeleteConfirmReport(report)}
                         title="Excluir"
                         className="p-2 rounded-lg border border-border bg-surface text-text-muted hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors"
                       >
@@ -445,6 +449,38 @@ export default function ColaboradorRelatoriosPage() {
                   className="flex-1 px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white transition-colors text-sm font-medium disabled:opacity-50"
                 >
                   Sim, enviar
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {deleteConfirmReport && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+            onClick={() => setDeleteConfirmReport(null)}
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-surface border border-border rounded-xl shadow-2xl w-full max-w-sm p-6">
+              <h2 className="text-lg font-bold text-text-main mb-1">Excluir relatório?</h2>
+              <p className="text-sm text-text-muted mb-5">
+                Isso vai apagar "<span className="font-medium text-text-main">{deleteConfirmReport.nome}</span>" pra sempre, incluindo a configuração de envio. Não dá pra desfazer.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setDeleteConfirmReport(null)}
+                  className="flex-1 px-4 py-2 rounded-lg border border-border text-text-main hover:bg-hover-bg transition-colors text-sm font-medium"
+                >
+                  Não
+                </button>
+                <button
+                  onClick={confirmDeleteReport}
+                  disabled={deletingReport}
+                  className="flex-1 px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors text-sm font-medium disabled:opacity-50"
+                >
+                  {deletingReport ? 'Excluindo...' : 'Sim, excluir'}
                 </button>
               </div>
             </div>
