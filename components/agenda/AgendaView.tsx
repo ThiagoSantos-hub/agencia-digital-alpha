@@ -14,6 +14,9 @@ import {
   Calendar,
   Mail,
   Trash2,
+  Plus,
+  Send,
+  X,
 } from 'lucide-react'
 
 const PLATFORM_LOGOS: Record<'gmail' | 'google_calendar', string> = {
@@ -29,6 +32,7 @@ interface AgendaEvent {
   location: string | null
   meetLink: string | null
   allDay: boolean
+  createdBySystem: boolean
 }
 
 interface AgendaEmail {
@@ -40,6 +44,12 @@ interface AgendaEmail {
   link: string
 }
 
+interface AgendaStats {
+  reunioesHoje: number
+  reunioesSemana: number
+  emailsImportantes: number
+}
+
 interface AgendaData {
   calendarConnected: boolean
   gmailConnected: boolean
@@ -48,7 +58,12 @@ interface AgendaData {
   events: AgendaEvent[]
   emails: AgendaEmail[]
   resumoIA: string | null
+  stats: AgendaStats
 }
+
+type DismissTarget =
+  | { type: 'event'; id: string; title: string; createdBySystem: boolean }
+  | { type: 'email'; id: string; title: string; createdBySystem: false }
 
 function formatTime(value: string | null, allDay: boolean) {
   if (!value || allDay) return 'Dia todo'
@@ -124,20 +139,54 @@ function ConnectCard({
   )
 }
 
-function SectionHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
+function SectionHeader({ icon, title, action }: { icon: React.ReactNode; title: string; action?: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2 mb-3">
-      <div className="w-6 h-6 rounded-md bg-primary/10 text-primary flex items-center justify-center">{icon}</div>
-      <h2 className="text-text-main text-sm font-bold">{title}</h2>
+    <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center gap-2">
+        <div className="w-6 h-6 rounded-md bg-primary/10 text-primary flex items-center justify-center">{icon}</div>
+        <h2 className="text-text-main text-sm font-bold">{title}</h2>
+      </div>
+      {action}
     </div>
   )
 }
+
+function StatCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="bg-surface border border-border rounded-xl p-4">
+      <p className="text-text-main text-2xl font-bold">{value}</p>
+      <p className="text-text-muted text-xs mt-0.5">{label}</p>
+    </div>
+  )
+}
+
+function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="bg-surface border border-border rounded-xl w-full max-w-md shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
+        <div className="flex-shrink-0 flex items-center justify-between px-5 py-3 border-b border-border">
+          <h2 className="text-sm font-semibold text-text-main">{title}</h2>
+          <button onClick={onClose} className="text-text-muted hover:text-text-main p-1 rounded-lg hover:bg-hover-bg">
+            <X size={16} />
+          </button>
+        </div>
+        <div className="p-5 overflow-y-auto">{children}</div>
+      </div>
+    </div>
+  )
+}
+
+const inputCls = 'w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-text-main placeholder:text-text-disabled focus:outline-none focus:border-primary/50 transition-colors'
+const labelCls = 'block text-xs font-semibold text-text-main mb-1'
 
 export function AgendaView() {
   const [data, setData] = useState<AgendaData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [dismissing, setDismissing] = useState<string | null>(null)
+  const [confirmTarget, setConfirmTarget] = useState<DismissTarget | null>(null)
+  const [showNewMeeting, setShowNewMeeting] = useState(false)
+  const [showNewEmail, setShowNewEmail] = useState(false)
   const searchParams = useSearchParams()
 
   const fetchAgenda = useCallback(async () => {
@@ -168,12 +217,14 @@ export function AgendaView() {
     fetchAgenda()
   }
 
-  const dismiss = async (type: 'event' | 'email', id: string) => {
+  const confirmDismiss = async () => {
+    if (!confirmTarget) return
+    const { type, id, createdBySystem } = confirmTarget
     setDismissing(id)
     await fetch('/api/agenda/dismiss', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, id }),
+      body: JSON.stringify({ type, id, deleteFromGoogle: createdBySystem }),
     })
     setData((prev) => {
       if (!prev) return prev
@@ -182,6 +233,7 @@ export function AgendaView() {
         : { ...prev, emails: prev.emails.filter((e) => e.id !== id) }
     })
     setDismissing(null)
+    setConfirmTarget(null)
   }
 
   const eventsByDay = useMemo(() => {
@@ -221,13 +273,33 @@ export function AgendaView() {
 
   return (
     <div className="space-y-6 pb-20 max-w-4xl mx-auto">
-      <div>
-        <h1 className="text-text-main text-2xl font-bold flex items-center gap-2">
-          <CalendarClock size={24} className="text-primary" /> Agenda
-        </h1>
-        <p className="text-text-muted text-sm mt-1">
-          Sua agenda e seus e-mails importantes, direto do seu Google, num lugar só.
-        </p>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-text-main text-2xl font-bold flex items-center gap-2">
+            <CalendarClock size={24} className="text-primary" /> Agenda
+          </h1>
+          <p className="text-text-muted text-sm mt-1">
+            Suas reuniões e seus e-mails, direto do seu Google, num lugar só.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowNewMeeting(true)}
+            disabled={!data.calendarConnected}
+            title={!data.calendarConnected ? 'Conecte o Google Agenda primeiro' : ''}
+            className="flex items-center gap-1.5 text-xs px-3.5 py-2 rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium transition-colors"
+          >
+            <Plus size={14} /> Nova reunião
+          </button>
+          <button
+            onClick={() => setShowNewEmail(true)}
+            disabled={!data.gmailConnected}
+            title={!data.gmailConnected ? 'Conecte o Gmail primeiro' : ''}
+            className="flex items-center gap-1.5 text-xs px-3.5 py-2 rounded-lg bg-surface border border-border hover:border-primary/40 disabled:opacity-40 disabled:cursor-not-allowed text-text-main font-medium transition-colors"
+          >
+            <Send size={14} /> Novo e-mail
+          </button>
+        </div>
       </div>
 
       {success === 'google_connected' && (
@@ -240,7 +312,7 @@ export function AgendaView() {
         <ConnectCard
           type="google_calendar"
           label="Google Agenda"
-          description="Conecte pra ver suas reuniões e compromissos aqui."
+          description="Conecte pra ver e criar suas reuniões aqui."
           connected={data.calendarConnected}
           connectedEmail={data.connectedEmailCalendar}
           onDisconnect={handleDisconnect}
@@ -248,12 +320,20 @@ export function AgendaView() {
         <ConnectCard
           type="gmail"
           label="Gmail"
-          description="Conecte pra ver seus e-mails marcados como importantes."
+          description="Conecte pra ver e-mails importantes e enviar e-mail daqui."
           connected={data.gmailConnected}
           connectedEmail={data.connectedEmailGmail}
           onDisconnect={handleDisconnect}
         />
       </div>
+
+      {(data.calendarConnected || data.gmailConnected) && (
+        <div className="grid grid-cols-3 gap-3">
+          <StatCard label="Reuniões hoje" value={data.stats.reunioesHoje} />
+          <StatCard label="Reuniões nos próximos 7 dias" value={data.stats.reunioesSemana} />
+          <StatCard label="E-mails importantes" value={data.stats.emailsImportantes} />
+        </div>
+      )}
 
       {data.resumoIA && (
         <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 p-5">
@@ -306,9 +386,9 @@ export function AgendaView() {
                             )}
                           </div>
                           <button
-                            onClick={() => dismiss('event', event.id)}
+                            onClick={() => setConfirmTarget({ type: 'event', id: event.id, title: event.title, createdBySystem: event.createdBySystem })}
                             disabled={dismissing === event.id}
-                            title="Esconder da agenda"
+                            title="Excluir"
                             className="opacity-0 group-hover:opacity-100 text-text-disabled hover:text-red-500 transition-all shrink-0 h-fit disabled:opacity-50"
                           >
                             <Trash2 size={14} />
@@ -349,9 +429,9 @@ export function AgendaView() {
                         <p className="text-text-muted text-xs mt-1 line-clamp-2">{email.snippet}</p>
                       </a>
                       <button
-                        onClick={() => dismiss('email', email.id)}
+                        onClick={() => setConfirmTarget({ type: 'email', id: email.id, title: email.subject, createdBySystem: false })}
                         disabled={dismissing === email.id}
-                        title="Esconder da agenda"
+                        title="Excluir"
                         className="opacity-0 group-hover:opacity-100 text-text-disabled hover:text-red-500 transition-all shrink-0 h-fit disabled:opacity-50"
                       >
                         <Trash2 size={14} />
@@ -364,6 +444,222 @@ export function AgendaView() {
           </div>
         </div>
       )}
+
+      {confirmTarget && (
+        <Modal title={confirmTarget.type === 'event' ? 'Excluir reunião?' : 'Excluir e-mail da lista?'} onClose={() => setConfirmTarget(null)}>
+          <p className="text-text-main text-sm font-semibold mb-2">{confirmTarget.title}</p>
+          <p className="text-text-muted text-sm mb-5">
+            {confirmTarget.type === 'event'
+              ? confirmTarget.createdBySystem
+                ? 'Essa reunião foi criada por aqui e será apagada de verdade do seu Google Agenda também.'
+                : 'Isso só esconde a reunião desta tela. Ela continua existindo normalmente no seu Google Agenda.'
+              : 'Isso só esconde o e-mail desta tela. Ele continua no seu Gmail normalmente, nada é apagado de verdade.'}
+          </p>
+          <div className="flex items-center justify-end gap-2">
+            <button onClick={() => setConfirmTarget(null)} className="text-xs px-4 py-2 rounded-lg border border-border text-text-muted hover:text-text-main hover:bg-hover-bg transition-colors">
+              Não
+            </button>
+            <button
+              onClick={confirmDismiss}
+              disabled={dismissing === confirmTarget.id}
+              className="text-xs px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium transition-colors disabled:opacity-50"
+            >
+              Sim, excluir
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {showNewMeeting && (
+        <NewMeetingModal
+          onClose={() => setShowNewMeeting(false)}
+          onCreated={() => {
+            setShowNewMeeting(false)
+            fetchAgenda()
+          }}
+        />
+      )}
+
+      {showNewEmail && (
+        <NewEmailModal
+          onClose={() => setShowNewEmail(false)}
+          onSent={() => setShowNewEmail(false)}
+        />
+      )}
     </div>
+  )
+}
+
+function NewMeetingModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [location, setLocation] = useState('')
+  const [date, setDate] = useState('')
+  const [startTime, setStartTime] = useState('')
+  const [endTime, setEndTime] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!title || !date || !startTime || !endTime) {
+      setError('Título, data, início e fim são obrigatórios.')
+      return
+    }
+    const start = new Date(`${date}T${startTime}`)
+    const end = new Date(`${date}T${endTime}`)
+    if (end <= start) {
+      setError('O horário de fim precisa ser depois do início.')
+      return
+    }
+
+    setSaving(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/agenda/meetings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          description: description || undefined,
+          location: location || undefined,
+          start: start.toISOString(),
+          end: end.toISOString(),
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setError(json.error || 'Erro ao criar a reunião.')
+        return
+      }
+      onCreated()
+    } catch {
+      setError('Erro ao criar a reunião.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Modal title="Nova reunião" onClose={onClose}>
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <div>
+          <label className={labelCls}>Título *</label>
+          <input className={inputCls} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Reunião com o cliente X" />
+        </div>
+        <div>
+          <label className={labelCls}>Descrição</label>
+          <textarea className={`${inputCls} min-h-[70px] resize-none`} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Pauta, observações..." />
+        </div>
+        <div>
+          <label className={labelCls}>Local ou link</label>
+          <input className={inputCls} value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Endereço ou link da chamada" />
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <div>
+            <label className={labelCls}>Data *</label>
+            <input type="date" className={inputCls} value={date} onChange={(e) => setDate(e.target.value)} />
+          </div>
+          <div>
+            <label className={labelCls}>Início *</label>
+            <input type="time" className={inputCls} value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+          </div>
+          <div>
+            <label className={labelCls}>Fim *</label>
+            <input type="time" className={inputCls} value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+          </div>
+        </div>
+
+        {error && (
+          <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-red-600 text-xs">
+            <AlertCircle size={14} className="shrink-0 mt-0.5" /> {error}
+          </div>
+        )}
+
+        <div className="flex items-center justify-end gap-2 pt-1">
+          <button type="button" onClick={onClose} className="text-xs px-4 py-2 rounded-lg border border-border text-text-muted hover:text-text-main hover:bg-hover-bg transition-colors">
+            Cancelar
+          </button>
+          <button type="submit" disabled={saving} className="text-xs px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium transition-colors disabled:opacity-50">
+            {saving ? 'Criando...' : 'Criar reunião'}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
+function NewEmailModal({ onClose, onSent }: { onClose: () => void; onSent: () => void }) {
+  const [to, setTo] = useState('')
+  const [subject, setSubject] = useState('')
+  const [body, setBody] = useState('')
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [sent, setSent] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!to || !subject || !body) {
+      setError('Destinatário, assunto e mensagem são obrigatórios.')
+      return
+    }
+    setSending(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/agenda/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to, subject, body }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setError(json.error || 'Erro ao enviar o e-mail.')
+        return
+      }
+      setSent(true)
+      setTimeout(onSent, 1200)
+    } catch {
+      setError('Erro ao enviar o e-mail.')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <Modal title="Novo e-mail" onClose={onClose}>
+      {sent ? (
+        <p className="text-emerald-600 text-sm font-medium">E-mail enviado com sucesso.</p>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <label className={labelCls}>Para *</label>
+            <input type="email" className={inputCls} value={to} onChange={(e) => setTo(e.target.value)} placeholder="destinatario@exemplo.com" />
+          </div>
+          <div>
+            <label className={labelCls}>Assunto *</label>
+            <input className={inputCls} value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Assunto do e-mail" />
+          </div>
+          <div>
+            <label className={labelCls}>Mensagem *</label>
+            <textarea className={`${inputCls} min-h-[140px] resize-none`} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Escreva sua mensagem..." />
+          </div>
+
+          {error && (
+            <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-red-600 text-xs">
+              <AlertCircle size={14} className="shrink-0 mt-0.5" /> {error}
+            </div>
+          )}
+
+          <div className="flex items-center justify-end gap-2 pt-1">
+            <button type="button" onClick={onClose} className="text-xs px-4 py-2 rounded-lg border border-border text-text-muted hover:text-text-main hover:bg-hover-bg transition-colors">
+              Cancelar
+            </button>
+            <button type="submit" disabled={sending} className="flex items-center gap-1.5 text-xs px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium transition-colors disabled:opacity-50">
+              <Send size={13} /> {sending ? 'Enviando...' : 'Enviar'}
+            </button>
+          </div>
+        </form>
+      )}
+    </Modal>
   )
 }

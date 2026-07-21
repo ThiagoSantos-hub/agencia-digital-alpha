@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
-import { refreshGoogleAccessToken } from '@/lib/googleToken'
 import { OpenAIProvider } from '@/lib/ai/providers/openai.provider'
+import { CRIADO_PELO_SISTEMA_KEY, getValidAccessToken } from '@/lib/agendaCalendar'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,6 +13,7 @@ interface AgendaEvent {
   location: string | null
   meetLink: string | null
   allDay: boolean
+  createdBySystem: boolean
 }
 
 interface AgendaEmail {
@@ -22,33 +23,6 @@ interface AgendaEmail {
   date: string | null
   snippet: string
   link: string
-}
-
-async function getValidAccessToken(
-  supabase: ReturnType<typeof createServerClient>,
-  userId: string,
-  type: 'gmail' | 'google_calendar',
-  row: { access_token: string | null; refresh_token: string | null; token_expiry: string | null }
-): Promise<string | null> {
-  if (!row.access_token) return null
-  const expired = !row.token_expiry || new Date(row.token_expiry).getTime() < Date.now() + 60_000
-  if (!expired) return row.access_token
-
-  if (!row.refresh_token) return null
-  const refreshed = await refreshGoogleAccessToken(row.refresh_token)
-  if (!refreshed) return null
-
-  await supabase
-    .from('personal_integrations')
-    .update({
-      access_token: refreshed.accessToken,
-      token_expiry: new Date(Date.now() + refreshed.expiresIn * 1000).toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq('user_id', userId)
-    .eq('type', type)
-
-  return refreshed.accessToken
 }
 
 async function fetchCalendarEvents(accessToken: string): Promise<AgendaEvent[]> {
@@ -73,6 +47,7 @@ async function fetchCalendarEvents(accessToken: string): Promise<AgendaEvent[]> 
     location: item.location || null,
     meetLink: item.hangoutLink || null,
     allDay: !item.start?.dateTime,
+    createdBySystem: item.extendedProperties?.private?.[CRIADO_PELO_SISTEMA_KEY] === 'true',
   }))
 }
 
@@ -201,6 +176,14 @@ export async function GET() {
 
   const resumoIA = await gerarResumoIA(events, emails)
 
+  const hoje = new Date().toDateString()
+  const em7dias = Date.now() + 7 * 24 * 60 * 60 * 1000
+  const stats = {
+    reunioesHoje: events.filter((e) => e.start && new Date(e.start).toDateString() === hoje).length,
+    reunioesSemana: events.filter((e) => e.start && new Date(e.start).getTime() <= em7dias).length,
+    emailsImportantes: emails.length,
+  }
+
   return NextResponse.json({
     calendarConnected,
     gmailConnected,
@@ -209,5 +192,6 @@ export async function GET() {
     events,
     emails,
     resumoIA,
+    stats,
   })
 }
