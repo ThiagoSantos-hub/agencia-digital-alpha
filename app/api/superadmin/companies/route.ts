@@ -80,6 +80,64 @@ export async function PATCH(request: Request) {
   return NextResponse.json({ success: true })
 }
 
+// DELETE — apaga a empresa e TODOS os dados relacionados a ela, permanentemente.
+// Ordem importa por causa de chaves estrangeiras sem CASCADE (ex: contracts
+// bloqueia a exclusão de contract_templates se não for apagado antes).
+export async function DELETE(request: Request) {
+  const auth = await requireSuperAdmin()
+  if (auth.error) return auth.error
+
+  const { searchParams } = new URL(request.url)
+  const companyId = searchParams.get('companyId')
+  if (!companyId) {
+    return NextResponse.json({ error: 'companyId é obrigatório.' }, { status: 400 })
+  }
+
+  const { data: company } = await supabaseAdmin.from('companies').select('is_platform_owner').eq('id', companyId).single()
+  if (!company) return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 })
+  if (company.is_platform_owner) return NextResponse.json({ error: 'Não é possível excluir a empresa da plataforma.' }, { status: 400 })
+
+  try {
+    // Tabelas com company_id direto, na ordem que respeita as chaves
+    // estrangeiras sem ON DELETE CASCADE (contracts antes de contract_templates).
+    const tablesInOrder = [
+      'contracts',
+      'contract_templates',
+      'campaign_metrics',
+      'campaigns',
+      'clients',
+      'collaborators',
+      'finances',
+      'webhooks',
+      'reports',
+      'alerts',
+      'feedbacks',
+      'conversations',
+      'integrations',
+    ]
+    for (const table of tablesInOrder) {
+      const { error } = await supabaseAdmin.from(table).delete().eq('company_id', companyId)
+      if (error) throw new Error(`Falha ao apagar ${table}: ${error.message}`)
+    }
+
+    // Usuários: apagar via Admin API (não só a linha de profiles) pra
+    // cascatear tudo que referencia auth.users (checklists, notificações,
+    // whatsapp_instances/groups, password_reset_tokens, etc.)
+    const { data: profiles } = await supabaseAdmin.from('profiles').select('id').eq('company_id', companyId)
+    for (const p of profiles ?? []) {
+      await supabaseAdmin.auth.admin.deleteUser(p.id)
+    }
+
+    const { error: companyError } = await supabaseAdmin.from('companies').delete().eq('id', companyId)
+    if (companyError) throw new Error(`Falha ao apagar a empresa: ${companyError.message}`)
+
+    return NextResponse.json({ success: true })
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Erro interno'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}
+
 export async function POST(request: Request) {
   const auth = await requireSuperAdmin()
   if (auth.error) return auth.error
