@@ -43,8 +43,8 @@ const INTEGRATION_ICONS: Record<string, string> = {
   brevo: 'https://www.brevo.com/wp-content/uploads/2023/01/brevo-logo.svg',
   openai: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/OpenAI_Logo.svg/200px-OpenAI_Logo.svg.png',
   evolution_api: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/200px-WhatsApp.svg.png',
-  n8n: 'https://n8n.io/favicon.ico',
-  elevenlabs: 'https://elevenlabs.io/favicon.ico',
+  n8n: 'https://cdn.simpleicons.org/n8n',
+  elevenlabs: 'https://cdn.simpleicons.org/elevenlabs',
   autentique: 'https://www.autentique.com.br/favicon.ico',
   assinafy: 'https://www.assinafy.com.br/favicon.ico',
 }
