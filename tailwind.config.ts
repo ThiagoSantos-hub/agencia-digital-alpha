@@ -21,8 +21,8 @@ const config: Config = {
         'text-main':       'var(--color-text-main, #1E293B)',
         'text-muted':      'var(--color-text-muted, #64748B)',
         'text-disabled':   'var(--color-text-disabled, #94A3B8)',
-        'active-bg':       '#EFF6FF',
-        'active-border':   '#BFDBFE',
+        'active-bg':       'var(--color-active-bg, #EFF6FF)',
+        'active-border':   'var(--color-active-border, #BFDBFE)',
         'hover-bg':        'var(--color-hover-bg, #F1F5F9)',
       },
       // Elevação 3D global — qualquer shadow-sm/md/lg do sistema

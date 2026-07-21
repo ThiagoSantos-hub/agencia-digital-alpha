@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useNotificacoes } from '@/hooks/useNotificacoes'
 import { Bell, CheckCheck, Trash2, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
 
 function iconeTipo(tipo: string) {
   switch (tipo) {
@@ -64,6 +65,7 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-4">
+        <ThemeToggle />
         <div ref={sinoRef} className="relative">
           <button
             onClick={() => setSinoAberto(prev => !prev)}

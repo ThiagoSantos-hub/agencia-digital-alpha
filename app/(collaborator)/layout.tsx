@@ -32,6 +32,7 @@ import { CollaboratorNavLink } from '@/components/layout/CollaboratorNavLink'
 import { NotificationToasts } from '@/components/layout/NotificationToasts'
 import { NotificationPermissionPrompt } from '@/components/layout/NotificationPermissionPrompt'
 import { AlphaWidget } from '@/components/AlphaWidget'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { springSoft } from '@/lib/motion'
 
 const menuGroups = [
@@ -292,6 +293,7 @@ export default function CollaboratorLayout({
           </div>
 
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             <div ref={sinoRef} className="relative">
               <motion.button
                 onClick={() => setSinoAberto(prev => !prev)}
