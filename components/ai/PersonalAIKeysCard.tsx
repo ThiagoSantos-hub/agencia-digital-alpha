@@ -53,8 +53,11 @@ export function PersonalAIKeysCard() {
   const [workContext, setWorkContext] = useState('')
   const [profileSaved, setProfileSaved] = useState(false)
 
-  const fetchStatus = async () => {
-    setLoading(true)
+  // showLoading só deve ser true na primeira busca (montagem) — chamado de
+  // novo depois de salvar/desconectar, ligar loading de novo fazia o card
+  // inteiro sumir (return null) e reaparecer, parecendo um reload de página.
+  const fetchStatus = async (showLoading = true) => {
+    if (showLoading) setLoading(true)
     try {
       const res = await fetch('/api/ai/keys')
       const json = await res.json()
@@ -65,7 +68,7 @@ export function PersonalAIKeysCard() {
       setPreferredName(json.preferredName ?? '')
       setWorkContext(json.workContext ?? '')
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
   }
 
@@ -83,14 +86,14 @@ export function PersonalAIKeysCard() {
       body: JSON.stringify({ openaiApiKey: openaiKey.trim() }),
     })
     setOpenaiKey('')
-    await fetchStatus()
+    await fetchStatus(false)
     setSaving(null)
   }
 
   const removeOpenai = async () => {
     setSaving('openai')
     await fetch('/api/ai/keys?type=openai', { method: 'DELETE' })
-    await fetchStatus()
+    await fetchStatus(false)
     setSaving(null)
   }
 
@@ -104,14 +107,14 @@ export function PersonalAIKeysCard() {
     })
     setElevenlabsKey('')
     setElevenlabsVoiceId('')
-    await fetchStatus()
+    await fetchStatus(false)
     setSaving(null)
   }
 
   const removeElevenlabs = async () => {
     setSaving('elevenlabs')
     await fetch('/api/ai/keys?type=elevenlabs', { method: 'DELETE' })
-    await fetchStatus()
+    await fetchStatus(false)
     setSaving(null)
   }
 
@@ -124,14 +127,14 @@ export function PersonalAIKeysCard() {
       body: JSON.stringify({ elevenlabsAgentId: agentId.trim() }),
     })
     setAgentId('')
-    await fetchStatus()
+    await fetchStatus(false)
     setSaving(null)
   }
 
   const removeAgent = async () => {
     setSaving('agent')
     await fetch('/api/ai/keys?type=agent', { method: 'DELETE' })
-    await fetchStatus()
+    await fetchStatus(false)
     setSaving(null)
   }
 

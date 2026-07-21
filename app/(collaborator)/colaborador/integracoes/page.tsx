@@ -114,9 +114,19 @@ export default function IntegracoesColaboradorPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-text-main text-2xl font-bold">Integrações</h1>
-        <p className="text-sm mt-1 text-text-muted">Conecte suas ferramentas e visualize as integrações da agência.</p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-text-main text-2xl font-bold">Integrações</h1>
+          <p className="text-sm mt-1 text-text-muted">Conecte suas ferramentas e visualize as integrações da agência.</p>
+        </div>
+        <a
+          href="https://wa.me/5585992307273"
+          target="_blank"
+          rel="noreferrer"
+          className="text-sm font-medium text-cta hover:text-cta-hover flex items-center gap-1.5 shrink-0"
+        >
+          💬 Suporte via WhatsApp
+        </a>
       </div>
 
       {successMsg && <div className="p-3 rounded-lg text-sm font-medium bg-cta/10 text-cta border border-cta/30">✅ {successMsg}</div>}

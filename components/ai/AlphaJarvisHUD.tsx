@@ -4,11 +4,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Activity, Users, Megaphone, CheckSquare, Wallet, Radio } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
-import type { VoiceState } from '@/hooks/useAlphaVoice'
 import { SecondBrainGraph } from '@/components/ai/SecondBrainGraph'
 import { ALPHA_CONFIG } from '@/lib/ai/alphaPersona'
 
 export type JarvisMode = 'alpha' | 'eleven'
+export type VoiceState = 'idle' | 'listening' | 'processing' | 'speaking'
 
 interface CrmStats {
   clientes: number

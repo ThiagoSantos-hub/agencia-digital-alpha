@@ -8,8 +8,8 @@ import { NotificationSound } from '@/components/layout/NotificationSound'
 import { NotificationToasts } from '@/components/layout/NotificationToasts'
 import { NotificationPermissionPrompt } from '@/components/layout/NotificationPermissionPrompt'
 import { AlphaWidget } from '@/components/AlphaWidget'
-import { AlphaVoiceButton } from '@/components/AlphaVoiceButton'
 import { BillingAlertsModal } from '@/components/billing/BillingAlertsModal'
+import { SupportChatWidget } from '@/components/support/SupportChatWidget'
 import { PageFade } from '@/components/ui/Motion'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -92,8 +92,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <NotificationToasts />
       <NotificationPermissionPrompt />
       <AlphaWidget />
-      <AlphaVoiceButton />
       <BillingAlertsModal />
+      <SupportChatWidget />
     </div>
   )
 }

@@ -55,17 +55,22 @@ function statusInfo(c: CompanyPayment): { label: string; cls: string } {
   return { label: '-', cls: 'text-text-muted bg-slate-100 border-slate-200' }
 }
 
-function SummaryCard({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: string; tone: string }) {
+function SummaryCard({ icon, label, value, tone }: { icon: React.ReactNode; label: string | string[]; value: string; tone: string }) {
+  const linhas = Array.isArray(label) ? label : [label]
   return (
     <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-3">
       <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${tone}`}>{icon}</div>
       <div className="min-w-0">
-        <p className="text-text-muted text-[11px] font-medium uppercase tracking-wide leading-tight">{label}</p>
+        <p className="text-text-muted text-[11px] font-medium uppercase tracking-wide leading-tight">
+          {linhas.map((linha, i) => <span key={i} className="block">{linha}</span>)}
+        </p>
         <p className="text-text-main text-lg font-bold leading-tight">{value}</p>
       </div>
     </div>
   )
 }
+
+const hoje = () => new Date().toISOString().slice(0, 10)
 
 export default function SuperAdminPagamentosPage() {
   const { profile, loading: authLoading } = useAuth()
@@ -73,11 +78,12 @@ export default function SuperAdminPagamentosPage() {
   const [summary, setSummary] = useState<Summary | null>(null)
   const [loading, setLoading] = useState(true)
   const [apenasProblemas, setApenasProblemas] = useState(false)
+  const [mrrAte, setMrrAte] = useState(hoje())
 
   useEffect(() => {
     const fetchPayments = async () => {
       setLoading(true)
-      const res = await fetch('/api/superadmin/payments')
+      const res = await fetch(`/api/superadmin/payments?until=${mrrAte}`)
       if (res.ok) {
         const data = await res.json()
         setCompanies(data.companies)
@@ -86,7 +92,7 @@ export default function SuperAdminPagamentosPage() {
       setLoading(false)
     }
     fetchPayments()
-  }, [])
+  }, [mrrAte])
 
   if (authLoading) return null
   if (!profile?.is_super_admin) {
@@ -109,10 +115,26 @@ export default function SuperAdminPagamentosPage() {
 
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <SummaryCard icon={<TrendingUp size={18} />} label="MRR estimado" value={formatBRL(summary.mrr)} tone="bg-primary/10 text-primary" />
+          <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 bg-primary/10 text-primary">
+              <TrendingUp size={18} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-text-muted text-[11px] font-medium uppercase tracking-wide leading-tight">MRR estimado</p>
+                <input
+                  type="date"
+                  value={mrrAte}
+                  onChange={(e) => setMrrAte(e.target.value || hoje())}
+                  className="text-[10px] bg-background border border-border rounded px-1 py-0.5 text-text-muted focus:outline-none focus:border-primary/50"
+                />
+              </div>
+              <p className="text-text-main text-lg font-bold leading-tight">{formatBRL(summary.mrr)}</p>
+            </div>
+          </div>
           <SummaryCard icon={<CreditCard size={18} />} label="Em dia" value={String(summary.emDia)} tone="bg-cta/10 text-cta" />
           <SummaryCard icon={<Clock size={18} />} label="Em teste" value={String(summary.emTrial)} tone="bg-primary/10 text-primary" />
-          <SummaryCard icon={<AlertTriangle size={18} />} label="Atrasadas/canceladas" value={String(summary.atrasados)} tone="bg-red-50 text-red-600" />
+          <SummaryCard icon={<AlertTriangle size={18} />} label={['Atrasadas', 'canceladas']} value={String(summary.atrasados)} tone="bg-red-50 text-red-600" />
           <SummaryCard icon={<Timer size={18} />} label="Pix vencendo (5d)" value={String(summary.pixVencendo)} tone="bg-amber-50 text-amber-600" />
         </div>
       )}

@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
 import { stripe } from '@/lib/stripe'
 import { PLAN_PRICE_BRL, type Plan } from '@/lib/planLimits'
@@ -36,17 +36,24 @@ interface CompanyRow {
   access_expires_at: string | null
   admin_emails: string[]
   renews_at: string | null
+  created_at: string
 }
 
 // Empresa cadastrada manualmente (sem Stripe) não tem pagamento pra
 // acompanhar — não entra na lista.
-export async function GET() {
+export async function GET(request: NextRequest) {
   const auth = await requireSuperAdmin()
   if (auth.error) return auth.error
 
+  // MRR "até" uma data — não temos histórico de status de assinatura, então
+  // isso é uma aproximação: empresas que já existiam até essa data, com o
+  // plano e status ATUAIS delas (não um retrato exato do passado).
+  const untilParam = request.nextUrl.searchParams.get('until')
+  const until = untilParam ? new Date(`${untilParam}T23:59:59`) : new Date()
+
   const { data: companies, error } = await supabaseAdmin
     .from('companies')
-    .select('id, name, slug, is_platform_owner, active, plan, payment_method, stripe_subscription_id, subscription_status, access_expires_at')
+    .select('id, name, slug, is_platform_owner, active, plan, payment_method, stripe_subscription_id, subscription_status, access_expires_at, created_at')
     .not('payment_method', 'is', null)
     .order('created_at', { ascending: false })
 
@@ -81,7 +88,11 @@ export async function GET() {
   const priceOf = (plan: Plan | null) => (plan ? PLAN_PRICE_BRL[plan] : 0)
 
   const mrr = rows
-    .filter((c) => c.payment_method === 'card' && ['active', 'trialing'].includes(c.subscription_status ?? ''))
+    .filter((c) =>
+      c.payment_method === 'card' &&
+      ['active', 'trialing'].includes(c.subscription_status ?? '') &&
+      new Date(c.created_at) <= until
+    )
     .reduce((sum, c) => sum + priceOf(c.plan), 0)
 
   const emDia = rows.filter((c) =>
