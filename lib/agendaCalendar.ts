@@ -1,5 +1,5 @@
 import { refreshGoogleAccessToken } from '@/lib/googleToken'
-import type { createServerClient } from '@/lib/supabase-server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export interface AgendaEvent {
   id: string
@@ -25,7 +25,7 @@ export const CRIADO_PELO_SISTEMA_KEY = 'criado_pelo_sistema'
 // Compartilhado entre a rota de leitura da Agenda e as rotas de criar
 // reunião / enviar e-mail, pra não duplicar essa lógica em cada uma.
 export async function getValidAccessToken(
-  supabase: ReturnType<typeof createServerClient>,
+  supabase: SupabaseClient,
   userId: string,
   type: 'gmail' | 'google_calendar',
   row: { access_token: string | null; refresh_token: string | null; token_expiry: string | null }
@@ -125,4 +125,55 @@ export async function deleteCalendarEvent(accessToken: string, eventId: string):
     headers: { Authorization: `Bearer ${accessToken}` },
   })
   return res.ok || res.status === 410 // 410 = já tinha sido apagado, trata como sucesso
+}
+
+export interface AgendaEmail {
+  id: string
+  subject: string
+  from: string
+  date: string | null
+  snippet: string
+  link: string
+}
+
+// Usado tanto pelo dashboard da Agenda quanto pelas ferramentas de IA que
+// consultam e-mail importante — reaproveita o mesmo critério (marcação
+// "Importante" do próprio Gmail, sem gastar IA nisso).
+export async function fetchImportantEmails(accessToken: string): Promise<AgendaEmail[]> {
+  const listUrl = new URL('https://gmail.googleapis.com/gmail/v1/users/me/messages')
+  listUrl.searchParams.set('q', 'is:important')
+  listUrl.searchParams.set('maxResults', '10')
+
+  const listRes = await fetch(listUrl, { headers: { Authorization: `Bearer ${accessToken}` } })
+  if (!listRes.ok) return []
+  const listData = await listRes.json()
+  const ids: string[] = (listData.messages ?? []).map((m: any) => m.id)
+  if (ids.length === 0) return []
+
+  const emails = await Promise.all(
+    ids.map(async (id) => {
+      const url = new URL(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}`)
+      url.searchParams.set('format', 'metadata')
+      url.searchParams.append('metadataHeaders', 'Subject')
+      url.searchParams.append('metadataHeaders', 'From')
+      url.searchParams.append('metadataHeaders', 'Date')
+
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } })
+      if (!res.ok) return null
+      const msg = await res.json()
+      const headers: { name: string; value: string }[] = msg.payload?.headers ?? []
+      const getHeader = (name: string) => headers.find((h) => h.name === name)?.value ?? ''
+
+      return {
+        id,
+        subject: getHeader('Subject') || '(sem assunto)',
+        from: getHeader('From'),
+        date: getHeader('Date') || null,
+        snippet: msg.snippet || '',
+        link: `https://mail.google.com/mail/u/0/#inbox/${id}`,
+      } as AgendaEmail
+    })
+  )
+
+  return emails.filter((e): e is AgendaEmail => e !== null)
 }

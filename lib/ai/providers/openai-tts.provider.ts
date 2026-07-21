@@ -4,11 +4,8 @@ import type { VoiceProvider } from '../types'
 export class OpenAITTSProvider implements VoiceProvider {
   private readonly openAiKey: string | undefined
 
-  constructor() {
-    this.openAiKey = process.env.OPENAI_API_KEY
-    if (!this.openAiKey) {
-      console.warn('[OpenAITTSProvider] OPENAI_API_KEY não configurada.')
-    }
+  constructor(openAiKey: string) {
+    this.openAiKey = openAiKey
   }
 
   async sintetizar(texto: string, options?: { speed?: number }): Promise<Buffer> {

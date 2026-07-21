@@ -6,10 +6,9 @@ export class OpenAIProvider implements AIProvider {
   private readonly apiKey: string
   private readonly model: string
 
-  constructor(model = 'gpt-4o-mini') {
-    const key = process.env.OPENAI_API_KEY
-    if (!key) throw new Error('[OpenAIProvider] OPENAI_API_KEY não configurada.')
-    this.apiKey = key
+  constructor(apiKey: string, model = 'gpt-4o-mini') {
+    if (!apiKey) throw new Error('[OpenAIProvider] Chave da OpenAI não informada.')
+    this.apiKey = apiKey
     this.model  = model
   }
 

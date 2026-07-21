@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { WhatsAppConnect } from '@/components/whatsapp/WhatsAppConnect'
+import { PersonalAIKeysCard } from '@/components/ai/PersonalAIKeysCard'
 
 interface Integration {
   id: string
@@ -43,8 +44,8 @@ const INTEGRATION_ICONS: Record<string, string> = {
   brevo: 'https://www.brevo.com/wp-content/uploads/2023/01/brevo-logo.svg',
   openai: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/OpenAI_Logo.svg/200px-OpenAI_Logo.svg.png',
   evolution_api: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/200px-WhatsApp.svg.png',
-  n8n: 'https://n8n.io/favicon.ico',
-  elevenlabs: 'https://elevenlabs.io/favicon.ico',
+  n8n: 'https://cdn.simpleicons.org/n8n',
+  elevenlabs: 'https://cdn.simpleicons.org/elevenlabs',
   autentique: 'https://www.autentique.com.br/favicon.ico',
   assinafy: 'https://www.assinafy.com.br/favicon.ico',
 }
@@ -423,6 +424,14 @@ export default function IntegracoesPage() {
           ❌ {errorMsg}
         </div>
       )}
+
+      <section>
+        <h2 className="text-text-main text-lg font-semibold mb-1">Minha IA</h2>
+        <p className="text-xs mb-4 text-text-muted">
+          Conecte sua própria chave pra usar o Alpha AI. Cada pessoa usa a própria IA, ninguém usa a chave de outro.
+        </p>
+        <PersonalAIKeysCard />
+      </section>
 
       <section>
         <h2 className="text-text-main text-lg font-semibold mb-4">Conexões OAuth</h2>

@@ -21,6 +21,9 @@ CREATE TABLE IF NOT EXISTS roadmap_features (
 
 ALTER TABLE roadmap_features ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "roadmap_features_select_authenticated" ON roadmap_features;
+DROP POLICY IF EXISTS "roadmap_features_write_super_admin" ON roadmap_features;
+
 CREATE POLICY "roadmap_features_select_authenticated"
   ON roadmap_features FOR SELECT
   TO authenticated

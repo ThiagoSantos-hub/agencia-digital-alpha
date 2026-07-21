@@ -10,16 +10,10 @@ export class ElevenLabsProvider implements VoiceProvider {
   private readonly voiceId:       string | undefined
   private readonly openAiKey:     string | undefined
 
-  constructor() {
-    this.elevenLabsKey = process.env.ELEVENLABS_API_KEY
-    this.voiceId       = process.env.ELEVENLABS_VOICE_ID
-    this.openAiKey     = process.env.OPENAI_API_KEY
-
-    // Apenas OPENAI_API_KEY é estritamente obrigatória para o funcionamento da classe (transcrição)
-    // ElevenLabs é obrigatória apenas se sintetizar() for chamado.
-    if (!this.openAiKey) {
-      console.warn('[ElevenLabsProvider] OPENAI_API_KEY não configurada. Transcrição não funcionará.')
-    }
+  constructor(params: { elevenLabsKey?: string; voiceId?: string; openAiKey?: string }) {
+    this.elevenLabsKey = params.elevenLabsKey
+    this.voiceId       = params.voiceId
+    this.openAiKey     = params.openAiKey
   }
 
   async sintetizar(texto: string): Promise<Buffer> {

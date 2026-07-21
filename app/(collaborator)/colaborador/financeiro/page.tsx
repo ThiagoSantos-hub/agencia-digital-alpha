@@ -8,6 +8,8 @@ export default function FinanceiroPage() {
   const { finances, loading, createFinance, deleteFinance, totalReceitas, totalGastos, saldo } = useColaboradorFinance()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [visiveis, setVisiveis] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; description: string } | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const [formData, setFormData] = useState({
     type: 'receita' as 'receita' | 'gasto',
     description: '',
@@ -33,8 +35,12 @@ export default function FinanceiroPage() {
     setIsSubmitting(false)
   }
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Deseja realmente excluir este lançamento?')) await deleteFinance(id)
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return
+    setDeleting(true)
+    await deleteFinance(deleteConfirm.id)
+    setDeleting(false)
+    setDeleteConfirm(null)
   }
 
   const formatCurrency = (value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -113,7 +119,7 @@ export default function FinanceiroPage() {
                 </td>
                 <td className="px-6 py-4 text-sm text-text-muted">{formatDate(item.date)}</td>
                 <td className="px-6 py-4 text-right">
-                  <button onClick={() => handleDelete(item.id)} className="p-2 text-text-muted hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
+                  <button onClick={() => setDeleteConfirm({ id: item.id, description: item.description })} className="p-2 text-text-muted hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
                 </td>
               </tr>
             ))}
@@ -161,6 +167,25 @@ export default function FinanceiroPage() {
                 <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-2.5 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl disabled:opacity-50">{isSubmitting ? 'Salvando...' : 'Salvar'}</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-surface border border-border w-full max-w-sm rounded-xl shadow-2xl overflow-hidden">
+            <div className="px-6 py-5">
+              <h3 className="text-lg font-bold text-text-main mb-2">Excluir lançamento?</h3>
+              <p className="text-text-muted text-sm">
+                Isso vai apagar "<span className="font-medium text-text-main">{deleteConfirm.description}</span>" pra sempre. Não dá pra desfazer.
+              </p>
+            </div>
+            <div className="px-6 py-4 border-t border-border flex gap-3">
+              <button onClick={() => setDeleteConfirm(null)} className="flex-1 px-4 py-2.5 border border-border text-text-muted font-bold rounded-xl hover:bg-hover-bg transition-colors">Não</button>
+              <button onClick={confirmDelete} disabled={deleting} className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl disabled:opacity-50 transition-colors">
+                {deleting ? 'Excluindo...' : 'Sim, excluir'}
+              </button>
+            </div>
           </div>
         </div>
       )}

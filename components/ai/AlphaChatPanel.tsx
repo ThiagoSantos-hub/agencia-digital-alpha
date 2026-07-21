@@ -1,7 +1,8 @@
 // components/ai/AlphaChatPanel.tsx
 'use client'
-import { useEffect, useRef } from 'react'
-import { Trash2, AlertCircle } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Trash2, AlertCircle, Bot, Loader2 } from 'lucide-react'
+import { useRouter, usePathname } from 'next/navigation'
 import { useAlphaAI }        from '@/hooks/useAlphaAI'
 import { AlphaChatMessage }  from './AlphaChatMessage'
 import { AlphaChatInput }    from './AlphaChatInput'
@@ -9,10 +10,50 @@ import { AlphaChatInput }    from './AlphaChatInput'
 export function AlphaChatPanel() {
   const { messages, loading, error, sendMessage, sendVoice, sendAudio, clearHistory } = useAlphaAI()
   const bottomRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
+  const pathname = usePathname()
+  const integracoesHref = pathname.startsWith('/colaborador') ? '/colaborador/integracoes' : '/integracoes'
+  const [checkingKey, setCheckingKey] = useState(true)
+  const [openaiConnected, setOpenaiConnected] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/ai/keys')
+      .then((res) => res.json())
+      .then((json) => setOpenaiConnected(!!json.openaiConnected))
+      .finally(() => setCheckingKey(false))
+  }, [])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  if (checkingKey) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 size={24} className="animate-spin text-text-muted" />
+      </div>
+    )
+  }
+
+  if (!openaiConnected) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center px-6">
+        <div className="w-16 h-16 rounded-full bg-ai/10 border border-ai/20 flex items-center justify-center text-ai mb-4">
+          <Bot size={28} />
+        </div>
+        <p className="text-text-main font-semibold mb-1">Conecte sua IA pra começar</p>
+        <p className="text-text-muted text-sm max-w-sm mb-5">
+          Cada pessoa usa a própria chave da OpenAI, a Alpha não funciona sem isso. Conecte a sua em Integrações.
+        </p>
+        <button
+          onClick={() => router.push(integracoesHref)}
+          className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-sm font-medium transition-colors"
+        >
+          Ir para Integrações
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-background overflow-hidden">

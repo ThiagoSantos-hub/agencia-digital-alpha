@@ -3,6 +3,7 @@
 
 import type { CRMTool } from './types'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { getValidAccessToken, fetchCalendarEvents, fetchImportantEmails } from '@/lib/agendaCalendar'
 
 export class CRMToolsService {
 
@@ -292,7 +293,56 @@ export class CRMToolsService {
     return JSON.stringify({ sucesso: true, mensagem: `Cliente "${data.name}" inativado com sucesso.`, cliente: data })
   }
 
-  getTools(supabase: SupabaseClient): CRMTool[] {
+  async getAgendaReunioes(supabase: SupabaseClient, userId: string): Promise<string> {
+    const { data: row } = await supabase
+      .from('personal_integrations')
+      .select('access_token, refresh_token, token_expiry, status')
+      .eq('user_id', userId)
+      .eq('type', 'google_calendar')
+      .maybeSingle()
+
+    if (!row || row.status !== 'connected') {
+      return JSON.stringify({ erro: 'Google Agenda não conectado. Conecte em Integrações > Agenda.' })
+    }
+
+    const token = await getValidAccessToken(supabase, userId, 'google_calendar', row)
+    if (!token) return JSON.stringify({ erro: 'Não foi possível acessar o Google Agenda.' })
+
+    const timeMin = new Date().toISOString()
+    const timeMax = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+    const events = await fetchCalendarEvents(token, timeMin, timeMax)
+    return JSON.stringify(events.map((e) => ({
+      titulo: e.title,
+      inicio: e.start,
+      local: e.location,
+      link_chamada: e.meetLink,
+    })))
+  }
+
+  async getAgendaEmails(supabase: SupabaseClient, userId: string): Promise<string> {
+    const { data: row } = await supabase
+      .from('personal_integrations')
+      .select('access_token, refresh_token, token_expiry, status')
+      .eq('user_id', userId)
+      .eq('type', 'gmail')
+      .maybeSingle()
+
+    if (!row || row.status !== 'connected') {
+      return JSON.stringify({ erro: 'Gmail não conectado. Conecte em Integrações > Agenda.' })
+    }
+
+    const token = await getValidAccessToken(supabase, userId, 'gmail', row)
+    if (!token) return JSON.stringify({ erro: 'Não foi possível acessar o Gmail.' })
+
+    const emails = await fetchImportantEmails(token)
+    return JSON.stringify(emails.map((e) => ({
+      assunto: e.subject,
+      de: e.from,
+      resumo: e.snippet,
+    })))
+  }
+
+  getTools(supabase: SupabaseClient, userId?: string): CRMTool[] {
     return [
       {
         name:        'getResumoGeral',
@@ -409,6 +459,23 @@ export class CRMToolsService {
         required: ['nomeOuId'],
         execute:  (args) => this.inativarCliente(supabase, args.nomeOuId),
       },
+      // ── Agenda (reuniões e e-mails, exigem o userId de quem está falando) ──
+      ...(userId ? [
+        {
+          name:        'getAgendaReunioes',
+          description: 'Retorna as reuniões e compromissos da Agenda pessoal do usuário nos próximos 14 dias.',
+          parameters:  {},
+          required:    [],
+          execute:     () => this.getAgendaReunioes(supabase, userId),
+        },
+        {
+          name:        'getAgendaEmails',
+          description: 'Retorna os e-mails marcados como importantes na caixa de entrada pessoal do usuário.',
+          parameters:  {},
+          required:    [],
+          execute:     () => this.getAgendaEmails(supabase, userId),
+        },
+      ] : []),
     ]
   }
 }

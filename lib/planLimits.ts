@@ -6,6 +6,12 @@ export const PLAN_LABELS: Record<Plan, string> = {
   premium: 'Premium (R$ 147)',
 }
 
+export const PLAN_PRICE_BRL: Record<Plan, number> = {
+  basico: 47,
+  pro: 97,
+  premium: 147,
+}
+
 // null = sem limite. Colaboradores não têm limite em nenhum plano.
 export const PLAN_CLIENT_LIMITS: Record<Plan, number | null> = {
   basico: 5,

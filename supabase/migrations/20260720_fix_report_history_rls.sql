@@ -10,6 +10,9 @@
 
 DROP POLICY IF EXISTS "report_history_select_admin" ON report_history;
 DROP POLICY IF EXISTS "report_history_insert_admin" ON report_history;
+DROP POLICY IF EXISTS "report_history_select_own" ON report_history;
+DROP POLICY IF EXISTS "report_history_select_company_admin" ON report_history;
+DROP POLICY IF EXISTS "report_history_insert_company_admin" ON report_history;
 
 CREATE POLICY "report_history_select_own" ON report_history FOR SELECT
   USING (

@@ -5,9 +5,7 @@ import { Mic, MicOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { AlphaJarvisHUD } from '@/components/ai/AlphaJarvisHUD'
 
-const AGENT_ID = 'agent_0101kwhjn4ymf3warnf5k6ktfb4y'
-
-function AlphaButton({ userName }: { userName: string }) {
+function AlphaButton({ userName, agentId }: { userName: string; agentId: string }) {
   const { startSession, endSession } = useConversationControls()
   const { status } = useConversationStatus()
   const [loading, setLoading] = useState(false)
@@ -73,12 +71,12 @@ function AlphaButton({ userName }: { userName: string }) {
     setHudOpen(true)
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true })
-      await startSession({ agentId: AGENT_ID })
+      await startSession({ agentId })
     } catch (error) {
       console.warn('[Alpha] Erro ao iniciar sessão:', error)
       setLoading(false)
     }
-  }, [active, loading, startSession, endSession])
+  }, [active, loading, startSession, endSession, agentId])
 
   const handleCloseHud = useCallback(async () => {
     try { await endSession() } catch {}
@@ -137,6 +135,8 @@ function AlphaButton({ userName }: { userName: string }) {
 export function AlphaWidget() {
   const [userName, setUserName] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
+  const [agentId, setAgentId] = useState<string | null>(null)
+  const [keysChecked, setKeysChecked] = useState(false)
   const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
@@ -144,6 +144,7 @@ export function AlphaWidget() {
       if (!data.user) {
         setUserName('')
         setUserId(null)
+        setKeysChecked(true)
         return
       }
       setUserId(data.user.id)
@@ -153,6 +154,14 @@ export function AlphaWidget() {
         .eq('id', data.user.id)
         .single()
       setUserName(profile?.name ?? data.user.email ?? '')
+
+      try {
+        const res = await fetch('/api/ai/keys')
+        const json = await res.json()
+        setAgentId(json.elevenlabsAgentId ?? null)
+      } finally {
+        setKeysChecked(true)
+      }
     })
   }, [supabase])
 
@@ -173,16 +182,30 @@ export function AlphaWidget() {
     console.warn('[Alpha] Erro SDK:', tipo)
   }, [])
 
-  if (userName === null) return null
+  if (userName === null || !keysChecked) return null
+
+  if (!agentId) {
+    return (
+      <div className="fixed bottom-6 right-6 z-[60] pointer-events-none">
+        <a
+          href="/integracoes"
+          title="Configure seu assistente de voz em Integrações"
+          className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg pointer-events-auto bg-hover-bg border-2 border-border text-text-disabled hover:text-text-muted transition-colors"
+        >
+          <Mic size={22} />
+        </a>
+      </div>
+    )
+  }
 
   return (
     <ConversationProvider
-      agentId={AGENT_ID}
+      agentId={agentId}
       onConnect={() => console.log('[Alpha] conectada')}
       onDisconnect={handleDisconnect}
       onError={handleError}
     >
-      <AlphaButton userName={userName} />
+      <AlphaButton userName={userName} agentId={agentId} />
     </ConversationProvider>
   )
 }

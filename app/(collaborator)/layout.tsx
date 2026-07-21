@@ -21,7 +21,8 @@ import {
   BarChart2,
   List,
   Rocket,
-  CalendarClock
+  CalendarClock,
+  Bot
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase'
@@ -30,6 +31,9 @@ import { PageFade } from '@/components/ui/Motion'
 import { CollaboratorNavLink } from '@/components/layout/CollaboratorNavLink'
 import { NotificationToasts } from '@/components/layout/NotificationToasts'
 import { NotificationPermissionPrompt } from '@/components/layout/NotificationPermissionPrompt'
+import { AlphaWidget } from '@/components/AlphaWidget'
+import { BillingAlertsModal } from '@/components/billing/BillingAlertsModal'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { springSoft } from '@/lib/motion'
 
 const menuGroups = [
@@ -63,6 +67,7 @@ const menuGroups = [
   {
     label: 'FERRAMENTAS',
     items: [
+      { label: 'Alpha AI', href: '/colaborador/ai', icon: Bot, ativo: true },
       { label: 'Integrações', href: '/colaborador/integracoes', icon: Plug, ativo: true },
     ],
   },
@@ -289,6 +294,7 @@ export default function CollaboratorLayout({
           </div>
 
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             <div ref={sinoRef} className="relative">
               <motion.button
                 onClick={() => setSinoAberto(prev => !prev)}
@@ -403,6 +409,8 @@ export default function CollaboratorLayout({
 
       <NotificationToasts />
       <NotificationPermissionPrompt />
+      <AlphaWidget />
+      <BillingAlertsModal />
     </div>
   )
 }

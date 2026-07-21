@@ -4,6 +4,7 @@ import { createServerClient } from '@/lib/supabase-server'
 import { renderContractPdf, formatDataDoDia } from '@/lib/pdf/renderContractPdf'
 import { getEsignatureClient } from '@/lib/esignature/provider'
 import { substituteTokens } from '@/lib/tokens'
+import { sendContractNotification } from '@/lib/email'
 import { isValidCPF, isValidCNPJ, isValidCEP, isValidEmail, isValidPhone } from '@/lib/validators'
 
 export const runtime = 'nodejs'
@@ -184,6 +185,17 @@ export async function POST(request: NextRequest) {
         sent_at: new Date().toISOString(),
       })
       .eq('id', contract.id)
+
+    try {
+      await sendContractNotification({
+        toEmail: company.contract_signer_email,
+        toName: company.contract_signer_name ?? company.name,
+        clientName: fieldValues.nome_completo.trim(),
+        event: 'preenchido',
+      })
+    } catch (err) {
+      console.error('Falha ao enviar aviso de contrato preenchido:', err)
+    }
 
     return NextResponse.json({ success: true })
   } catch (error: unknown) {

@@ -27,7 +27,7 @@ function clamp(n: number, min: number, max: number) {
 }
 
 function looksLikeCrmQuestion(msg: string): boolean {
-  return /\b(cliente|clientes|campanha|campanhas|tarefa|tarefas|financeiro|receita|gasto|alerta|alertas|integra|meta ads|mensalidade|colaborador|crm|dashboard|relat[oó]rio)\b/i.test(
+  return /\b(cliente|clientes|campanha|campanhas|tarefa|tarefas|financeiro|receita|gasto|alerta|alertas|integra|meta ads|mensalidade|colaborador|crm|dashboard|relat[oó]rio|agenda|reuni[aã]o|reuni[oõ]es|e-?mail|compromisso)\b/i.test(
     msg
   )
 }
@@ -94,6 +94,19 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    const { data: aiKeys } = await supabase
+      .from('personal_ai_keys')
+      .select('openai_api_key, elevenlabs_api_key, elevenlabs_voice_id, preferred_name, work_context')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (!aiKeys?.openai_api_key) {
+      return NextResponse.json(
+        { error: 'Conecte sua chave da OpenAI em Integrações antes de usar a IA.' },
+        { status: 403, headers: CORS_HEADERS }
+      )
+    }
+
     const body = await req.json()
     const mensagem: string = body.mensagem ?? ''
     const incluirVoz: boolean = body.incluirVoz ?? false
@@ -131,8 +144,8 @@ export async function POST(req: NextRequest) {
 
     const precisaFerramenta =
       isCrm &&
-      /\b(lista|nome|quais|quem|cadastr|ativ|inativ|métric|metric|lançamento)\b/i.test(mensagem)
-    const tools = precisaFerramenta ? crmTools.getTools(supabase) : undefined
+      /\b(lista|nome|quais|quem|cadastr|ativ|inativ|métric|metric|lançamento|agenda|reuni[aã]o|reuni[oõ]es|e-?mail|compromisso|hoje|amanh[aã])\b/i.test(mensagem)
+    const tools = precisaFerramenta ? crmTools.getTools(supabase, user.id) : undefined
 
     // Notas compactas: só título+body curto (menos tokens no prompt = LLM mais rápido)
     const notesCompact = notes?.map((n) => ({
@@ -140,14 +153,16 @@ export async function POST(req: NextRequest) {
       body: n.body.length > 120 ? n.body.slice(0, 117) + '…' : n.body,
     }))
 
-    const resposta = await alphaAI.chat(mensagensParaIA, tools, {
+    const resposta = await alphaAI.chat(aiKeys.openai_api_key, mensagensParaIA, tools, {
       notes: notesCompact,
       crmSnapshot: crmSnapshot || undefined,
       maxTokens,
       temperature,
       compact: true,
+      preferredName: aiKeys.preferred_name ?? undefined,
+      workContext: aiKeys.work_context ?? undefined,
     })
-    const respostaTexto = resposta.text || 'Sem dados no momento, diretor.'
+    const respostaTexto = resposta.text || 'Sem dados no momento.'
 
     // Salva em background
     const historicoParaSalvar = [
@@ -162,7 +177,13 @@ export async function POST(req: NextRequest) {
     if (incluirVoz) {
       try {
         const textoFala = respostaTexto.replace(/\[\[SAVE:[\s\S]*?\]\]/gi, '').trim()
-        audioBase64 = await voiceService.sintetizarBase64(textoFala || respostaTexto, 'openai', {
+        const voiceKeys = {
+          openAiKey: aiKeys.openai_api_key,
+          elevenLabsKey: aiKeys.elevenlabs_api_key ?? undefined,
+          elevenLabsVoiceId: aiKeys.elevenlabs_voice_id ?? undefined,
+        }
+        const voiceProvider = voiceKeys.elevenLabsKey && voiceKeys.elevenLabsVoiceId ? 'elevenlabs' : 'openai'
+        audioBase64 = await voiceService.sintetizarBase64(textoFala || respostaTexto, voiceKeys, voiceProvider, {
           speed: voiceSpeed,
         })
       } catch (e) {

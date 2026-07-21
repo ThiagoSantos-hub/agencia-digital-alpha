@@ -33,6 +33,19 @@ export async function POST(req: NextRequest) {
 
     console.log('[API Transcribe] Usuário autenticado:', user.email)
 
+    const { data: aiKeys } = await supabase
+      .from('personal_ai_keys')
+      .select('openai_api_key')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (!aiKeys?.openai_api_key) {
+      return NextResponse.json(
+        { error: 'Conecte sua chave da OpenAI em Integrações antes de usar a IA.' },
+        { status: 403, headers: CORS_HEADERS }
+      )
+    }
+
     const formData  = await req.formData()
     const audioFile = formData.get('audio') as File | null
     const mimeType  = formData.get('mimeType') as string ?? 'audio/webm'
@@ -47,7 +60,7 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await audioFile.arrayBuffer()
     const buffer      = Buffer.from(arrayBuffer)
     
-    const texto = await voiceService.transcrever(buffer, mimeType)
+    const texto = await voiceService.transcrever(buffer, { openAiKey: aiKeys.openai_api_key }, mimeType)
     
     if (!texto?.trim()) {
       return NextResponse.json(

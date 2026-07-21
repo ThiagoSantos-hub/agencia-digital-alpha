@@ -207,3 +207,29 @@ export async function sendInternalAlert(params: { subject: string; message: stri
     htmlContent: `<p style="font-family: sans-serif;">${params.message}</p>`,
   })
 }
+
+// Avisa o assinante da empresa (contract_signer_email) quando um cliente preenche
+// o formulário público de contrato, e de novo quando o contrato é assinado por
+// todo mundo — hoje nenhum dos dois momentos gerava aviso nenhum pro admin.
+export async function sendContractNotification(params: {
+  toEmail: string
+  toName: string
+  clientName: string
+  event: 'preenchido' | 'assinado'
+}): Promise<{ ok: boolean }> {
+  const subject = params.event === 'preenchido'
+    ? `${params.clientName} preencheu um contrato`
+    : `Contrato com ${params.clientName} foi assinado`
+
+  const message = params.event === 'preenchido'
+    ? `${params.clientName} acabou de preencher os dados do contrato e ele foi enviado para assinatura eletrônica. Você recebe outro aviso assim que todas as partes assinarem.`
+    : `O contrato com ${params.clientName} foi assinado por todas as partes. O PDF assinado já está disponível dentro do sistema, em Contratos.`
+
+  return sendBrevoEmail({
+    toEmail: params.toEmail,
+    toName: params.toName,
+    senderName: 'Digital Alpha',
+    subject,
+    htmlContent: `<p style="font-family: sans-serif;">${message}</p>`,
+  })
+}

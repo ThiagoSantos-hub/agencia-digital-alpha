@@ -2,7 +2,7 @@
 -- do Autentique). Cada empresa escolhe qual dos dois usa nos seus contratos.
 
 ALTER TABLE companies
-  ADD COLUMN esignature_provider TEXT NOT NULL DEFAULT 'autentique'
+  ADD COLUMN IF NOT EXISTS esignature_provider TEXT NOT NULL DEFAULT 'autentique'
     CHECK (esignature_provider IN ('autentique', 'assinafy'));
 
 -- Semeia uma linha 'assinafy' desconectada pra cada empresa já existente

@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS agenda_dismissed_items (
 
 ALTER TABLE agenda_dismissed_items ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "agenda_dismissed_items_own" ON agenda_dismissed_items;
+
 CREATE POLICY "agenda_dismissed_items_own"
   ON agenda_dismissed_items FOR ALL
   TO authenticated
