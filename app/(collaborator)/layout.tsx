@@ -19,7 +19,8 @@ import {
   Sparkles,
   MessageSquare,
   BarChart2,
-  List
+  List,
+  Rocket
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase'
@@ -35,6 +36,7 @@ const menuGroups = [
     label: 'PRINCIPAL',
     items: [
       { label: 'Novidades',  href: '/colaborador/novidades', icon: Sparkles,      ativo: true },
+      { label: 'Próximas Atualizações', href: '/colaborador/atualizacoes', icon: Rocket, ativo: true },
       { label: 'Feedback',   href: '/colaborador/feedbacks',  icon: MessageSquare, ativo: true },
     ],
   },

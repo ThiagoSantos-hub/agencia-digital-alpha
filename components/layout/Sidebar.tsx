@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, Megaphone, BarChart2, Bell,
   CheckSquare, List, Wallet, UserCog, Bot, Plug,
   Sparkles, MessageSquare, UserCircle, LogOut, Settings,
-  FileSignature, Building2, CreditCard
+  FileSignature, Building2, CreditCard, Rocket
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/hooks/useAuth'
@@ -16,6 +16,7 @@ const menuGroups = [
     label: 'PRINCIPAL',
     items: [
       { label: 'Novidades',  href: '/novidades', icon: Sparkles,      ativo: true },
+      { label: 'Próximas Atualizações', href: '/atualizacoes', icon: Rocket, ativo: true },
       { label: 'Feedbacks',  href: '/feedbacks', icon: MessageSquare, ativo: true },
     ],
   },
