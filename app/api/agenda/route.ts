@@ -189,6 +189,16 @@ export async function GET() {
     if (token) emails = await fetchImportantEmails(token)
   }
 
+  const { data: dismissed } = await supabase
+    .from('agenda_dismissed_items')
+    .select('item_type, item_id')
+    .eq('user_id', user.id)
+
+  const dismissedEvents = new Set((dismissed ?? []).filter((d) => d.item_type === 'event').map((d) => d.item_id))
+  const dismissedEmails = new Set((dismissed ?? []).filter((d) => d.item_type === 'email').map((d) => d.item_id))
+  events = events.filter((e) => !dismissedEvents.has(e.id))
+  emails = emails.filter((e) => !dismissedEmails.has(e.id))
+
   const resumoIA = await gerarResumoIA(events, emails)
 
   return NextResponse.json({
