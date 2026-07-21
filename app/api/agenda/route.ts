@@ -1,57 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
 import { OpenAIProvider } from '@/lib/ai/providers/openai.provider'
-import { getValidAccessToken, fetchCalendarEvents, type AgendaEvent } from '@/lib/agendaCalendar'
+import { getValidAccessToken, fetchCalendarEvents, fetchImportantEmails, type AgendaEvent, type AgendaEmail } from '@/lib/agendaCalendar'
 
 export const dynamic = 'force-dynamic'
-
-interface AgendaEmail {
-  id: string
-  subject: string
-  from: string
-  date: string | null
-  snippet: string
-  link: string
-}
-
-async function fetchImportantEmails(accessToken: string): Promise<AgendaEmail[]> {
-  const listUrl = new URL('https://gmail.googleapis.com/gmail/v1/users/me/messages')
-  listUrl.searchParams.set('q', 'is:important')
-  listUrl.searchParams.set('maxResults', '10')
-
-  const listRes = await fetch(listUrl, { headers: { Authorization: `Bearer ${accessToken}` } })
-  if (!listRes.ok) return []
-  const listData = await listRes.json()
-  const ids: string[] = (listData.messages ?? []).map((m: any) => m.id)
-  if (ids.length === 0) return []
-
-  const emails = await Promise.all(
-    ids.map(async (id) => {
-      const url = new URL(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}`)
-      url.searchParams.set('format', 'metadata')
-      url.searchParams.append('metadataHeaders', 'Subject')
-      url.searchParams.append('metadataHeaders', 'From')
-      url.searchParams.append('metadataHeaders', 'Date')
-
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } })
-      if (!res.ok) return null
-      const msg = await res.json()
-      const headers: { name: string; value: string }[] = msg.payload?.headers ?? []
-      const getHeader = (name: string) => headers.find((h) => h.name === name)?.value ?? ''
-
-      return {
-        id,
-        subject: getHeader('Subject') || '(sem assunto)',
-        from: getHeader('From'),
-        date: getHeader('Date') || null,
-        snippet: msg.snippet || '',
-        link: `https://mail.google.com/mail/u/0/#inbox/${id}`,
-      } as AgendaEmail
-    })
-  )
-
-  return emails.filter((e): e is AgendaEmail => e !== null)
-}
 
 async function gerarResumoIA(events: AgendaEvent[], emails: AgendaEmail[]): Promise<string | null> {
   if (events.length === 0 && emails.length === 0) return null

@@ -27,7 +27,7 @@ function clamp(n: number, min: number, max: number) {
 }
 
 function looksLikeCrmQuestion(msg: string): boolean {
-  return /\b(cliente|clientes|campanha|campanhas|tarefa|tarefas|financeiro|receita|gasto|alerta|alertas|integra|meta ads|mensalidade|colaborador|crm|dashboard|relat[oó]rio)\b/i.test(
+  return /\b(cliente|clientes|campanha|campanhas|tarefa|tarefas|financeiro|receita|gasto|alerta|alertas|integra|meta ads|mensalidade|colaborador|crm|dashboard|relat[oó]rio|agenda|reuni[aã]o|reuni[oõ]es|e-?mail|compromisso)\b/i.test(
     msg
   )
 }
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
 
     const { data: aiKeys } = await supabase
       .from('personal_ai_keys')
-      .select('openai_api_key, elevenlabs_api_key, elevenlabs_voice_id')
+      .select('openai_api_key, elevenlabs_api_key, elevenlabs_voice_id, preferred_name, work_context')
       .eq('user_id', user.id)
       .maybeSingle()
 
@@ -144,8 +144,8 @@ export async function POST(req: NextRequest) {
 
     const precisaFerramenta =
       isCrm &&
-      /\b(lista|nome|quais|quem|cadastr|ativ|inativ|métric|metric|lançamento)\b/i.test(mensagem)
-    const tools = precisaFerramenta ? crmTools.getTools(supabase) : undefined
+      /\b(lista|nome|quais|quem|cadastr|ativ|inativ|métric|metric|lançamento|agenda|reuni[aã]o|reuni[oõ]es|e-?mail|compromisso|hoje|amanh[aã])\b/i.test(mensagem)
+    const tools = precisaFerramenta ? crmTools.getTools(supabase, user.id) : undefined
 
     // Notas compactas: só título+body curto (menos tokens no prompt = LLM mais rápido)
     const notesCompact = notes?.map((n) => ({
@@ -159,8 +159,10 @@ export async function POST(req: NextRequest) {
       maxTokens,
       temperature,
       compact: true,
+      preferredName: aiKeys.preferred_name ?? undefined,
+      workContext: aiKeys.work_context ?? undefined,
     })
-    const respostaTexto = resposta.text || 'Sem dados no momento, diretor.'
+    const respostaTexto = resposta.text || 'Sem dados no momento.'
 
     // Salva em background
     const historicoParaSalvar = [

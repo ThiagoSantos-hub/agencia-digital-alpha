@@ -38,48 +38,39 @@ export interface BrainNote {
   body: string
 }
 
-export const DEFAULT_NOTES: BrainNote[] = [
-  { id: 'n-voce', area: 'meta', title: 'Thiago', body: 'Thiago Santos, 36 anos, Fortaleza-CE. Tráfego, CRM, treinamento, sistemas. 3 filhos.' },
-  { id: 'n-meta-3m', area: 'metas', title: '3 meses', body: 'SaaS Digital Alpha vendendo. Meta ~R$ 15 mil.' },
-  { id: 'n-meta-6m', area: 'metas', title: '6 meses', body: 'Faturar ~R$ 50 mil.' },
-  { id: 'n-meta-3a', area: 'metas', title: '3 anos', body: 'Faturar ~R$ 1 mi/ano.' },
-  { id: 'n-carreira', area: 'trabalho', title: 'CEO Alpha', body: 'CEO Digital Alpha. Tráfego, CRM, treinamento. Foco 3 meses.' },
-  { id: 'n-proj-alpha', area: 'projetos', title: 'Digital Alpha', body: 'Sistema para agências gerenciarem clientes e equipe.' },
-  { id: 'n-proj-noivos', area: 'projetos', title: 'Noivos', body: 'Sites para noivos organizarem o casamento.' },
-  { id: 'n-proj-trafego', area: 'projetos', title: 'Tráfego', body: 'Tráfego pago de 20+ empresas.' },
-  { id: 'n-proj-ebook', area: 'projetos', title: 'Ebook', body: 'Ebook para pregadores.' },
-  { id: 'n-proj-sermao', area: 'projetos', title: 'Sermão', body: 'Site Elaborador de Sermão.' },
-  { id: 'n-proj-discipulo', area: 'projetos', title: 'Discípulo', body: 'Projeto Discípulo.' },
-  { id: 'n-financas', area: 'financas', title: 'Metas $', body: '15k/3m · 50k/6m · 1mi/ano.' },
-  { id: 'n-aprende', area: 'aprendizado', title: 'Estudos', body: 'IA, Bíblia, finanças, vendas.' },
-  { id: 'n-saude', area: 'saude', title: 'Rotina', body: 'Quer treinar e regular sono/alimentação.' },
-  { id: 'n-rayana', area: 'relacoes', title: 'Rayana', body: 'Noiva do diretor.' },
-  { id: 'n-naylla', area: 'relacoes', title: 'Naylla', body: 'Filha Naylla Thiele (~14, 15 em ago).' },
-  { id: 'n-theo', area: 'relacoes', title: 'Theo', body: 'Filho Theo Lucas, 11 anos.' },
-  { id: 'n-thaylon', area: 'relacoes', title: 'Thaylon', body: 'Filho Thaylon Ravi, 8 anos.' },
-  { id: 'n-ricardo', area: 'relacoes', title: 'Ricardo', body: 'Amigo e colaborador. Não sócio.' },
-]
+// Cada usuário começa sem nenhuma nota fixa — o "segundo cérebro" é pessoal
+// de cada um, preenchido por ele mesmo (nunca dados de outra pessoa por padrão).
+export const DEFAULT_NOTES: BrainNote[] = []
 
-export const DEFAULT_REL: [string, string][] = [
-  ['n-voce', 'n-carreira'],
-  ['n-voce', 'n-rayana'],
-  ['n-meta-3m', 'n-proj-alpha'],
-  ['n-meta-3m', 'n-financas'],
-  ['n-carreira', 'n-proj-alpha'],
-  ['n-ricardo', 'n-carreira'],
-]
+export const DEFAULT_REL: [string, string][] = []
 
-const RULES = `
-Você é Alpha (Digital Alpha). Chame o usuário de "diretor".
-Formal, seco, objetivo. PT-BR. Sem emojis/markdown.
+function buildRules(preferredName?: string, workContext?: string): string {
+  const tratamento = preferredName?.trim()
+    ? `Chame o usuário de "${preferredName.trim()}".`
+    : 'Trate o usuário de forma direta e respeitosa, sem inventar um título.'
+  const contexto = workContext?.trim()
+    ? `\nSobre o usuário e o trabalho dele: ${workContext.trim()}`
+    : ''
+
+  return `
+Você é Alpha, assistente de IA da Digital Alpha. ${tratamento}
+Formal, direto, objetivo. PT-BR. Sem emojis/markdown.
 Máximo 1–2 frases. Sem "vou verificar". Só o resultado.
-Nunca invente dados do CRM.
+Nunca invente dados do CRM.${contexto}
 `.trim()
+}
 
 /** Prompt completo (legado / detalhado) */
-export function buildSystemPersonaBlock(notes: BrainNote[] = DEFAULT_NOTES): string {
+export function buildSystemPersonaBlock(
+  notes: BrainNote[] = DEFAULT_NOTES,
+  preferredName?: string,
+  workContext?: string
+): string {
+  const rules = buildRules(preferredName, workContext)
+  if (notes.length === 0) return rules
+
   const lines = notes.map((n) => `- [${AREA[n.area]?.label ?? n.area}] ${n.title}: ${n.body}`)
-  return `${RULES}
+  return `${rules}
 
 SECOND BRAIN:
 ${lines.join('\n')}
@@ -89,9 +80,16 @@ area ∈ meta,metas,trabalho,projetos,financas,aprendizado,saude,relacoes`
 }
 
 /** Prompt enxuto — menos tokens = LLM responde mais rápido */
-export function buildSystemPersonaBlockCompact(notes: BrainNote[] = DEFAULT_NOTES): string {
+export function buildSystemPersonaBlockCompact(
+  notes: BrainNote[] = DEFAULT_NOTES,
+  preferredName?: string,
+  workContext?: string
+): string {
+  const rules = buildRules(preferredName, workContext)
+  if (notes.length === 0) return rules
+
   const lines = notes.map((n) => `${n.title}: ${n.body}`)
-  return `${RULES}
+  return `${rules}
 
 CONTEXTO: ${lines.join(' | ')}
 

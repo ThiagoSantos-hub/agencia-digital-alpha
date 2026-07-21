@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Bot, Mic, Check, ChevronDown, Copy, CheckCheck, Headphones } from 'lucide-react'
+import { Bot, Mic, Check, ChevronDown, Copy, CheckCheck, Headphones, UserCircle } from 'lucide-react'
 
 const cardCls = 'rounded-xl p-4 bg-surface border border-border shadow-sm'
 const btnPrimary = 'text-xs px-3 py-1.5 rounded-lg font-medium bg-primary text-white hover:bg-primary-hover transition-colors disabled:opacity-50'
@@ -49,6 +49,9 @@ export function PersonalAIKeysCard() {
   const [agentId, setAgentId] = useState('')
   const [saving, setSaving] = useState<string | null>(null)
   const [webhookUrl, setWebhookUrl] = useState('')
+  const [preferredName, setPreferredName] = useState('')
+  const [workContext, setWorkContext] = useState('')
+  const [profileSaved, setProfileSaved] = useState(false)
 
   const fetchStatus = async () => {
     setLoading(true)
@@ -59,6 +62,8 @@ export function PersonalAIKeysCard() {
       setElevenlabsConnected(!!json.elevenlabsConnected)
       setAgentConnected(!!json.agentConnected)
       setWebhookSecret(json.webhookSecret ?? '')
+      setPreferredName(json.preferredName ?? '')
+      setWorkContext(json.workContext ?? '')
     } finally {
       setLoading(false)
     }
@@ -130,10 +135,61 @@ export function PersonalAIKeysCard() {
     setSaving(null)
   }
 
+  const saveProfile = async () => {
+    setSaving('profile')
+    await fetch('/api/ai/keys', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ preferredName: preferredName.trim(), workContext: workContext.trim() }),
+    })
+    setSaving(null)
+    setProfileSaved(true)
+    setTimeout(() => setProfileSaved(false), 2000)
+  }
+
   if (loading) return null
 
   return (
     <div className="space-y-4">
+      <div className={cardCls}>
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-background">
+            <UserCircle size={18} className="text-primary" />
+          </div>
+          <div>
+            <p className="text-text-main text-sm font-medium">Como a Alpha deve te tratar</p>
+            <p className="text-xs mt-0.5 text-text-muted">Isso deixa as respostas mais do seu jeito, não é obrigatório preencher.</p>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <div>
+            <label className="text-[11px] font-semibold text-text-muted mb-1 block">Como você quer ser chamado</label>
+            <input
+              type="text"
+              placeholder="Ex: Thiago, diretor, chefe..."
+              value={preferredName}
+              onChange={(e) => setPreferredName(e.target.value)}
+              className={`${inputCls} w-full`}
+            />
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold text-text-muted mb-1 block">Sobre você e seu jeito de trabalhar</label>
+            <textarea
+              placeholder="Ex: Sou dono de uma agência de marketing, prefiro respostas curtas e direto ao ponto, sem enrolação."
+              value={workContext}
+              onChange={(e) => setWorkContext(e.target.value)}
+              className={`${inputCls} w-full min-h-[70px] resize-none`}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={saveProfile} disabled={saving === 'profile'} className={btnPrimary}>
+              {saving === 'profile' ? 'Salvando...' : 'Salvar'}
+            </button>
+            {profileSaved && <span className="text-cta text-xs flex items-center gap-1"><Check size={12} /> Salvo</span>}
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className={cardCls}>
           <div className="flex items-center gap-3 mb-3">

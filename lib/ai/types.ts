@@ -30,6 +30,17 @@ export interface AIRequest {
   tools?: CRMTool[]
   maxTokens?: number
   temperature?: number
+  // Só usado pelo N8nBrainProvider — o n8n monta o system prompt final com
+  // isso, em vez do texto vir pronto do sistema (assim a personalidade fica
+  // editável direto no workflow do n8n).
+  personaContext?: {
+    notes?: { area: string; title: string; body: string }[]
+    crmSnapshot?: string
+    compact?: boolean
+    preferredName?: string
+    workContext?: string
+    dataHora?: string
+  }
 }
 
 export interface AIResponse {
