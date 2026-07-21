@@ -8,14 +8,9 @@ import {
 } from './alphaPersona'
 
 export class AIService {
-  private provider: AIProvider | null = null
-
-  private getProvider(): AIProvider {
-    if (!this.provider) {
-      const { OpenAIProvider } = require('./providers/openai.provider')
-      this.provider = new OpenAIProvider()
-    }
-    return this.provider!
+  private getProvider(apiKey: string): AIProvider {
+    const { OpenAIProvider } = require('./providers/openai.provider')
+    return new OpenAIProvider(apiKey)
   }
 
   private getDynamicSystemPrompt(
@@ -42,6 +37,7 @@ export class AIService {
   }
 
   async chat(
+    apiKey: string,
     messages: Message[],
     tools?: CRMTool[],
     options?: {
@@ -52,7 +48,7 @@ export class AIService {
       compact?: boolean
     }
   ): Promise<AIResponse> {
-    const provider = this.getProvider()
+    const provider = this.getProvider(apiKey)
     const systemMessage: Message = {
       role: 'system',
       content: this.getDynamicSystemPrompt(

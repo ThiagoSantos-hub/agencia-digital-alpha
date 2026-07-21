@@ -21,7 +21,8 @@ import {
   BarChart2,
   List,
   Rocket,
-  CalendarClock
+  CalendarClock,
+  Bot
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase'
@@ -63,6 +64,7 @@ const menuGroups = [
   {
     label: 'FERRAMENTAS',
     items: [
+      { label: 'Alpha AI', href: '/colaborador/ai', icon: Bot, ativo: true },
       { label: 'Integrações', href: '/colaborador/integracoes', icon: Plug, ativo: true },
     ],
   },

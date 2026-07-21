@@ -3,28 +3,33 @@ import type { VoiceProvider } from './types'
 
 export type VoiceProviderName = 'openai' | 'elevenlabs'
 
-export class VoiceService {
-  private providers: Partial<Record<VoiceProviderName, VoiceProvider>> = {}
+export interface VoiceKeys {
+  openAiKey: string
+  elevenLabsKey?: string
+  elevenLabsVoiceId?: string
+}
 
-  private getProvider(nome: VoiceProviderName = 'openai'): VoiceProvider {
-    if (!this.providers[nome]) {
-      if (nome === 'elevenlabs') {
-        const { ElevenLabsProvider } = require('./providers/elevenlabs.provider')
-        this.providers['elevenlabs'] = new ElevenLabsProvider()
-      } else {
-        const { OpenAITTSProvider } = require('./providers/openai-tts.provider')
-        this.providers['openai'] = new OpenAITTSProvider()
-      }
+export class VoiceService {
+  private getProvider(provider: VoiceProviderName, keys: VoiceKeys): VoiceProvider {
+    if (provider === 'elevenlabs' && keys.elevenLabsKey && keys.elevenLabsVoiceId) {
+      const { ElevenLabsProvider } = require('./providers/elevenlabs.provider')
+      return new ElevenLabsProvider({
+        elevenLabsKey: keys.elevenLabsKey,
+        voiceId: keys.elevenLabsVoiceId,
+        openAiKey: keys.openAiKey,
+      })
     }
-    return this.providers[nome]!
+    const { OpenAITTSProvider } = require('./providers/openai-tts.provider')
+    return new OpenAITTSProvider(keys.openAiKey)
   }
 
   async sintetizar(
     texto: string,
+    keys: VoiceKeys,
     provider: VoiceProviderName = 'openai',
     options?: { speed?: number }
   ): Promise<Buffer> {
-    const p = this.getProvider(provider) as VoiceProvider & {
+    const p = this.getProvider(provider, keys) as VoiceProvider & {
       sintetizar: (t: string, opts?: { speed?: number }) => Promise<Buffer>
     }
     return p.sintetizar(texto, options)
@@ -32,15 +37,16 @@ export class VoiceService {
 
   async sintetizarBase64(
     texto: string,
+    keys: VoiceKeys,
     provider: VoiceProviderName = 'openai',
     options?: { speed?: number }
   ): Promise<string> {
-    const buffer = await this.sintetizar(texto, provider, options)
+    const buffer = await this.sintetizar(texto, keys, provider, options)
     return buffer.toString('base64')
   }
 
-  async transcrever(audioBuffer: Buffer, mimeType = 'audio/webm'): Promise<string> {
-    return this.getProvider('openai').transcrever(audioBuffer, mimeType)
+  async transcrever(audioBuffer: Buffer, keys: VoiceKeys, mimeType = 'audio/webm'): Promise<string> {
+    return this.getProvider('openai', keys).transcrever(audioBuffer, mimeType)
   }
 }
 

@@ -58,7 +58,7 @@ async function gerarResumoIA(events: AgendaEvent[], emails: AgendaEmail[]): Prom
   if (!process.env.OPENAI_API_KEY) return null
 
   try {
-    const provider = new OpenAIProvider('gpt-4o-mini')
+    const provider = new OpenAIProvider(process.env.OPENAI_API_KEY!)
     const contexto = [
       events.length > 0
         ? `Reuniões e eventos dos próximos 14 dias:\n${events.map((e) => `- ${e.title}${e.start ? ` em ${e.start}` : ''}${e.location ? ` (${e.location})` : ''}`).join('\n')}`

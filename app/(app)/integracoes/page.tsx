@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { WhatsAppConnect } from '@/components/whatsapp/WhatsAppConnect'
+import { PersonalAIKeysCard } from '@/components/ai/PersonalAIKeysCard'
 
 interface Integration {
   id: string
@@ -423,6 +424,14 @@ export default function IntegracoesPage() {
           ❌ {errorMsg}
         </div>
       )}
+
+      <section>
+        <h2 className="text-text-main text-lg font-semibold mb-1">Minha IA</h2>
+        <p className="text-xs mb-4 text-text-muted">
+          Conecte sua própria chave pra usar o Alpha AI. Cada pessoa usa a própria IA, ninguém usa a chave de outro.
+        </p>
+        <PersonalAIKeysCard />
+      </section>
 
       <section>
         <h2 className="text-text-main text-lg font-semibold mb-4">Conexões OAuth</h2>

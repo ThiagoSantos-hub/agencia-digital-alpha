@@ -94,6 +94,19 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    const { data: aiKeys } = await supabase
+      .from('personal_ai_keys')
+      .select('openai_api_key, elevenlabs_api_key, elevenlabs_voice_id')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (!aiKeys?.openai_api_key) {
+      return NextResponse.json(
+        { error: 'Conecte sua chave da OpenAI em Integrações antes de usar a IA.' },
+        { status: 403, headers: CORS_HEADERS }
+      )
+    }
+
     const body = await req.json()
     const mensagem: string = body.mensagem ?? ''
     const incluirVoz: boolean = body.incluirVoz ?? false
@@ -140,7 +153,7 @@ export async function POST(req: NextRequest) {
       body: n.body.length > 120 ? n.body.slice(0, 117) + '…' : n.body,
     }))
 
-    const resposta = await alphaAI.chat(mensagensParaIA, tools, {
+    const resposta = await alphaAI.chat(aiKeys.openai_api_key, mensagensParaIA, tools, {
       notes: notesCompact,
       crmSnapshot: crmSnapshot || undefined,
       maxTokens,
@@ -162,7 +175,13 @@ export async function POST(req: NextRequest) {
     if (incluirVoz) {
       try {
         const textoFala = respostaTexto.replace(/\[\[SAVE:[\s\S]*?\]\]/gi, '').trim()
-        audioBase64 = await voiceService.sintetizarBase64(textoFala || respostaTexto, 'openai', {
+        const voiceKeys = {
+          openAiKey: aiKeys.openai_api_key,
+          elevenLabsKey: aiKeys.elevenlabs_api_key ?? undefined,
+          elevenLabsVoiceId: aiKeys.elevenlabs_voice_id ?? undefined,
+        }
+        const voiceProvider = voiceKeys.elevenLabsKey && voiceKeys.elevenLabsVoiceId ? 'elevenlabs' : 'openai'
+        audioBase64 = await voiceService.sintetizarBase64(textoFala || respostaTexto, voiceKeys, voiceProvider, {
           speed: voiceSpeed,
         })
       } catch (e) {
