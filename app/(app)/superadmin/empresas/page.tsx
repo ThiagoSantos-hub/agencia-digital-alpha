@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Loader2, Building2, ExternalLink, Eye, Pencil, Power, X } from 'lucide-react'
+import { Loader2, Building2, ExternalLink, Eye, Pencil, Power, X, Trash2, AlertTriangle } from 'lucide-react'
 import { PLAN_LABELS, type Plan } from '@/lib/planLimits'
 
 interface Company {
@@ -57,6 +57,11 @@ export default function SuperAdminEmpresasPage() {
   const [editForm, setEditForm] = useState({ name: '', slug: '', metaTesterProfile: '', plan: '' as Plan | '' })
   const [savingEdit, setSavingEdit] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
+  const [confirmToggle, setConfirmToggle] = useState<Company | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<Company | null>(null)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const fetchCompanies = async () => {
     setLoading(true)
@@ -132,15 +137,32 @@ export default function SuperAdminEmpresasPage() {
     fetchCompanies()
   }
 
-  const toggleActive = async (c: Company) => {
-    const acao = c.active ? 'Desativar' : 'Reativar'
-    if (!confirm(`${acao} a empresa "${c.name}"?${c.active ? ' Ninguém dessa empresa vai conseguir fazer login enquanto estiver inativa (dá pra reverter depois).' : ''}`)) return
+  const confirmToggleActive = async () => {
+    if (!confirmToggle) return
+    const c = confirmToggle
+    setConfirmToggle(null)
     setCompanies((prev) => prev.map((x) => (x.id === c.id ? { ...x, active: !c.active } : x)))
     await fetch('/api/superadmin/companies', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ companyId: c.id, active: !c.active }),
     })
+  }
+
+  const handleDelete = async () => {
+    if (!confirmDelete || deleteConfirmText !== confirmDelete.name) return
+    setDeleting(true)
+    setDeleteError(null)
+    const res = await fetch(`/api/superadmin/companies?companyId=${confirmDelete.id}`, { method: 'DELETE' })
+    setDeleting(false)
+    if (!res.ok) {
+      const data = await res.json()
+      setDeleteError(data.error || 'Erro ao excluir empresa.')
+      return
+    }
+    setConfirmDelete(null)
+    setDeleteConfirmText('')
+    fetchCompanies()
   }
 
   if (authLoading) return null
@@ -295,13 +317,22 @@ export default function SuperAdminEmpresasPage() {
                           <Pencil size={14} />
                         </button>
                         {!c.is_platform_owner && (
-                          <button
-                            onClick={() => toggleActive(c)}
-                            title={c.active ? 'Desativar empresa' : 'Reativar empresa'}
-                            className={`p-1.5 rounded-lg border transition-colors ${c.active ? 'border-border text-text-muted hover:text-red-600 hover:border-red-200' : 'border-cta/30 text-cta hover:bg-cta/10'}`}
-                          >
-                            <Power size={14} />
-                          </button>
+                          <>
+                            <button
+                              onClick={() => setConfirmToggle(c)}
+                              title={c.active ? 'Desativar empresa' : 'Reativar empresa'}
+                              className={`p-1.5 rounded-lg border transition-colors ${c.active ? 'border-border text-text-muted hover:text-red-600 hover:border-red-200' : 'border-cta/30 text-cta hover:bg-cta/10'}`}
+                            >
+                              <Power size={14} />
+                            </button>
+                            <button
+                              onClick={() => { setConfirmDelete(c); setDeleteConfirmText(''); setDeleteError(null) }}
+                              title="Excluir empresa permanentemente"
+                              className="p-1.5 rounded-lg border border-border text-text-muted hover:text-red-600 hover:border-red-200 transition-colors"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </>
                         )}
                       </div>
                     </td>
@@ -379,6 +410,67 @@ export default function SuperAdminEmpresasPage() {
                     {savingEdit ? 'Salvando...' : 'Salvar'}
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {confirmToggle && (
+        <>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onClick={() => setConfirmToggle(null)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-surface border border-border rounded-xl shadow-2xl w-full max-w-sm p-6">
+              <h2 className="text-lg font-bold text-text-main mb-1">
+                {confirmToggle.active ? 'Desativar empresa?' : 'Reativar empresa?'}
+              </h2>
+              <p className="text-sm text-text-muted mb-5">
+                {confirmToggle.active
+                  ? `Ninguém da empresa "${confirmToggle.name}" vai conseguir fazer login enquanto ela estiver inativa. Os dados continuam guardados e dá pra reverter isso a qualquer momento.`
+                  : `A empresa "${confirmToggle.name}" volta a funcionar normalmente, e os usuários dela conseguem fazer login de novo.`}
+              </p>
+              <div className="flex gap-3">
+                <button onClick={() => setConfirmToggle(null)} className="flex-1 px-4 py-2 rounded-lg border border-border text-text-main hover:bg-hover-bg transition-colors text-sm font-medium">Não</button>
+                <button onClick={confirmToggleActive} className="flex-1 px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white transition-colors text-sm font-medium">
+                  {confirmToggle.active ? 'Sim, desativar' : 'Sim, reativar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {confirmDelete && (
+        <>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onClick={() => setConfirmDelete(null)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-surface border border-red-200 rounded-xl shadow-2xl w-full max-w-sm p-6">
+              <div className="flex items-center gap-2 mb-1">
+                <AlertTriangle size={20} className="text-red-600" />
+                <h2 className="text-lg font-bold text-text-main">Excluir empresa permanentemente?</h2>
+              </div>
+              <p className="text-sm text-text-muted mb-4">
+                Isso apaga a empresa <strong className="text-text-main">"{confirmDelete.name}"</strong> e TODOS os dados relacionados a ela para sempre: clientes, campanhas, financeiro, relatórios, contratos, colaboradores e usuários. Não tem como desfazer essa ação.
+              </p>
+              <p className="text-xs text-text-muted mb-2">
+                Pra confirmar, digite o nome exato da empresa: <strong className="text-text-main">{confirmDelete.name}</strong>
+              </p>
+              <input
+                className={inputCls}
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="Digite o nome da empresa"
+              />
+              {deleteError && <div className="mt-3 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-red-600 text-sm">{deleteError}</div>}
+              <div className="flex gap-3 mt-4">
+                <button onClick={() => setConfirmDelete(null)} className="flex-1 px-4 py-2 rounded-lg border border-border text-text-main hover:bg-hover-bg transition-colors text-sm font-medium">Cancelar</button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting || deleteConfirmText !== confirmDelete.name}
+                  className="flex-1 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deleting ? 'Excluindo...' : 'Excluir para sempre'}
+                </button>
               </div>
             </div>
           </div>
