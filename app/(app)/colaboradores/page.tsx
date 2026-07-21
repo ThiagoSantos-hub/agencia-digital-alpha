@@ -33,6 +33,7 @@ export default function ColaboradoresPage() {
     createColaborador,
     updateColaborador,
     toggleStatus,
+    toggleAgendaEnabled,
   } = useColaboradores()
 
   const [search, setSearch] = useState('')
@@ -243,6 +244,7 @@ export default function ColaboradoresPage() {
                 <th className="px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider hidden md:table-cell">E-mail</th>
                 <th className="px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider hidden md:table-cell">Telefone</th>
                 <th className="px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Agenda</th>
                 <th className="px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider text-right">Ações</th>
               </tr>
             </thead>
@@ -267,6 +269,19 @@ export default function ColaboradoresPage() {
                       }`}
                     >
                       {c.status === 'ativo' ? 'Ativo' : 'Inativo'}
+                    </button>
+                  </td>
+                  <td className="px-6 py-4">
+                    <button
+                      onClick={() => toggleAgendaEnabled(c.id, c.agenda_enabled)}
+                      title={c.agenda_enabled ? 'Clique para desativar o acesso à Agenda' : 'Clique para liberar o acesso à Agenda'}
+                      className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${
+                        c.agenda_enabled
+                          ? 'bg-cta/10 text-cta hover:bg-cta/20'
+                          : 'bg-hover-bg text-text-muted hover:bg-border'
+                      }`}
+                    >
+                      {c.agenda_enabled ? 'Liberada' : 'Bloqueada'}
                     </button>
                   </td>
                   <td className="px-6 py-4 text-right">

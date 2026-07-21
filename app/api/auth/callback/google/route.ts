@@ -2,18 +2,22 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
 
 const VALID_TYPES = ['google_ads', 'gmail', 'google_drive', 'google_calendar']
+const PERSONAL_TYPES = ['gmail', 'google_calendar']
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
   const error = searchParams.get('error')
-  const type = searchParams.get('state')
+  const rawState = searchParams.get('state')
 
   if (error || !code) {
     return NextResponse.redirect(new URL('/integracoes?error=google_auth_failed', request.url))
   }
 
-  if (!type || !VALID_TYPES.includes(type)) {
+  const isPersonal = !!rawState?.startsWith('personal:')
+  const type = isPersonal ? rawState!.replace('personal:', '') : rawState
+
+  if (!type || !VALID_TYPES.includes(type) || (isPersonal && !PERSONAL_TYPES.includes(type))) {
     return NextResponse.redirect(new URL('/integracoes?error=google_invalid_type', request.url))
   }
 
@@ -57,6 +61,31 @@ export async function GET(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    if (isPersonal) {
+      // Conexão pessoal (Agenda): um token por usuário, não por empresa.
+      const { error: dbError } = await supabase
+        .from('personal_integrations')
+        .upsert({
+          user_id: user.id,
+          type,
+          status: 'connected',
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token ?? null,
+          token_expiry: expiryDate.toISOString(),
+          connected_at: new Date().toISOString(),
+          connected_email: connectedEmail,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id,type' })
+
+      if (dbError) {
+        return NextResponse.redirect(new URL('/agenda?error=google_db_failed', request.url))
+      }
+
+      const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+      const base = profile?.role === 'collaborator' ? '/colaborador/agenda' : '/agenda'
+      return NextResponse.redirect(new URL(`${base}?success=google_connected&service=${type}`, request.url))
     }
 
     const { data: updated, error: dbError } = await supabase

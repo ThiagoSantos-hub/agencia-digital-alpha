@@ -8,12 +8,22 @@ const SCOPES: Record<string, string> = {
   google_calendar: 'https://www.googleapis.com/auth/calendar.readonly',
 }
 
+// Gmail e Google Agenda podem ser conectados de duas formas: como integração
+// da empresa (Integrações, um token só pra empresa toda) ou como conexão
+// pessoal (Agenda, um token por usuário). O parâmetro `personal=1` distingue
+// os dois — o callback usa isso pra saber em qual tabela salvar o token.
+const PERSONAL_TYPES = ['gmail', 'google_calendar']
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const type = searchParams.get('type')
+  const personal = searchParams.get('personal') === '1'
 
   if (!type || !SCOPES[type]) {
     return NextResponse.redirect(new URL('/integracoes?error=google_invalid_type', request.url))
+  }
+  if (personal && !PERSONAL_TYPES.includes(type)) {
+    return NextResponse.redirect(new URL('/agenda?error=google_invalid_type', request.url))
   }
 
   const scopes = [
@@ -30,7 +40,7 @@ export async function GET(request: NextRequest) {
   // consent -> garante refresh_token sempre | select_account -> força a tela de escolha de conta
   authUrl.searchParams.set('prompt', 'consent select_account')
   // state carrega qual serviço está sendo conectado, pro callback saber onde salvar
-  authUrl.searchParams.set('state', type)
+  authUrl.searchParams.set('state', personal ? `personal:${type}` : type)
 
   return NextResponse.redirect(authUrl.toString())
 }

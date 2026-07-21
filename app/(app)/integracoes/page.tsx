@@ -22,11 +22,14 @@ interface Webhook {
   active: boolean
 }
 
+// Gmail e Google Agenda saíram daqui: viraram conexão pessoal, feita por
+// cada usuário (admin ou colaborador) direto na tela de Agenda, não mais
+// uma integração única por empresa.
 const OAUTH_INTEGRATIONS = [
-  'google_ads', 'gmail', 'google_drive', 'google_calendar',
+  'google_ads', 'google_drive',
   'meta_ads', 'meta_ads_2', 'meta_ads_3', 'meta_ads_4',
 ]
-const GOOGLE_INTEGRATIONS = ['google_ads', 'gmail', 'google_drive', 'google_calendar']
+const GOOGLE_INTEGRATIONS = ['google_ads', 'google_drive']
 
 const INTEGRATION_ICONS: Record<string, string> = {
   google_ads: 'https://www.gstatic.com/images/branding/product/2x/google_ads_48dp.png',
@@ -426,6 +429,9 @@ export default function IntegracoesPage() {
         <p className="text-xs mb-2 text-text-muted">
           Cada serviço do Google pode ser conectado com uma conta diferente. Ao clicar em "Conectar", o Google vai pedir para você escolher a conta.
         </p>
+        <div className="rounded-lg px-3 py-2.5 mb-4 text-xs bg-primary/5 border border-primary/20 text-text-muted">
+          <p>Gmail e Google Agenda agora são conectados na tela de <a href="/agenda" className="text-primary underline">Agenda</a>, já que cada pessoa da equipe conecta a própria conta.</p>
+        </div>
         <div className="rounded-lg px-3 py-2.5 mb-4 text-xs bg-primary/5 border border-primary/20 text-text-muted">
           <p className="font-medium text-text-main mb-1">Conectando o Meta Ads:</p>
           <p>Ao clicar em "Conectar" você autoriza o acesso à sua conta de anúncios do Meta (e, se vinculado, ao Instagram da mesma conta). Escolha a conta certa quando o Facebook perguntar. Se aparecer um erro de permissão durante o processo, entre em contato com o suporte, pode ser necessário liberar seu acesso antes.</p>

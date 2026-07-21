@@ -33,7 +33,6 @@ export default function IntegracoesColaboradorPage() {
   const [metaConnected, setMetaConnected] = useState(false)
   const [googleAdsConnected, setGoogleAdsConnected] = useState(false)
   const [googleDriveConnected, setGoogleDriveConnected] = useState(false)
-  const [googleCalendarConnected, setGoogleCalendarConnected] = useState(false)
   const [emailConnected, setEmailConnected] = useState(false)
   const [openaiKey, setOpenaiKey] = useState('')
   const [elevenlabsKey, setElevenlabsKey] = useState('')
@@ -58,7 +57,6 @@ export default function IntegracoesColaboradorPage() {
             if (int.type === 'meta_ads') setMetaConnected(!!int.api_key)
             if (int.type === 'google_ads') setGoogleAdsConnected(!!int.api_key)
             if (int.type === 'google_drive') setGoogleDriveConnected(!!int.api_key)
-            if (int.type === 'google_calendar') setGoogleCalendarConnected(!!int.api_key)
             if (int.type === 'email') setEmailConnected(!!int.api_key)
             if (int.type === 'openai') setOpenaiKey(int.api_key || '')
             if (int.type === 'elevenlabs') setElevenlabsKey(int.api_key || '')
@@ -79,7 +77,6 @@ export default function IntegracoesColaboradorPage() {
     if (type === 'meta_ads') setMetaConnected(false)
     if (type === 'google_ads') setGoogleAdsConnected(false)
     if (type === 'google_drive') setGoogleDriveConnected(false)
-    if (type === 'google_calendar') setGoogleCalendarConnected(false)
     if (type === 'email') setEmailConnected(false)
     setSuccessMsg(`${type.replace('_', ' ')} desconectado.`)
   }
@@ -151,6 +148,9 @@ export default function IntegracoesColaboradorPage() {
 
       <section>
         <h2 className="text-text-main text-lg font-semibold mb-4">Minhas Conexões</h2>
+        <p className="text-xs mb-4 text-text-muted">
+          Gmail e Google Agenda agora são conectados na tela de <a href="/colaborador/agenda" className="text-primary underline">Agenda</a>.
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[
             { type: 'openai', label: 'OpenAI', key: openaiKey, setKey: setOpenaiKey },
@@ -176,7 +176,6 @@ export default function IntegracoesColaboradorPage() {
 
           <OauthCard type="google_ads" label="Google Ads Pessoal" connected={googleAdsConnected} href="/api/integrations/connect/google?type=google_ads" />
           <OauthCard type="google_drive" label="Google Drive" connected={googleDriveConnected} href="/api/integrations/connect/google?type=google_drive" />
-          <OauthCard type="google_calendar" label="Google Agenda" connected={googleCalendarConnected} href="/api/integrations/connect/google?type=google_calendar" />
           <OauthCard type="email" label="Google E-mail" connected={emailConnected} href="/api/integrations/connect/google?type=email" />
           <OauthCard type="meta_ads" label="Meta Ads Pessoal" connected={metaConnected} href="/api/integrations/connect/meta-collaborator" />
         </div>

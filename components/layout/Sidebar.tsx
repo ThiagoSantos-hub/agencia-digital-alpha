@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, Megaphone, BarChart2, Bell,
   CheckSquare, List, Wallet, UserCog, Bot, Plug,
   Sparkles, MessageSquare, UserCircle, LogOut, Settings,
-  FileSignature, Building2, CreditCard, Rocket
+  FileSignature, Building2, CreditCard, Rocket, CalendarClock
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/hooks/useAuth'
@@ -32,6 +32,7 @@ const menuGroups = [
   {
     label: 'GESTÃO',
     items: [
+      { label: 'Agenda',        href: '/agenda',        icon: CalendarClock, ativo: true },
       { label: 'Tarefas',       href: '/tarefas',       icon: CheckSquare,   ativo: true },
       { label: 'Checklists',    href: '/checklists',    icon: List,          ativo: true },
       { label: 'Contratos',     href: '/contratos',     icon: FileSignature, ativo: true },
