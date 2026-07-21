@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
-import { Plus, Copy, Trash2, Loader2, FileText, Sparkles } from 'lucide-react'
+import { Plus, Copy, Trash2, Loader2, FileText, Sparkles, Link2, Check } from 'lucide-react'
 
 interface Template {
   id: string
@@ -29,6 +29,8 @@ export default function ModelosDeContratoPage() {
   const [galleryOpen, setGalleryOpen] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [creatingBlank, setCreatingBlank] = useState(false)
+  const [companySlug, setCompanySlug] = useState('')
+  const [copiedId, setCopiedId] = useState<string | null>(null)
 
   const fetchAll = async () => {
     setLoading(true)
@@ -37,12 +39,27 @@ export default function ModelosDeContratoPage() {
     setLoading(false)
   }
 
+  const fetchCompanySlug = async () => {
+    const res = await fetch('/api/company')
+    if (res.ok) {
+      const data = await res.json()
+      setCompanySlug(data.slug ?? '')
+    }
+  }
+
+  const handleCopyLink = (templateSlug: string, templateId: string) => {
+    const url = `${window.location.origin}/propostas/${companySlug}/${templateSlug}`
+    navigator.clipboard.writeText(url)
+    setCopiedId(templateId)
+    setTimeout(() => setCopiedId(null), 1500)
+  }
+
   const fetchGallery = async () => {
     const res = await fetch('/api/contract-templates/gallery')
     if (res.ok) setGallery(await res.json())
   }
 
-  useEffect(() => { fetchAll() }, [])
+  useEffect(() => { fetchAll(); fetchCompanySlug() }, [])
 
   const handleOpenGallery = async () => {
     setGalleryOpen(true)
@@ -112,6 +129,15 @@ export default function ModelosDeContratoPage() {
                   <p className="text-text-muted text-xs">{t.currency} · {t.active ? 'Ativo' : 'Inativo'} · /{t.slug}</p>
                 </button>
                 <div className="flex items-center gap-1.5">
+                  {t.active && (
+                    <button
+                      onClick={() => handleCopyLink(t.slug, t.id)}
+                      title="Copiar link pro cliente preencher"
+                      className="p-2 text-text-muted hover:text-primary hover:bg-hover-bg rounded-xl"
+                    >
+                      {copiedId === t.id ? <Check size={15} className="text-cta" /> : <Link2 size={15} />}
+                    </button>
+                  )}
                   <button
                     onClick={() => handleDuplicateOwn(t.id)}
                     disabled={busyId === t.id}

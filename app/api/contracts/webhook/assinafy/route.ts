@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getAssinafyWebhookSecret } from '@/lib/esignature/assinafy'
+import { sendContractNotification } from '@/lib/email'
 
 export const runtime = 'nodejs'
 
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     const { data: contract, error } = await supabase
       .from('contracts')
-      .select('*, companies:company_id (id, contract_signer_email)')
+      .select('*, companies:company_id (id, contract_signer_email, contract_signer_name, name)')
       .eq('esignature_document_id', documentId)
       .single()
 
@@ -109,6 +110,19 @@ export async function POST(request: NextRequest) {
         signed_pdf_storage_path: updatedContract.pdf_signed_path,
       })
       await supabase.from('contracts').update({ n8n_notified_at: new Date().toISOString() }).eq('id', contract.id)
+
+      if (companySignerEmail) {
+        try {
+          await sendContractNotification({
+            toEmail: companySignerEmail,
+            toName: contract.companies?.contract_signer_name ?? contract.companies?.name ?? '',
+            clientName: updatedContract.nome_completo,
+            event: 'assinado',
+          })
+        } catch (err) {
+          console.error('Falha ao enviar aviso de contrato assinado:', err)
+        }
+      }
     }
 
     return NextResponse.json({ ok: true })
