@@ -12,9 +12,19 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
-  const { data, error } = await supabase
+  const { data: profile } = await supabase.from('profiles').select('is_super_admin').eq('id', user.id).single()
+
+  let query = supabase
     .from('roadmap_features')
     .select('id, category, name, description, benefits, how_to_use, problem_solved, status, display_order')
+
+  // "Administração" é sobre gestão de OUTRAS empresas na plataforma (Superadmin) —
+  // não faz sentido aparecer pra quem só administra a própria agência.
+  if (!profile?.is_super_admin) {
+    query = query.neq('category', 'Administração')
+  }
+
+  const { data, error } = await query
     .order('category', { ascending: true })
     .order('display_order', { ascending: true })
 
