@@ -244,13 +244,13 @@ function CalendarGrid({
           const isToday = day.toDateString() === today.toDateString()
           const isSelected = selectedDay?.toDateString() === day.toDateString()
           const dayEvents = eventsForDay(day)
-          const visibleEvents = dayEvents.slice(0, 3)
+          const visibleEvents = dayEvents.slice(0, 2)
           const extraCount = dayEvents.length - visibleEvents.length
           return (
             <button
               key={day.toISOString()}
               onClick={() => setSelectedDay(day)}
-              className={`min-h-[6.5rem] lg:min-h-[7.5rem] rounded-lg p-1.5 text-left flex flex-col gap-1 border transition-colors overflow-hidden ${
+              className={`min-h-[3.25rem] rounded-lg p-1 text-left flex flex-col gap-0.5 border transition-colors overflow-hidden ${
                 isSelected ? 'border-primary bg-primary/5' : 'border-transparent hover:border-border'
               } ${!inMonth ? 'opacity-40' : ''}`}
             >
@@ -417,7 +417,7 @@ export function AgendaView() {
   if (!data) return null
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-6 pb-20 max-w-6xl mx-auto">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-text-main text-2xl font-bold flex items-center gap-2">
