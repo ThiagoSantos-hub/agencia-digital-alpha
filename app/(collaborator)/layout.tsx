@@ -31,6 +31,7 @@ import { PageFade } from '@/components/ui/Motion'
 import { CollaboratorNavLink } from '@/components/layout/CollaboratorNavLink'
 import { NotificationToasts } from '@/components/layout/NotificationToasts'
 import { NotificationPermissionPrompt } from '@/components/layout/NotificationPermissionPrompt'
+import { AlphaWidget } from '@/components/AlphaWidget'
 import { springSoft } from '@/lib/motion'
 
 const menuGroups = [
@@ -405,6 +406,7 @@ export default function CollaboratorLayout({
 
       <NotificationToasts />
       <NotificationPermissionPrompt />
+      <AlphaWidget />
     </div>
   )
 }

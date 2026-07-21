@@ -1,7 +1,14 @@
 // app/api/alpha/route.ts
 // API da Alpha — acesso aos dados reais do sistema
 // Chamada pelas Tools do ElevenLabs
-// Protegida por ALPHA_API_SECRET
+//
+// Cada usuario (de qualquer empresa) configura o proprio agente de voz na
+// ElevenLabs e cola, no cabecalho x-alpha-secret do webhook das ferramentas,
+// o segredo pessoal gerado em personal_ai_keys.alpha_webhook_secret — assim
+// o backend sabe de qual empresa puxar os dados. O antigo segredo unico
+// (ALPHA_API_SECRET) continua funcionando, preso na empresa dona da
+// plataforma, so pra nao quebrar o agente que ja existia antes disso virar
+// multi-empresa.
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
@@ -11,21 +18,36 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-function verificarSecret(req: NextRequest): boolean {
-  const secret = req.headers.get('x-alpha-secret')
-  return secret === process.env.ALPHA_API_SECRET
-}
-
-// A Alpha (assistente de voz do ElevenLabs) é uma ferramenta interna do dono
-// da plataforma, não uma feature multi-tenant — trava toda consulta na empresa
-// dona da plataforma (is_platform_owner = true), nunca em outras empresas,
-// mesmo que o segredo compartilhado (ALPHA_API_SECRET) algum dia vaze.
 let platformCompanyIdCache: string | null = null
 async function getPlatformCompanyId(): Promise<string | null> {
   if (platformCompanyIdCache) return platformCompanyIdCache
   const { data } = await supabase.from('companies').select('id').eq('is_platform_owner', true).maybeSingle()
   platformCompanyIdCache = data?.id ?? null
   return platformCompanyIdCache
+}
+
+async function resolveCallerCompany(req: NextRequest): Promise<string | null> {
+  const secret = req.headers.get('x-alpha-secret')
+  if (!secret) return null
+
+  if (process.env.ALPHA_API_SECRET && secret === process.env.ALPHA_API_SECRET) {
+    return getPlatformCompanyId()
+  }
+
+  const { data: keyRow } = await supabase
+    .from('personal_ai_keys')
+    .select('user_id')
+    .eq('alpha_webhook_secret', secret)
+    .maybeSingle()
+  if (!keyRow) return null
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('company_id')
+    .eq('id', keyRow.user_id)
+    .maybeSingle()
+
+  return profile?.company_id ?? null
 }
 
 function hoje(): string {
@@ -56,8 +78,7 @@ function fmtBRL(v: number): string {
   return `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
 }
 
-async function getClientes() {
-  const companyId = await getPlatformCompanyId()
+async function getClientes(companyId: string) {
   const { data, error } = await supabase
     .from('clients')
     .select('id, name, company, status, monthly_fee, payment_day, phone, email, inactive_at')
@@ -101,9 +122,7 @@ async function getClientes() {
   }
 }
 
-async function getFinanceiro() {
-  const companyId = await getPlatformCompanyId()
-
+async function getFinanceiro(companyId: string) {
   const { data: mesAtual } = await supabase
     .from('finances')
     .select('tipo, valor, status, categoria, descricao, data_vencimento')
@@ -184,9 +203,8 @@ async function getFinanceiro() {
   }
 }
 
-async function getCampanhas(params: { periodo?: string; cliente?: string } = {}) {
+async function getCampanhas(companyId: string, params: { periodo?: string; cliente?: string } = {}) {
   const { cliente } = params
-  const companyId = await getPlatformCompanyId()
 
   const { data, error } = await supabase
     .from('campaigns')
@@ -236,8 +254,7 @@ async function getCampanhas(params: { periodo?: string; cliente?: string } = {})
   }
 }
 
-async function getIntegracoes() {
-  const companyId = await getPlatformCompanyId()
+async function getIntegracoes(companyId: string) {
   const { data, error } = await supabase
     .from('integrations')
     .select('type, label, status, connected_at')
@@ -264,12 +281,12 @@ async function getIntegracoes() {
   }
 }
 
-async function getResumoGeral() {
+async function getResumoGeral(companyId: string) {
   const [clientes, financeiro, campanhas, integracoes] = await Promise.all([
-    getClientes(),
-    getFinanceiro(),
-    getCampanhas(),
-    getIntegracoes(),
+    getClientes(companyId),
+    getFinanceiro(companyId),
+    getCampanhas(companyId),
+    getIntegracoes(companyId),
   ])
 
   return {
@@ -302,7 +319,8 @@ async function getResumoGeral() {
 // IMPORTANTE: Sempre retorna status 200 — o SDK do ElevenLabs crasha com 4xx/5xx
 
 export async function POST(req: NextRequest) {
-  if (!verificarSecret(req)) {
+  const companyId = await resolveCallerCompany(req)
+  if (!companyId) {
     return NextResponse.json({ sucesso: false, mensagem: 'Nao autorizado' })
   }
 
@@ -320,19 +338,19 @@ export async function POST(req: NextRequest) {
 
     switch (acao) {
       case 'get_clientes':
-        resultado = await getClientes()
+        resultado = await getClientes(companyId)
         break
       case 'get_financeiro':
-        resultado = await getFinanceiro()
+        resultado = await getFinanceiro(companyId)
         break
       case 'get_campanhas':
-        resultado = await getCampanhas(params ?? {})
+        resultado = await getCampanhas(companyId, params ?? {})
         break
       case 'get_integracoes':
-        resultado = await getIntegracoes()
+        resultado = await getIntegracoes(companyId)
         break
       case 'get_resumo_geral':
-        resultado = await getResumoGeral()
+        resultado = await getResumoGeral(companyId)
         break
       default:
         return NextResponse.json({ sucesso: false, mensagem: `Acao desconhecida: ${acao}` })
@@ -345,7 +363,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  if (!verificarSecret(req)) {
+  const companyId = await resolveCallerCompany(req)
+  if (!companyId) {
     return NextResponse.json({ sucesso: false, mensagem: 'Nao autorizado' })
   }
   return NextResponse.json({ status: 'Alpha API online', timestamp: new Date().toISOString() })
