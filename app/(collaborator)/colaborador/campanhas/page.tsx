@@ -143,41 +143,37 @@ const CampaignCard = React.memo(function CampaignCard({ campaign, fetchMetrics, 
 
   return (
     <>
-      <div className="bg-surface border border-border rounded-xl overflow-hidden hover:border-primary/30 transition-all shadow-sm">
-        <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-              <Megaphone size={22} />
-            </div>
-            <div>
-              <h3 className="text-text-main font-bold text-base leading-tight">{campaign.name}</h3>
-              <div className="flex items-center gap-3 mt-1">
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusInfo.className}`}>{statusInfo.label}</span>
-                <span className="text-text-muted text-[10px]">ID: {campaign.meta_campaign_id || campaign.id}</span>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="text-right hidden sm:block">
-              <p className="text-text-muted text-[10px] font-bold uppercase tracking-wider">Orçamento Diário</p>
-              <p className="text-text-main font-semibold text-sm">{campaign.budget ? `R$ ${campaign.budget.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'}</p>
-            </div>
-            <button onClick={abrirConfig} className="w-8 h-8 rounded-xl bg-background border border-border flex items-center justify-center text-text-muted hover:text-primary hover:border-primary/30 transition-all" title="Configurar métricas">
+      <tr className="hover:bg-hover-bg transition-colors">
+        <td className="px-4 py-3">
+          <p className="text-text-main font-medium text-sm">{campaign.name}</p>
+          <p className="text-text-disabled text-[10px] mt-0.5">ID: {campaign.meta_campaign_id || campaign.id}</p>
+        </td>
+        <td className="px-4 py-3">
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusInfo.className}`}>{statusInfo.label}</span>
+        </td>
+        <td className="px-4 py-3 text-text-main text-sm">
+          {campaign.budget ? `R$ ${campaign.budget.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'}
+        </td>
+        <td className="px-4 py-3 text-right">
+          <div className="flex items-center justify-end gap-2">
+            <button onClick={abrirConfig} className="w-8 h-8 rounded-lg bg-background border border-border flex items-center justify-center text-text-muted hover:text-primary hover:border-primary/30 transition-all" title="Configurar métricas">
               <Settings2 size={14} />
             </button>
-            <button onClick={loadMetrics} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            <button onClick={loadMetrics} className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
               expandido
                 ? 'bg-primary text-white'
                 : 'bg-background border border-border text-text-muted hover:text-text-main'
             }`}>
               <BarChart2 size={14} />
-              {expandido ? 'Ocultar Métricas' : 'Ver Métricas'}
+              {expandido ? 'Ocultar' : 'Métricas'}
             </button>
           </div>
-        </div>
+        </td>
+      </tr>
 
-        {expandido && (
-          <div className="px-5 pb-5 pt-2 border-t border-border bg-background/50">
+      {expandido && (
+        <tr>
+          <td colSpan={4} className="px-4 pb-4 pt-1 bg-background/50 border-b border-border">
             {loadingMetrics ? (
               <div className="flex items-center justify-center py-8 gap-2 text-text-muted text-xs">
                 <RefreshCw size={16} className="animate-spin text-primary" /> Buscando dados reais do Meta Ads...
@@ -187,7 +183,7 @@ const CampaignCard = React.memo(function CampaignCard({ campaign, fetchMetrics, 
                 Nenhuma métrica encontrada. Configure as métricas clicando no ícone <Settings2 size={11} className="inline" /> ao lado.
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 pt-3">
                 {metrics.map((m) => (
                   <div key={m.id} className="bg-surface border border-border rounded-xl p-3 shadow-sm">
                     <p className="text-text-muted text-[10px] uppercase font-bold tracking-wider mb-1">{m.metric_label}</p>
@@ -202,9 +198,9 @@ const CampaignCard = React.memo(function CampaignCard({ campaign, fetchMetrics, 
                 Abrir no Gerenciador <ExternalLink size={12} />
               </a>
             </div>
-          </div>
-        )}
-      </div>
+          </td>
+        </tr>
+      )}
       {modalAberto && (
         <MetricSelectorModal campaign={campaign} allOptions={allOptions} onSave={handleSaveMetrics} onClose={() => setModalAberto(false)} />
       )}
@@ -299,10 +295,22 @@ const ClienteAccordion = React.memo(function ClienteAccordion({ clienteId, clien
       </button>
 
       {aberto && (
-        <div className="px-4 pb-4 space-y-3 border-t border-border pt-4">
-          {campanhasFiltradas.map(campaign => (
-            <CampaignCard key={campaign.id} campaign={campaign} fetchMetrics={fetchMetrics} fetchAllMetricOptions={fetchAllMetricOptions} saveSelectedMetrics={saveSelectedMetrics} dateStart={dateStart} dateEnd={dateEnd} />
-          ))}
+        <div className="border-t border-border overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-border bg-hover-bg">
+                <th className="px-4 py-3 text-[10px] font-black text-text-muted uppercase tracking-widest">Campanha</th>
+                <th className="px-4 py-3 text-[10px] font-black text-text-muted uppercase tracking-widest">Status</th>
+                <th className="px-4 py-3 text-[10px] font-black text-text-muted uppercase tracking-widest">Orçamento diário</th>
+                <th className="px-4 py-3 text-[10px] font-black text-text-muted uppercase tracking-widest text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {campanhasFiltradas.map(campaign => (
+                <CampaignCard key={campaign.id} campaign={campaign} fetchMetrics={fetchMetrics} fetchAllMetricOptions={fetchAllMetricOptions} saveSelectedMetrics={saveSelectedMetrics} dateStart={dateStart} dateEnd={dateEnd} />
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
