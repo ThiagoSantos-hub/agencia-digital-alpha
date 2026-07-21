@@ -9,10 +9,11 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
-  const { title, description, location, start, end } = await request.json()
+  const { title, description, location, start, end, attendees, createMeetLink } = await request.json()
   if (!title || !start || !end) {
     return NextResponse.json({ error: 'Título, início e fim são obrigatórios.' }, { status: 400 })
   }
+  const attendeeEmails: string[] = Array.isArray(attendees) ? attendees.filter((e: unknown) => typeof e === 'string' && e.includes('@')) : []
 
   const { data: row } = await supabase
     .from('personal_integrations')
@@ -30,10 +31,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Não foi possível renovar o acesso ao Google Agenda. Reconecte na tela de Agenda.' }, { status: 400 })
   }
 
-  const created = await createCalendarEvent(token, { title, description, location, start, end })
+  const created = await createCalendarEvent(token, {
+    title,
+    description,
+    location,
+    start,
+    end,
+    attendees: attendeeEmails,
+    createMeetLink: !!createMeetLink,
+  })
   if (!created) {
     return NextResponse.json({ error: 'Erro ao criar a reunião no Google Agenda.' }, { status: 500 })
   }
 
-  return NextResponse.json({ success: true, id: created.id })
+  return NextResponse.json({ success: true, id: created.id, meetLink: created.meetLink })
 }
