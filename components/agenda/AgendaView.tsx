@@ -17,6 +17,8 @@ import {
   Plus,
   Send,
   X,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 
 const PLATFORM_LOGOS: Record<'gmail' | 'google_calendar', string> = {
@@ -68,17 +70,6 @@ type DismissTarget =
 function formatTime(value: string | null, allDay: boolean) {
   if (!value || allDay) return 'Dia todo'
   return new Date(value).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-}
-
-function formatDayHeader(value: string | null) {
-  if (!value) return 'Sem data'
-  const date = new Date(value)
-  const today = new Date()
-  const tomorrow = new Date(today.getTime() + 86_400_000)
-  const sameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString()
-  if (sameDay(date, today)) return 'Hoje'
-  if (sameDay(date, tomorrow)) return 'Amanhã'
-  return date.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })
 }
 
 function parseFromName(from: string) {
@@ -160,6 +151,165 @@ function StatCard({ label, value }: { label: string; value: number }) {
   )
 }
 
+const WEEKDAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+
+function CalendarGrid({
+  calendarConnected,
+  onDeleteRequest,
+  dismissing,
+  refreshKey,
+}: {
+  calendarConnected: boolean
+  onDeleteRequest: (event: AgendaEvent) => void
+  dismissing: string | null
+  refreshKey: number
+}) {
+  const [viewMonth, setViewMonth] = useState(() => {
+    const now = new Date()
+    return new Date(now.getFullYear(), now.getMonth(), 1)
+  })
+  const [events, setEvents] = useState<AgendaEvent[]>([])
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null)
+
+  const gridDays = useMemo(() => {
+    const lastOfMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 0)
+    const start = new Date(viewMonth)
+    start.setDate(start.getDate() - start.getDay())
+    const end = new Date(lastOfMonth)
+    end.setDate(end.getDate() + (6 - end.getDay()))
+    const days: Date[] = []
+    const cursor = new Date(start)
+    while (cursor <= end) {
+      days.push(new Date(cursor))
+      cursor.setDate(cursor.getDate() + 1)
+    }
+    return days
+  }, [viewMonth])
+
+  useEffect(() => {
+    if (!calendarConnected || gridDays.length === 0) return
+    const from = gridDays[0].toISOString()
+    const to = new Date(gridDays[gridDays.length - 1].getTime() + 86_400_000).toISOString()
+    fetch(`/api/agenda/calendar?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`)
+      .then((res) => res.json())
+      .then((json) => setEvents(json.events ?? []))
+      .catch(() => setEvents([]))
+  }, [calendarConnected, gridDays, refreshKey])
+
+  const eventsForDay = (day: Date) => events.filter((e) => e.start && new Date(e.start).toDateString() === day.toDateString())
+
+  if (!calendarConnected) {
+    return <p className="text-text-muted text-sm">Conecte o Google Agenda pra ver o calendário aqui.</p>
+  }
+
+  const today = new Date()
+  const monthLabel = viewMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+  const selectedEvents = selectedDay ? eventsForDay(selectedDay) : []
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-text-main text-sm font-semibold capitalize">{monthLabel}</p>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1))}
+            className="p-1.5 rounded-lg hover:bg-hover-bg text-text-muted"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <button
+            onClick={() => setViewMonth(new Date(today.getFullYear(), today.getMonth(), 1))}
+            className="text-xs px-2.5 py-1 rounded-lg hover:bg-hover-bg text-text-muted font-medium"
+          >
+            Hoje
+          </button>
+          <button
+            onClick={() => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1))}
+            className="p-1.5 rounded-lg hover:bg-hover-bg text-text-muted"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-7 gap-1 text-center mb-1">
+        {WEEKDAY_LABELS.map((d) => (
+          <p key={d} className="text-[10px] font-bold uppercase text-text-disabled py-1">{d}</p>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-7 gap-1">
+        {gridDays.map((day) => {
+          const inMonth = day.getMonth() === viewMonth.getMonth()
+          const isToday = day.toDateString() === today.toDateString()
+          const isSelected = selectedDay?.toDateString() === day.toDateString()
+          const dayEvents = eventsForDay(day)
+          return (
+            <button
+              key={day.toISOString()}
+              onClick={() => setSelectedDay(day)}
+              className={`aspect-square rounded-lg p-1 text-left flex flex-col gap-1 border transition-colors ${
+                isSelected ? 'border-primary bg-primary/5' : 'border-transparent hover:border-border'
+              } ${!inMonth ? 'opacity-30' : ''}`}
+            >
+              <span className={`text-[11px] w-5 h-5 flex items-center justify-center rounded-full shrink-0 ${isToday ? 'bg-primary text-white font-bold' : 'text-text-main'}`}>
+                {day.getDate()}
+              </span>
+              {dayEvents.length > 0 && (
+                <span className="flex gap-0.5 flex-wrap px-0.5">
+                  {dayEvents.slice(0, 4).map((e) => (
+                    <span key={e.id} className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                  ))}
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+
+      {selectedDay && (
+        <div className="mt-4 border-t border-border pt-4">
+          <p className="text-text-disabled text-[11px] font-bold uppercase tracking-wide mb-2">
+            {selectedDay.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}
+          </p>
+          {selectedEvents.length === 0 ? (
+            <p className="text-text-muted text-sm">Nada agendado nesse dia.</p>
+          ) : (
+            <div className="space-y-2">
+              {selectedEvents.map((event) => (
+                <div key={event.id} className="group bg-surface border border-border rounded-xl p-3.5 flex gap-3 hover:border-primary/30 transition-colors">
+                  <div className="w-14 shrink-0 text-xs font-semibold text-primary pt-0.5">{formatTime(event.start, event.allDay)}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-text-main text-sm font-semibold truncate">{event.title}</p>
+                    {event.location && (
+                      <p className="text-text-muted text-xs mt-1 flex items-center gap-1">
+                        <MapPin size={11} className="shrink-0" /> <span className="truncate">{event.location}</span>
+                      </p>
+                    )}
+                    {event.meetLink && (
+                      <a href={event.meetLink} target="_blank" rel="noreferrer" className="text-primary text-xs mt-1 flex items-center gap-1 hover:underline w-fit">
+                        <Video size={11} /> Entrar na chamada
+                      </a>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => onDeleteRequest(event)}
+                    disabled={dismissing === event.id}
+                    title="Excluir"
+                    className="opacity-0 group-hover:opacity-100 text-text-disabled hover:text-red-500 transition-all shrink-0 h-fit disabled:opacity-50"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -187,6 +337,7 @@ export function AgendaView() {
   const [confirmTarget, setConfirmTarget] = useState<DismissTarget | null>(null)
   const [showNewMeeting, setShowNewMeeting] = useState(false)
   const [showNewEmail, setShowNewEmail] = useState(false)
+  const [calendarRefreshKey, setCalendarRefreshKey] = useState(0)
   const searchParams = useSearchParams()
 
   const fetchAgenda = useCallback(async () => {
@@ -234,22 +385,8 @@ export function AgendaView() {
     })
     setDismissing(null)
     setConfirmTarget(null)
+    if (type === 'event') setCalendarRefreshKey((k) => k + 1)
   }
-
-  const eventsByDay = useMemo(() => {
-    if (!data) return []
-    const groups = new Map<string, AgendaEvent[]>()
-    for (const event of data.events) {
-      const key = event.start ? new Date(event.start).toDateString() : 'sem-data'
-      if (!groups.has(key)) groups.set(key, [])
-      groups.get(key)!.push(event)
-    }
-    return Array.from(groups.entries()).map(([key, events]) => ({
-      header: formatDayHeader(events[0]?.start ?? null),
-      key,
-      events,
-    }))
-  }, [data])
 
   const success = searchParams.get('success')
 
@@ -345,66 +482,24 @@ export function AgendaView() {
         </div>
       )}
 
-      {(data.calendarConnected || data.gmailConnected) && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div>
-            <SectionHeader icon={<Calendar size={13} />} title="Próximas reuniões" />
-            {!data.calendarConnected ? (
-              <p className="text-text-muted text-sm">Conecte o Google Agenda pra ver suas reuniões aqui.</p>
-            ) : data.events.length === 0 ? (
-              <p className="text-text-muted text-sm">Nada agendado nos próximos 14 dias.</p>
-            ) : (
-              <div className="space-y-4">
-                {eventsByDay.map((group) => (
-                  <div key={group.key}>
-                    <p className="text-text-disabled text-[11px] font-bold uppercase tracking-wide mb-2">{group.header}</p>
-                    <div className="space-y-2">
-                      {group.events.map((event) => (
-                        <div
-                          key={event.id}
-                          className="group bg-surface border border-border rounded-xl p-3.5 flex gap-3 hover:border-primary/30 transition-colors"
-                        >
-                          <div className="w-14 shrink-0 text-xs font-semibold text-primary pt-0.5">
-                            {formatTime(event.start, event.allDay)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-text-main text-sm font-semibold truncate">{event.title}</p>
-                            {event.location && (
-                              <p className="text-text-muted text-xs mt-1 flex items-center gap-1">
-                                <MapPin size={11} className="shrink-0" /> <span className="truncate">{event.location}</span>
-                              </p>
-                            )}
-                            {event.meetLink && (
-                              <a
-                                href={event.meetLink}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-primary text-xs mt-1 flex items-center gap-1 hover:underline w-fit"
-                              >
-                                <Video size={11} /> Entrar na chamada
-                              </a>
-                            )}
-                          </div>
-                          <button
-                            onClick={() => setConfirmTarget({ type: 'event', id: event.id, title: event.title, createdBySystem: event.createdBySystem })}
-                            disabled={dismissing === event.id}
-                            title="Excluir"
-                            className="opacity-0 group-hover:opacity-100 text-text-disabled hover:text-red-500 transition-all shrink-0 h-fit disabled:opacity-50"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+      <div>
+        <SectionHeader icon={<Calendar size={13} />} title="Calendário" />
+        <div className="bg-surface border border-border rounded-xl p-4">
+          <CalendarGrid
+            calendarConnected={data.calendarConnected}
+            dismissing={dismissing}
+            refreshKey={calendarRefreshKey}
+            onDeleteRequest={(event) =>
+              setConfirmTarget({ type: 'event', id: event.id, title: event.title, createdBySystem: event.createdBySystem })
+            }
+          />
+        </div>
+      </div>
 
-          <div>
-            <SectionHeader icon={<Mail size={13} />} title="E-mails importantes" />
-            {!data.gmailConnected ? (
+      {(data.calendarConnected || data.gmailConnected) && (
+        <div>
+          <SectionHeader icon={<Mail size={13} />} title="E-mails importantes" />
+          {!data.gmailConnected ? (
               <p className="text-text-muted text-sm">Conecte o Gmail pra ver seus e-mails importantes aqui.</p>
             ) : data.emails.length === 0 ? (
               <p className="text-text-muted text-sm">Nenhum e-mail importante recente.</p>
@@ -441,7 +536,6 @@ export function AgendaView() {
                 })}
               </div>
             )}
-          </div>
         </div>
       )}
 
@@ -497,6 +591,8 @@ function NewMeetingModal({ onClose, onCreated }: { onClose: () => void; onCreate
   const [date, setDate] = useState('')
   const [startTime, setStartTime] = useState('')
   const [endTime, setEndTime] = useState('')
+  const [attendees, setAttendees] = useState('')
+  const [createMeetLink, setCreateMeetLink] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -512,6 +608,15 @@ function NewMeetingModal({ onClose, onCreated }: { onClose: () => void; onCreate
       setError('O horário de fim precisa ser depois do início.')
       return
     }
+    const attendeeEmails = attendees
+      .split(',')
+      .map((email) => email.trim())
+      .filter((email) => email.length > 0)
+    const invalidEmail = attendeeEmails.find((email) => !email.includes('@'))
+    if (invalidEmail) {
+      setError(`"${invalidEmail}" não parece um e-mail válido.`)
+      return
+    }
 
     setSaving(true)
     setError(null)
@@ -525,6 +630,8 @@ function NewMeetingModal({ onClose, onCreated }: { onClose: () => void; onCreate
           location: location || undefined,
           start: start.toISOString(),
           end: end.toISOString(),
+          attendees: attendeeEmails,
+          createMeetLink,
         }),
       })
       const json = await res.json()
@@ -552,8 +659,17 @@ function NewMeetingModal({ onClose, onCreated }: { onClose: () => void; onCreate
           <textarea className={`${inputCls} min-h-[70px] resize-none`} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Pauta, observações..." />
         </div>
         <div>
-          <label className={labelCls}>Local ou link</label>
-          <input className={inputCls} value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Endereço ou link da chamada" />
+          <label className={labelCls}>Participantes</label>
+          <input className={inputCls} value={attendees} onChange={(e) => setAttendees(e.target.value)} placeholder="fulano@empresa.com, ciclano@empresa.com" />
+          <p className="text-[11px] text-text-muted mt-1">Separe os e-mails por vírgula. Cada um recebe o convite direto por e-mail.</p>
+        </div>
+        <label className="flex items-center gap-2 text-xs text-text-main cursor-pointer">
+          <input type="checkbox" checked={createMeetLink} onChange={(e) => setCreateMeetLink(e.target.checked)} className="rounded border-border" />
+          Criar link de videochamada (Google Meet) automaticamente
+        </label>
+        <div>
+          <label className={labelCls}>Local {createMeetLink ? '(opcional, além da videochamada)' : ''}</label>
+          <input className={inputCls} value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Endereço, se for presencial" />
         </div>
         <div className="grid grid-cols-3 gap-2">
           <div>

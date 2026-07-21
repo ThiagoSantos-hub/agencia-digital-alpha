@@ -1,6 +1,17 @@
 import { refreshGoogleAccessToken } from '@/lib/googleToken'
 import type { createServerClient } from '@/lib/supabase-server'
 
+export interface AgendaEvent {
+  id: string
+  title: string
+  start: string | null
+  end: string | null
+  location: string | null
+  meetLink: string | null
+  allDay: boolean
+  createdBySystem: boolean
+}
+
 // Marca, no próprio evento do Google Agenda, que ele foi criado pelo nosso
 // sistema (via extendedProperties.private, um campo livre que o Google
 // reserva pra esse tipo de metadado). Usado pra decidir se o botão de
@@ -40,11 +51,51 @@ export async function getValidAccessToken(
   return refreshed.accessToken
 }
 
+// Busca eventos do Google Agenda num período arbitrário. Usado tanto pelo
+// resumo/dashboard da Agenda (últimos 14 dias) quanto pelo calendário visual
+// (mês exibido, que pode ser qualquer período).
+export async function fetchCalendarEvents(accessToken: string, timeMin: string, timeMax: string): Promise<AgendaEvent[]> {
+  const url = new URL('https://www.googleapis.com/calendar/v3/calendars/primary/events')
+  url.searchParams.set('timeMin', timeMin)
+  url.searchParams.set('timeMax', timeMax)
+  url.searchParams.set('singleEvents', 'true')
+  url.searchParams.set('orderBy', 'startTime')
+  url.searchParams.set('maxResults', '100')
+
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } })
+  if (!res.ok) return []
+  const data = await res.json()
+
+  return (data.items ?? []).map((item: any) => ({
+    id: item.id,
+    title: item.summary || '(sem título)',
+    start: item.start?.dateTime || item.start?.date || null,
+    end: item.end?.dateTime || item.end?.date || null,
+    location: item.location || null,
+    meetLink: item.hangoutLink || null,
+    allDay: !item.start?.dateTime,
+    createdBySystem: item.extendedProperties?.private?.[CRIADO_PELO_SISTEMA_KEY] === 'true',
+  }))
+}
+
 export async function createCalendarEvent(
   accessToken: string,
-  input: { title: string; description?: string; location?: string; start: string; end: string }
-): Promise<{ id: string } | null> {
-  const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+  input: {
+    title: string
+    description?: string
+    location?: string
+    start: string
+    end: string
+    attendees?: string[]
+    createMeetLink?: boolean
+  }
+): Promise<{ id: string; meetLink: string | null } | null> {
+  const url = new URL('https://www.googleapis.com/calendar/v3/calendars/primary/events')
+  url.searchParams.set('conferenceDataVersion', '1')
+  // sendUpdates=all -> os participantes recebem o convite por e-mail direto do Google
+  url.searchParams.set('sendUpdates', 'all')
+
+  const res = await fetch(url, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -56,12 +107,16 @@ export async function createCalendarEvent(
       location: input.location || undefined,
       start: { dateTime: input.start },
       end: { dateTime: input.end },
+      attendees: input.attendees && input.attendees.length > 0 ? input.attendees.map((email) => ({ email })) : undefined,
+      conferenceData: input.createMeetLink
+        ? { createRequest: { requestId: crypto.randomUUID(), conferenceSolutionKey: { type: 'hangoutsMeet' } } }
+        : undefined,
       extendedProperties: { private: { [CRIADO_PELO_SISTEMA_KEY]: 'true' } },
     }),
   })
   if (!res.ok) return null
   const data = await res.json()
-  return { id: data.id }
+  return { id: data.id, meetLink: data.hangoutLink ?? null }
 }
 
 export async function deleteCalendarEvent(accessToken: string, eventId: string): Promise<boolean> {

@@ -1,20 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
 import { OpenAIProvider } from '@/lib/ai/providers/openai.provider'
-import { CRIADO_PELO_SISTEMA_KEY, getValidAccessToken } from '@/lib/agendaCalendar'
+import { getValidAccessToken, fetchCalendarEvents, type AgendaEvent } from '@/lib/agendaCalendar'
 
 export const dynamic = 'force-dynamic'
-
-interface AgendaEvent {
-  id: string
-  title: string
-  start: string | null
-  end: string | null
-  location: string | null
-  meetLink: string | null
-  allDay: boolean
-  createdBySystem: boolean
-}
 
 interface AgendaEmail {
   id: string
@@ -23,32 +12,6 @@ interface AgendaEmail {
   date: string | null
   snippet: string
   link: string
-}
-
-async function fetchCalendarEvents(accessToken: string): Promise<AgendaEvent[]> {
-  const timeMin = new Date().toISOString()
-  const timeMax = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
-  const url = new URL('https://www.googleapis.com/calendar/v3/calendars/primary/events')
-  url.searchParams.set('timeMin', timeMin)
-  url.searchParams.set('timeMax', timeMax)
-  url.searchParams.set('singleEvents', 'true')
-  url.searchParams.set('orderBy', 'startTime')
-  url.searchParams.set('maxResults', '20')
-
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } })
-  if (!res.ok) return []
-  const data = await res.json()
-
-  return (data.items ?? []).map((item: any) => ({
-    id: item.id,
-    title: item.summary || '(sem título)',
-    start: item.start?.dateTime || item.start?.date || null,
-    end: item.end?.dateTime || item.end?.date || null,
-    location: item.location || null,
-    meetLink: item.hangoutLink || null,
-    allDay: !item.start?.dateTime,
-    createdBySystem: item.extendedProperties?.private?.[CRIADO_PELO_SISTEMA_KEY] === 'true',
-  }))
 }
 
 async function fetchImportantEmails(accessToken: string): Promise<AgendaEmail[]> {
@@ -156,7 +119,11 @@ export async function GET() {
 
   if (calendarConnected && calendarRow) {
     const token = await getValidAccessToken(supabase, user.id, 'google_calendar', calendarRow)
-    if (token) events = await fetchCalendarEvents(token)
+    if (token) {
+      const timeMin = new Date().toISOString()
+      const timeMax = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+      events = await fetchCalendarEvents(token, timeMin, timeMax)
+    }
   }
 
   if (gmailConnected && gmailRow) {
