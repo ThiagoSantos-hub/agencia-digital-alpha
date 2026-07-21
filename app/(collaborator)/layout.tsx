@@ -32,6 +32,7 @@ import { CollaboratorNavLink } from '@/components/layout/CollaboratorNavLink'
 import { NotificationToasts } from '@/components/layout/NotificationToasts'
 import { NotificationPermissionPrompt } from '@/components/layout/NotificationPermissionPrompt'
 import { AlphaWidget } from '@/components/AlphaWidget'
+import { BillingAlertsModal } from '@/components/billing/BillingAlertsModal'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { springSoft } from '@/lib/motion'
 
@@ -409,6 +410,7 @@ export default function CollaboratorLayout({
       <NotificationToasts />
       <NotificationPermissionPrompt />
       <AlphaWidget />
+      <BillingAlertsModal />
     </div>
   )
 }
