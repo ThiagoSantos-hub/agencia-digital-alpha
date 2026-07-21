@@ -14,6 +14,14 @@ const SCOPES: Record<string, string> = {
 // os dois — o callback usa isso pra saber em qual tabela salvar o token.
 const PERSONAL_TYPES = ['gmail', 'google_calendar']
 
+// Na Agenda pessoal, além de ler, o usuário cria reunião (precisa escrever no
+// Google Agenda) e manda e-mail (precisa de gmail.send) — escopo maior só
+// nesse fluxo, o da empresa continua só leitura.
+const PERSONAL_SCOPES: Record<string, string> = {
+  gmail: 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send',
+  google_calendar: 'https://www.googleapis.com/auth/calendar',
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const type = searchParams.get('type')
@@ -28,7 +36,7 @@ export async function GET(request: NextRequest) {
 
   const scopes = [
     'https://www.googleapis.com/auth/userinfo.email',
-    SCOPES[type],
+    personal ? PERSONAL_SCOPES[type] : SCOPES[type],
   ].join(' ')
 
   const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
