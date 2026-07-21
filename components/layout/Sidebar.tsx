@@ -93,6 +93,7 @@ export function Sidebar() {
         label: 'PLATAFORMA',
         items: [
           { label: 'Empresas', href: '/superadmin/empresas', icon: Building2, ativo: true },
+          { label: 'Pagamentos', href: '/superadmin/pagamentos', icon: CreditCard, ativo: true },
         ],
       }]
     : menuGroups
