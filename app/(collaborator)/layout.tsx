@@ -20,7 +20,8 @@ import {
   MessageSquare,
   BarChart2,
   List,
-  Rocket
+  Rocket,
+  CalendarClock
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase'
@@ -53,6 +54,7 @@ const menuGroups = [
   {
     label: 'GESTÃO',
     items: [
+      { label: 'Agenda',     href: '/colaborador/agenda',     icon: CalendarClock, ativo: true },
       { label: 'Tarefas',    href: '/colaborador/tarefas',    icon: CheckSquare, ativo: true },
       { label: 'Checklists', href: '/colaborador/checklists', icon: List,        ativo: true },
       { label: 'Financeiro', href: '/colaborador/financeiro', icon: Wallet,      ativo: true },
@@ -113,7 +115,23 @@ export default function CollaboratorLayout({
   const [sinoAberto, setSinoAberto] = useState(false)
   const sinoRef = useRef<HTMLDivElement>(null)
   const [temNovidade, setTemNovidade] = useState(false)
+  // Começa true pra não "piscar" o item escondido enquanto carrega — só
+  // esconde de fato se o admin realmente desativou pra esse colaborador.
+  const [agendaEnabled, setAgendaEnabled] = useState(true)
   const supabase = createClient()
+
+  useEffect(() => {
+    if (!profile?.id) return
+
+    supabase
+      .from('collaborators')
+      .select('agenda_enabled')
+      .eq('user_id', profile.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data && data.agenda_enabled === false) setAgendaEnabled(false)
+      })
+  }, [profile?.id])
 
   useEffect(() => {
     if (!profile?.id) return
@@ -222,7 +240,9 @@ export default function CollaboratorLayout({
                 {group.label}
               </p>
               <div className="space-y-0.5">
-                {group.items.map((item) => {
+                {group.items
+                  .filter((item) => item.label !== 'Agenda' || agendaEnabled)
+                  .map((item) => {
                   const Icon = item.icon
                   const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
                   const isNovidades = item.label === 'Novidades'

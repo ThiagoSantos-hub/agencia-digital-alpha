@@ -7,6 +7,14 @@ import { maskPhone } from '@/lib/validators'
 const inputCls = 'w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-text-main text-sm placeholder:text-text-disabled focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors'
 const labelCls = 'block text-sm font-medium text-text-main mb-1.5'
 
+function RequiredLabel({ text, filled }: { text: string; filled: boolean }) {
+  return (
+    <label className={labelCls}>
+      {text} <span className={filled ? 'text-emerald-500' : 'text-red-500'}>*</span>
+    </label>
+  )
+}
+
 const PLANOS = [
   { value: 'basico', label: 'Básico', price: 'R$ 47/mês', desc: 'até 5 clientes' },
   { value: 'pro', label: 'Pro', price: 'R$ 97/mês', desc: 'até 15 clientes' },
@@ -66,23 +74,23 @@ export default function AssinarPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className={labelCls}>Nome da empresa *</label>
+              <RequiredLabel text="Nome da empresa" filled={!!form.companyName.trim()} />
               <input className={inputCls} value={form.companyName} onChange={(e) => setField('companyName', e.target.value)} placeholder="Agência XYZ" />
             </div>
             <div>
-              <label className={labelCls}>Seu nome *</label>
+              <RequiredLabel text="Seu nome" filled={!!form.adminName.trim()} />
               <input className={inputCls} value={form.adminName} onChange={(e) => setField('adminName', e.target.value)} placeholder="Nome completo" />
             </div>
             <div>
-              <label className={labelCls}>Seu e-mail *</label>
+              <RequiredLabel text="Seu e-mail" filled={!!form.adminEmail.trim()} />
               <input type="email" className={inputCls} value={form.adminEmail} onChange={(e) => setField('adminEmail', e.target.value)} placeholder="voce@empresa.com" />
             </div>
             <div>
-              <label className={labelCls}>Telefone/WhatsApp *</label>
+              <RequiredLabel text="Telefone/WhatsApp" filled={!!form.phone.trim()} />
               <input className={inputCls} value={form.phone} onChange={(e) => setField('phone', maskPhone(e.target.value))} placeholder="(11) 99999-9999" />
             </div>
             <div>
-              <label className={labelCls}>Perfil do Facebook *</label>
+              <RequiredLabel text="Perfil do Facebook" filled={!!form.facebookProfile.trim()} />
               <input className={inputCls} value={form.facebookProfile} onChange={(e) => setField('facebookProfile', e.target.value)} placeholder="facebook.com/seuperfil" />
               <p className="text-xs text-text-muted mt-1">Precisamos disso pra liberar seu acesso ao Meta Ads/Instagram depois.</p>
             </div>

@@ -10,6 +10,7 @@ export interface Colaborador {
   email: string | null
   phone: string | null
   status: 'ativo' | 'inativo'
+  agenda_enabled: boolean
   salary: number | null
   salary_frequency: 'mensal' | 'quinzenal' | 'semanal' | null
   salary_day: number | null
@@ -88,6 +89,15 @@ export function useColaboradores() {
     await updateColaborador(id, { status: newStatus })
   }
 
+  const toggleAgendaEnabled = async (id: string, current: boolean) => {
+    const { error } = await supabase
+      .from('collaborators')
+      .update({ agenda_enabled: !current, updated_at: new Date().toISOString() })
+      .eq('id', id)
+    if (error) throw error
+    await fetchColaboradores()
+  }
+
   useEffect(() => {
     fetchColaboradores()
   }, [fetchColaboradores])
@@ -101,5 +111,6 @@ export function useColaboradores() {
     updateColaborador,
     deleteColaborador,
     toggleStatus,
+    toggleAgendaEnabled,
   }
 }
