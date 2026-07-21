@@ -238,30 +238,38 @@ function CalendarGrid({
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-1.5">
         {gridDays.map((day) => {
           const inMonth = day.getMonth() === viewMonth.getMonth()
           const isToday = day.toDateString() === today.toDateString()
           const isSelected = selectedDay?.toDateString() === day.toDateString()
           const dayEvents = eventsForDay(day)
+          const visibleEvents = dayEvents.slice(0, 3)
+          const extraCount = dayEvents.length - visibleEvents.length
           return (
             <button
               key={day.toISOString()}
               onClick={() => setSelectedDay(day)}
-              className={`aspect-square rounded-lg p-1 text-left flex flex-col gap-1 border transition-colors ${
+              className={`min-h-[6.5rem] lg:min-h-[7.5rem] rounded-lg p-1.5 text-left flex flex-col gap-1 border transition-colors overflow-hidden ${
                 isSelected ? 'border-primary bg-primary/5' : 'border-transparent hover:border-border'
-              } ${!inMonth ? 'opacity-30' : ''}`}
+              } ${!inMonth ? 'opacity-40' : ''}`}
             >
               <span className={`text-[11px] w-5 h-5 flex items-center justify-center rounded-full shrink-0 ${isToday ? 'bg-primary text-white font-bold' : 'text-text-main'}`}>
                 {day.getDate()}
               </span>
-              {dayEvents.length > 0 && (
-                <span className="flex gap-0.5 flex-wrap px-0.5">
-                  {dayEvents.slice(0, 4).map((e) => (
-                    <span key={e.id} className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                  ))}
-                </span>
-              )}
+              <div className="flex flex-col gap-0.5 min-w-0">
+                {visibleEvents.map((e) => (
+                  <span
+                    key={e.id}
+                    className="text-[10px] leading-tight px-1 py-0.5 rounded bg-primary/10 text-primary font-medium truncate"
+                  >
+                    {!e.allDay && e.start ? `${formatTime(e.start, false)} ` : ''}{e.title}
+                  </span>
+                ))}
+                {extraCount > 0 && (
+                  <span className="text-[10px] text-text-muted px-1">+{extraCount} mais</span>
+                )}
+              </div>
             </button>
           )
         })}
@@ -409,7 +417,7 @@ export function AgendaView() {
   if (!data) return null
 
   return (
-    <div className="space-y-6 pb-20 max-w-4xl mx-auto">
+    <div className="space-y-6 pb-20">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-text-main text-2xl font-bold flex items-center gap-2">
