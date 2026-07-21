@@ -223,58 +223,92 @@ export default function SuperAdminEmpresasPage() {
         {loading ? (
           <p className="text-text-muted text-sm p-3">Carregando...</p>
         ) : (
-          <div className="divide-y divide-border">
-            {companies.map((c) => (
-              <div key={c.id} className="flex items-center justify-between py-2.5 px-1 gap-3">
-                <div className="min-w-0">
-                  <p className="text-text-main text-sm font-medium">{c.name} {c.is_platform_owner && <span className="text-[10px] text-primary">(plataforma)</span>}</p>
-                  <p className="text-text-muted text-xs">/{c.slug}</p>
-                  {c.meta_tester_profile && (
-                    <p className="text-text-muted text-xs mt-0.5 flex items-center gap-1 truncate">
-                      <ExternalLink size={11} className="shrink-0" /> {c.meta_tester_profile}
-                      {!c.meta_tester_added && (
-                        <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 whitespace-nowrap">aguardando testador Meta</span>
+          <div className="overflow-x-auto -mx-1">
+            <table className="w-full text-sm border-collapse min-w-[860px]">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left font-semibold text-text-muted text-xs uppercase tracking-wide py-2.5 px-3">Empresa</th>
+                  <th className="text-left font-semibold text-text-muted text-xs uppercase tracking-wide py-2.5 px-3">Plano</th>
+                  <th className="text-left font-semibold text-text-muted text-xs uppercase tracking-wide py-2.5 px-3">Testador Meta</th>
+                  <th className="text-left font-semibold text-text-muted text-xs uppercase tracking-wide py-2.5 px-3">Status</th>
+                  <th className="text-right font-semibold text-text-muted text-xs uppercase tracking-wide py-2.5 px-3">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {companies.map((c) => (
+                  <tr key={c.id} className="hover:bg-hover-bg transition-colors">
+                    <td className="py-3 px-3 align-top">
+                      <p className="text-text-main font-medium flex items-center gap-1.5">
+                        {c.name}
+                        {c.is_platform_owner && <span className="text-[10px] font-normal text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">plataforma</span>}
+                      </p>
+                      <p className="text-text-muted text-xs mt-0.5">/{c.slug}</p>
+                      {c.meta_tester_profile && (
+                        <a href={c.meta_tester_profile} target="_blank" rel="noreferrer" className="text-text-muted text-xs mt-1 flex items-center gap-1 hover:text-primary max-w-[220px] truncate">
+                          <ExternalLink size={11} className="shrink-0" /> <span className="truncate">{c.meta_tester_profile}</span>
+                        </a>
                       )}
-                    </p>
-                  )}
-                  {c.payment_method && (
-                    <p className="text-text-muted text-xs mt-0.5">
-                      {c.plan ? PLAN_LABELS[c.plan] : 'Sem plano'} · {c.payment_method === 'pix' ? 'Pix' : 'Cartão'} · {c.subscription_status ?? '-'}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {!c.is_platform_owner && c.meta_tester_profile && (
-                    <label className="flex items-center gap-1.5 text-xs text-text-muted cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={c.meta_tester_added}
-                        onChange={() => toggleTesterAdded(c.id, c.meta_tester_added)}
-                      />
-                      Testador Meta adicionado
-                    </label>
-                  )}
-                  <span className={`text-xs px-2 py-1 rounded-lg border whitespace-nowrap ${c.active ? 'text-cta bg-cta/10 border-cta/30' : 'text-text-disabled bg-slate-100 border-slate-200'}`}>
-                    {c.active ? 'Ativa' : 'Inativa'}
-                  </span>
-                  <button onClick={() => setViewCompany(c)} title="Ver informações" className="p-1.5 rounded-lg border border-border text-text-muted hover:text-primary hover:border-primary/30 transition-colors">
-                    <Eye size={14} />
-                  </button>
-                  <button onClick={() => openEdit(c)} title="Editar" className="p-1.5 rounded-lg border border-border text-text-muted hover:text-primary hover:border-primary/30 transition-colors">
-                    <Pencil size={14} />
-                  </button>
-                  {!c.is_platform_owner && (
-                    <button
-                      onClick={() => toggleActive(c)}
-                      title={c.active ? 'Desativar empresa' : 'Reativar empresa'}
-                      className={`p-1.5 rounded-lg border transition-colors ${c.active ? 'border-border text-text-muted hover:text-red-600 hover:border-red-200' : 'border-cta/30 text-cta hover:bg-cta/10'}`}
-                    >
-                      <Power size={14} />
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+                    </td>
+                    <td className="py-3 px-3 align-top">
+                      {c.plan ? (
+                        <>
+                          <p className="text-text-main font-medium">{PLAN_LABELS[c.plan]}</p>
+                          <p className="text-text-muted text-xs mt-0.5">
+                            {c.payment_method === 'pix' ? 'Pix' : c.payment_method === 'card' ? 'Cartão' : ''}
+                            {c.subscription_status ? ` · ${c.subscription_status}` : ''}
+                          </p>
+                        </>
+                      ) : (
+                        <span className="text-text-muted text-xs">Sem plano</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-3 align-top">
+                      {c.meta_tester_profile ? (
+                        <div className="flex flex-col gap-1 items-start">
+                          <label className="flex items-center gap-1.5 text-xs text-text-muted cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={c.meta_tester_added}
+                              onChange={() => toggleTesterAdded(c.id, c.meta_tester_added)}
+                            />
+                            Adicionado
+                          </label>
+                          {!c.meta_tester_added && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 whitespace-nowrap">aguardando</span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-text-muted text-xs">-</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-3 align-top">
+                      <span className={`text-xs px-2 py-1 rounded-lg border whitespace-nowrap ${c.active ? 'text-cta bg-cta/10 border-cta/30' : 'text-text-disabled bg-slate-100 border-slate-200'}`}>
+                        {c.active ? 'Ativa' : 'Inativa'}
+                      </span>
+                    </td>
+                    <td className="py-3 px-3 align-top">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button onClick={() => setViewCompany(c)} title="Ver informações" className="p-1.5 rounded-lg border border-border text-text-muted hover:text-primary hover:border-primary/30 transition-colors">
+                          <Eye size={14} />
+                        </button>
+                        <button onClick={() => openEdit(c)} title="Editar" className="p-1.5 rounded-lg border border-border text-text-muted hover:text-primary hover:border-primary/30 transition-colors">
+                          <Pencil size={14} />
+                        </button>
+                        {!c.is_platform_owner && (
+                          <button
+                            onClick={() => toggleActive(c)}
+                            title={c.active ? 'Desativar empresa' : 'Reativar empresa'}
+                            className={`p-1.5 rounded-lg border transition-colors ${c.active ? 'border-border text-text-muted hover:text-red-600 hover:border-red-200' : 'border-cta/30 text-cta hover:bg-cta/10'}`}
+                          >
+                            <Power size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </Card>
