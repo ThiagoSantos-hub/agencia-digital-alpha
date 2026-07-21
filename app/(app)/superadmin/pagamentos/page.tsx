@@ -59,8 +59,8 @@ function SummaryCard({ icon, label, value, tone }: { icon: React.ReactNode; labe
   return (
     <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-3">
       <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${tone}`}>{icon}</div>
-      <div>
-        <p className="text-text-muted text-[11px] font-medium uppercase tracking-wide">{label}</p>
+      <div className="min-w-0">
+        <p className="text-text-muted text-[11px] font-medium uppercase tracking-wide leading-tight break-words">{label}</p>
         <p className="text-text-main text-lg font-bold leading-tight">{value}</p>
       </div>
     </div>

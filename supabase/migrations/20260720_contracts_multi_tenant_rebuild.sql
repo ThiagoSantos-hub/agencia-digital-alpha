@@ -4,7 +4,11 @@
 -- Sem dados reais a preservar (confirmado) — recria do zero.
 
 DROP TABLE IF EXISTS contracts CASCADE;
+DROP TABLE IF EXISTS contract_template_fields CASCADE;
+DROP TABLE IF EXISTS contract_template_clauses CASCADE;
+DROP TABLE IF EXISTS contract_template_pricing_items CASCADE;
 DROP TABLE IF EXISTS contract_templates CASCADE;
+DROP TABLE IF EXISTS clause_snippets CASCADE;
 
 -- ─── contract_templates ─────────────────────────────────────────────────────
 

@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS personal_ai_keys (
 
 ALTER TABLE personal_ai_keys ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "personal_ai_keys_own" ON personal_ai_keys;
+
 CREATE POLICY "personal_ai_keys_own"
   ON personal_ai_keys FOR ALL
   TO authenticated

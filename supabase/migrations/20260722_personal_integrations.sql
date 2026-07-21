@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS personal_integrations (
 
 ALTER TABLE personal_integrations ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "personal_integrations_own" ON personal_integrations;
+
 CREATE POLICY "personal_integrations_own"
   ON personal_integrations FOR ALL
   TO authenticated

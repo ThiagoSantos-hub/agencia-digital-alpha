@@ -29,7 +29,7 @@ WHERE category = 'Agenda' AND name = 'IA na Agenda';
 -- Funcionalidade nova que não estava na lista original: enviar e-mail
 -- direto pelo Gmail conectado, sem precisar sair do sistema.
 INSERT INTO roadmap_features (category, name, description, benefits, how_to_use, problem_solved, status, display_order)
-VALUES (
+SELECT
   'Agenda',
   'Enviar e-mail pelo sistema',
   'Escreva e envie um e-mail de verdade direto pela tela de Agenda, usando o seu próprio Gmail conectado.',
@@ -38,4 +38,6 @@ VALUES (
   'Antes não tinha nenhum jeito de mandar e-mail direto do sistema.',
   'disponivel',
   6
+WHERE NOT EXISTS (
+  SELECT 1 FROM roadmap_features WHERE category = 'Agenda' AND name = 'Enviar e-mail pelo sistema'
 );

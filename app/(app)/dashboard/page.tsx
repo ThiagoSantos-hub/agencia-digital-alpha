@@ -222,7 +222,7 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div className="h-[calc(100vh-100px)] flex flex-col gap-4 overflow-hidden">
+    <div className="h-full flex flex-col gap-4 overflow-hidden">
       <div className="h-16 flex flex-shrink-0 items-center gap-4">
         <div className="bg-surface border border-border rounded-xl px-5 h-full flex items-center gap-4 flex-1 min-w-0 shadow-sm">
           <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">

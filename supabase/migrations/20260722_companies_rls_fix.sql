@@ -6,6 +6,9 @@
 -- que a fundação multi-tenant foi aplicada. Isso também explica o botão de trocar
 -- provedor de assinatura (Autentique/Assinafy) não "colar".
 
+DROP POLICY IF EXISTS "companies_select_same_company" ON companies;
+DROP POLICY IF EXISTS "companies_update_same_company" ON companies;
+
 CREATE POLICY "companies_select_same_company" ON companies FOR SELECT
   USING (id = public.get_current_company_id() OR public.is_super_admin());
 
