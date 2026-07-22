@@ -22,7 +22,7 @@ interface TemplateField {
   display_order: number
 }
 
-interface PricingItem { label: string; amount: number; frequency: 'unico' | 'mensal' }
+interface PricingItem { label: string; amount: number; frequency: 'unico' | 'mensal' | 'semanal' }
 
 interface PublicTemplateData {
   companyName: string
@@ -148,7 +148,7 @@ export default function PropostaPublicaPage() {
                 <div key={i} className="flex items-center justify-between text-sm">
                   <span className="text-text-muted">{item.label}</span>
                   <span className="text-text-main font-medium">
-                    {fmtMoney(item.amount, data.template.currency)}{item.frequency === 'mensal' ? '/mês' : ''}
+                    {fmtMoney(item.amount, data.template.currency)}{item.frequency === 'mensal' ? '/mês' : item.frequency === 'semanal' ? '/semana' : ''}
                   </span>
                 </div>
               ))}

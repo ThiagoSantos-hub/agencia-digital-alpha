@@ -27,6 +27,36 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
   )
 }
 
+// Telefone e dados financeiros ficam ocultos até o usuário clicar no olhinho —
+// evita expor esses dados de relance numa tela compartilhada/print de tela.
+function MaskedInfoRow({ icon, label, value, revealed, onToggle }: {
+  icon: React.ReactNode; label: string; value: string | null; revealed: boolean; onToggle: () => void
+}) {
+  return (
+    <div className="flex items-start gap-3 py-3 border-b border-border last:border-0">
+      <div className="mt-0.5 text-text-muted">{icon}</div>
+      <div className="flex-1 flex items-center justify-between gap-2">
+        <div>
+          <p className="text-xs text-text-muted mb-0.5">{label}</p>
+          <p className="text-sm text-text-main">
+            {value == null ? '—' : revealed ? value : '••••••••'}
+          </p>
+        </div>
+        {value != null && (
+          <button
+            type="button"
+            onClick={onToggle}
+            title={revealed ? 'Ocultar' : 'Mostrar'}
+            className="p-1.5 rounded-lg text-text-muted hover:text-primary hover:bg-hover-bg transition-colors shrink-0"
+          >
+            {revealed ? <EyeOff size={14} /> : <Eye size={14} />}
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function ModalConfirmarExclusao({ name, onClose, onConfirm }: { name: string; onClose: () => void; onConfirm: () => void }) {
   const [loading, setLoading] = useState(false)
   return (
@@ -63,6 +93,8 @@ export default function ClientePerfilPage() {
   const [client, setClient] = useState<Client | null>(null)
   const [loading, setLoading] = useState(true)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [telefoneRevelado, setTelefoneRevelado] = useState(false)
+  const [financeiroRevelado, setFinanceiroRevelado] = useState(false)
 
   useEffect(() => {
     async function fetch() {
@@ -188,7 +220,8 @@ export default function ClientePerfilPage() {
 
           <InfoRow icon={<Building2 size={15} />} label="Empresa" value={client.company} />
           <InfoRow icon={<Mail size={15} />} label="E-mail" value={client.email} />
-          <InfoRow icon={<Phone size={15} />} label="Telefone" value={client.phone} />
+          <MaskedInfoRow icon={<Phone size={15} />} label="Telefone" value={client.phone}
+            revealed={telefoneRevelado} onToggle={() => setTelefoneRevelado((v) => !v)} />
           <InfoRow icon={<CalendarDays size={15} />} label="Data de entrada"
             value={client.start_date
               ? new Date(client.start_date + 'T00:00:00').toLocaleDateString('pt-BR')
@@ -199,12 +232,14 @@ export default function ClientePerfilPage() {
                 ? new Date(client.inativo_em).toLocaleDateString('pt-BR')
                 : null} />
           )}
-          <InfoRow icon={<DollarSign size={15} />} label="Mensalidade"
+          <MaskedInfoRow icon={<DollarSign size={15} />} label="Mensalidade"
             value={client.monthly_fee != null
               ? `R$ ${client.monthly_fee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-              : null} />
-          <InfoRow icon={<CreditCard size={15} />} label="Dia de pagamento"
-            value={client.payment_day != null ? `Dia ${client.payment_day}` : null} />
+              : null}
+            revealed={financeiroRevelado} onToggle={() => setFinanceiroRevelado((v) => !v)} />
+          <MaskedInfoRow icon={<CreditCard size={15} />} label="Dia de pagamento"
+            value={client.payment_day != null ? `Dia ${client.payment_day}` : null}
+            revealed={financeiroRevelado} onToggle={() => setFinanceiroRevelado((v) => !v)} />
         </div>
 
         {/* Meta Ads Integration Info */}

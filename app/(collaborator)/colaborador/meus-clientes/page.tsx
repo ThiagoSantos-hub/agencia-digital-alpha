@@ -184,6 +184,19 @@ export default function MeusClientesPage() {
   const [search, setSearch] = useState('')
   const [modalNovo, setModalNovo] = useState(false)
   const [clienteEditar, setClienteEditar] = useState<Client | null>(null)
+  // Contato e financeiro ficam ocultos por padrão, revelados por cliente ao
+  // clicar no olhinho — evita expor telefone/e-mail/valores numa tela
+  // compartilhada.
+  const [contatoRevelado, setContatoRevelado] = useState<Set<string>>(new Set())
+  const [financeiroRevelado, setFinanceiroRevelado] = useState<Set<string>>(new Set())
+
+  const toggleRevelado = (setFn: typeof setContatoRevelado, id: string) => {
+    setFn((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
 
   const myClients = useMemo(() => clients.filter(c => c.manager_id === profile?.id), [clients, profile?.id])
   const filteredActive = useMemo(() => myClients.filter(c => c.status !== 'inativo' && (c.name.toLowerCase().includes(search.toLowerCase()) || (c.company ?? '').toLowerCase().includes(search.toLowerCase()))), [myClients, search])
@@ -220,12 +233,34 @@ export default function MeusClientesPage() {
                   <span className="text-text-muted text-[10px] ml-1.5">{c.company || '—'}</span>
                 </td>
                 <td className="px-3 py-2 whitespace-nowrap">
-                  <span className="text-text-muted text-[11px]">{c.phone || '—'}</span>
-                  <span className="text-text-disabled text-[10px] ml-1.5">{c.email || '—'}</span>
+                  <div className="inline-flex items-center gap-1.5">
+                    {contatoRevelado.has(c.id) ? (
+                      <>
+                        <span className="text-text-muted text-[11px]">{c.phone || '—'}</span>
+                        <span className="text-text-disabled text-[10px] ml-1.5">{c.email || '—'}</span>
+                      </>
+                    ) : (
+                      <span className="text-text-disabled text-[11px]">••••••••</span>
+                    )}
+                    <button onClick={() => toggleRevelado(setContatoRevelado, c.id)} title={contatoRevelado.has(c.id) ? 'Ocultar' : 'Mostrar'} className="p-1 text-text-muted hover:text-primary rounded-md">
+                      {contatoRevelado.has(c.id) ? <EyeOff size={12} /> : <Eye size={12} />}
+                    </button>
+                  </div>
                 </td>
                 <td className="px-3 py-2 whitespace-nowrap">
-                  <span className="text-text-main font-medium text-xs">{c.monthly_fee ? c.monthly_fee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '—'}</span>
-                  <span className="text-text-muted text-[10px] ml-1.5">{c.payment_day ? `Dia ${c.payment_day}` : '—'}</span>
+                  <div className="inline-flex items-center gap-1.5">
+                    {financeiroRevelado.has(c.id) ? (
+                      <>
+                        <span className="text-text-main font-medium text-xs">{c.monthly_fee ? c.monthly_fee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '—'}</span>
+                        <span className="text-text-muted text-[10px] ml-1.5">{c.payment_day ? `Dia ${c.payment_day}` : '—'}</span>
+                      </>
+                    ) : (
+                      <span className="text-text-disabled text-xs">••••••••</span>
+                    )}
+                    <button onClick={() => toggleRevelado(setFinanceiroRevelado, c.id)} title={financeiroRevelado.has(c.id) ? 'Ocultar' : 'Mostrar'} className="p-1 text-text-muted hover:text-primary rounded-md">
+                      {financeiroRevelado.has(c.id) ? <EyeOff size={12} /> : <Eye size={12} />}
+                    </button>
+                  </div>
                 </td>
                 <td className="px-3 py-2 whitespace-nowrap">
                   <div className="inline-flex items-center gap-2">
