@@ -144,11 +144,11 @@ export function AlphaVoiceButton() {
         title={isActive ? 'Desativar Alpha AI' : 'Ativar Alpha AI'}
         style={{
           position: 'fixed',
-          bottom: 100,
+          bottom: 24,
           right: 24,
           zIndex: 60,
-          width: 48,
-          height: 48,
+          width: 56,
+          height: 56,
           borderRadius: '50%',
           border: `2px solid ${btnBg[voiceState]}`,
           cursor: 'pointer',

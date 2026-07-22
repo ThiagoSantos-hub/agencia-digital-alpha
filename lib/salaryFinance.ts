@@ -53,13 +53,26 @@ export async function gerarOuAtualizarLancamentosSalario(
     .eq('collaborator_id', collaboratorId)
     .eq('status', 'pendente')
 
-  if (existentes && existentes.length > 0) {
+  const pendentes = existentes ?? []
+  const esperado = frequency === 'quinzenal' ? 2 : 1
+
+  // Já tem a quantidade certa de lançamentos pendentes pra frequência atual —
+  // só atualiza o valor, sem mexer na data (pra não bagunçar pagamento já
+  // agendado).
+  if (pendentes.length === esperado) {
     await supabase
       .from('finances')
       .update({ valor: salary, updated_at: new Date().toISOString() })
       .eq('collaborator_id', collaboratorId)
       .eq('status', 'pendente')
     return
+  }
+
+  // Quantidade errada (frequência mudou de mensal/semanal pra quinzenal ou
+  // vice-versa, ou nunca foi gerado) — apaga os pendentes antigos e gera do
+  // zero pra frequência atual.
+  if (pendentes.length > 0) {
+    await supabase.from('finances').delete().eq('collaborator_id', collaboratorId).eq('status', 'pendente')
   }
 
   const base = {
@@ -84,10 +97,13 @@ export async function gerarOuAtualizarLancamentosSalario(
       recorrencia: 'mensal',
     })
   } else if (frequency === 'quinzenal') {
+    // Salário é o valor total do mês, dividido nas duas parcelas quinzenais
+    // (senão o total pago no mês dobraria).
+    const metade = salary / 2
     const dia2 = diaSeguinteQuinzena(day)
     await supabase.from('finances').insert([
-      { ...base, dia_vencimento: day, data_vencimento: proximaOcorrencia(day), recorrencia: 'mensal' },
-      { ...base, dia_vencimento: dia2, data_vencimento: proximaOcorrencia(dia2), recorrencia: 'mensal' },
+      { ...base, valor: metade, descricao: `${base.descricao} (quinzenal 1/2)`, dia_vencimento: day, data_vencimento: proximaOcorrencia(day), recorrencia: 'mensal' },
+      { ...base, valor: metade, descricao: `${base.descricao} (quinzenal 2/2)`, dia_vencimento: dia2, data_vencimento: proximaOcorrencia(dia2), recorrencia: 'mensal' },
     ])
   } else {
     const proxima = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)

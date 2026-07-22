@@ -9,6 +9,7 @@ import { SecondBrainGraph } from '@/components/ai/SecondBrainGraph'
 import { ALPHA_CONFIG } from '@/lib/ai/alphaPersona'
 
 export type JarvisMode = 'alpha' | 'eleven'
+export type { VoiceState }
 
 interface CrmStats {
   clientes: number

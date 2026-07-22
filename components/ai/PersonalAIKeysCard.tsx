@@ -52,9 +52,14 @@ export function PersonalAIKeysCard() {
   const [preferredName, setPreferredName] = useState('')
   const [workContext, setWorkContext] = useState('')
   const [profileSaved, setProfileSaved] = useState(false)
+  const [voiceProvider, setVoiceProvider] = useState<'alpha' | 'elevenlabs'>('elevenlabs')
+  const [savingProvider, setSavingProvider] = useState(false)
 
-  const fetchStatus = async () => {
-    setLoading(true)
+  // showLoading só deve ser true na primeira busca (montagem) — chamado de
+  // novo depois de salvar/desconectar, ligar loading de novo fazia o card
+  // inteiro sumir (return null) e reaparecer, parecendo um reload de página.
+  const fetchStatus = async (showLoading = true) => {
+    if (showLoading) setLoading(true)
     try {
       const res = await fetch('/api/ai/keys')
       const json = await res.json()
@@ -64,8 +69,9 @@ export function PersonalAIKeysCard() {
       setWebhookSecret(json.webhookSecret ?? '')
       setPreferredName(json.preferredName ?? '')
       setWorkContext(json.workContext ?? '')
+      setVoiceProvider(json.voiceProvider === 'alpha' ? 'alpha' : 'elevenlabs')
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
   }
 
@@ -73,6 +79,18 @@ export function PersonalAIKeysCard() {
     fetchStatus()
     setWebhookUrl(`${window.location.origin}/api/alpha`)
   }, [])
+
+  const saveVoiceProvider = async (provider: 'alpha' | 'elevenlabs') => {
+    if (provider === voiceProvider) return
+    setSavingProvider(true)
+    await fetch('/api/ai/keys', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ voiceProvider: provider }),
+    })
+    setVoiceProvider(provider)
+    setSavingProvider(false)
+  }
 
   const saveOpenai = async () => {
     if (!openaiKey.trim()) return
@@ -83,14 +101,14 @@ export function PersonalAIKeysCard() {
       body: JSON.stringify({ openaiApiKey: openaiKey.trim() }),
     })
     setOpenaiKey('')
-    await fetchStatus()
+    await fetchStatus(false)
     setSaving(null)
   }
 
   const removeOpenai = async () => {
     setSaving('openai')
     await fetch('/api/ai/keys?type=openai', { method: 'DELETE' })
-    await fetchStatus()
+    await fetchStatus(false)
     setSaving(null)
   }
 
@@ -104,14 +122,14 @@ export function PersonalAIKeysCard() {
     })
     setElevenlabsKey('')
     setElevenlabsVoiceId('')
-    await fetchStatus()
+    await fetchStatus(false)
     setSaving(null)
   }
 
   const removeElevenlabs = async () => {
     setSaving('elevenlabs')
     await fetch('/api/ai/keys?type=elevenlabs', { method: 'DELETE' })
-    await fetchStatus()
+    await fetchStatus(false)
     setSaving(null)
   }
 
@@ -124,14 +142,14 @@ export function PersonalAIKeysCard() {
       body: JSON.stringify({ elevenlabsAgentId: agentId.trim() }),
     })
     setAgentId('')
-    await fetchStatus()
+    await fetchStatus(false)
     setSaving(null)
   }
 
   const removeAgent = async () => {
     setSaving('agent')
     await fetch('/api/ai/keys?type=agent', { method: 'DELETE' })
-    await fetchStatus()
+    await fetchStatus(false)
     setSaving(null)
   }
 
@@ -188,6 +206,39 @@ export function PersonalAIKeysCard() {
             {profileSaved && <span className="text-cta text-xs flex items-center gap-1"><Check size={12} /> Salvo</span>}
           </div>
         </div>
+      </div>
+
+      <div className={cardCls}>
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-background">
+            <Mic size={18} className="text-primary" />
+          </div>
+          <div>
+            <p className="text-text-main text-sm font-medium">IA do microfone flutuante</p>
+            <p className="text-xs mt-0.5 text-text-muted">Escolha qual IA de voz o botão de microfone usa.</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          {(['alpha', 'elevenlabs'] as const).map((provider) => (
+            <button
+              key={provider}
+              onClick={() => saveVoiceProvider(provider)}
+              disabled={savingProvider || voiceProvider === provider}
+              className={`text-xs px-4 py-2 rounded-lg font-medium border transition-colors disabled:cursor-default ${
+                voiceProvider === provider
+                  ? 'bg-primary text-white border-primary'
+                  : 'bg-surface text-text-muted border-border hover:border-primary'
+              }`}
+            >
+              {voiceProvider === provider ? '✓ ' : ''}{provider === 'alpha' ? 'Alpha AI' : 'ElevenLabs'} {voiceProvider === provider ? '(ativo)' : ''}
+            </button>
+          ))}
+        </div>
+        <p className="text-[11px] text-text-muted mt-2">
+          {voiceProvider === 'alpha'
+            ? 'Usa sua chave da OpenAI (o card "Minha IA" abaixo), fala com o navegador e responde por voz.'
+            : 'Usa o agente de conversa do ElevenLabs, configurado no card "Assistente de voz" abaixo.'}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

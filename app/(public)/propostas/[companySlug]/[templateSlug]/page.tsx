@@ -139,7 +139,7 @@ export default function PropostaPublicaPage() {
           <div className="flex flex-col items-center text-center mb-6">
             <FileSignature size={32} className="text-primary mb-2" />
             <h1 className="text-text-main text-xl font-bold">{data.template.name}</h1>
-            <p className="text-text-muted text-sm mt-1">{data.companyName} — preencha seus dados para gerar seu contrato.</p>
+            <p className="text-text-muted text-sm mt-1">{data.companyName}, preencha seus dados para gerar seu contrato.</p>
           </div>
 
           {data.pricingItems.length > 0 && (
@@ -179,6 +179,17 @@ export default function PropostaPublicaPage() {
                 )}
               </div>
             ))}
+
+            {data.clauseTitles.length > 0 && (
+              <div className="bg-background border border-border rounded-xl p-4">
+                <p className="text-text-main text-xs font-semibold mb-2">Este contrato inclui as seguintes cláusulas:</p>
+                <ul className="space-y-1 max-h-40 overflow-y-auto pr-1">
+                  {data.clauseTitles.map((title, i) => (
+                    <li key={i} className="text-text-muted text-xs">{title}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             <label className="flex items-start gap-2.5 text-sm text-text-muted pt-2">
               <input type="checkbox" checked={aceite} onChange={(e) => setAceite(e.target.checked)} className="mt-0.5" />
