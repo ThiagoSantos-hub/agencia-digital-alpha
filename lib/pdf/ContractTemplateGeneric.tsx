@@ -12,7 +12,7 @@ export interface ContractTemplateGenericProps {
   }
   contractantFieldRows: Array<{ label: string; value: string }>
   clauses: Array<{ title: string; body: string }>
-  pricingItems: Array<{ label: string; amount: number; frequency: 'unico' | 'mensal' }>
+  pricingItems: Array<{ label: string; amount: number; frequency: 'unico' | 'mensal' | 'semanal' }>
   currency: 'BRL' | 'USD'
   dataDoDia: string
   signerName: string
@@ -80,7 +80,7 @@ export function ContractTemplateGeneric(props: ContractTemplateGenericProps) {
               {pricingItems.map((item, i) => (
                 <View key={i} style={styles.tableRow}>
                   <Text style={styles.tableCellLabel}>{item.label}</Text>
-                  <Text style={styles.tableCellFreq}>{item.frequency === 'unico' ? 'Único' : 'Mensal'}</Text>
+                  <Text style={styles.tableCellFreq}>{item.frequency === 'unico' ? 'Único' : item.frequency === 'semanal' ? 'Semanal' : 'Mensal'}</Text>
                   <Text style={styles.tableCellAmount}>{fmtMoney(item.amount, currency)}</Text>
                 </View>
               ))}

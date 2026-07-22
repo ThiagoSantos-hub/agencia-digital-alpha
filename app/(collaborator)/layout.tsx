@@ -22,7 +22,8 @@ import {
   List,
   Rocket,
   CalendarClock,
-  Bot
+  Bot,
+  Settings
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase'
@@ -75,6 +76,7 @@ const menuGroups = [
   {
     label: 'OUTROS',
     items: [
+      { label: 'Configurações', href: '/colaborador/configuracoes', icon: Settings, ativo: true },
       { label: 'Perfil',    href: '/colaborador/perfil',    icon: UserCircle,    ativo: true  },
     ],
   },

@@ -9,6 +9,7 @@ import { Search, Loader2 } from 'lucide-react'
  * Confidencial — NÃO mostra:
  * - clientes inativos
  * - telefones
+ * - e-mails
  * - status atrasado / dias de atraso
  */
 export default function ColaboradorClientesPage() {
@@ -37,14 +38,13 @@ export default function ColaboradorClientesPage() {
           <thead>
             <tr className="border-b border-border bg-hover-bg">
               <th className="px-5 py-3 text-text-muted font-medium">CLIENTE / EMPRESA</th>
-              <th className="px-5 py-3 text-text-muted font-medium">E-MAIL</th>
               <th className="px-5 py-3 text-text-muted font-medium">STATUS</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {list.length === 0 ? (
               <tr>
-                <td colSpan={3} className="px-5 py-10 text-center text-text-disabled">
+                <td colSpan={2} className="px-5 py-10 text-center text-text-disabled">
                   Nenhum cliente encontrado.
                 </td>
               </tr>
@@ -55,9 +55,6 @@ export default function ColaboradorClientesPage() {
                     <span className="text-text-main font-bold text-sm">{c.name}</span>
                     <span className="text-text-muted text-xs">{c.company || '—'}</span>
                   </div>
-                </td>
-                <td className="px-5 py-4">
-                  <span className="text-text-muted text-xs">{c.email || '—'}</span>
                 </td>
                 <td className="px-5 py-4">
                   {/* Sempre "Ativo" — colaborador não vê atraso nem inativo */}

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Table, Column } from '@/components/ui/Table'
 import { Settings2, Download, RotateCcw, Ban, Loader2 } from 'lucide-react'
 
-interface PricingItem { label: string; amount: number; frequency: 'unico' | 'mensal' }
+interface PricingItem { label: string; amount: number; frequency: 'unico' | 'mensal' | 'semanal' }
 
 interface Contract {
   id: string
@@ -35,7 +35,8 @@ function summarizePricing(items: PricingItem[], currency: 'BRL' | 'USD'): string
   const cifrao = currency === 'USD' ? 'US$' : 'R$'
   const first = items[0]
   const suffix = items.length > 1 ? ` +${items.length - 1}` : ''
-  return `${cifrao} ${Number(first.amount).toFixed(2)}${first.frequency === 'mensal' ? '/mês' : ''}${suffix}`
+  const sufixoFrequencia = first.frequency === 'mensal' ? '/mês' : first.frequency === 'semanal' ? '/semana' : ''
+  return `${cifrao} ${Number(first.amount).toFixed(2)}${sufixoFrequencia}${suffix}`
 }
 
 export default function ContratosPage() {

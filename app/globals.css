@@ -3,6 +3,12 @@
 @tailwind utilities;
 
 :root {
+  /* Sem isso, controles nativos do navegador (select, option, input date/time)
+     sempre renderizam com paleta clara, mesmo no tema escuro — texto claro
+     de --color-text-main em cima do popup branco nativo do <select> fica
+     ilegível. */
+  color-scheme: light;
+
   /* Design Tokens — Digital Alpha (Manual de Marca Jul/2026) */
   --color-background: #EEF2F7;
   --color-surface: #FFFFFF;
@@ -44,6 +50,7 @@
 }
 
 html[data-theme="dark"] {
+  color-scheme: dark;
   --color-background: #0F172A;
   --color-surface: #1E293B;
   --color-sidebar: #1E293B;

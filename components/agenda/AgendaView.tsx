@@ -19,7 +19,10 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Smartphone,
+  Users,
 } from 'lucide-react'
+import { useWhatsApp } from '@/hooks/useWhatsApp'
 
 const PLATFORM_LOGOS: Record<'gmail' | 'google_calendar', string> = {
   gmail: 'https://www.gstatic.com/images/branding/product/2x/gmail_2020q4_48dp.png',
@@ -604,6 +607,13 @@ function NewMeetingModal({ onClose, onCreated }: { onClose: () => void; onCreate
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const [whatsappTipo, setWhatsappTipo] = useState<'nenhum' | 'privado' | 'grupo'>('nenhum')
+  const [whatsappNumero, setWhatsappNumero] = useState('')
+  const [whatsappGrupo, setWhatsappGrupo] = useState('')
+  const { groups: gruposAgencia, loadingGroups: carregandoGruposAgencia } = useWhatsApp('agency')
+  const { groups: gruposProprios, loadingGroups: carregandoGruposProprios } = useWhatsApp('own')
+  const grupoEscolhidoNaAgencia = gruposAgencia.some((g) => g.group_id === whatsappGrupo)
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!title || !date || !startTime || !endTime) {
@@ -640,6 +650,8 @@ function NewMeetingModal({ onClose, onCreated }: { onClose: () => void; onCreate
           end: end.toISOString(),
           attendees: attendeeEmails,
           createMeetLink,
+          whatsappDestino: whatsappTipo === 'privado' ? whatsappNumero.replace(/\D/g, '') : whatsappTipo === 'grupo' ? whatsappGrupo : undefined,
+          whatsappFonte: whatsappTipo === 'grupo' && grupoEscolhidoNaAgencia ? 'agency' : 'own',
         }),
       })
       const json = await res.json()
@@ -675,6 +687,52 @@ function NewMeetingModal({ onClose, onCreated }: { onClose: () => void; onCreate
           <input type="checkbox" checked={createMeetLink} onChange={(e) => setCreateMeetLink(e.target.checked)} className="rounded border-border" />
           Criar link de videochamada (Google Meet) automaticamente
         </label>
+
+        <div className="bg-background border border-border rounded-lg p-3 space-y-2">
+          <label className={labelCls}>Avisar por WhatsApp (opcional)</label>
+          <div className="grid grid-cols-3 gap-2">
+            <button type="button" onClick={() => setWhatsappTipo('nenhum')} className={`text-xs px-2 py-1.5 rounded-lg border ${whatsappTipo === 'nenhum' ? 'bg-primary/10 border-primary text-primary' : 'bg-surface border-border text-text-muted'}`}>Nenhum</button>
+            <button type="button" onClick={() => setWhatsappTipo('privado')} className={`flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded-lg border ${whatsappTipo === 'privado' ? 'bg-primary/10 border-primary text-primary' : 'bg-surface border-border text-text-muted'}`}><Smartphone size={12} /> Número</button>
+            <button type="button" onClick={() => setWhatsappTipo('grupo')} className={`flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded-lg border ${whatsappTipo === 'grupo' ? 'bg-primary/10 border-primary text-primary' : 'bg-surface border-border text-text-muted'}`}><Users size={12} /> Grupo</button>
+          </div>
+
+          {whatsappTipo === 'privado' && (
+            <input
+              className={inputCls}
+              value={whatsappNumero}
+              onChange={(e) => setWhatsappNumero(e.target.value.replace(/\D/g, ''))}
+              placeholder="5511999999999"
+            />
+          )}
+
+          {whatsappTipo === 'grupo' && (
+            carregandoGruposAgencia || carregandoGruposProprios ? (
+              <div className={inputCls}>Carregando grupos...</div>
+            ) : gruposAgencia.length > 0 || gruposProprios.length > 0 ? (
+              <select className={inputCls} value={whatsappGrupo} onChange={(e) => setWhatsappGrupo(e.target.value)}>
+                <option value="">Selecione...</option>
+                {gruposAgencia.length > 0 && (
+                  <optgroup label="Grupos da Agência">
+                    {gruposAgencia.map((g) => <option key={g.group_id} value={g.group_id}>{g.name}</option>)}
+                  </optgroup>
+                )}
+                {gruposProprios.length > 0 && (
+                  <optgroup label="Meus Grupos">
+                    {gruposProprios.map((g) => <option key={g.group_id} value={g.group_id}>{g.name}</option>)}
+                  </optgroup>
+                )}
+              </select>
+            ) : (
+              <div className="bg-primary/5 border border-primary/20 rounded-lg px-3 py-2 text-xs text-primary">
+                Nenhum grupo encontrado. Conecte o WhatsApp em Integrações.
+              </div>
+            )
+          )}
+
+          {whatsappTipo !== 'nenhum' && (
+            <p className="text-[11px] text-text-muted">Manda um aviso automático com título, data/hora e link da reunião assim que ela for criada.</p>
+          )}
+        </div>
         <div>
           <label className={labelCls}>Local {createMeetLink ? '(opcional, além da videochamada)' : ''}</label>
           <input className={inputCls} value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Endereço, se for presencial" />

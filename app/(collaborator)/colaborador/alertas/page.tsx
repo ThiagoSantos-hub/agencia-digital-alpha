@@ -3,9 +3,12 @@
 import { useState } from 'react'
 import { Plus, Bell, Facebook, Globe, Trash2, Edit2, Copy, Smartphone, Users, AlertTriangle, DollarSign, X, Save, Loader2 } from 'lucide-react'
 import { useAlertas, Alert, AlertInput } from '@/hooks/useAlertas'
+import { useWhatsApp } from '@/hooks/useWhatsApp'
 
 export default function ColaboradorAlertasPage() {
   const { alerts, loading, createAlerta, updateAlerta, deleteAlerta, toggleAtivo } = useAlertas()
+  const { groups: gruposAgencia, loadingGroups: carregandoGruposAgencia } = useWhatsApp('agency')
+  const { groups: gruposProprios, loadingGroups: carregandoGruposProprios } = useWhatsApp('own')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingAlert, setEditingAlert] = useState<Alert | null>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -165,12 +168,43 @@ export default function ColaboradorAlertasPage() {
                   <label className="text-xs font-bold text-text-muted uppercase">Recebedor</label>
                   <div className="grid grid-cols-2 gap-2">
                     <button type="button" onClick={() => setFormData({...formData, recebedor_tipo: 'privado'})} className={`flex items-center justify-center p-2 rounded-xl border ${formData.recebedor_tipo === 'privado' ? 'bg-primary/10 border-primary text-primary' : 'bg-background border-border text-text-muted'}`}><Smartphone size={14} /></button>
-                    <button type="button" onClick={() => setFormData({...formData, recebedor_tipo: 'grupo'})} className={`flex items-center justify-center p-2 rounded-xl border ${formData.recebedor_tipo === 'grupo' ? 'bg-primary/10 border-primary text-primary' : 'bg-background border-border text-text-muted'}`}><Users size={14} /></button>
+                    <button type="button" onClick={() => setFormData({...formData, recebedor_tipo: 'grupo', recebedor_numero: ''})} className={`flex items-center justify-center p-2 rounded-xl border ${formData.recebedor_tipo === 'grupo' ? 'bg-primary/10 border-primary text-primary' : 'bg-background border-border text-text-muted'}`}><Users size={14} /></button>
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-text-muted uppercase">WhatsApp</label>
-                  <input required type="text" value={formData.recebedor_numero} onChange={e => setFormData({...formData, recebedor_numero: e.target.value.replace(/\D/g, '')})} className={inputCls} placeholder="5511999999999" />
+                  <label className="text-xs font-bold text-text-muted uppercase">
+                    {formData.recebedor_tipo === 'grupo' ? 'Grupo do WhatsApp' : 'WhatsApp'}
+                  </label>
+                  {formData.recebedor_tipo === 'grupo' ? (
+                    carregandoGruposAgencia || carregandoGruposProprios ? (
+                      <div className={inputCls}>Carregando grupos...</div>
+                    ) : gruposAgencia.length > 0 || gruposProprios.length > 0 ? (
+                      <select
+                        required
+                        value={formData.recebedor_numero}
+                        onChange={e => setFormData({...formData, recebedor_numero: e.target.value})}
+                        className={inputCls}
+                      >
+                        <option value="">Selecione...</option>
+                        {gruposAgencia.length > 0 && (
+                          <optgroup label="Grupos da Agência">
+                            {gruposAgencia.map(g => <option key={g.group_id} value={g.group_id}>{g.name}</option>)}
+                          </optgroup>
+                        )}
+                        {gruposProprios.length > 0 && (
+                          <optgroup label="Meus Grupos">
+                            {gruposProprios.map(g => <option key={g.group_id} value={g.group_id}>{g.name}</option>)}
+                          </optgroup>
+                        )}
+                      </select>
+                    ) : (
+                      <div className="w-full bg-primary/5 border border-primary/20 rounded-xl px-4 py-2.5 text-xs text-primary">
+                        Nenhum grupo encontrado. Conecte o WhatsApp em Integrações.
+                      </div>
+                    )
+                  ) : (
+                    <input required type="text" value={formData.recebedor_numero} onChange={e => setFormData({...formData, recebedor_numero: e.target.value.replace(/\D/g, '')})} className={inputCls} placeholder="5511999999999" />
+                  )}
                 </div>
               </div>
               <div className="space-y-1.5">

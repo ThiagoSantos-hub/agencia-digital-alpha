@@ -135,7 +135,7 @@ export default function IntegracoesColaboradorPage() {
       <section>
         <h2 className="text-text-main text-lg font-semibold mb-1">Meu WhatsApp</h2>
         <p className="text-xs mb-4 text-text-muted">Conecte seu WhatsApp pessoal para enviar relatórios automáticos para seus contatos e grupos.</p>
-        <WhatsAppConnect />
+        <WhatsAppConnect showGroupsButton={true} />
       </section>
 
       <section>

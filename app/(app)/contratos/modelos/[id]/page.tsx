@@ -27,7 +27,7 @@ const FIELD_TYPES = [
 
 interface Field { field_key: string; label: string; field_type: string; required: boolean; options: { value: string; label: string }[] | null }
 interface Clause { title: string; body: string }
-interface PricingItem { label: string; amount: number; frequency: 'unico' | 'mensal' }
+interface PricingItem { label: string; amount: number; frequency: 'unico' | 'mensal' | 'semanal' }
 interface ClauseSnippet { id: string; category: string; title: string; body_example: string }
 interface Company { name: string; contract_signer_name: string | null; contract_signer_cpf: string | null; contract_signer_email: string | null; contract_signer_phone: string | null; contract_signer_address: string | null }
 
@@ -347,8 +347,9 @@ export default function EditorModeloPage() {
               </div>
               <div className="col-span-2">
                 <label className={labelCls}>Frequência</label>
-                <select className={inputCls} value={p.frequency} onChange={(e) => updatePricing(i, { frequency: e.target.value as 'unico' | 'mensal' })}>
+                <select className={inputCls} value={p.frequency} onChange={(e) => updatePricing(i, { frequency: e.target.value as 'unico' | 'mensal' | 'semanal' })}>
                   <option value="unico">Único</option>
+                  <option value="semanal">Semanal</option>
                   <option value="mensal">Mensal</option>
                 </select>
               </div>
@@ -376,7 +377,7 @@ export default function EditorModeloPage() {
               <div className="pt-2 border-t border-border">
                 <p className="font-bold text-xs mb-1">TABELA DE VALORES</p>
                 {pricingItems.map((p, i) => (
-                  <p key={i} className="text-xs">{p.label} — {currency === 'USD' ? 'US$' : 'R$'} {p.amount.toFixed(2)} ({p.frequency === 'unico' ? 'único' : 'mensal'})</p>
+                  <p key={i} className="text-xs">{p.label}, {currency === 'USD' ? 'US$' : 'R$'} {p.amount.toFixed(2)} ({p.frequency === 'unico' ? 'único' : p.frequency === 'semanal' ? 'semanal' : 'mensal'})</p>
                 ))}
               </div>
             )}

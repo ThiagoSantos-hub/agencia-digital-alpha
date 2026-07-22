@@ -288,7 +288,8 @@ export default function ClientesPage() {
   const isCollaborator = profile?.role === 'collaborator'
   const { clients, loading, deleteCliente, updateCliente, createCliente, refetch } = useClientes()
   const [search, setSearch] = useState('')
-  const [valoresVisiveis, setValoresVisiveis] = useState(true)
+  const [valoresVisiveis, setValoresVisiveis] = useState(false)
+  const [contatoVisivel, setContatoVisivel] = useState(false)
   const [modalNovo, setModalNovo] = useState(false)
   const [clienteEditar, setClienteEditar] = useState<Client | null>(null)
   const [clienteExcluir, setClienteExcluir] = useState<Client | null>(null)
@@ -361,7 +362,14 @@ export default function ClientesPage() {
             <thead>
               <tr className="border-b border-border bg-hover-bg">
                 <th className="px-5 py-3 text-text-muted font-semibold text-xs uppercase tracking-wider">Cliente / Empresa</th>
-                <th className="px-5 py-3 text-text-muted font-semibold text-xs uppercase tracking-wider">Contato</th>
+                <th className="px-5 py-3 text-text-muted font-semibold text-xs uppercase tracking-wider">
+                  <div className="flex items-center gap-2">
+                    Contato
+                    <button onClick={() => setContatoVisivel(v => !v)} className="text-text-disabled hover:text-text-main" title={contatoVisivel ? 'Ocultar' : 'Mostrar'}>
+                      {contatoVisivel ? <EyeOff size={13} /> : <Eye size={13} />}
+                    </button>
+                  </div>
+                </th>
                 {!isCollaborator && (
                   <th className="px-5 py-3 text-text-muted font-semibold text-xs uppercase tracking-wider">
                     <div className="flex items-center gap-2">
@@ -390,8 +398,8 @@ export default function ClientesPage() {
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex flex-col gap-0.5">
-                      <span className="text-text-muted text-xs">{c.phone || '—'}</span>
-                      <span className="text-text-disabled text-[10px]">{c.email || '—'}</span>
+                      <span className="text-text-muted text-xs">{contatoVisivel ? (c.phone || '—') : '••••••••'}</span>
+                      <span className="text-text-disabled text-[10px]">{contatoVisivel ? (c.email || '—') : '••••••••'}</span>
                     </div>
                   </td>
                   {!isCollaborator && (
@@ -400,7 +408,7 @@ export default function ClientesPage() {
                         <span className="text-text-main font-medium text-sm">
                           {c.monthly_fee ? (valoresVisiveis ? `R$ ${c.monthly_fee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '••••••') : '—'}
                         </span>
-                        <span className="text-text-muted text-[10px]">Dia {c.payment_day || '—'}</span>
+                        <span className="text-text-muted text-[10px]">{valoresVisiveis ? `Dia ${c.payment_day || '—'}` : '••••••'}</span>
                       </div>
                     </td>
                   )}

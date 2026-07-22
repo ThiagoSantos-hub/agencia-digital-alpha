@@ -14,7 +14,8 @@ import {
   Globe,
   ChevronRight,
   Loader2,
-  Facebook
+  Facebook,
+  Search
 } from 'lucide-react'
 import { useRelatorios, Report, ReportHistory } from '@/hooks/useRelatorios'
 import { useWhatsApp } from '@/hooks/useWhatsApp'
@@ -34,6 +35,7 @@ export default function ColaboradorRelatoriosPage() {
 
   const [filterStatus, setFilterStatus] = useState<'todos' | 'ativo' | 'inativo'>('todos')
   const [filterCanal, setFilterCanal] = useState<'todos' | 'meta' | 'google'>('todos')
+  const [searchQuery, setSearchQuery] = useState('')
   const [historyReport, setHistoryReport] = useState<Report | null>(null)
   const [historyData, setHistoryData] = useState<ReportHistory[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
@@ -97,12 +99,14 @@ export default function ColaboradorRelatoriosPage() {
   }
 
   const filteredReports = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
     return reports.filter(report => {
       const matchStatus = filterStatus === 'todos' || (filterStatus === 'ativo' ? report.ativo : !report.ativo)
       const matchCanal = filterCanal === 'todos' || report.canal === filterCanal
-      return matchStatus && matchCanal
+      const matchSearch = !query || report.nome.toLowerCase().includes(query)
+      return matchStatus && matchCanal && matchSearch
     })
-  }, [reports, filterStatus, filterCanal])
+  }, [reports, filterStatus, filterCanal, searchQuery])
 
   const stats = useMemo(() => {
     const ativos = reports.filter(r => r.ativo).length
@@ -211,6 +215,16 @@ export default function ColaboradorRelatoriosPage() {
       </div>
 
       <div className="flex flex-wrap gap-4 mb-6">
+        <div className="flex items-center gap-2 bg-surface border border-border px-3 py-2 rounded-xl flex-1 min-w-[220px]">
+          <Search size={16} className="text-text-muted shrink-0" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Buscar relatório pelo nome..."
+            className="bg-transparent outline-none text-sm text-text-main placeholder:text-text-disabled w-full"
+          />
+        </div>
         <div className="flex items-center gap-2 bg-surface border border-border px-3 py-2 rounded-xl">
           <Filter size={16} className="text-text-muted" />
           <select 
