@@ -4,16 +4,19 @@ import { useState, useMemo, useEffect } from 'react'
 import { useTasks, Task, TaskStatus, TaskPriority } from '@/hooks/useTasks'
 import { useAuth } from '@/hooks/useAuth'
 import { createClient } from '@/lib/supabase'
-import { 
-  Plus, 
-  Calendar, 
-  Clock, 
+import { useWhatsApp } from '@/hooks/useWhatsApp'
+import {
+  Plus,
+  Calendar,
+  Clock,
   X,
   Circle,
   PlayCircle,
   CheckCircle2,
   PauseCircle,
-  ExternalLink
+  ExternalLink,
+  Smartphone,
+  Users
 } from 'lucide-react'
 import { 
   DndContext, 
@@ -67,6 +70,13 @@ export default function CollaboratorTasksPage() {
     assigned_to: ''
   })
 
+  const [whatsappTipo, setWhatsappTipo] = useState<'nenhum' | 'privado' | 'grupo'>('nenhum')
+  const [whatsappNumero, setWhatsappNumero] = useState('')
+  const [whatsappGrupo, setWhatsappGrupo] = useState('')
+  const { groups: gruposAgencia, loadingGroups: carregandoGruposAgencia } = useWhatsApp('agency')
+  const { groups: gruposProprios, loadingGroups: carregandoGruposProprios } = useWhatsApp('own')
+  const grupoEscolhidoNaAgencia = gruposAgencia.some((g) => g.group_id === whatsappGrupo)
+
   useEffect(() => {
     async function fetchUsers() {
       const supabase = createClient()
@@ -104,8 +114,27 @@ export default function CollaboratorTasksPage() {
     }
     try {
       await createTask({ ...newTask, assigned_to: newTask.assigned_to })
+
+      const destino = whatsappTipo === 'privado' ? whatsappNumero.replace(/\D/g, '') : whatsappTipo === 'grupo' ? whatsappGrupo : ''
+      if (destino) {
+        const assignee = allUsers.find((u) => u.id === newTask.assigned_to)
+        fetch('/api/tasks/notify-whatsapp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            destino,
+            fonte: whatsappTipo === 'grupo' && grupoEscolhidoNaAgencia ? 'agency' : 'own',
+            taskTitle: newTask.title,
+            assigneeName: assignee?.name || assignee?.email,
+          }),
+        }).catch(() => {})
+      }
+
       setIsModalOpen(false)
       setNewTask({ title: '', description: '', priority: 'media', due_date: '', drive_link: '', status: 'a_fazer', assigned_to: '' })
+      setWhatsappTipo('nenhum')
+      setWhatsappNumero('')
+      setWhatsappGrupo('')
     } catch (err: any) {
       alert(`Erro ao criar tarefa: ${err.message || 'Erro desconhecido'}`)
     }
@@ -387,6 +416,53 @@ export default function CollaboratorTasksPage() {
                 <label className="text-xs font-bold text-text-muted uppercase tracking-widest text-primary">Link do Google Drive (Opcional)</label>
                 <input type="url" value={newTask.drive_link} onChange={e => setNewTask({...newTask, drive_link: e.target.value})} className={inputCls} placeholder="https://drive.google.com/..." />
               </div>
+
+              <div className="bg-surface border border-border rounded-lg p-3 space-y-2">
+                <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Avisar por WhatsApp (opcional)</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button type="button" onClick={() => setWhatsappTipo('nenhum')} className={`text-xs px-2 py-1.5 rounded-lg border ${whatsappTipo === 'nenhum' ? 'bg-primary/10 border-primary text-primary' : 'bg-background border-border text-text-muted'}`}>Nenhum</button>
+                  <button type="button" onClick={() => setWhatsappTipo('privado')} className={`flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded-lg border ${whatsappTipo === 'privado' ? 'bg-primary/10 border-primary text-primary' : 'bg-background border-border text-text-muted'}`}><Smartphone size={12} /> Número</button>
+                  <button type="button" onClick={() => setWhatsappTipo('grupo')} className={`flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded-lg border ${whatsappTipo === 'grupo' ? 'bg-primary/10 border-primary text-primary' : 'bg-background border-border text-text-muted'}`}><Users size={12} /> Grupo</button>
+                </div>
+
+                {whatsappTipo === 'privado' && (
+                  <input
+                    className={inputCls}
+                    value={whatsappNumero}
+                    onChange={(e) => setWhatsappNumero(e.target.value.replace(/\D/g, ''))}
+                    placeholder="5511999999999"
+                  />
+                )}
+
+                {whatsappTipo === 'grupo' && (
+                  carregandoGruposAgencia || carregandoGruposProprios ? (
+                    <div className={inputCls}>Carregando grupos...</div>
+                  ) : gruposAgencia.length > 0 || gruposProprios.length > 0 ? (
+                    <select className={inputCls} value={whatsappGrupo} onChange={(e) => setWhatsappGrupo(e.target.value)}>
+                      <option value="">Selecione...</option>
+                      {gruposAgencia.length > 0 && (
+                        <optgroup label="Grupos da Agência">
+                          {gruposAgencia.map((g) => <option key={g.group_id} value={g.group_id}>{g.name}</option>)}
+                        </optgroup>
+                      )}
+                      {gruposProprios.length > 0 && (
+                        <optgroup label="Meus Grupos">
+                          {gruposProprios.map((g) => <option key={g.group_id} value={g.group_id}>{g.name}</option>)}
+                        </optgroup>
+                      )}
+                    </select>
+                  ) : (
+                    <div className="bg-primary/5 border border-primary/20 rounded-lg px-3 py-2 text-xs text-primary">
+                      Nenhum grupo encontrado. Conecte o WhatsApp em Integrações.
+                    </div>
+                  )
+                )}
+
+                {whatsappTipo !== 'nenhum' && (
+                  <p className="text-[11px] text-text-muted">Manda um aviso automático avisando sobre a nova tarefa e quem é o responsável.</p>
+                )}
+              </div>
+
               <button type="submit" className={primaryBtnFull}>Criar e Enviar</button>
             </form>
           </div>
