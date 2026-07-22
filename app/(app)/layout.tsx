@@ -83,7 +83,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col ml-64 h-full">
         <Header />
         <main className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-          <PageFade key={pathname}>
+          <PageFade key={pathname} className="h-full">
             {children}
           </PageFade>
         </main>

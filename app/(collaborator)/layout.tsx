@@ -404,7 +404,7 @@ export default function CollaboratorLayout({
         </header>
 
         <main className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-background">
-          <PageFade key={pathname}>
+          <PageFade key={pathname} className="h-full">
             {children}
           </PageFade>
         </main>
