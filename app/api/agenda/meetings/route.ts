@@ -2,11 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createServerClient } from '@/lib/supabase-server'
 import { getValidAccessToken, createCalendarEvent } from '@/lib/agendaCalendar'
+import { resolveWhatsAppInstance, sendWhatsAppText } from '@/lib/whatsappSend'
 
 export const dynamic = 'force-dynamic'
-
-const EVO_URL = process.env.EVOLUTION_API_URL || ''
-const EVO_KEY = process.env.EVOLUTION_API_KEY || ''
 
 // Mesmo client de serviço usado em app/api/whatsapp/groups/route.ts — resolver a
 // instância do ADMIN (fonte 'agency') exige ler whatsapp_instances de outro
@@ -31,20 +29,8 @@ async function avisarWhatsApp(params: {
   location?: string
   meetLink?: string
 }) {
-  if (!EVO_URL || !EVO_KEY) return
-
-  let instanceUserId = params.callerId
-  if (params.fonte === 'agency') {
-    const { data: callerProfile } = await supabaseAdmin.from('profiles').select('company_id').eq('id', params.callerId).single()
-    const { data: adminProfile } = await supabaseAdmin
-      .from('profiles').select('id').eq('role', 'admin').eq('company_id', callerProfile?.company_id ?? '').maybeSingle()
-    if (!adminProfile) return
-    instanceUserId = adminProfile.id
-  }
-
-  const { data: instance } = await supabaseAdmin
-    .from('whatsapp_instances').select('instance_name, status').eq('user_id', instanceUserId).maybeSingle()
-  if (!instance || instance.status !== 'connected' || !instance.instance_name) return
+  const instanceName = await resolveWhatsAppInstance(supabaseAdmin, params.callerId, params.fonte)
+  if (!instanceName) return
 
   const linhas = [
     `📅 Nova reunião agendada: *${params.title}*`,
@@ -53,15 +39,7 @@ async function avisarWhatsApp(params: {
   if (params.meetLink) linhas.push(`🔗 Videochamada: ${params.meetLink}`)
   if (params.location) linhas.push(`📍 ${params.location}`)
 
-  try {
-    await fetch(`${EVO_URL}/message/sendText/${instance.instance_name}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', apikey: EVO_KEY },
-      body: JSON.stringify({ number: params.destino, text: linhas.join('\n') }),
-    })
-  } catch (err) {
-    console.error('Falha ao enviar aviso de reunião pelo WhatsApp:', err)
-  }
+  await sendWhatsAppText(instanceName, params.destino, linhas.join('\n'))
 }
 
 export async function POST(request: NextRequest) {
@@ -105,14 +83,27 @@ export async function POST(request: NextRequest) {
   }
 
   if (whatsappDestino) {
+    const fonte = whatsappFonte === 'agency' ? 'agency' : 'own'
+
     await avisarWhatsApp({
       callerId: user.id,
-      fonte: whatsappFonte === 'agency' ? 'agency' : 'own',
+      fonte,
       destino: whatsappDestino,
       title,
       start,
       location: location || undefined,
       meetLink: created.meetLink || undefined,
+    })
+
+    // Guarda pro cron reenviar o link 30 minutos antes do início.
+    await supabaseAdmin.from('agenda_whatsapp_reminders').insert({
+      user_id: user.id,
+      event_id: created.id,
+      title,
+      start_at: start,
+      meet_link: created.meetLink || null,
+      whatsapp_destino: whatsappDestino,
+      whatsapp_fonte: fonte,
     })
   }
 
