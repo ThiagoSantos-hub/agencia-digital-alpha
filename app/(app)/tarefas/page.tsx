@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useTasks, Task, TaskStatus, TaskPriority } from '@/hooks/useTasks'
 import { createClient } from '@/lib/supabase'
 import { useWhatsApp } from '@/hooks/useWhatsApp'
+import { useAuth } from '@/hooks/useAuth'
 import {
   Plus,
   Calendar,
@@ -71,9 +72,13 @@ export default function AdminTasksPage() {
   const [whatsappTipo, setWhatsappTipo] = useState<'nenhum' | 'privado' | 'grupo'>('nenhum')
   const [whatsappNumero, setWhatsappNumero] = useState('')
   const [whatsappGrupo, setWhatsappGrupo] = useState('')
+  const { role } = useAuth()
+  // Pra quem é admin, "grupos da agência" e "meus grupos" são o mesmo
+  // WhatsApp conectado — só mostra as duas listas separadas pra quem não é admin.
+  const naoEhAdmin = role !== 'admin'
   const { groups: gruposAgencia, loadingGroups: carregandoGruposAgencia } = useWhatsApp('agency')
   const { groups: gruposProprios, loadingGroups: carregandoGruposProprios } = useWhatsApp('own')
-  const grupoEscolhidoNaAgencia = gruposAgencia.some((g) => g.group_id === whatsappGrupo)
+  const grupoEscolhidoNaAgencia = !naoEhAdmin || gruposAgencia.some((g) => g.group_id === whatsappGrupo)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -321,20 +326,26 @@ export default function AdminTasksPage() {
                 )}
 
                 {whatsappTipo === 'grupo' && (
-                  carregandoGruposAgencia || carregandoGruposProprios ? (
+                  carregandoGruposAgencia || (naoEhAdmin && carregandoGruposProprios) ? (
                     <div className={inputCls}>Carregando grupos...</div>
-                  ) : gruposAgencia.length > 0 || gruposProprios.length > 0 ? (
+                  ) : gruposAgencia.length > 0 || (naoEhAdmin && gruposProprios.length > 0) ? (
                     <select className={inputCls} value={whatsappGrupo} onChange={(e) => setWhatsappGrupo(e.target.value)}>
                       <option value="">Selecione...</option>
-                      {gruposAgencia.length > 0 && (
-                        <optgroup label="Grupos da Agência">
-                          {gruposAgencia.map((g) => <option key={g.group_id} value={g.group_id}>{g.name}</option>)}
-                        </optgroup>
-                      )}
-                      {gruposProprios.length > 0 && (
-                        <optgroup label="Meus Grupos">
-                          {gruposProprios.map((g) => <option key={g.group_id} value={g.group_id}>{g.name}</option>)}
-                        </optgroup>
+                      {naoEhAdmin ? (
+                        <>
+                          {gruposAgencia.length > 0 && (
+                            <optgroup label="Grupos da Agência">
+                              {gruposAgencia.map((g) => <option key={g.group_id} value={g.group_id}>{g.name}</option>)}
+                            </optgroup>
+                          )}
+                          {gruposProprios.length > 0 && (
+                            <optgroup label="Meus Grupos">
+                              {gruposProprios.map((g) => <option key={g.group_id} value={g.group_id}>{g.name}</option>)}
+                            </optgroup>
+                          )}
+                        </>
+                      ) : (
+                        gruposAgencia.map((g) => <option key={g.group_id} value={g.group_id}>{g.name}</option>)
                       )}
                     </select>
                   ) : (

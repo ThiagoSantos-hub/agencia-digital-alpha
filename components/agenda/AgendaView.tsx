@@ -23,6 +23,7 @@ import {
   Users,
 } from 'lucide-react'
 import { useWhatsApp } from '@/hooks/useWhatsApp'
+import { useAuth } from '@/hooks/useAuth'
 
 const PLATFORM_LOGOS: Record<'gmail' | 'google_calendar', string> = {
   gmail: 'https://www.gstatic.com/images/branding/product/2x/gmail_2020q4_48dp.png',
@@ -610,9 +611,14 @@ function NewMeetingModal({ onClose, onCreated }: { onClose: () => void; onCreate
   const [whatsappTipo, setWhatsappTipo] = useState<'nenhum' | 'privado' | 'grupo'>('nenhum')
   const [whatsappNumero, setWhatsappNumero] = useState('')
   const [whatsappGrupo, setWhatsappGrupo] = useState('')
+  const { role } = useAuth()
+  // Pra quem é admin, "grupos da agência" e "meus grupos" são o mesmo
+  // WhatsApp conectado (a própria instância dele) — mostrar as duas listas
+  // só faz sentido pra quem não é admin (colaborador ou gestor).
+  const isColaborador = role !== 'admin'
   const { groups: gruposAgencia, loadingGroups: carregandoGruposAgencia } = useWhatsApp('agency')
   const { groups: gruposProprios, loadingGroups: carregandoGruposProprios } = useWhatsApp('own')
-  const grupoEscolhidoNaAgencia = gruposAgencia.some((g) => g.group_id === whatsappGrupo)
+  const grupoEscolhidoNaAgencia = !isColaborador || gruposAgencia.some((g) => g.group_id === whatsappGrupo)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -706,20 +712,26 @@ function NewMeetingModal({ onClose, onCreated }: { onClose: () => void; onCreate
           )}
 
           {whatsappTipo === 'grupo' && (
-            carregandoGruposAgencia || carregandoGruposProprios ? (
+            carregandoGruposAgencia || (isColaborador && carregandoGruposProprios) ? (
               <div className={inputCls}>Carregando grupos...</div>
-            ) : gruposAgencia.length > 0 || gruposProprios.length > 0 ? (
+            ) : gruposAgencia.length > 0 || (isColaborador && gruposProprios.length > 0) ? (
               <select className={inputCls} value={whatsappGrupo} onChange={(e) => setWhatsappGrupo(e.target.value)}>
                 <option value="">Selecione...</option>
-                {gruposAgencia.length > 0 && (
-                  <optgroup label="Grupos da Agência">
-                    {gruposAgencia.map((g) => <option key={g.group_id} value={g.group_id}>{g.name}</option>)}
-                  </optgroup>
-                )}
-                {gruposProprios.length > 0 && (
-                  <optgroup label="Meus Grupos">
-                    {gruposProprios.map((g) => <option key={g.group_id} value={g.group_id}>{g.name}</option>)}
-                  </optgroup>
+                {isColaborador ? (
+                  <>
+                    {gruposAgencia.length > 0 && (
+                      <optgroup label="Grupos da Agência">
+                        {gruposAgencia.map((g) => <option key={g.group_id} value={g.group_id}>{g.name}</option>)}
+                      </optgroup>
+                    )}
+                    {gruposProprios.length > 0 && (
+                      <optgroup label="Meus Grupos">
+                        {gruposProprios.map((g) => <option key={g.group_id} value={g.group_id}>{g.name}</option>)}
+                      </optgroup>
+                    )}
+                  </>
+                ) : (
+                  gruposAgencia.map((g) => <option key={g.group_id} value={g.group_id}>{g.name}</option>)
                 )}
               </select>
             ) : (
