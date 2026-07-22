@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, CardHeader } from '@/components/ui/Card'
-import { Loader2, CreditCard, TrendingUp, Clock, AlertTriangle, Timer } from 'lucide-react'
+import { Loader2, CreditCard, TrendingUp, Clock, AlertTriangle, Timer, Calendar } from 'lucide-react'
 import { PLAN_LABELS, type Plan } from '@/lib/planLimits'
 
 interface CompanyPayment {
@@ -113,6 +113,25 @@ export default function SuperAdminPagamentosPage() {
         <p className="text-text-muted text-sm mt-1">Acompanhe como está o pagamento de cada empresa cliente.</p>
       </div>
 
+      <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 flex items-center gap-3 flex-wrap">
+        <Calendar size={16} className="text-primary shrink-0" />
+        <label className="text-sm text-text-main font-medium shrink-0" htmlFor="mrr-ate">
+          Calcular o MRR estimado considerando empresas cadastradas até:
+        </label>
+        <input
+          id="mrr-ate"
+          type="date"
+          value={mrrAte}
+          onChange={(e) => setMrrAte(e.target.value || hoje())}
+          className="bg-surface border border-border rounded-lg px-3 py-1.5 text-sm text-text-main focus:outline-none focus:border-primary/50 cursor-pointer"
+        />
+        {mrrAte !== hoje() && (
+          <button onClick={() => setMrrAte(hoje())} className="text-xs text-primary hover:underline shrink-0">
+            Voltar pra hoje
+          </button>
+        )}
+      </div>
+
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-3">
@@ -120,15 +139,7 @@ export default function SuperAdminPagamentosPage() {
               <TrendingUp size={18} />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-text-muted text-[11px] font-medium uppercase tracking-wide leading-tight">MRR estimado</p>
-                <input
-                  type="date"
-                  value={mrrAte}
-                  onChange={(e) => setMrrAte(e.target.value || hoje())}
-                  className="text-[10px] bg-background border border-border rounded px-1 py-0.5 text-text-muted focus:outline-none focus:border-primary/50"
-                />
-              </div>
+              <p className="text-text-muted text-[11px] font-medium uppercase tracking-wide leading-tight">MRR estimado</p>
               <p className="text-text-main text-lg font-bold leading-tight">{formatBRL(summary.mrr)}</p>
             </div>
           </div>
