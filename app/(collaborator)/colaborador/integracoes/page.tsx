@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { Lock } from 'lucide-react'
 import { WhatsAppConnect } from '@/components/whatsapp/WhatsAppConnect'
 import { PersonalAIKeysCard } from '@/components/ai/PersonalAIKeysCard'
+import { getIntegrationErrorMessage } from '@/lib/integrationErrorMessages'
 
 const INTEGRATION_ICONS: Record<string, string> = {
   meta_ads: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/200px-Meta_Platforms_Inc._logo.svg.png',
@@ -45,7 +46,11 @@ export default function IntegracoesColaboradorPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('success') === 'meta_connected') setSuccessMsg('Meta Ads conectado com sucesso!')
-    if (params.get('error')) setErrorMsg('Erro ao conectar. Tente novamente.')
+    const errorCode = params.get('error')
+    if (errorCode) setErrorMsg(getIntegrationErrorMessage(errorCode))
+    if (params.get('success') || errorCode) {
+      window.history.replaceState({}, '', window.location.pathname)
+    }
   }, [])
 
   useEffect(() => {

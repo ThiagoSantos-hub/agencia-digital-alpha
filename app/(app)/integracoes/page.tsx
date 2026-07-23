@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { WhatsAppConnect } from '@/components/whatsapp/WhatsAppConnect'
 import { PersonalAIKeysCard } from '@/components/ai/PersonalAIKeysCard'
 import { FeatureLock } from '@/components/ui/FeatureLock'
+import { getIntegrationErrorMessage } from '@/lib/integrationErrorMessages'
 
 interface Integration {
   id: string
@@ -292,7 +293,11 @@ export default function IntegracoesPage() {
       const slot = params.get('slot')
       setSuccessMsg(slot && slot !== 'meta_ads' ? `Meta Ads (${slot.replace('meta_ads_', '#')}) conectado com sucesso!` : 'Meta Ads conectado com sucesso!')
     }
-    if (params.get('error')) setErrorMsg('Erro ao conectar. Tente novamente.')
+    const errorCode = params.get('error')
+    if (errorCode) setErrorMsg(getIntegrationErrorMessage(errorCode))
+    if (params.get('success') || errorCode) {
+      window.history.replaceState({}, '', window.location.pathname)
+    }
     fetchData()
   }, [])
 
