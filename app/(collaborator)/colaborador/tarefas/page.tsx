@@ -5,6 +5,7 @@ import { useTasks, Task, TaskStatus, TaskPriority } from '@/hooks/useTasks'
 import { useAuth } from '@/hooks/useAuth'
 import { createClient } from '@/lib/supabase'
 import { useWhatsApp } from '@/hooks/useWhatsApp'
+import { FeatureLock } from '@/components/ui/FeatureLock'
 import {
   Plus,
   Calendar,
@@ -297,10 +298,12 @@ export default function CollaboratorTasksPage() {
                   <input type="date" value={editingTask.due_date ? editingTask.due_date.split('T')[0] : ''} onChange={e => setEditingTask({...editingTask, due_date: e.target.value})} className={inputCls} />
                 </div>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-muted uppercase tracking-widest text-primary">Link do Google Drive (Opcional)</label>
-                <input type="url" value={editingTask.drive_link || ''} onChange={e => setEditingTask({...editingTask, drive_link: e.target.value})} className={inputCls} placeholder="https://drive.google.com/..." />
-              </div>
+              <FeatureLock featureKey="tarefas.anexo_drive">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-widest text-primary">Link do Google Drive (Opcional)</label>
+                  <input type="url" value={editingTask.drive_link || ''} onChange={e => setEditingTask({...editingTask, drive_link: e.target.value})} className={inputCls} placeholder="https://drive.google.com/..." />
+                </div>
+              </FeatureLock>
               <button type="submit" className={primaryBtnFull}>Salvar Alterações</button>
             </form>
           </div>
@@ -412,11 +415,14 @@ export default function CollaboratorTasksPage() {
                   <input type="date" value={newTask.due_date} onChange={e => setNewTask({...newTask, due_date: e.target.value})} className={inputCls} />
                 </div>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-muted uppercase tracking-widest text-primary">Link do Google Drive (Opcional)</label>
-                <input type="url" value={newTask.drive_link} onChange={e => setNewTask({...newTask, drive_link: e.target.value})} className={inputCls} placeholder="https://drive.google.com/..." />
-              </div>
+              <FeatureLock featureKey="tarefas.anexo_drive">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-widest text-primary">Link do Google Drive (Opcional)</label>
+                  <input type="url" value={newTask.drive_link} onChange={e => setNewTask({...newTask, drive_link: e.target.value})} className={inputCls} placeholder="https://drive.google.com/..." />
+                </div>
+              </FeatureLock>
 
+              <FeatureLock featureKey="tarefas.aviso_whatsapp">
               <div className="bg-surface border border-border rounded-lg p-3 space-y-2">
                 <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Avisar por WhatsApp (opcional)</label>
                 <div className="grid grid-cols-3 gap-2">
@@ -462,6 +468,7 @@ export default function CollaboratorTasksPage() {
                   <p className="text-[11px] text-text-muted">Manda um aviso automático avisando sobre a nova tarefa e quem é o responsável.</p>
                 )}
               </div>
+              </FeatureLock>
 
               <button type="submit" className={primaryBtnFull}>Criar e Enviar</button>
             </form>

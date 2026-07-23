@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase'
+import { FeatureLock } from '@/components/ui/FeatureLock'
 import {
   useFinanceiro,
   LancamentoInput,
@@ -622,34 +623,36 @@ export default function FinanceiroPage() {
                   className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-text-main text-sm placeholder:text-text-disabled focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
                 <p className="text-text-disabled text-xs mt-1">A data de vencimento será calculada automaticamente para o próximo mês com esse dia.</p>
               </div>
-              <div className="flex items-center justify-between bg-background border border-border rounded-xl px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <Pin size={15} className="text-text-muted" />
+              <FeatureLock featureKey="financeiro.lancamentos_fixos">
+                <div className="flex items-center justify-between bg-background border border-border rounded-xl px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <Pin size={15} className="text-text-muted" />
+                    <div>
+                      <p className="text-text-main text-xs font-medium">{modalTipo === 'receita' ? 'Receita Fixa' : 'Despesa Fixa'}</p>
+                      <p className="text-text-disabled text-xs">Classifica como uma {modalTipo === 'receita' ? 'receita' : 'despesa'} fixa</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setFormInput(p => ({ ...p, recorrente: !p.recorrente }))}
+                    className={`w-11 h-6 rounded-full transition-colors relative flex items-center px-1 ${formInput.recorrente ? 'bg-cta' : 'bg-slate-300'}`}>
+                    <div className={`w-4 h-4 bg-white rounded-full shadow-md transition-all duration-200 transform ${formInput.recorrente ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </button>
+                </div>
+                {formInput.recorrente && (
                   <div>
-                    <p className="text-text-main text-xs font-medium">{modalTipo === 'receita' ? 'Receita Fixa' : 'Despesa Fixa'}</p>
-                    <p className="text-text-disabled text-xs">Classifica como uma {modalTipo === 'receita' ? 'receita' : 'despesa'} fixa</p>
+                    <label className="text-xs font-medium text-text-muted mb-1.5 block">Repetir</label>
+                    <div className="flex gap-2">
+                      {(['mensal', 'semanal', 'anual'] as const).map(r => (
+                        <button key={r} onClick={() => setFormInput(p => ({ ...p, recorrencia: r }))}
+                          className={`flex-1 py-2 rounded-xl text-xs font-medium border transition-colors ${
+                            formInput.recorrencia === r ? 'border-primary/40 text-primary bg-primary/10' : 'border-border text-text-muted'
+                          }`}>
+                          {r.charAt(0).toUpperCase() + r.slice(1)}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-                <button onClick={() => setFormInput(p => ({ ...p, recorrente: !p.recorrente }))}
-                  className={`w-11 h-6 rounded-full transition-colors relative flex items-center px-1 ${formInput.recorrente ? 'bg-cta' : 'bg-slate-300'}`}>
-                  <div className={`w-4 h-4 bg-white rounded-full shadow-md transition-all duration-200 transform ${formInput.recorrente ? 'translate-x-5' : 'translate-x-0'}`} />
-                </button>
-              </div>
-              {formInput.recorrente && (
-                <div>
-                  <label className="text-xs font-medium text-text-muted mb-1.5 block">Repetir</label>
-                  <div className="flex gap-2">
-                    {(['mensal', 'semanal', 'anual'] as const).map(r => (
-                      <button key={r} onClick={() => setFormInput(p => ({ ...p, recorrencia: r }))}
-                        className={`flex-1 py-2 rounded-xl text-xs font-medium border transition-colors ${
-                          formInput.recorrencia === r ? 'border-primary/40 text-primary bg-primary/10' : 'border-border text-text-muted'
-                        }`}>
-                        {r.charAt(0).toUpperCase() + r.slice(1)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+                )}
+              </FeatureLock>
             </div>
 
             <div className="flex-shrink-0 px-6 py-5 border-t border-border bg-surface">

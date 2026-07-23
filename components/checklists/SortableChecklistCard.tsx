@@ -3,9 +3,10 @@
 import { useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { 
+import {
   GripHorizontal, Trash2, Edit2, Plus, Copy,
 } from 'lucide-react'
+import { FeatureLock } from '@/components/ui/FeatureLock'
 import { 
   DndContext, 
   closestCorners, 
@@ -136,9 +137,11 @@ export function SortableChecklistCard({
               <Edit2 size={12} />
             </button>
             {duplicateChecklist && (
-              <button onClick={() => duplicateChecklist(list.id)} className="p-1 text-text-disabled hover:text-cta" title="Duplicar checklist">
-                <Copy size={12} />
-              </button>
+              <FeatureLock featureKey="checklists.duplicar" variant="replace">
+                <button onClick={() => duplicateChecklist(list.id)} className="p-1 text-text-disabled hover:text-cta" title="Duplicar checklist">
+                  <Copy size={12} />
+                </button>
+              </FeatureLock>
             )}
             <button onClick={() => deleteChecklist(list.id)} className="p-1 text-text-disabled hover:text-red-500">
               <Trash2 size={12} />
@@ -155,22 +158,24 @@ export function SortableChecklistCard({
               className="w-full bg-surface border border-border rounded-lg px-2 py-1 text-[10px] text-text-main focus:outline-none focus:border-primary truncate"
               autoFocus
             />
-            <div className="flex flex-wrap gap-0.5">
-              {DIAS_SEMANA.map(day => (
-                <button
-                  key={day.id}
-                  onClick={() => {
-                    if (days.includes(day.id)) setDays(days.filter(d => d !== day.id))
-                    else setDays([...days, day.id].sort())
-                  }}
-                  className={`w-5 h-5 rounded-lg text-[8px] font-black border transition-all ${
-                    days.includes(day.id) ? 'bg-primary text-white border-primary' : 'bg-surface text-text-disabled border-border'
-                  }`}
-                >
-                  {day.label}
-                </button>
-              ))}
-            </div>
+            <FeatureLock featureKey="checklists.reset_automatico">
+              <div className="flex flex-wrap gap-0.5">
+                {DIAS_SEMANA.map(day => (
+                  <button
+                    key={day.id}
+                    onClick={() => {
+                      if (days.includes(day.id)) setDays(days.filter(d => d !== day.id))
+                      else setDays([...days, day.id].sort())
+                    }}
+                    className={`w-5 h-5 rounded-lg text-[8px] font-black border transition-all ${
+                      days.includes(day.id) ? 'bg-primary text-white border-primary' : 'bg-surface text-text-disabled border-border'
+                    }`}
+                  >
+                    {day.label}
+                  </button>
+                ))}
+              </div>
+            </FeatureLock>
             <div className="flex gap-1">
               <button 
                 onClick={async () => {

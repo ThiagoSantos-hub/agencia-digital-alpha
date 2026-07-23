@@ -23,6 +23,7 @@ import {
   horizontalListSortingStrategy 
 } from '@dnd-kit/sortable'
 import { SortableChecklistCard } from '@/components/checklists/SortableChecklistCard'
+import { FeatureLock } from '@/components/ui/FeatureLock'
 
 const DIAS_SEMANA = [
   { id: 0, label: 'D' },
@@ -177,25 +178,27 @@ export default function ChecklistsPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2">Dias de Reset Automático</label>
-                <div className="flex justify-between gap-1">
-                  {DIAS_SEMANA.map(day => (
-                    <button
-                      key={day.id}
-                      onClick={() => toggleDay(day.id, newListDays, setNewListDays)}
-                      className={`flex-1 rounded-lg text-[10px] font-black transition-all duration-300 border flex items-center justify-center h-8 ${
-                        newListDays.includes(day.id)
-                          ? 'bg-primary text-white border-primary shadow-sm'
-                          : 'bg-background text-text-muted border-border hover:border-primary/50'
-                      }`}
-                      title={DIAS_LABELS[day.id]}
-                    >
-                      {day.label}
-                    </button>
-                  ))}
+              <FeatureLock featureKey="checklists.reset_automatico">
+                <div>
+                  <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2">Dias de Reset Automático</label>
+                  <div className="flex justify-between gap-1">
+                    {DIAS_SEMANA.map(day => (
+                      <button
+                        key={day.id}
+                        onClick={() => toggleDay(day.id, newListDays, setNewListDays)}
+                        className={`flex-1 rounded-lg text-[10px] font-black transition-all duration-300 border flex items-center justify-center h-8 ${
+                          newListDays.includes(day.id)
+                            ? 'bg-primary text-white border-primary shadow-sm'
+                            : 'bg-background text-text-muted border-border hover:border-primary/50'
+                        }`}
+                        title={DIAS_LABELS[day.id]}
+                      >
+                        {day.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </FeatureLock>
             </div>
 
             <div className="space-y-4">

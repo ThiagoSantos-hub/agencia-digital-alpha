@@ -4,6 +4,7 @@ import { useState, useRef, useMemo } from 'react'
 import { useClientes, Client } from '@/hooks/useClientes'
 import { useAuth } from '@/hooks/useAuth'
 import { Search, UserPlus, X, Loader2, Pencil, Trash2, Download, Upload, Clock, CheckCircle2, Ban, Target, Eye, EyeOff } from 'lucide-react'
+import { FeatureLock } from '@/components/ui/FeatureLock'
 // xlsx (~1MB) só é carregado quando o usuário realmente exporta/importa uma planilha,
 // em vez de ir no bundle JS de toda visita a esta página.
 
@@ -71,29 +72,31 @@ function FormFields({ form, set }: { form: ClienteForm; set: (f: keyof ClienteFo
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2.5">
-        <div className="space-y-1">
-          <label className="block text-[11px] font-medium text-text-muted">Data de entrada</label>
-          <input type="date" value={form.start_date} onChange={(e) => set('start_date', e.target.value)} className={inputCls} />
-        </div>
-        <div className="space-y-1">
-          <label className="block text-[11px] font-medium text-text-muted">Meta Ads (act_...)</label>
-          <input type="text" placeholder="act_123" value={form.meta_ad_account_id} onChange={(e) => set('meta_ad_account_id', e.target.value)} className={inputCls} />
-        </div>
+      <div className="space-y-1">
+        <label className="block text-[11px] font-medium text-text-muted">Data de entrada</label>
+        <input type="date" value={form.start_date} onChange={(e) => set('start_date', e.target.value)} className={inputCls} />
       </div>
 
-      <div className="flex items-center justify-between bg-background border border-border rounded-lg px-3 py-2">
-        <span className="text-[11px] font-medium text-text-muted flex items-center gap-1.5">
-          <Target size={12} className="text-primary" /> Exibir em Campanhas
-        </span>
-        <button
-          type="button"
-          onClick={() => set('show_campaigns', !form.show_campaigns)}
-          className={`p-1.5 rounded-lg transition-colors ${form.show_campaigns ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-text-muted'}`}
-        >
-          {form.show_campaigns ? <Eye size={15} /> : <EyeOff size={15} />}
-        </button>
-      </div>
+      <FeatureLock featureKey="clientes.exibir_campanhas">
+        <div className="grid grid-cols-2 gap-2.5">
+          <div className="space-y-1">
+            <label className="block text-[11px] font-medium text-text-muted">Meta Ads (act_...)</label>
+            <input type="text" placeholder="act_123" value={form.meta_ad_account_id} onChange={(e) => set('meta_ad_account_id', e.target.value)} className={inputCls} />
+          </div>
+          <div className="flex items-center justify-between bg-background border border-border rounded-lg px-3 py-2">
+            <span className="text-[11px] font-medium text-text-muted flex items-center gap-1.5">
+              <Target size={12} className="text-primary" /> Exibir em Campanhas
+            </span>
+            <button
+              type="button"
+              onClick={() => set('show_campaigns', !form.show_campaigns)}
+              className={`p-1.5 rounded-lg transition-colors ${form.show_campaigns ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-text-muted'}`}
+            >
+              {form.show_campaigns ? <Eye size={15} /> : <EyeOff size={15} />}
+            </button>
+          </div>
+        </div>
+      </FeatureLock>
     </div>
   )
 }
@@ -455,8 +458,10 @@ export default function ClientesPage() {
         {!isCollaborator && (
           <div className="flex items-center gap-3">
             <input type="file" ref={fileInputRef} onChange={handleImport} accept=".xlsx,.xls" className="hidden" />
-            <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-3 py-2 bg-surface border border-border text-text-muted hover:text-text-main rounded-xl text-sm"><Upload size={15} /> Importar</button>
-            <button onClick={handleExport} className="flex items-center gap-2 px-3 py-2 bg-surface border border-border text-text-muted hover:text-text-main rounded-xl text-sm"><Download size={15} /> Exportar</button>
+            <FeatureLock featureKey="clientes.exportar_importar" variant="replace">
+              <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-3 py-2 bg-surface border border-border text-text-muted hover:text-text-main rounded-xl text-sm"><Upload size={15} /> Importar</button>
+              <button onClick={handleExport} className="flex items-center gap-2 px-3 py-2 bg-surface border border-border text-text-muted hover:text-text-main rounded-xl text-sm"><Download size={15} /> Exportar</button>
+            </FeatureLock>
             <button onClick={() => setModalNovo(true)} className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl text-sm font-bold shadow-sm"><UserPlus size={16} /> Novo Cliente</button>
           </div>
         )}

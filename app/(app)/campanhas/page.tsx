@@ -4,6 +4,7 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { useMetaAccount } from '@/hooks/useMetaAccount'
 import { useCampanhas, Campaign, CampaignMetric, MetaMetricOption } from '@/hooks/useCampanhas'
 import { useClientes } from '@/hooks/useClientes'
+import { FeatureLock } from '@/components/ui/FeatureLock'
 import {
   Search, Megaphone, BarChart2, RefreshCw, Calendar,
   ExternalLink, Filter, AlertTriangle, ChevronDown,
@@ -156,9 +157,11 @@ const CampaignCard = React.memo(function CampaignCard({ campaign, fetchMetrics, 
         </td>
         <td className="px-4 py-3 text-right">
           <div className="flex items-center justify-end gap-2">
-            <button onClick={abrirConfig} className="w-8 h-8 rounded-lg bg-background border border-border flex items-center justify-center text-text-muted hover:text-primary hover:border-primary/30 transition-all" title="Configurar métricas">
-              <Settings2 size={14} />
-            </button>
+            <FeatureLock featureKey="campanhas.metricas_personalizadas" variant="replace">
+              <button onClick={abrirConfig} className="w-8 h-8 rounded-lg bg-background border border-border flex items-center justify-center text-text-muted hover:text-primary hover:border-primary/30 transition-all" title="Configurar métricas">
+                <Settings2 size={14} />
+              </button>
+            </FeatureLock>
             <button onClick={loadMetrics} className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
               expandido
                 ? 'bg-primary text-white'
@@ -383,15 +386,17 @@ export default function CampanhasPage() {
           <h1 className="text-text-main text-3xl font-bold tracking-tight">Campanhas Ativas</h1>
           <p className="text-text-muted text-sm mt-1">Visualização direta de anúncios sincronizados com seu Meta Ads.</p>
         </div>
-        <button onClick={handleSync} disabled={loading}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-            loading
-              ? 'bg-primary/15 text-primary'
-              : 'bg-surface border border-border text-text-main hover:border-primary/40'
-          }`}>
-          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-          {loading ? 'Sincronizando...' : 'Sincronizar Meta'}
-        </button>
+        <FeatureLock featureKey="campanhas.sincronizar_meta" variant="replace">
+          <button onClick={handleSync} disabled={loading}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+              loading
+                ? 'bg-primary/15 text-primary'
+                : 'bg-surface border border-border text-text-main hover:border-primary/40'
+            }`}>
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            {loading ? 'Sincronizando...' : 'Sincronizar Meta'}
+          </button>
+        </FeatureLock>
       </div>
 
       {(error || localError) && (

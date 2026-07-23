@@ -24,6 +24,8 @@ import {
 } from 'lucide-react'
 import { useWhatsApp } from '@/hooks/useWhatsApp'
 import { useAuth } from '@/hooks/useAuth'
+import { usePlanFeatures } from '@/hooks/usePlanFeatures'
+import { FeatureLock } from '@/components/ui/FeatureLock'
 
 const PLATFORM_LOGOS: Record<'gmail' | 'google_calendar', string> = {
   gmail: 'https://www.gstatic.com/images/branding/product/2x/gmail_2020q4_48dp.png',
@@ -440,14 +442,16 @@ export function AgendaView() {
           >
             <Plus size={14} /> Nova reunião
           </button>
-          <button
-            onClick={() => setShowNewEmail(true)}
-            disabled={!data.gmailConnected}
-            title={!data.gmailConnected ? 'Conecte o Gmail primeiro' : ''}
-            className="flex items-center gap-1.5 text-xs px-3.5 py-2 rounded-lg bg-surface border border-border hover:border-primary/40 disabled:opacity-40 disabled:cursor-not-allowed text-text-main font-medium transition-colors"
-          >
-            <Send size={14} /> Novo e-mail
-          </button>
+          <FeatureLock featureKey="agenda.enviar_email" variant="replace">
+            <button
+              onClick={() => setShowNewEmail(true)}
+              disabled={!data.gmailConnected}
+              title={!data.gmailConnected ? 'Conecte o Gmail primeiro' : ''}
+              className="flex items-center gap-1.5 text-xs px-3.5 py-2 rounded-lg bg-surface border border-border hover:border-primary/40 disabled:opacity-40 disabled:cursor-not-allowed text-text-main font-medium transition-colors"
+            >
+              <Send size={14} /> Novo e-mail
+            </button>
+          </FeatureLock>
         </div>
       </div>
 
@@ -485,13 +489,15 @@ export function AgendaView() {
       )}
 
       {data.resumoIA && (
-        <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 p-5">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles size={16} className="text-primary" />
-            <h2 className="text-text-main text-sm font-bold uppercase tracking-wide">Resumo da IA</h2>
+        <FeatureLock featureKey="agenda.resumo_ia">
+          <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles size={16} className="text-primary" />
+              <h2 className="text-text-main text-sm font-bold uppercase tracking-wide">Resumo da IA</h2>
+            </div>
+            <p className="text-text-main text-sm leading-relaxed">{data.resumoIA}</p>
           </div>
-          <p className="text-text-main text-sm leading-relaxed">{data.resumoIA}</p>
-        </div>
+        </FeatureLock>
       )}
 
       <div>
@@ -597,6 +603,8 @@ export function AgendaView() {
 }
 
 function NewMeetingModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const { isLocked: isPlanLocked } = usePlanFeatures()
+  const meetLinkLocked = isPlanLocked('agenda.meet_automatico')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState('')
@@ -655,7 +663,7 @@ function NewMeetingModal({ onClose, onCreated }: { onClose: () => void; onCreate
           start: start.toISOString(),
           end: end.toISOString(),
           attendees: attendeeEmails,
-          createMeetLink,
+          createMeetLink: meetLinkLocked ? false : createMeetLink,
           whatsappDestino: whatsappTipo === 'privado' ? whatsappNumero.replace(/\D/g, '') : whatsappTipo === 'grupo' ? whatsappGrupo : undefined,
           whatsappFonte: whatsappTipo === 'grupo' && grupoEscolhidoNaAgencia ? 'agency' : 'own',
         }),
@@ -689,10 +697,12 @@ function NewMeetingModal({ onClose, onCreated }: { onClose: () => void; onCreate
           <input className={inputCls} value={attendees} onChange={(e) => setAttendees(e.target.value)} placeholder="fulano@empresa.com, ciclano@empresa.com" />
           <p className="text-[11px] text-text-muted mt-1">Separe os e-mails por vírgula. Cada um recebe o convite direto por e-mail.</p>
         </div>
-        <label className="flex items-center gap-2 text-xs text-text-main cursor-pointer">
-          <input type="checkbox" checked={createMeetLink} onChange={(e) => setCreateMeetLink(e.target.checked)} className="rounded border-border" />
-          Criar link de videochamada (Google Meet) automaticamente
-        </label>
+        <FeatureLock featureKey="agenda.meet_automatico">
+          <label className="flex items-center gap-2 text-xs text-text-main cursor-pointer">
+            <input type="checkbox" checked={createMeetLink} onChange={(e) => setCreateMeetLink(e.target.checked)} className="rounded border-border" />
+            Criar link de videochamada (Google Meet) automaticamente
+          </label>
+        </FeatureLock>
 
         <div className="bg-background border border-border rounded-lg p-3 space-y-2">
           <label className={labelCls}>Avisar por WhatsApp (opcional)</label>
