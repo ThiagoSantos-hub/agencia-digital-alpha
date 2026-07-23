@@ -110,7 +110,7 @@ function AlphaButton({ userName, agentId }: { userName: string; agentId: string 
         lastResponse={active ? 'Alpha está ouvindo e respondendo em tempo real.' : ''}
       />
 
-      <div className="fixed bottom-6 right-6 z-[60] flex flex-col items-end gap-3 pointer-events-none">
+      <div className="fixed bottom-8 left-[268px] z-[60] flex flex-col items-start gap-3 pointer-events-none">
         <button
           onClick={handleClick}
           disabled={loading}
@@ -186,7 +186,7 @@ export function AlphaWidget() {
 
   if (!agentId) {
     return (
-      <div className="fixed bottom-6 right-6 z-[60] pointer-events-none">
+      <div className="fixed bottom-8 left-[268px] z-[60] pointer-events-none">
         <a
           href="/integracoes"
           title="Configure seu assistente de voz em Integrações"
