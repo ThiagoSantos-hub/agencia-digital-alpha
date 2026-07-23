@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
+import { checkAndStoreMetaAdsIdentity } from '@/lib/metaAdsIdentity'
 
 const VALID_SLOTS = ['meta_ads', 'meta_ads_2', 'meta_ads_3', 'meta_ads_4']
 
@@ -55,6 +56,17 @@ export async function GET(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    // Trava do plano Gratuito: a mesma conta REAL do Facebook (vinda do OAuth,
+    // não do texto autodeclarado) não pode conectar o Meta Ads em mais de uma
+    // empresa Gratuita — é aqui que a conta passa a "valer a pena" de verdade.
+    const { data: profile } = await supabase.from('profiles').select('company_id').eq('id', user.id).single()
+    if (profile?.company_id) {
+      const { blocked } = await checkAndStoreMetaAdsIdentity(profile.company_id, finalToken)
+      if (blocked) {
+        return NextResponse.redirect(new URL('/integracoes?error=meta_free_plan_duplicate', request.url))
+      }
     }
 
     const { data: updated, error: dbError } = await supabase

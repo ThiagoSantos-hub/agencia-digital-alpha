@@ -1,9 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
-import { getTrialDaysForSignup, isFacebookProfileInBadStanding } from '@/lib/billing'
+import { getTrialDaysForSignup, isFacebookProfileInBadStanding, hasFacebookProfileUsedFreePlan } from '@/lib/billing'
 import { getPlanById, priceIdForPlan } from '@/lib/plans'
-import { verifyFacebookToken } from '@/lib/facebookLoginToken'
 import { provisionCompany, generateTempPassword } from '@/lib/companyProvisioning'
 import { sendWelcomeEmail } from '@/lib/email'
 
@@ -19,9 +18,9 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export async function POST(request: Request) {
   try {
-    const { companyName, adminName, adminEmail, phone, facebookProfile, paymentMethod, plan, fbToken } = await request.json()
+    const { companyName, adminName, adminEmail, phone, facebookProfile, paymentMethod, plan } = await request.json()
 
-    if (!companyName || !adminName || !adminEmail || !phone) {
+    if (!companyName || !adminName || !adminEmail || !phone || !facebookProfile) {
       return NextResponse.json({ error: 'Todos os campos são obrigatórios.' }, { status: 400 })
     }
     if (!EMAIL_REGEX.test(adminEmail)) {
@@ -44,33 +43,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Este e-mail já possui uma conta. Faça login ou use outro e-mail.' }, { status: 400 })
     }
 
-    // Plano Gratuito: exige login com Facebook verificado (não o texto
-    // autodeclarado de facebookProfile) pra impedir múltiplos cadastros
-    // gratuitos só trocando de e-mail.
+    // Plano Gratuito: identifica pelo perfil do Facebook informado (mesmo
+    // texto autodeclarado usado pros planos pagos) pra impedir que a mesma
+    // pessoa volte a se cadastrar no Gratuito com outro e-mail só pra renovar
+    // os 20 relatórios/20 alertas do mês.
     if (planRow.is_free) {
-      if (!fbToken) {
-        return NextResponse.json({ error: 'Entre com o Facebook pra continuar o cadastro gratuito.' }, { status: 400 })
-      }
-      const verified = verifyFacebookToken(fbToken)
-      if (!verified) {
-        return NextResponse.json({ error: 'Login com Facebook expirado ou inválido. Tente entrar de novo.' }, { status: 400 })
-      }
-
-      const { data: existingByFacebook } = await supabaseAdmin
-        .from('companies')
-        .select('id')
-        .eq('facebook_user_id', verified.facebookUserId)
-        .maybeSingle()
-      if (existingByFacebook) {
+      if (await hasFacebookProfileUsedFreePlan(facebookProfile)) {
         return NextResponse.json({ error: 'Não foi possível completar o cadastro gratuito. Fale com o suporte.' }, { status: 400 })
       }
 
       const tempPassword = generateTempPassword()
       const result = await provisionCompany({
         companyName, adminName, adminEmail, phone, adminPassword: tempPassword,
-        metaTesterProfile: facebookProfile || null,
+        metaTesterProfile: facebookProfile,
         plan: planRow.id,
-        facebookUserId: verified.facebookUserId,
       })
 
       if (!result.success) {
@@ -82,11 +68,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, redirect: '/login' })
     }
 
-    // Planos pagos seguem exigindo o perfil do Facebook (autodeclarado) pra
-    // antifraude de trial/inadimplência já existente.
-    if (!facebookProfile) {
-      return NextResponse.json({ error: 'Perfil do Facebook é obrigatório.' }, { status: 400 })
-    }
     if (paymentMethod !== 'card' && paymentMethod !== 'pix') {
       return NextResponse.json({ error: 'Forma de pagamento inválida.' }, { status: 400 })
     }
