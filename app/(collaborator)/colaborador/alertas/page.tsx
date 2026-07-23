@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Plus, Bell, Facebook, Globe, Trash2, Edit2, Copy, Smartphone, Users, AlertTriangle, DollarSign, X, Save, Loader2 } from 'lucide-react'
 import { useAlertas, Alert, AlertInput } from '@/hooks/useAlertas'
 import { useWhatsApp } from '@/hooks/useWhatsApp'
+import { FeatureLock } from '@/components/ui/FeatureLock'
 
 export default function ColaboradorAlertasPage() {
   const { alerts, loading, createAlerta, updateAlerta, deleteAlerta, toggleAtivo } = useAlertas()
@@ -113,7 +114,9 @@ export default function ColaboradorAlertasPage() {
                 </button>
                 <div className="flex items-center gap-3">
                   <button onClick={() => handleOpenModal(alert)} className="p-1.5 hover:bg-hover-bg rounded-lg text-text-muted hover:text-text-main"><Edit2 size={16} /></button>
-                  <button onClick={() => handleDuplicate(alert)} className="p-1.5 hover:bg-hover-bg rounded-lg text-text-muted hover:text-text-main"><Copy size={16} /></button>
+                  <FeatureLock featureKey="alertas.duplicar" variant="replace">
+                    <button onClick={() => handleDuplicate(alert)} className="p-1.5 hover:bg-hover-bg rounded-lg text-text-muted hover:text-text-main"><Copy size={16} /></button>
+                  </FeatureLock>
                   <button onClick={() => handleDelete(alert.id)} className="p-1.5 hover:bg-red-50 rounded-lg text-text-muted hover:text-red-500"><Trash2 size={16} /></button>
                 </div>
               </div>

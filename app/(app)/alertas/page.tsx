@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { useAlertas, Alert, AlertInput } from '@/hooks/useAlertas'
 import { useWhatsApp } from '@/hooks/useWhatsApp'
+import { FeatureLock } from '@/components/ui/FeatureLock'
 
 export default function AlertasPage() {
   const { alerts, loading, createAlerta, updateAlerta, deleteAlerta, toggleAtivo } = useAlertas()
@@ -188,9 +189,11 @@ export default function AlertasPage() {
                   <button onClick={() => handleOpenModal(alert)} className="p-1.5 hover:bg-hover-bg rounded-lg text-text-muted hover:text-text-main transition-colors">
                     <Edit2 size={16} />
                   </button>
-                  <button onClick={() => handleDuplicate(alert)} className="p-1.5 hover:bg-hover-bg rounded-lg text-text-muted hover:text-text-main transition-colors">
-                    <Copy size={16} />
-                  </button>
+                  <FeatureLock featureKey="alertas.duplicar" variant="replace">
+                    <button onClick={() => handleDuplicate(alert)} className="p-1.5 hover:bg-hover-bg rounded-lg text-text-muted hover:text-text-main transition-colors">
+                      <Copy size={16} />
+                    </button>
+                  </FeatureLock>
                   <button onClick={() => handleDelete(alert.id)} className="p-1.5 hover:bg-red-50 rounded-lg text-text-muted hover:text-red-600 transition-colors">
                     <Trash2 size={16} />
                   </button>

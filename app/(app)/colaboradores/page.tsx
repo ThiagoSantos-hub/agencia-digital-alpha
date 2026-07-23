@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { gerarOuAtualizarLancamentosSalario } from '@/lib/salaryFinance'
+import { FeatureLock } from '@/components/ui/FeatureLock'
 
 interface ColaboradorFormInput extends ColaboradorInput {
   password?: string
@@ -297,17 +298,19 @@ export default function ColaboradoresPage() {
                     </button>
                   </td>
                   <td className="px-6 py-4">
-                    <button
-                      onClick={() => toggleAgendaEnabled(c.id, c.agenda_enabled)}
-                      title={c.agenda_enabled ? 'Clique para desativar o acesso à Agenda' : 'Clique para liberar o acesso à Agenda'}
-                      className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${
-                        c.agenda_enabled
-                          ? 'bg-cta/10 text-cta hover:bg-cta/20'
-                          : 'bg-hover-bg text-text-muted hover:bg-border'
-                      }`}
-                    >
-                      {c.agenda_enabled ? 'Liberada' : 'Bloqueada'}
-                    </button>
+                    <FeatureLock featureKey="colaboradores.acesso_agenda" variant="replace">
+                      <button
+                        onClick={() => toggleAgendaEnabled(c.id, c.agenda_enabled)}
+                        title={c.agenda_enabled ? 'Clique para desativar o acesso à Agenda' : 'Clique para liberar o acesso à Agenda'}
+                        className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${
+                          c.agenda_enabled
+                            ? 'bg-cta/10 text-cta hover:bg-cta/20'
+                            : 'bg-hover-bg text-text-muted hover:bg-border'
+                        }`}
+                      >
+                        {c.agenda_enabled ? 'Liberada' : 'Bloqueada'}
+                      </button>
+                    </FeatureLock>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">

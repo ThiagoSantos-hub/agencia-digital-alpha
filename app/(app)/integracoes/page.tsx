@@ -33,6 +33,7 @@ const OAUTH_INTEGRATIONS = [
   'meta_ads', 'meta_ads_2', 'meta_ads_3', 'meta_ads_4',
 ]
 const GOOGLE_INTEGRATIONS = ['google_ads', 'google_drive']
+const EXTRA_META_SLOTS = ['meta_ads_2', 'meta_ads_3', 'meta_ads_4']
 
 const INTEGRATION_ICONS: Record<string, string> = {
   google_ads: 'https://www.gstatic.com/images/branding/product/2x/google_ads_48dp.png',
@@ -494,6 +495,15 @@ export default function IntegracoesPage() {
                   >
                     Desconectar
                   </button>
+                ) : EXTRA_META_SLOTS.includes(integration.type) ? (
+                  <FeatureLock featureKey="integracoes.contas_meta_extras" variant="replace">
+                    <a
+                      href={`/api/integrations/connect/meta?slot=${integration.type}`}
+                      className="text-xs px-3 py-1.5 rounded-lg font-medium transition-colors bg-primary text-white hover:bg-primary-hover"
+                    >
+                      Conectar
+                    </a>
+                  </FeatureLock>
                 ) : (
                   <a
                     href={
@@ -622,6 +632,7 @@ export default function IntegracoesPage() {
 
       <section>
         <h2 className="text-text-main text-lg font-semibold mb-4">Webhooks</h2>
+        <FeatureLock featureKey="integracoes.webhooks">
         <div className="space-y-3">
           {webhooks.map(webhook => (
             <div
@@ -682,6 +693,7 @@ export default function IntegracoesPage() {
             </div>
           ))}
         </div>
+        </FeatureLock>
       </section>
     </div>
   )

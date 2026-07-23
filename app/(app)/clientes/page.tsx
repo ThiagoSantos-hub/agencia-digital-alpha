@@ -4,6 +4,7 @@ import { useState, useRef, useMemo } from 'react'
 import { useClientes, Client } from '@/hooks/useClientes'
 import { useAuth } from '@/hooks/useAuth'
 import { Search, UserPlus, X, Loader2, Pencil, Trash2, Download, Upload, Clock, CheckCircle2, Ban, Target, Eye, EyeOff } from 'lucide-react'
+import { FeatureLock } from '@/components/ui/FeatureLock'
 // xlsx (~1MB) só é carregado quando o usuário realmente exporta/importa uma planilha,
 // em vez de ir no bundle JS de toda visita a esta página.
 
@@ -455,8 +456,10 @@ export default function ClientesPage() {
         {!isCollaborator && (
           <div className="flex items-center gap-3">
             <input type="file" ref={fileInputRef} onChange={handleImport} accept=".xlsx,.xls" className="hidden" />
-            <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-3 py-2 bg-surface border border-border text-text-muted hover:text-text-main rounded-xl text-sm"><Upload size={15} /> Importar</button>
-            <button onClick={handleExport} className="flex items-center gap-2 px-3 py-2 bg-surface border border-border text-text-muted hover:text-text-main rounded-xl text-sm"><Download size={15} /> Exportar</button>
+            <FeatureLock featureKey="clientes.exportar_importar" variant="replace">
+              <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-3 py-2 bg-surface border border-border text-text-muted hover:text-text-main rounded-xl text-sm"><Upload size={15} /> Importar</button>
+              <button onClick={handleExport} className="flex items-center gap-2 px-3 py-2 bg-surface border border-border text-text-muted hover:text-text-main rounded-xl text-sm"><Download size={15} /> Exportar</button>
+            </FeatureLock>
             <button onClick={() => setModalNovo(true)} className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl text-sm font-bold shadow-sm"><UserPlus size={16} /> Novo Cliente</button>
           </div>
         )}

@@ -5,6 +5,7 @@ import { useTasks, Task, TaskStatus, TaskPriority } from '@/hooks/useTasks'
 import { useAuth } from '@/hooks/useAuth'
 import { createClient } from '@/lib/supabase'
 import { useWhatsApp } from '@/hooks/useWhatsApp'
+import { FeatureLock } from '@/components/ui/FeatureLock'
 import {
   Plus,
   Calendar,
@@ -417,6 +418,7 @@ export default function CollaboratorTasksPage() {
                 <input type="url" value={newTask.drive_link} onChange={e => setNewTask({...newTask, drive_link: e.target.value})} className={inputCls} placeholder="https://drive.google.com/..." />
               </div>
 
+              <FeatureLock featureKey="tarefas.aviso_whatsapp">
               <div className="bg-surface border border-border rounded-lg p-3 space-y-2">
                 <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Avisar por WhatsApp (opcional)</label>
                 <div className="grid grid-cols-3 gap-2">
@@ -462,6 +464,7 @@ export default function CollaboratorTasksPage() {
                   <p className="text-[11px] text-text-muted">Manda um aviso automático avisando sobre a nova tarefa e quem é o responsável.</p>
                 )}
               </div>
+              </FeatureLock>
 
               <button type="submit" className={primaryBtnFull}>Criar e Enviar</button>
             </form>

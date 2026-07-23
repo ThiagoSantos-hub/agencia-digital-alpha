@@ -6,6 +6,7 @@ import { Card, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { Plus, Copy, Trash2, Loader2, FileText, Sparkles, Link2, Check } from 'lucide-react'
+import { FeatureLock } from '@/components/ui/FeatureLock'
 
 interface Template {
   id: string
@@ -175,33 +176,35 @@ export default function ModelosDeContratoPage() {
             </div>
           </button>
 
-          <div>
-            <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-text-disabled mb-2">
-              <Sparkles size={12} /> Exemplos prontos
-            </p>
-            <div className="space-y-2">
-              {gallery.length === 0 ? (
-                <p className="text-text-muted text-sm">Carregando exemplos...</p>
-              ) : (
-                gallery.map((g) => (
-                  <div key={g.id} className="flex items-center justify-between p-3 rounded-xl border border-border bg-background">
-                    <div>
-                      <p className="text-text-main text-sm font-semibold">{g.name}</p>
-                      <p className="text-text-muted text-xs">{g.clause_count} cláusulas · {g.currency}</p>
+          <FeatureLock featureKey="contratos.galeria_modelos">
+            <div>
+              <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-text-disabled mb-2">
+                <Sparkles size={12} /> Exemplos prontos
+              </p>
+              <div className="space-y-2">
+                {gallery.length === 0 ? (
+                  <p className="text-text-muted text-sm">Carregando exemplos...</p>
+                ) : (
+                  gallery.map((g) => (
+                    <div key={g.id} className="flex items-center justify-between p-3 rounded-xl border border-border bg-background">
+                      <div>
+                        <p className="text-text-main text-sm font-semibold">{g.name}</p>
+                        <p className="text-text-muted text-xs">{g.clause_count} cláusulas · {g.currency}</p>
+                      </div>
+                      <Button
+                        variant="secondary"
+                        onClick={() => handleUseTemplate(g.id)}
+                        disabled={busyId === g.id}
+                        icon={busyId === g.id ? <Loader2 size={14} className="animate-spin" /> : undefined}
+                      >
+                        {busyId === g.id ? 'Copiando...' : 'Usar este modelo'}
+                      </Button>
                     </div>
-                    <Button
-                      variant="secondary"
-                      onClick={() => handleUseTemplate(g.id)}
-                      disabled={busyId === g.id}
-                      icon={busyId === g.id ? <Loader2 size={14} className="animate-spin" /> : undefined}
-                    >
-                      {busyId === g.id ? 'Copiando...' : 'Usar este modelo'}
-                    </Button>
-                  </div>
-                ))
-              )}
+                  ))
+                )}
+              </div>
             </div>
-          </div>
+          </FeatureLock>
         </div>
       </Modal>
     </div>

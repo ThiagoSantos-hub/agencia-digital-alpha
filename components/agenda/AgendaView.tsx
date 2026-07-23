@@ -24,6 +24,8 @@ import {
 } from 'lucide-react'
 import { useWhatsApp } from '@/hooks/useWhatsApp'
 import { useAuth } from '@/hooks/useAuth'
+import { usePlanFeatures } from '@/hooks/usePlanFeatures'
+import { FeatureLock } from '@/components/ui/FeatureLock'
 
 const PLATFORM_LOGOS: Record<'gmail' | 'google_calendar', string> = {
   gmail: 'https://www.gstatic.com/images/branding/product/2x/gmail_2020q4_48dp.png',
@@ -597,6 +599,8 @@ export function AgendaView() {
 }
 
 function NewMeetingModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const { isLocked: isPlanLocked } = usePlanFeatures()
+  const meetLinkLocked = isPlanLocked('agenda.meet_automatico')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState('')
@@ -655,7 +659,7 @@ function NewMeetingModal({ onClose, onCreated }: { onClose: () => void; onCreate
           start: start.toISOString(),
           end: end.toISOString(),
           attendees: attendeeEmails,
-          createMeetLink,
+          createMeetLink: meetLinkLocked ? false : createMeetLink,
           whatsappDestino: whatsappTipo === 'privado' ? whatsappNumero.replace(/\D/g, '') : whatsappTipo === 'grupo' ? whatsappGrupo : undefined,
           whatsappFonte: whatsappTipo === 'grupo' && grupoEscolhidoNaAgencia ? 'agency' : 'own',
         }),
@@ -689,10 +693,12 @@ function NewMeetingModal({ onClose, onCreated }: { onClose: () => void; onCreate
           <input className={inputCls} value={attendees} onChange={(e) => setAttendees(e.target.value)} placeholder="fulano@empresa.com, ciclano@empresa.com" />
           <p className="text-[11px] text-text-muted mt-1">Separe os e-mails por vírgula. Cada um recebe o convite direto por e-mail.</p>
         </div>
-        <label className="flex items-center gap-2 text-xs text-text-main cursor-pointer">
-          <input type="checkbox" checked={createMeetLink} onChange={(e) => setCreateMeetLink(e.target.checked)} className="rounded border-border" />
-          Criar link de videochamada (Google Meet) automaticamente
-        </label>
+        <FeatureLock featureKey="agenda.meet_automatico">
+          <label className="flex items-center gap-2 text-xs text-text-main cursor-pointer">
+            <input type="checkbox" checked={createMeetLink} onChange={(e) => setCreateMeetLink(e.target.checked)} className="rounded border-border" />
+            Criar link de videochamada (Google Meet) automaticamente
+          </label>
+        </FeatureLock>
 
         <div className="bg-background border border-border rounded-lg p-3 space-y-2">
           <label className={labelCls}>Avisar por WhatsApp (opcional)</label>

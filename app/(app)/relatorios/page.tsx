@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { useRelatorios, Report, ReportHistory } from '@/hooks/useRelatorios'
 import { useWhatsApp } from '@/hooks/useWhatsApp'
+import { FeatureLock } from '@/components/ui/FeatureLock'
 
 export default function RelatoriosPage() {
   const router = useRouter()
@@ -295,12 +296,14 @@ export default function RelatoriosPage() {
               filteredReports.map((report) => (
                 <tr key={report.id} className="hover:bg-hover-bg transition-colors group">
                   <td className="p-4">
-                    <button 
-                      onClick={() => toggleAtivo(report.id, !report.ativo)}
-                      className={`w-10 h-5 rounded-full relative transition-colors ${report.ativo ? 'bg-primary' : 'bg-slate-300'}`}
-                    >
-                      <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all shadow-sm ${report.ativo ? 'right-1' : 'left-1'}`} />
-                    </button>
+                    <FeatureLock featureKey="relatorios.envio_automatico" variant="replace">
+                      <button
+                        onClick={() => toggleAtivo(report.id, !report.ativo)}
+                        className={`w-10 h-5 rounded-full relative transition-colors ${report.ativo ? 'bg-primary' : 'bg-slate-300'}`}
+                      >
+                        <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all shadow-sm ${report.ativo ? 'right-1' : 'left-1'}`} />
+                      </button>
+                    </FeatureLock>
                   </td>
                   <td className="p-4">
                     <div className="font-medium text-text-main">{report.nome}</div>

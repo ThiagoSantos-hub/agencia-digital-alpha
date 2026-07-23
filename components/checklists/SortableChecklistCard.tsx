@@ -3,9 +3,10 @@
 import { useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { 
+import {
   GripHorizontal, Trash2, Edit2, Plus, Copy,
 } from 'lucide-react'
+import { FeatureLock } from '@/components/ui/FeatureLock'
 import { 
   DndContext, 
   closestCorners, 
@@ -136,9 +137,11 @@ export function SortableChecklistCard({
               <Edit2 size={12} />
             </button>
             {duplicateChecklist && (
-              <button onClick={() => duplicateChecklist(list.id)} className="p-1 text-text-disabled hover:text-cta" title="Duplicar checklist">
-                <Copy size={12} />
-              </button>
+              <FeatureLock featureKey="checklists.duplicar" variant="replace">
+                <button onClick={() => duplicateChecklist(list.id)} className="p-1 text-text-disabled hover:text-cta" title="Duplicar checklist">
+                  <Copy size={12} />
+                </button>
+              </FeatureLock>
             )}
             <button onClick={() => deleteChecklist(list.id)} className="p-1 text-text-disabled hover:text-red-500">
               <Trash2 size={12} />
