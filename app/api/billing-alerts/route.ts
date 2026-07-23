@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
 import { stripe } from '@/lib/stripe'
-import { getClientLimit, type Plan } from '@/lib/planLimits'
+import { getClientLimit } from '@/lib/plans'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,7 +53,7 @@ export async function GET() {
   }
 
   let clientLimitClose: { used: number; limit: number } | null = null
-  const limite = getClientLimit(company?.plan as Plan | null)
+  const limite = await getClientLimit(company?.plan)
   if (limite !== null) {
     const { count } = await supabase
       .from('clients')

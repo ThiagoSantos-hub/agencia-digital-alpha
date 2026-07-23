@@ -2,7 +2,7 @@
 // app/api/superadmin/companies/route.ts (usado também pelo webhook do Stripe
 // agora). Os outros 2 usos duplicados (collaborators/invite,
 // collaborators/update-password) ficam como estão, fora de escopo.
-import { PLAN_LABELS, PLAN_CLIENT_LIMITS, type Plan } from './planLimits'
+import { getPlanById, type Plan, type PlanRow } from './plans'
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY
 const BREVO_SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL
@@ -35,25 +35,25 @@ async function sendBrevoEmail(payload: {
   }
 }
 
-function planDetalhesHtml(plan: Plan | null, paymentMethod: 'card' | 'pix' | null, trialDays: number): string {
-  if (!plan) return ''
+function planDetalhesHtml(planRow: PlanRow | null, paymentMethod: 'card' | 'pix' | null, trialDays: number): string {
+  if (!planRow) return ''
 
-  const precoBase: Record<Plan, number> = { basico: 47, pro: 97, premium: 147 }
-  const preco = paymentMethod === 'pix' ? precoBase[plan] * 1.1 : precoBase[plan]
-  const limite = PLAN_CLIENT_LIMITS[plan]
-  const limiteTexto = limite === null ? 'Clientes ilimitados' : `Até ${limite} clientes cadastrados`
+  const preco = paymentMethod === 'pix' ? planRow.price_brl * 1.1 : planRow.price_brl
+  const limiteTexto = planRow.client_limit === null ? 'Clientes ilimitados' : `Até ${planRow.client_limit} clientes cadastrados`
 
-  const cobrancaTexto = paymentMethod === 'pix'
-    ? 'Pagamento único via Pix, válido por 30 dias. Para continuar usando depois desse prazo, é só pagar de novo dentro do sistema, em "Assinatura".'
-    : trialDays > 0
-      ? `Você está com ${trialDays} dias de teste grátis. Depois desse período, a cobrança de R$ ${preco.toFixed(2).replace('.', ',')} por mês começa automaticamente no cartão cadastrado.`
-      : `Assinatura mensal recorrente de R$ ${preco.toFixed(2).replace('.', ',')}, cobrada automaticamente todo mês no cartão cadastrado.`
+  const cobrancaTexto = planRow.is_free
+    ? 'Plano gratuito, sem cobrança nenhuma.'
+    : paymentMethod === 'pix'
+      ? 'Pagamento único via Pix, válido por 30 dias. Para continuar usando depois desse prazo, é só pagar de novo dentro do sistema, em "Assinatura".'
+      : trialDays > 0
+        ? `Você está com ${trialDays} dias de teste grátis. Depois desse período, a cobrança de R$ ${preco.toFixed(2).replace('.', ',')} por mês começa automaticamente no cartão cadastrado.`
+        : `Assinatura mensal recorrente de R$ ${preco.toFixed(2).replace('.', ',')}, cobrada automaticamente todo mês no cartão cadastrado.`
 
   return `
     <table role="presentation" width="100%" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; margin: 24px 0;">
       <tr>
         <td style="padding: 20px 24px;">
-          <p style="margin: 0 0 10px 0; font-size: 15px; font-weight: bold; color: #065f46;">Plano ${PLAN_LABELS[plan]}</p>
+          <p style="margin: 0 0 10px 0; font-size: 15px; font-weight: bold; color: #065f46;">Plano ${planRow.name}</p>
           <p style="margin: 0 0 6px 0; font-size: 14px; color: #374151;">${limiteTexto}</p>
           <p style="margin: 0; font-size: 14px; color: #374151;">${cobrancaTexto}</p>
         </td>
@@ -72,6 +72,7 @@ export async function sendWelcomeEmail(params: {
   trialDays?: number
 }): Promise<{ ok: boolean }> {
   const { companyName, adminName, adminEmail, tempPassword, plan = null, paymentMethod = null, trialDays = 0 } = params
+  const planRow = await getPlanById(plan)
 
   return sendBrevoEmail({
     toEmail: adminEmail,
@@ -96,7 +97,7 @@ export async function sendWelcomeEmail(params: {
                 O acesso da empresa <strong>${companyName}</strong> à plataforma foi criado com sucesso.
               </p>
 
-              ${planDetalhesHtml(plan, paymentMethod, trialDays)}
+              ${planDetalhesHtml(planRow, paymentMethod, trialDays)}
 
               <table role="presentation" width="100%" style="background: #f3f4f6; border-radius: 10px; margin: 8px 0 24px 0;">
                 <tr>

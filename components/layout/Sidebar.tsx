@@ -1,14 +1,16 @@
 'use client'
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, Megaphone, BarChart2, Bell,
   CheckSquare, List, Wallet, UserCog, Bot, Plug,
   Sparkles, MessageSquare, UserCircle, LogOut, Settings,
-  FileSignature, Building2, CreditCard, Rocket, CalendarClock
+  FileSignature, Building2, CreditCard, Rocket, CalendarClock, Lock, Layers
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/hooks/useAuth'
+import { usePlanFeatures } from '@/hooks/usePlanFeatures'
 import { springSoft } from '@/lib/motion'
 
 const menuGroups = [
@@ -23,28 +25,28 @@ const menuGroups = [
   {
     label: 'CLIENTES & CAMPANHAS',
     items: [
-      { label: 'Clientes',   href: '/clientes',   icon: Users,      ativo: true },
-      { label: 'Campanhas',  href: '/campanhas',  icon: Megaphone,  ativo: true },
-      { label: 'Relatórios', href: '/relatorios', icon: BarChart2,  ativo: true },
-      { label: 'Alertas',    href: '/alertas',    icon: Bell,       ativo: true },
+      { label: 'Clientes',   href: '/clientes',   icon: Users,      ativo: true, featureKey: 'modulo.clientes' },
+      { label: 'Campanhas',  href: '/campanhas',  icon: Megaphone,  ativo: true, featureKey: 'modulo.campanhas' },
+      { label: 'Relatórios', href: '/relatorios', icon: BarChart2,  ativo: true, featureKey: 'modulo.relatorios' },
+      { label: 'Alertas',    href: '/alertas',    icon: Bell,       ativo: true, featureKey: 'modulo.alertas' },
     ],
   },
   {
     label: 'GESTÃO',
     items: [
-      { label: 'Agenda',        href: '/agenda',        icon: CalendarClock, ativo: true },
-      { label: 'Tarefas',       href: '/tarefas',       icon: CheckSquare,   ativo: true },
-      { label: 'Checklists',    href: '/checklists',    icon: List,          ativo: true },
-      { label: 'Contratos',     href: '/contratos',     icon: FileSignature, ativo: true },
-      { label: 'Financeiro',    href: '/financeiro',    icon: Wallet,        ativo: true },
-      { label: 'Colaboradores', href: '/colaboradores', icon: UserCog,       ativo: true },
+      { label: 'Agenda',        href: '/agenda',        icon: CalendarClock, ativo: true, featureKey: 'modulo.agenda' },
+      { label: 'Tarefas',       href: '/tarefas',       icon: CheckSquare,   ativo: true, featureKey: 'modulo.tarefas' },
+      { label: 'Checklists',    href: '/checklists',    icon: List,          ativo: true, featureKey: 'modulo.checklists' },
+      { label: 'Contratos',     href: '/contratos',     icon: FileSignature, ativo: true, featureKey: 'modulo.contratos' },
+      { label: 'Financeiro',    href: '/financeiro',    icon: Wallet,        ativo: true, featureKey: 'modulo.financeiro' },
+      { label: 'Colaboradores', href: '/colaboradores', icon: UserCog,       ativo: true, featureKey: 'modulo.colaboradores' },
     ],
   },
   {
     label: 'FERRAMENTAS',
     items: [
-      { label: 'Alpha AI',    href: '/ai',          icon: Bot,  ativo: true },
-      { label: 'Integrações', href: '/integracoes', icon: Plug, ativo: true },
+      { label: 'Alpha AI',    href: '/ai',          icon: Bot,  ativo: true, featureKey: 'modulo.ai' },
+      { label: 'Integrações', href: '/integracoes', icon: Plug, ativo: true, featureKey: 'modulo.integracoes' },
     ],
   },
   {
@@ -87,6 +89,8 @@ function NavLink({
 export function Sidebar() {
   const pathname = usePathname()
   const { signOut, profile } = useAuth()
+  const { isLocked, planName } = usePlanFeatures()
+  const [lockedLabel, setLockedLabel] = useState<string | null>(null)
 
   const groups = profile?.is_super_admin
     ? [...menuGroups, {
@@ -94,6 +98,7 @@ export function Sidebar() {
         items: [
           { label: 'Empresas', href: '/superadmin/empresas', icon: Building2, ativo: true },
           { label: 'Pagamentos', href: '/superadmin/pagamentos', icon: CreditCard, ativo: true },
+          { label: 'Planos', href: '/superadmin/planos', icon: Layers, ativo: true },
         ],
       }]
     : menuGroups
@@ -134,6 +139,20 @@ export function Sidebar() {
                     <span className="ml-auto text-[9px] bg-hover-bg text-text-disabled px-1.5 py-0.5 rounded-md font-bold uppercase">Em breve</span>
                   </div>
                 )
+
+                const locked = 'featureKey' in item && item.featureKey ? isLocked(item.featureKey) : false
+                if (locked) return (
+                  <button
+                    key={item.href}
+                    onClick={() => setLockedLabel(item.label)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-text-disabled hover:bg-hover-bg transition-colors"
+                  >
+                    <Icon size={18} />
+                    <span className="text-sm font-semibold">{item.label}</span>
+                    <Lock size={13} className="ml-auto" />
+                  </button>
+                )
+
                 return (
                   <NavLink key={item.href} href={item.href} active={isActive}>
                     <Icon size={18} />
@@ -158,6 +177,24 @@ export function Sidebar() {
           <span className="text-sm font-semibold">Sair do sistema</span>
         </motion.button>
       </div>
+
+      {lockedLabel && (
+        <>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onClick={() => setLockedLabel(null)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-surface border border-border rounded-xl shadow-2xl w-full max-w-sm p-6">
+              <h2 className="text-lg font-bold text-text-main mb-2">{lockedLabel} não está no seu plano</h2>
+              <p className="text-sm text-text-muted mb-5">
+                Essa funcionalidade não está incluída no seu plano atual{planName ? ` (${planName})` : ''}. Faça upgrade pra desbloquear.
+              </p>
+              <div className="flex gap-3">
+                <button onClick={() => setLockedLabel(null)} className="flex-1 px-4 py-2 rounded-lg border border-border text-text-main hover:bg-hover-bg transition-colors text-sm font-medium">Fechar</button>
+                <Link href="/assinatura" onClick={() => setLockedLabel(null)} className="flex-1 px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white transition-colors text-sm font-medium text-center">Ver planos</Link>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </aside>
   )
 }

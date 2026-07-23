@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Loader2, Building2, ExternalLink, Eye, Pencil, Power, X, Trash2, AlertTriangle } from 'lucide-react'
-import { PLAN_LABELS, type Plan } from '@/lib/planLimits'
+type Plan = string
 
 interface Company {
   id: string
@@ -21,17 +21,17 @@ interface Company {
   admin_emails: string[]
   phone: string | null
   plan: Plan | null
+  plan_name?: string | null
   payment_method: 'card' | 'pix' | null
   subscription_status: string | null
   access_expires_at: string | null
 }
 
-const PLAN_OPTIONS: { value: Plan | ''; label: string }[] = [
-  { value: '', label: 'Sem plano' },
-  { value: 'basico', label: PLAN_LABELS.basico },
-  { value: 'pro', label: PLAN_LABELS.pro },
-  { value: 'premium', label: PLAN_LABELS.premium },
-]
+interface PlanOption {
+  id: string
+  name: string
+  active: boolean
+}
 
 const inputCls = 'w-full px-3 py-2 bg-background border border-border rounded-lg text-text-main text-sm focus:outline-none focus:border-primary/50 transition-colors'
 const labelCls = 'block text-[11px] font-medium text-text-muted mb-1'
@@ -47,6 +47,7 @@ function slugify(value: string): string {
 export default function SuperAdminEmpresasPage() {
   const { profile, loading: authLoading } = useAuth()
   const [companies, setCompanies] = useState<Company[]>([])
+  const [plans, setPlans] = useState<PlanOption[]>([])
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState({ companyName: '', companySlug: '', adminName: '', adminEmail: '', adminPassword: '', metaTesterProfile: '', plan: '' as Plan | '' })
   const [creating, setCreating] = useState(false)
@@ -70,7 +71,12 @@ export default function SuperAdminEmpresasPage() {
     setLoading(false)
   }
 
-  useEffect(() => { fetchCompanies() }, [])
+  useEffect(() => {
+    fetchCompanies()
+    fetch('/api/superadmin/plans').then((res) => res.ok ? res.json() : []).then(setPlans)
+  }, [])
+
+  const planOptions: PlanOption[] = [{ id: '', name: 'Sem plano', active: true }, ...plans]
 
   const set = (field: Exclude<keyof typeof form, 'plan'>, value: string) =>
     setForm((prev) => ({
@@ -219,7 +225,7 @@ export default function SuperAdminEmpresasPage() {
           <div>
             <label className={labelCls}>Plano</label>
             <select className={inputCls} value={form.plan} onChange={(e) => setPlan(e.target.value as Plan | '')}>
-              {PLAN_OPTIONS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+              {planOptions.map((p) => <option key={p.id} value={p.id}>{p.name}{!p.active && p.id !== '' ? ' (inativo)' : ''}</option>)}
             </select>
           </div>
 
@@ -274,7 +280,7 @@ export default function SuperAdminEmpresasPage() {
                     <td className="py-3 px-3 align-top">
                       {c.plan ? (
                         <>
-                          <p className="text-text-main font-medium">{PLAN_LABELS[c.plan]}</p>
+                          <p className="text-text-main font-medium">{c.plan_name ?? c.plan}</p>
                           <p className="text-text-muted text-xs mt-0.5">
                             {c.payment_method === 'pix' ? 'Pix' : c.payment_method === 'card' ? 'Cartão' : ''}
                             {c.subscription_status ? ` · ${c.subscription_status}` : ''}
@@ -363,7 +369,7 @@ export default function SuperAdminEmpresasPage() {
                 <p><span className="text-text-muted">Perfil do Facebook:</span> <span className="text-text-main">{viewCompany.meta_tester_profile || '-'}</span></p>
                 <p><span className="text-text-muted">Testador Meta adicionado:</span> <span className="text-text-main">{viewCompany.meta_tester_added ? 'Sim' : 'Não'}</span></p>
                 <p><span className="text-text-muted">Telefone:</span> <span className="text-text-main">{viewCompany.phone || '-'}</span></p>
-                <p><span className="text-text-muted">Plano:</span> <span className="text-text-main">{viewCompany.plan ? PLAN_LABELS[viewCompany.plan] : '-'}</span></p>
+                <p><span className="text-text-muted">Plano:</span> <span className="text-text-main">{viewCompany.plan ? (viewCompany.plan_name ?? viewCompany.plan) : '-'}</span></p>
                 <p><span className="text-text-muted">Pagamento:</span> <span className="text-text-main">{viewCompany.payment_method === 'pix' ? 'Pix' : viewCompany.payment_method === 'card' ? 'Cartão' : '- (cadastro manual)'}</span></p>
                 <p><span className="text-text-muted">Status da assinatura:</span> <span className="text-text-main">{viewCompany.subscription_status || '-'}</span></p>
                 {viewCompany.payment_method === 'pix' && (
@@ -400,7 +406,7 @@ export default function SuperAdminEmpresasPage() {
                 <div>
                   <label className={labelCls}>Plano</label>
                   <select className={inputCls} value={editForm.plan} onChange={(e) => setEditForm({ ...editForm, plan: e.target.value as Plan | '' })}>
-                    {PLAN_OPTIONS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+                    {planOptions.map((p) => <option key={p.id} value={p.id}>{p.name}{!p.active && p.id !== '' ? ' (inativo)' : ''}</option>)}
                   </select>
                 </div>
                 {editError && <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-red-600 text-sm">{editError}</div>}

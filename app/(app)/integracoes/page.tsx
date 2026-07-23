@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { WhatsAppConnect } from '@/components/whatsapp/WhatsAppConnect'
 import { PersonalAIKeysCard } from '@/components/ai/PersonalAIKeysCard'
+import { FeatureLock } from '@/components/ui/FeatureLock'
 
 interface Integration {
   id: string
@@ -510,22 +511,24 @@ export default function IntegracoesPage() {
         <p className="text-xs mb-4 text-text-muted">
           Conecte o provedor que sua empresa já usa e escolha qual deles envia os contratos gerados pelo formulário público.
         </p>
-        <div className="flex items-center gap-2 mb-4">
-          {(['autentique', 'assinafy'] as const).map(provider => (
-            <button
-              key={provider}
-              onClick={() => saveEsignatureProvider(provider)}
-              disabled={savingProvider || esignatureProvider === provider}
-              className={`text-xs px-4 py-2 rounded-lg font-medium border transition-colors disabled:cursor-default ${
-                esignatureProvider === provider
-                  ? 'bg-primary text-white border-primary'
-                  : 'bg-surface text-text-muted border-border hover:border-primary'
-              }`}
-            >
-              {esignatureProvider === provider ? '✓ ' : ''}{provider === 'assinafy' ? 'Assinafy' : 'Autentique'} {esignatureProvider === provider ? '(ativo)' : ''}
-            </button>
-          ))}
-        </div>
+        <FeatureLock featureKey="contratos.assinatura_eletronica">
+          <div className="flex items-center gap-2 mb-4">
+            {(['autentique', 'assinafy'] as const).map(provider => (
+              <button
+                key={provider}
+                onClick={() => saveEsignatureProvider(provider)}
+                disabled={savingProvider || esignatureProvider === provider}
+                className={`text-xs px-4 py-2 rounded-lg font-medium border transition-colors disabled:cursor-default ${
+                  esignatureProvider === provider
+                    ? 'bg-primary text-white border-primary'
+                    : 'bg-surface text-text-muted border-border hover:border-primary'
+                }`}
+              >
+                {esignatureProvider === provider ? '✓ ' : ''}{provider === 'assinafy' ? 'Assinafy' : 'Autentique'} {esignatureProvider === provider ? '(ativo)' : ''}
+              </button>
+            ))}
+          </div>
+        </FeatureLock>
       </section>
 
       <section>

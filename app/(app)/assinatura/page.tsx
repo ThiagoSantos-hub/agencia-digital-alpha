@@ -2,11 +2,18 @@
 
 import { useEffect, useState } from 'react'
 import { Loader2, CreditCard, QrCode, CheckCircle2 } from 'lucide-react'
-import { PLAN_LABELS, PLAN_CLIENT_LIMITS, type Plan } from '@/lib/planLimits'
+interface PlanDetails {
+  name: string
+  client_limit: number | null
+  monthly_reports_limit: number | null
+  monthly_alerts_limit: number | null
+  is_free: boolean
+}
 
 interface CompanyBilling {
   name: string
-  plan: Plan | null
+  plan: string | null
+  plan_details: PlanDetails | null
   payment_method: 'card' | 'pix' | null
   subscription_status: string | null
   access_expires_at: string | null
@@ -23,10 +30,9 @@ const STATUS_LABELS: Record<string, string> = {
   pix_expirado: 'Expirada (Pix)',
 }
 
-function limiteTexto(plan: Plan | null): string {
-  if (!plan) return ''
-  const limite = PLAN_CLIENT_LIMITS[plan]
-  return limite === null ? 'clientes ilimitados' : `até ${limite} clientes`
+function limiteTexto(planDetails: PlanDetails | null): string {
+  if (!planDetails) return ''
+  return planDetails.client_limit === null ? 'clientes ilimitados' : `até ${planDetails.client_limit} clientes`
 }
 
 export default function AssinaturaPage() {
@@ -80,10 +86,10 @@ export default function AssinaturaPage() {
           {company?.payment_method === 'pix' ? <QrCode size={20} className="text-primary" /> : <CreditCard size={20} className="text-primary" />}
           <div>
             <p className="text-sm font-medium text-text-main">
-              {company?.plan ? PLAN_LABELS[company.plan] : 'Sem plano configurado'}
+              {company?.plan_details?.name ?? 'Sem plano configurado'}
             </p>
             <p className="text-xs text-text-muted">
-              {company?.plan ? limiteTexto(company.plan) : ''}
+              {limiteTexto(company?.plan_details ?? null)}
             </p>
             <p className="text-xs text-text-muted mt-1">
               {company?.subscription_status ? (STATUS_LABELS[company.subscription_status] ?? company.subscription_status) : '-'}
