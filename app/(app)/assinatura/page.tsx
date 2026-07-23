@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Loader2, CreditCard, QrCode, CheckCircle2 } from 'lucide-react'
+import { Loader2, CreditCard, QrCode, CheckCircle2, Facebook } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
+
 interface PlanDetails {
   name: string
   client_limit: number | null
@@ -18,6 +20,7 @@ interface CompanyBilling {
   subscription_status: string | null
   access_expires_at: string | null
   renews_at: string | null
+  meta_tester_profile: string | null
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -36,17 +39,44 @@ function limiteTexto(planDetails: PlanDetails | null): string {
 }
 
 export default function AssinaturaPage() {
+  const { profile } = useAuth()
   const [company, setCompany] = useState<CompanyBilling | null>(null)
   const [loading, setLoading] = useState(true)
   const [renewing, setRenewing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const [facebookProfile, setFacebookProfile] = useState('')
+  const [savingFacebook, setSavingFacebook] = useState(false)
+  const [facebookError, setFacebookError] = useState<string | null>(null)
+  const [facebookSaved, setFacebookSaved] = useState(false)
+
   useEffect(() => {
     fetch('/api/company')
       .then((res) => res.json())
-      .then((data) => setCompany(data))
+      .then((data) => {
+        setCompany(data)
+        setFacebookProfile(data.meta_tester_profile ?? '')
+      })
       .finally(() => setLoading(false))
   }, [])
+
+  const handleSaveFacebook = async () => {
+    setSavingFacebook(true)
+    setFacebookError(null)
+    setFacebookSaved(false)
+    const res = await fetch('/api/company', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ meta_tester_profile: facebookProfile }),
+    })
+    setSavingFacebook(false)
+    if (!res.ok) {
+      const data = await res.json()
+      setFacebookError(data.error || 'Erro ao salvar.')
+      return
+    }
+    setFacebookSaved(true)
+  }
 
   const handleRenew = async () => {
     setRenewing(true)
@@ -138,6 +168,35 @@ export default function AssinaturaPage() {
           </>
         )}
       </div>
+
+      {profile?.role === 'admin' && (
+        <div className="bg-surface border border-border rounded-xl p-6 space-y-3">
+          <div className="flex items-center gap-3">
+            <Facebook size={20} className="text-primary" />
+            <div>
+              <p className="text-sm font-medium text-text-main">Perfil do Facebook cadastrado</p>
+              <p className="text-xs text-text-muted">Usado só pra identificação da sua conta na plataforma.</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <input
+              className="flex-1 px-3.5 py-2.5 bg-background border border-border rounded-xl text-text-main text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+              value={facebookProfile}
+              onChange={(e) => { setFacebookProfile(e.target.value); setFacebookSaved(false) }}
+              placeholder="facebook.com/seuperfil"
+            />
+            <button
+              onClick={handleSaveFacebook}
+              disabled={savingFacebook || !facebookProfile.trim()}
+              className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium transition-colors whitespace-nowrap"
+            >
+              {savingFacebook ? 'Salvando...' : 'Salvar'}
+            </button>
+          </div>
+          {facebookError && <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-red-600 text-sm">{facebookError}</div>}
+          {facebookSaved && <p className="text-cta text-xs">Perfil atualizado.</p>}
+        </div>
+      )}
     </div>
   )
 }

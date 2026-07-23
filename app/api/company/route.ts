@@ -14,7 +14,7 @@ async function requireManager() {
   if (!profile || profile.role === 'collaborator') {
     return { error: NextResponse.json({ error: 'Acesso negado' }, { status: 403 }) }
   }
-  return { session, companyId: profile.company_id as string }
+  return { session, companyId: profile.company_id as string, role: profile.role as string }
 }
 
 // GET — dados da própria empresa (usados como identidade CONTRATADO nos contratos)
@@ -50,10 +50,16 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { contract_signer_name, contract_signer_cpf, contract_signer_email, contract_signer_phone, contract_signer_address, esignature_provider } = body
+    const { contract_signer_name, contract_signer_cpf, contract_signer_email, contract_signer_phone, contract_signer_address, esignature_provider, meta_tester_profile } = body
 
     if (esignature_provider !== undefined && !['autentique', 'assinafy'].includes(esignature_provider)) {
       return NextResponse.json({ error: 'Provedor de assinatura inválido.' }, { status: 400 })
+    }
+
+    // Perfil do Facebook é identidade sensível (usado pra antifraude de trial/
+    // inadimplência) — só o admin da empresa pode trocar, não os managers.
+    if (meta_tester_profile !== undefined && auth.role !== 'admin') {
+      return NextResponse.json({ error: 'Só o admin da empresa pode alterar o perfil do Facebook.' }, { status: 403 })
     }
 
     const updates: Record<string, unknown> = {
@@ -62,6 +68,7 @@ export async function PATCH(request: NextRequest) {
       updated_at: new Date().toISOString(),
     }
     if (esignature_provider !== undefined) updates.esignature_provider = esignature_provider
+    if (meta_tester_profile !== undefined) updates.meta_tester_profile = meta_tester_profile || null
 
     const { data, error } = await auth.session!
       .from('companies')
