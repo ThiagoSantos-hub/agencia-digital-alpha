@@ -251,6 +251,50 @@ export async function POST(request: Request) {
       });
     }
 
+    // Limite mensal de relatórios do plano — checa DEPOIS da prévia (que só
+    // mostra a mensagem, não conta como envio) e ANTES de disparar de verdade.
+    if (reportCompanyId) {
+      const { data: companyPlan } = await supabase
+        .from('companies')
+        .select('plan')
+        .eq('id', reportCompanyId)
+        .maybeSingle();
+      const { data: planRow } = companyPlan?.plan
+        ? await supabase.from('plans').select('monthly_reports_limit').eq('id', companyPlan.plan).maybeSingle()
+        : { data: null };
+      const limite = planRow?.monthly_reports_limit ?? null;
+
+      if (limite !== null) {
+        const inicioMes = new Date();
+        inicioMes.setDate(1);
+        inicioMes.setHours(0, 0, 0, 0);
+
+        const { data: reportIds } = await supabase.from('reports').select('id').eq('company_id', reportCompanyId);
+        const ids = (reportIds ?? []).map((r) => r.id);
+
+        const { count } = ids.length > 0
+          ? await supabase
+              .from('report_history')
+              .select('id', { count: 'exact', head: true })
+              .in('report_id', ids)
+              .eq('status', 'enviado')
+              .gte('enviado_em', inicioMes.toISOString())
+          : { count: 0 };
+
+        if ((count ?? 0) >= limite) {
+          const erroLimite = `Limite de ${limite} relatórios do plano atingido este mês.`;
+          await supabase.from('report_history').insert({ report_id, status: 'erro', mensagem_enviada: mensagemFinal, erro_detalhe: erroLimite });
+
+          // Avança proximo_envio mesmo bloqueado — senão o cron tenta de novo a
+          // cada hora pelo resto do mês. No mês seguinte a contagem zera.
+          const proximoEnvioLimite = calcularProximoEnvio(report.frequencia, report.horario_envio, report.dias_semana);
+          await supabase.from('reports').update({ proximo_envio: proximoEnvioLimite }).eq('id', report_id);
+
+          return NextResponse.json({ success: false, error: erroLimite, limitReached: true }, { status: 403 });
+        }
+      }
+    }
+
     let status: 'enviado' | 'erro' = 'enviado';
     let erroDetalhe = null;
 

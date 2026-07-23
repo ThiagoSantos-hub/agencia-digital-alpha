@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { Loader2, CreditCard, TrendingUp, Clock, AlertTriangle, Timer, Calendar } from 'lucide-react'
-import { PLAN_LABELS, type Plan } from '@/lib/planLimits'
+type Plan = string
 
 interface CompanyPayment {
   id: string
@@ -13,6 +13,7 @@ interface CompanyPayment {
   is_platform_owner: boolean
   active: boolean
   plan: Plan | null
+  plan_name?: string | null
   payment_method: 'card' | 'pix' | null
   subscription_status: string | null
   access_expires_at: string | null
@@ -187,7 +188,7 @@ export default function SuperAdminPagamentosPage() {
                         <p className="text-text-muted text-xs mt-0.5">{c.admin_emails[0] || '-'}</p>
                       </td>
                       <td className="py-3 px-3 align-top">
-                        <span className="text-text-main">{c.plan ? PLAN_LABELS[c.plan] : '-'}</span>
+                        <span className="text-text-main">{c.plan_name ?? '-'}</span>
                       </td>
                       <td className="py-3 px-3 align-top">
                         <span className="text-text-main">{c.payment_method === 'pix' ? 'Pix' : 'Cartão'}</span>

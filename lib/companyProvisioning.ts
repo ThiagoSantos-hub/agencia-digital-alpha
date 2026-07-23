@@ -40,7 +40,8 @@ export interface ProvisionCompanyInput {
   companySlug?: string
   metaTesterProfile?: string | null
   phone?: string | null
-  plan?: 'basico' | 'pro' | 'premium' | null
+  plan?: string | null
+  facebookUserId?: string | null
   paymentMethod?: 'card' | 'pix' | null
   stripeCustomerId?: string | null
   stripeSubscriptionId?: string | null
@@ -67,6 +68,7 @@ export async function provisionCompany(input: ProvisionCompanyInput): Promise<Pr
       meta_tester_profile: input.metaTesterProfile || null,
       phone: input.phone || null,
       plan: input.plan || null,
+      facebook_user_id: input.facebookUserId || null,
       payment_method: input.paymentMethod || null,
       stripe_customer_id: input.stripeCustomerId || null,
       stripe_subscription_id: input.stripeSubscriptionId || null,

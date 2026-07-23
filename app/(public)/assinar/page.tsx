@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { Loader2, AlertCircle, CreditCard, QrCode } from 'lucide-react'
+import { Suspense, useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Loader2, AlertCircle, CreditCard, QrCode, Facebook } from 'lucide-react'
 import { maskPhone } from '@/lib/validators'
 
 const inputCls = 'w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-text-main text-sm placeholder:text-text-disabled focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors'
@@ -15,13 +16,40 @@ function RequiredLabel({ text, filled }: { text: string; filled: boolean }) {
   )
 }
 
-const PLANOS = [
-  { value: 'basico', label: 'Básico', price: 'R$ 47/mês', desc: 'até 5 clientes' },
-  { value: 'pro', label: 'Pro', price: 'R$ 97/mês', desc: 'até 15 clientes' },
-  { value: 'premium', label: 'Premium', price: 'R$ 147/mês', desc: 'clientes ilimitados' },
-] as const
+interface PublicPlan {
+  id: string
+  name: string
+  price_brl: number
+  client_limit: number | null
+  monthly_reports_limit: number | null
+  monthly_alerts_limit: number | null
+  is_free: boolean
+  display_order: number
+}
+
+function planDesc(p: PublicPlan): string {
+  const partes: string[] = []
+  partes.push(p.client_limit === null ? 'clientes ilimitados' : `até ${p.client_limit} clientes`)
+  if (p.monthly_reports_limit !== null) partes.push(`${p.monthly_reports_limit} relatórios/mês`)
+  if (p.monthly_alerts_limit !== null) partes.push(`${p.monthly_alerts_limit} alertas/mês`)
+  return partes.join(' · ')
+}
 
 export default function AssinarPage() {
+  return (
+    <Suspense fallback={null}>
+      <AssinarForm />
+    </Suspense>
+  )
+}
+
+function AssinarForm() {
+  const searchParams = useSearchParams()
+
+  const [plans, setPlans] = useState<PublicPlan[]>([])
+  const [loadingPlans, setLoadingPlans] = useState(true)
+  const [plan, setPlan] = useState<string>('')
+
   const [form, setForm] = useState({
     companyName: '',
     adminName: '',
@@ -30,9 +58,32 @@ export default function AssinarPage() {
     facebookProfile: '',
   })
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'pix'>('card')
-  const [plan, setPlan] = useState<'basico' | 'pro' | 'premium'>('basico')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const [fbToken, setFbToken] = useState<string | null>(null)
+  const [fbName, setFbName] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('/api/public/plans')
+      .then((res) => res.json())
+      .then((data: PublicPlan[]) => {
+        setPlans(data)
+        if (data.length > 0) setPlan(data[0].id)
+      })
+      .finally(() => setLoadingPlans(false))
+  }, [])
+
+  useEffect(() => {
+    const token = searchParams.get('fb_token')
+    const name = searchParams.get('fb_name')
+    const fbError = searchParams.get('fb_error')
+    if (token) { setFbToken(token); setFbName(name) }
+    if (fbError) setError('Não conseguimos confirmar o login com Facebook. Tente de novo.')
+  }, [searchParams])
+
+  const selectedPlan = plans.find((p) => p.id === plan) ?? null
+  const isFree = !!selectedPlan?.is_free
 
   const setField = (key: keyof typeof form, value: string) => setForm((prev) => ({ ...prev, [key]: value }))
 
@@ -40,8 +91,16 @@ export default function AssinarPage() {
     e.preventDefault()
     setError(null)
 
-    if (!form.companyName || !form.adminName || !form.adminEmail || !form.phone || !form.facebookProfile) {
+    if (!form.companyName || !form.adminName || !form.adminEmail || !form.phone) {
       setError('Preencha todos os campos.')
+      return
+    }
+    if (!isFree && !form.facebookProfile) {
+      setError('Informe seu perfil do Facebook.')
+      return
+    }
+    if (isFree && !fbToken) {
+      setError('Entre com o Facebook pra continuar o cadastro gratuito.')
       return
     }
 
@@ -50,7 +109,7 @@ export default function AssinarPage() {
       const res = await fetch('/api/public/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, paymentMethod, plan }),
+        body: JSON.stringify({ ...form, paymentMethod, plan, fbToken }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -58,7 +117,7 @@ export default function AssinarPage() {
         setLoading(false)
         return
       }
-      window.location.href = data.url
+      window.location.href = data.redirect || data.url
     } catch {
       setError('Erro ao processar o cadastro. Tente novamente.')
       setLoading(false)
@@ -70,7 +129,7 @@ export default function AssinarPage() {
       <div className="w-full max-w-lg">
         <div className="bg-surface border border-border rounded-xl p-8 shadow-sm">
           <h1 className="text-xl font-bold text-text-main mb-1">Assine a Digital Alpha</h1>
-          <p className="text-sm text-text-muted mb-6">Preencha seus dados e escolha a forma de pagamento pra começar.</p>
+          <p className="text-sm text-text-muted mb-6">Preencha seus dados e escolha o plano pra começar.</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -89,60 +148,87 @@ export default function AssinarPage() {
               <RequiredLabel text="Telefone/WhatsApp" filled={!!form.phone.trim()} />
               <input className={inputCls} value={form.phone} onChange={(e) => setField('phone', maskPhone(e.target.value))} placeholder="(11) 99999-9999" />
             </div>
-            <div>
-              <RequiredLabel text="Perfil do Facebook" filled={!!form.facebookProfile.trim()} />
-              <input className={inputCls} value={form.facebookProfile} onChange={(e) => setField('facebookProfile', e.target.value)} placeholder="facebook.com/seuperfil" />
-              <p className="text-xs text-text-muted mt-1">Precisamos disso pra liberar seu acesso ao Meta Ads/Instagram depois.</p>
-            </div>
+
+            {!isFree && (
+              <div>
+                <RequiredLabel text="Perfil do Facebook" filled={!!form.facebookProfile.trim()} />
+                <input className={inputCls} value={form.facebookProfile} onChange={(e) => setField('facebookProfile', e.target.value)} placeholder="facebook.com/seuperfil" />
+                <p className="text-xs text-text-muted mt-1">Precisamos disso pra liberar seu acesso ao Meta Ads/Instagram depois.</p>
+              </div>
+            )}
 
             <div>
               <label className={labelCls}>Escolha seu plano</label>
-              <div className="grid grid-cols-3 gap-3">
-                {PLANOS.map((p) => (
-                  <button
-                    key={p.value}
-                    type="button"
-                    onClick={() => setPlan(p.value)}
-                    className={`flex flex-col items-center justify-center gap-0.5 py-3 rounded-xl border text-center transition-colors ${
-                      plan === p.value ? 'bg-primary/10 border-primary text-primary' : 'bg-background border-border text-text-muted hover:border-primary/40'
-                    }`}
-                  >
-                    <span className="text-sm font-semibold">{p.label}</span>
-                    <span className="text-xs">{p.price}</span>
-                    <span className="text-[10px] text-text-muted">{p.desc}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className={labelCls}>Forma de pagamento</label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('card')}
-                  className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-colors ${
-                    paymentMethod === 'card' ? 'bg-primary/10 border-primary text-primary' : 'bg-background border-border text-text-muted hover:border-primary/40'
-                  }`}
-                >
-                  <CreditCard size={16} /> Cartão
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('pix')}
-                  className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-colors ${
-                    paymentMethod === 'pix' ? 'bg-primary/10 border-primary text-primary' : 'bg-background border-border text-text-muted hover:border-primary/40'
-                  }`}
-                >
-                  <QrCode size={16} /> Pix
-                </button>
-              </div>
-              {paymentMethod === 'card' ? (
-                <p className="text-xs text-text-muted mt-2">Assinatura mensal recorrente. Se você nunca usou o sistema antes, ganha um período de teste grátis antes da primeira cobrança.</p>
+              {loadingPlans ? (
+                <p className="text-sm text-text-muted">Carregando planos...</p>
               ) : (
-                <p className="text-xs text-text-muted mt-2">Pagamento único via Pix (com acréscimo de 10% sobre o valor do cartão), libera 30 dias de acesso. Sem teste grátis: pra continuar usando depois, é só pagar de novo dentro do sistema.</p>
+                <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(plans.length, 3)}, 1fr)` }}>
+                  {plans.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setPlan(p.id)}
+                      className={`flex flex-col items-center justify-center gap-0.5 py-3 rounded-xl border text-center transition-colors ${
+                        plan === p.id ? 'bg-primary/10 border-primary text-primary' : 'bg-background border-border text-text-muted hover:border-primary/40'
+                      }`}
+                    >
+                      <span className="text-sm font-semibold">{p.name}</span>
+                      <span className="text-xs">{p.is_free ? 'Grátis' : `R$ ${p.price_brl.toFixed(2).replace('.', ',')}/mês`}</span>
+                      <span className="text-[10px] text-text-muted px-2 text-center">{planDesc(p)}</span>
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
+
+            {isFree ? (
+              <div>
+                <label className={labelCls}>Identidade verificada</label>
+                {fbToken ? (
+                  <div className="flex items-center gap-2 bg-cta/10 border border-cta/20 rounded-xl px-3.5 py-2.5 text-sm text-text-main">
+                    <Facebook size={16} className="text-primary shrink-0" />
+                    <span>Conectado como {fbName || 'perfil do Facebook'}.</span>
+                  </div>
+                ) : (
+                  <a
+                    href="/api/public/facebook-login"
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border bg-[#1877F2] text-white text-sm font-medium hover:opacity-90 transition-opacity"
+                  >
+                    <Facebook size={16} /> Entrar com Facebook pra continuar
+                  </a>
+                )}
+                <p className="text-xs text-text-muted mt-1">O plano Gratuito exige login com Facebook pra confirmar que é uma pessoa nova, sem cartão nenhum.</p>
+              </div>
+            ) : (
+              <div>
+                <label className={labelCls}>Forma de pagamento</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('card')}
+                    className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-colors ${
+                      paymentMethod === 'card' ? 'bg-primary/10 border-primary text-primary' : 'bg-background border-border text-text-muted hover:border-primary/40'
+                    }`}
+                  >
+                    <CreditCard size={16} /> Cartão
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('pix')}
+                    className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-colors ${
+                      paymentMethod === 'pix' ? 'bg-primary/10 border-primary text-primary' : 'bg-background border-border text-text-muted hover:border-primary/40'
+                    }`}
+                  >
+                    <QrCode size={16} /> Pix
+                  </button>
+                </div>
+                {paymentMethod === 'card' ? (
+                  <p className="text-xs text-text-muted mt-2">Assinatura mensal recorrente. Se você nunca usou o sistema antes, ganha um período de teste grátis antes da primeira cobrança.</p>
+                ) : (
+                  <p className="text-xs text-text-muted mt-2">Pagamento único via Pix (com acréscimo de 10% sobre o valor do cartão), libera 30 dias de acesso. Sem teste grátis: pra continuar usando depois, é só pagar de novo dentro do sistema.</p>
+                )}
+              </div>
+            )}
 
             {error && (
               <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-3.5 py-2.5 text-red-600 text-sm">
@@ -153,11 +239,11 @@ export default function AssinarPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || loadingPlans}
               className="w-full py-3.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
             >
               {loading ? <Loader2 size={18} className="animate-spin" /> : null}
-              {loading ? 'Processando...' : 'Continuar para pagamento'}
+              {loading ? 'Processando...' : isFree ? 'Criar minha conta grátis' : 'Continuar para pagamento'}
             </button>
           </form>
         </div>

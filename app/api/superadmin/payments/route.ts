@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
 import { stripe } from '@/lib/stripe'
-import { PLAN_PRICE_BRL, type Plan } from '@/lib/planLimits'
+import { getAllPlans, type Plan } from '@/lib/plans'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,6 +30,7 @@ interface CompanyRow {
   is_platform_owner: boolean
   active: boolean
   plan: Plan | null
+  plan_name?: string | null
   payment_method: 'card' | 'pix' | null
   stripe_subscription_id: string | null
   subscription_status: string | null
@@ -69,6 +70,10 @@ export async function GET(request: NextRequest) {
   // Data de próxima cobrança do cartão vem direto do Stripe (não guardamos
   // localmente, mesmo padrão de app/api/company/route.ts) — busca em paralelo,
   // e se a assinatura já não existir mais no Stripe só deixa null.
+  const plans = await getAllPlans()
+  const priceOf = (plan: Plan | null) => plans.find((p) => p.id === plan)?.price_brl ?? 0
+  const nameOf = (plan: Plan | null) => plans.find((p) => p.id === plan)?.name ?? null
+
   const rows: CompanyRow[] = await Promise.all(
     (companies ?? []).map(async (c) => {
       let renewsAt: string | null = null
@@ -81,11 +86,9 @@ export async function GET(request: NextRequest) {
           // assinatura não existe mais no Stripe — só não mostra a data
         }
       }
-      return { ...c, admin_emails: adminEmailsFor(c.id), renews_at: renewsAt }
+      return { ...c, admin_emails: adminEmailsFor(c.id), renews_at: renewsAt, plan_name: nameOf(c.plan) }
     })
   )
-
-  const priceOf = (plan: Plan | null) => (plan ? PLAN_PRICE_BRL[plan] : 0)
 
   const mrr = rows
     .filter((c) =>

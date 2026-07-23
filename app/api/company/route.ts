@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
 import { stripe } from '@/lib/stripe'
+import { getPlanById } from '@/lib/plans'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,7 +38,9 @@ export async function GET() {
     }
   }
 
-  return NextResponse.json({ ...data, renews_at: renewsAt })
+  const planDetails = await getPlanById(data.plan)
+
+  return NextResponse.json({ ...data, renews_at: renewsAt, plan_details: planDetails })
 }
 
 // PATCH — atualiza os dados de identidade CONTRATADO da própria empresa

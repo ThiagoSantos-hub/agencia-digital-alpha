@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
 import { stripe } from '@/lib/stripe'
-import { priceIdForPlan, type Plan } from '@/lib/planLimits'
+import { priceIdForPlan } from '@/lib/plans'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,7 +27,7 @@ export async function POST() {
     return NextResponse.json({ error: 'Esta empresa não está no plano Pix.' }, { status: 400 })
   }
 
-  const basePrice = await stripe.prices.retrieve(priceIdForPlan((company.plan as Plan) ?? 'basico'))
+  const basePrice = await stripe.prices.retrieve(await priceIdForPlan(company.plan ?? 'basico'))
   const pixAmount = Math.round((basePrice.unit_amount ?? 0) * 1.1)
 
   const session = await stripe.checkout.sessions.create({

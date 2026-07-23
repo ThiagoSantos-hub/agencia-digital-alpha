@@ -6,6 +6,7 @@ import { Card, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Table, Column } from '@/components/ui/Table'
 import { Settings2, Download, RotateCcw, Ban, Loader2 } from 'lucide-react'
+import { FeatureLock } from '@/components/ui/FeatureLock'
 
 interface PricingItem { label: string; amount: number; frequency: 'unico' | 'mensal' | 'semanal' }
 
@@ -134,21 +135,23 @@ export default function ContratosPage() {
   ]
 
   return (
-    <div className="space-y-8 pb-20">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-text-main text-2xl font-bold">Contratos</h1>
-          <p className="text-text-muted text-sm mt-1">Acompanhe os contratos gerados automaticamente pelos formulários públicos.</p>
+    <FeatureLock featureKey="modulo.contratos">
+      <div className="space-y-8 pb-20">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-text-main text-2xl font-bold">Contratos</h1>
+            <p className="text-text-muted text-sm mt-1">Acompanhe os contratos gerados automaticamente pelos formulários públicos.</p>
+          </div>
+          <Link href="/contratos/modelos">
+            <Button variant="secondary" icon={<Settings2 size={16} />}>Modelos de Contrato</Button>
+          </Link>
         </div>
-        <Link href="/contratos/modelos">
-          <Button variant="secondary" icon={<Settings2 size={16} />}>Modelos de Contrato</Button>
-        </Link>
-      </div>
 
-      <Card padding="sm" animate={false}>
-        <CardHeader title="Todos os contratos" description={`${contracts.length} registro(s)`} />
-        <Table columns={columns} data={contracts} keyExtractor={(c) => c.id} loading={loading} />
-      </Card>
-    </div>
+        <Card padding="sm" animate={false}>
+          <CardHeader title="Todos os contratos" description={`${contracts.length} registro(s)`} />
+          <Table columns={columns} data={contracts} keyExtractor={(c) => c.id} loading={loading} />
+        </Card>
+      </div>
+    </FeatureLock>
   )
 }

@@ -147,15 +147,50 @@ export async function POST(request: Request) {
       await supabase.from('alerts').update({ last_checked_at: new Date().toISOString() }).eq('id', alert.id)
 
       if (isTriggered && alert.last_status !== 'triggered') {
+        // Limite mensal de alertas do plano: conta quantos alert_triggers essa
+        // empresa já teve esse mês antes de decidir se dispara mais um.
+        let dentroDoLimite = true
+        if (profile?.company_id) {
+          const { data: company } = await supabase.from('companies').select('plan').eq('id', profile.company_id).maybeSingle()
+          const { data: planRow } = company?.plan
+            ? await supabase.from('plans').select('monthly_alerts_limit').eq('id', company.plan).maybeSingle()
+            : { data: null }
+          const limite = planRow?.monthly_alerts_limit ?? null
+
+          if (limite !== null) {
+            const inicioMes = new Date()
+            inicioMes.setDate(1)
+            inicioMes.setHours(0, 0, 0, 0)
+            const { count } = await supabase
+              .from('alert_triggers')
+              .select('id', { count: 'exact', head: true })
+              .eq('company_id', profile.company_id)
+              .gte('triggered_at', inicioMes.toISOString())
+            dentroDoLimite = (count ?? 0) < limite
+          }
+        }
+
+        // Sempre marca last_status='triggered', mesmo acima do limite — senão
+        // o cron acha que é transição nova a cada execução e tenta nesse
+        // incidente antigo de novo assim que o mês virar.
+        await supabase.from('alerts').update({
+          last_status: 'triggered',
+          last_triggered_at: new Date().toISOString(),
+        }).eq('id', alert.id)
+
+        if (!dentroDoLimite) {
+          results.push({ id: alert.id, nome: alert.nome, status: 'limite_plano_atingido' })
+          continue
+        }
+
         let mensagem = alert.mensagem_template
         for (const [token, valor] of Object.entries(tokenValues)) mensagem = mensagem.replaceAll(token, valor)
 
         const sendResult = await sendWhatsApp(alert.user_id, alert.recebedor_numero, mensagem)
 
-        await supabase.from('alerts').update({
-          last_status: 'triggered',
-          last_triggered_at: new Date().toISOString(),
-        }).eq('id', alert.id)
+        if (profile?.company_id) {
+          await supabase.from('alert_triggers').insert({ alert_id: alert.id, company_id: profile.company_id })
+        }
 
         triggeredCount++
         results.push({ id: alert.id, nome: alert.nome, status: sendResult.sent ? 'disparado' : 'disparo_falhou', detail: sendResult.reason })

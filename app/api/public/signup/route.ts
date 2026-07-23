@@ -2,7 +2,10 @@ import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { getTrialDaysForSignup, isFacebookProfileInBadStanding } from '@/lib/billing'
-import { priceIdForPlan, type Plan } from '@/lib/planLimits'
+import { getPlanById, priceIdForPlan } from '@/lib/plans'
+import { verifyFacebookToken } from '@/lib/facebookLoginToken'
+import { provisionCompany, generateTempPassword } from '@/lib/companyProvisioning'
+import { sendWelcomeEmail } from '@/lib/email'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,18 +19,17 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export async function POST(request: Request) {
   try {
-    const { companyName, adminName, adminEmail, phone, facebookProfile, paymentMethod, plan } = await request.json()
+    const { companyName, adminName, adminEmail, phone, facebookProfile, paymentMethod, plan, fbToken } = await request.json()
 
-    if (!companyName || !adminName || !adminEmail || !phone || !facebookProfile) {
+    if (!companyName || !adminName || !adminEmail || !phone) {
       return NextResponse.json({ error: 'Todos os campos são obrigatórios.' }, { status: 400 })
     }
     if (!EMAIL_REGEX.test(adminEmail)) {
       return NextResponse.json({ error: 'E-mail inválido.' }, { status: 400 })
     }
-    if (paymentMethod !== 'card' && paymentMethod !== 'pix') {
-      return NextResponse.json({ error: 'Forma de pagamento inválida.' }, { status: 400 })
-    }
-    if (plan !== 'basico' && plan !== 'pro' && plan !== 'premium') {
+
+    const planRow = await getPlanById(plan)
+    if (!planRow || !planRow.active) {
       return NextResponse.json({ error: 'Plano inválido.' }, { status: 400 })
     }
 
@@ -42,6 +44,53 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Este e-mail já possui uma conta. Faça login ou use outro e-mail.' }, { status: 400 })
     }
 
+    // Plano Gratuito: exige login com Facebook verificado (não o texto
+    // autodeclarado de facebookProfile) pra impedir múltiplos cadastros
+    // gratuitos só trocando de e-mail.
+    if (planRow.is_free) {
+      if (!fbToken) {
+        return NextResponse.json({ error: 'Entre com o Facebook pra continuar o cadastro gratuito.' }, { status: 400 })
+      }
+      const verified = verifyFacebookToken(fbToken)
+      if (!verified) {
+        return NextResponse.json({ error: 'Login com Facebook expirado ou inválido. Tente entrar de novo.' }, { status: 400 })
+      }
+
+      const { data: existingByFacebook } = await supabaseAdmin
+        .from('companies')
+        .select('id')
+        .eq('facebook_user_id', verified.facebookUserId)
+        .maybeSingle()
+      if (existingByFacebook) {
+        return NextResponse.json({ error: 'Não foi possível completar o cadastro gratuito. Fale com o suporte.' }, { status: 400 })
+      }
+
+      const tempPassword = generateTempPassword()
+      const result = await provisionCompany({
+        companyName, adminName, adminEmail, phone, adminPassword: tempPassword,
+        metaTesterProfile: facebookProfile || null,
+        plan: planRow.id,
+        facebookUserId: verified.facebookUserId,
+      })
+
+      if (!result.success) {
+        return NextResponse.json({ error: result.error }, { status: result.status })
+      }
+
+      await sendWelcomeEmail({ companyName, adminName, adminEmail, tempPassword, plan: planRow.id })
+
+      return NextResponse.json({ success: true, redirect: '/login' })
+    }
+
+    // Planos pagos seguem exigindo o perfil do Facebook (autodeclarado) pra
+    // antifraude de trial/inadimplência já existente.
+    if (!facebookProfile) {
+      return NextResponse.json({ error: 'Perfil do Facebook é obrigatório.' }, { status: 400 })
+    }
+    if (paymentMethod !== 'card' && paymentMethod !== 'pix') {
+      return NextResponse.json({ error: 'Forma de pagamento inválida.' }, { status: 400 })
+    }
+
     // Checagem antifraude: perfil do Facebook já usado por uma empresa em
     // débito (cancelada, atrasada, Pix vencido) não pode se cadastrar de novo
     // com outro e-mail. Mensagem genérica pra não entregar o motivo real.
@@ -51,7 +100,7 @@ export async function POST(request: Request) {
 
     const successUrl = `${APP_URL}/assinar/sucesso?session_id={CHECKOUT_SESSION_ID}`
     const cancelUrl = `${APP_URL}/assinar`
-    const priceId = priceIdForPlan(plan as Plan)
+    const priceId = await priceIdForPlan(planRow.id)
 
     if (paymentMethod === 'card') {
       const trialDays = await getTrialDaysForSignup(facebookProfile)
@@ -62,7 +111,7 @@ export async function POST(request: Request) {
         customer_email: adminEmail,
         success_url: successUrl,
         cancel_url: cancelUrl,
-        metadata: { companyName, adminName, adminEmail, phone, facebookProfile, paymentMethod, plan, trialDays: String(trialDays) },
+        metadata: { companyName, adminName, adminEmail, phone, facebookProfile, paymentMethod, plan: planRow.id, trialDays: String(trialDays) },
       })
       return NextResponse.json({ url: session.url })
     }
@@ -79,7 +128,7 @@ export async function POST(request: Request) {
       line_items: [{
         price_data: {
           currency: basePrice.currency,
-          product_data: { name: `Assinatura Digital Alpha, 1 mês (Pix, plano ${plan})` },
+          product_data: { name: `Assinatura Digital Alpha, 1 mês (Pix, plano ${planRow.name})` },
           unit_amount: pixAmount,
         },
         quantity: 1,
@@ -87,7 +136,7 @@ export async function POST(request: Request) {
       customer_email: adminEmail,
       success_url: successUrl,
       cancel_url: cancelUrl,
-      metadata: { companyName, adminName, adminEmail, phone, facebookProfile, paymentMethod, plan },
+      metadata: { companyName, adminName, adminEmail, phone, facebookProfile, paymentMethod, plan: planRow.id },
     })
     return NextResponse.json({ url: session.url })
   } catch (error: unknown) {

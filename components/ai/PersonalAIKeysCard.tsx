@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Bot, Mic, Check, ChevronDown, Copy, CheckCheck, Headphones, UserCircle } from 'lucide-react'
+import { FeatureLock } from '@/components/ui/FeatureLock'
 
 const cardCls = 'rounded-xl p-4 bg-surface border border-border shadow-sm'
 const btnPrimary = 'text-xs px-3 py-1.5 rounded-lg font-medium bg-primary text-white hover:bg-primary-hover transition-colors disabled:opacity-50'
@@ -218,6 +219,7 @@ export function PersonalAIKeysCard() {
             <p className="text-xs mt-0.5 text-text-muted">Escolha qual IA de voz o botão de microfone usa.</p>
           </div>
         </div>
+        <FeatureLock featureKey="ai.microfone_flutuante">
         <div className="flex gap-2">
           {(['alpha', 'elevenlabs'] as const).map((provider) => (
             <button
@@ -234,6 +236,7 @@ export function PersonalAIKeysCard() {
             </button>
           ))}
         </div>
+        </FeatureLock>
         <p className="text-[11px] text-text-muted mt-2">
           {voiceProvider === 'alpha'
             ? 'Usa sua chave da OpenAI (o card "Minha IA" abaixo), fala com o navegador e responde por voz.'

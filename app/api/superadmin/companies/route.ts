@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
 import { provisionCompany } from '@/lib/companyProvisioning'
 import { sendWelcomeEmail } from '@/lib/email'
+import { getAllPlans } from '@/lib/plans'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,6 +43,8 @@ export async function GET() {
   const countBy = (rows: { company_id: string | null }[] | null, id: string) =>
     (rows ?? []).filter((r) => r.company_id === id).length
 
+  const plans = await getAllPlans()
+
   const withCounts = (companies ?? []).map((c) => ({
     ...c,
     client_count: countBy(clientRows, c.id),
@@ -49,6 +52,7 @@ export async function GET() {
     admin_emails: (profileRows ?? [])
       .filter((p) => p.company_id === c.id && p.role === 'admin')
       .map((p) => p.email),
+    plan_name: plans.find((p) => p.id === c.plan)?.name ?? null,
   }))
 
   return NextResponse.json(withCounts)
