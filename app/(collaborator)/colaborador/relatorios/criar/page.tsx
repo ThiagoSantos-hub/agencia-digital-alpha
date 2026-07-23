@@ -80,7 +80,11 @@ function CreateEditReportContent() {
   }
 
   useEffect(() => {
-    supabase.from('clients').select('id, name').order('name').then(({ data }) => { if (data) setClients(data) })
+    // clients_directory, não a tabela clients direto: RLS agora só libera o
+    // registro completo pra quem gerencia aquele cliente (migration
+    // 20260731_clients_rls_hardening.sql), mas aqui só precisamos de id/nome
+    // pra vincular o relatório a qualquer cliente da agência.
+    supabase.from('clients_directory').select('id, name').order('name').then(({ data }) => { if (data) setClients(data) })
   }, [])
 
   useEffect(() => {

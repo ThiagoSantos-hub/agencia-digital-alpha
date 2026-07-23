@@ -6,6 +6,7 @@ import { Trash2, X, Plus, Loader2, ListChecks } from 'lucide-react'
 import { DndContext, closestCorners, KeyboardSensor, PointerSensor, useSensor, useSensors, DragOverlay, defaultDropAnimationSideEffects } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy } from '@dnd-kit/sortable'
 import { SortableChecklistCard } from '@/components/checklists/SortableChecklistCard'
+import { FeatureLock } from '@/components/ui/FeatureLock'
 
 const DIAS_SEMANA = [
   { id: 0, label: 'D' }, { id: 1, label: 'S' }, { id: 2, label: 'T' },
@@ -88,16 +89,18 @@ export default function ColaboradorChecklistsPage() {
                 <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2">Nome da Lista</label>
                 <input type="text" value={newListTitle} onChange={(e) => setNewListTitle(e.target.value)} placeholder="Ex: Tarefas Diárias..." className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-xs focus:outline-none focus:border-primary/50" />
               </div>
-              <div>
-                <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2">Dias de Repetição</label>
-                <div className="flex justify-between gap-1">
-                  {DIAS_SEMANA.map(day => (
-                    <button key={day.id} onClick={() => toggleDay(day.id)} className={`flex-1 rounded-lg text-[10px] font-black border flex items-center justify-center h-8 ${
-                      newListDays.includes(day.id) ? 'bg-primary text-white border-primary' : 'bg-background text-text-muted border-border'
-                    }`}>{day.label}</button>
-                  ))}
+              <FeatureLock featureKey="checklists.reset_automatico">
+                <div>
+                  <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2">Dias de Repetição</label>
+                  <div className="flex justify-between gap-1">
+                    {DIAS_SEMANA.map(day => (
+                      <button key={day.id} onClick={() => toggleDay(day.id)} className={`flex-1 rounded-lg text-[10px] font-black border flex items-center justify-center h-8 ${
+                        newListDays.includes(day.id) ? 'bg-primary text-white border-primary' : 'bg-background text-text-muted border-border'
+                      }`}>{day.label}</button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </FeatureLock>
             </div>
             <div className="space-y-4">
               <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Itens</label>

@@ -43,10 +43,14 @@ export async function GET(request: NextRequest) {
     .eq('status', 'connected')
     .maybeSingle();
 
+  // Filtra por company_id do usuário logado, não só por client_id. Sem
+  // isso, um usuário autenticado conseguia passar o client_id de OUTRA
+  // empresa na query string e receber de volta nomes de campanhas alheias.
   const { data: campaigns } = await supabaseService
     .from('campaigns')
     .select('name, meta_campaign_id')
     .eq('client_id', clientId)
+    .eq('company_id', profile?.company_id ?? '')
     .order('created_at', { ascending: true })
     .limit(10);
 

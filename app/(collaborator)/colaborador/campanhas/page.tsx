@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { useMetaAccount } from '@/hooks/useMetaAccount'
 import { useCampanhas, Campaign, CampaignMetric, MetaMetricOption } from '@/hooks/useCampanhas'
-import { useClientes } from '@/hooks/useClientes'
+import { createClient } from '@/lib/supabase'
 import { FeatureLock } from '@/components/ui/FeatureLock'
 import {
   Search, Megaphone, BarChart2, RefreshCw, Calendar,
@@ -320,9 +320,28 @@ const ClienteAccordion = React.memo(function ClienteAccordion({ clienteId, clien
   )
 })
 
+interface ClienteDiretorio {
+  id: string
+  name: string
+  status: 'ativo' | 'inativo' | 'atrasado'
+  meta_ad_account_id: string | null
+}
+
 export default function ColaboradorCampanhasPage() {
   const { campaigns, loading, error, syncAllMetaCampaigns, fetchMetrics, fetchAllMetricOptions, saveSelectedMetrics } = useCampanhas()
-  const { clients } = useClientes()
+  // clients_directory (não a tabela clients direto): RLS de clients agora só
+  // libera o registro completo pra quem gerencia aquele cliente (ver
+  // migration 20260731_clients_rls_hardening.sql). Essa tela só precisa de
+  // nome/status/conta de anúncio pra agrupar campanhas de TODOS os clientes
+  // da agência, não só os do próprio colaborador.
+  const [clients, setClients] = useState<ClienteDiretorio[]>([])
+  useEffect(() => {
+    const supabase = createClient()
+    supabase
+      .from('clients_directory')
+      .select('id, name, status, meta_ad_account_id')
+      .then(({ data }) => setClients(data ?? []))
+  }, [])
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('ativa')
   const [dateStart, setDateStart] = useState('')
@@ -387,15 +406,17 @@ export default function ColaboradorCampanhasPage() {
           <h1 className="text-text-main text-3xl font-bold tracking-tight">Campanhas Ativas</h1>
           <p className="text-text-muted text-sm mt-1">Visualização direta de anúncios sincronizados com seu Meta Ads.</p>
         </div>
-        <button onClick={handleSync} disabled={loading}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-            loading
-              ? 'bg-primary/15 text-primary'
-              : 'bg-surface border border-border text-text-main hover:border-primary/40'
-          }`}>
-          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-          {loading ? 'Sincronizando...' : 'Sincronizar Meta'}
-        </button>
+        <FeatureLock featureKey="campanhas.sincronizar_meta" variant="replace">
+          <button onClick={handleSync} disabled={loading}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+              loading
+                ? 'bg-primary/15 text-primary'
+                : 'bg-surface border border-border text-text-main hover:border-primary/40'
+            }`}>
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            {loading ? 'Sincronizando...' : 'Sincronizar Meta'}
+          </button>
+        </FeatureLock>
       </div>
 
       {(error || localError) && (

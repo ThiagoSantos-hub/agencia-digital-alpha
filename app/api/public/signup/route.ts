@@ -5,6 +5,7 @@ import { isFacebookProfileInBadStanding, hasFacebookProfileUsedFreePlan } from '
 import { getPlanById, priceIdForPlan } from '@/lib/plans'
 import { provisionCompany, generateTempPassword } from '@/lib/companyProvisioning'
 import { sendWelcomeEmail } from '@/lib/email'
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,6 +19,14 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export async function POST(request: Request) {
   try {
+    // Cadastro público sem autenticação. Limita por IP pra impedir criação
+    // em massa de contas (principalmente do plano Gratuito).
+    const ip = getClientIp(request)
+    const dentroDoLimite = await checkRateLimit(`signup:${ip}`, 5, 600)
+    if (!dentroDoLimite) {
+      return NextResponse.json({ error: 'Muitas tentativas. Aguarde alguns minutos e tente de novo.' }, { status: 429 })
+    }
+
     const { companyName, adminName, adminEmail, phone, facebookProfile, paymentMethod, plan } = await request.json()
 
     if (!companyName || !adminName || !adminEmail || !phone || !facebookProfile) {
