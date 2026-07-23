@@ -72,7 +72,7 @@ function PlanCard({ plan, onChoose, highlight }: { plan: PublicPlan; onChoose: (
         ))}
       </ul>
 
-      <div className="mt-1.5 pt-1.5 border-t border-border space-y-1 flex-1">
+      <div className="mt-1.5 pt-1.5 border-t border-border space-y-1">
         {FEATURE_GROUPS.map((group) => (
           <div key={group}>
             <p className="text-[9px] font-bold uppercase tracking-widest text-text-disabled mb-0.5">{group}</p>
@@ -124,7 +124,7 @@ export default function AssinarPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/public/plans')
+    fetch('/api/public/plans', { cache: 'no-store' })
       .then((res) => res.json())
       .then((data: PublicPlan[]) => setPlans(data))
       .finally(() => setLoadingPlans(false))
@@ -181,10 +181,12 @@ export default function AssinarPage() {
         {loadingPlans ? (
           <div className="flex-1 flex items-center justify-center"><Loader2 className="animate-spin text-primary" size={32} /></div>
         ) : (
-          <div className="flex-1 min-h-0 max-w-5xl w-full mx-auto grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(plans.length, 3)}, minmax(0, 1fr))` }}>
-            {plans.map((p) => (
-              <PlanCard key={p.id} plan={p} onChoose={() => choosePlan(p.id)} highlight={!p.is_free && p.price_brl === highestPrice} />
-            ))}
+          <div className="flex-1 min-h-0 flex items-center justify-center">
+            <div className="max-w-5xl w-full grid gap-3 items-start" style={{ gridTemplateColumns: `repeat(${Math.min(plans.length, 3)}, minmax(0, 1fr))` }}>
+              {plans.map((p) => (
+                <PlanCard key={p.id} plan={p} onChoose={() => choosePlan(p.id)} highlight={!p.is_free && p.price_brl === highestPrice} />
+              ))}
+            </div>
           </div>
         )}
       </div>
