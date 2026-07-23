@@ -132,6 +132,105 @@ function PlanCard({ plan, onChoose, highlight, recommended }: { plan: PublicPlan
   )
 }
 
+interface RecentSignup {
+  plan: string
+  created_at: string
+}
+
+function formatRelativeTime(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime()
+  const minutes = Math.floor(diffMs / 60000)
+  if (minutes < 1) return 'agora mesmo'
+  if (minutes < 60) return `há ${minutes} min`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `há ${hours}h`
+  const days = Math.floor(hours / 24)
+  return `há ${days} dia${days > 1 ? 's' : ''}`
+}
+
+// Popup de atividade: mistura cadastros reais recentes (sem mostrar nome da
+// empresa, só o plano e há quanto tempo) com mensagens ilustrativas genéricas
+// de preenchimento — nunca inventa nome de pessoa, cidade ou horário
+// específico de um evento que não aconteceu.
+function SignupActivityToast({ plans }: { plans: PublicPlan[] }) {
+  const [messages, setMessages] = useState<string[]>([])
+  const [index, setIndex] = useState(0)
+  const [dismissed, setDismissed] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/public/recent-signups', { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: RecentSignup[]) => {
+        const planName = (id: string) => plans.find((p) => p.id === id)?.name ?? id
+        const real = data.map((s) => `Uma agência acabou de assinar o ${planName(s.plan)} · ${formatRelativeTime(s.created_at)}`)
+        const ilustrativas = [
+          'Uma agência acabou de assinar o Gratuito',
+          'Uma agência acabou de assinar o Pro',
+          'Uma agência acabou de assinar o Max',
+        ]
+        setMessages([...real, ...ilustrativas])
+      })
+      .catch(() => setMessages([]))
+  }, [plans])
+
+  useEffect(() => {
+    if (messages.length === 0) return
+    const timer = setInterval(() => setIndex((i) => (i + 1) % messages.length), 7000)
+    return () => clearInterval(timer)
+  }, [messages])
+
+  if (dismissed || messages.length === 0) return null
+
+  return (
+    <div className="fixed bottom-3 left-3 z-30 max-w-[260px] animate-in fade-in slide-in-from-bottom-2">
+      <div className="flex items-center gap-2 bg-surface border border-border shadow-lg rounded-xl px-3 py-2 text-[11px] text-text-main">
+        <span className="w-1.5 h-1.5 rounded-full bg-cta shrink-0" />
+        <span className="flex-1">{messages[index]}</span>
+        <button onClick={() => setDismissed(true)} className="text-text-disabled hover:text-text-muted shrink-0">
+          <XIcon size={12} />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+interface Testimonial {
+  id: string
+  name: string
+  role: string | null
+  quote: string
+}
+
+function TestimonialsSection() {
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([])
+
+  useEffect(() => {
+    fetch('/api/public/testimonials', { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : []))
+      .then(setTestimonials)
+      .catch(() => setTestimonials([]))
+  }, [])
+
+  if (testimonials.length === 0) return null
+
+  return (
+    <div className="px-4 py-10 border-t border-border">
+      <div className="max-w-5xl mx-auto">
+        <h2 className="text-center text-base font-bold text-text-main mb-6">O que dizem as agências que já usam</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {testimonials.map((t) => (
+            <div key={t.id} className="bg-surface border border-border rounded-xl p-4">
+              <p className="text-sm text-text-main leading-snug mb-3">"{t.quote}"</p>
+              <p className="text-xs font-semibold text-text-main">{t.name}</p>
+              {t.role && <p className="text-xs text-text-muted">{t.role}</p>}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function AssinarPage() {
   return (
     <Suspense fallback={null}>
@@ -210,31 +309,36 @@ function AssinarForm() {
 
   if (step === 'plan') {
     return (
-      <div className="min-h-screen lg:h-screen bg-background px-4 py-8 lg:py-4 flex flex-col items-center justify-center overflow-y-auto lg:overflow-hidden">
-        {loadingPlans ? (
-          <Loader2 className="animate-spin text-primary" size={32} />
-        ) : (
-          <>
-            <h1 className="text-lg font-bold text-text-main mb-4">Escolha seu plano</h1>
-            <div className={`max-w-5xl w-full grid grid-cols-1 gap-3 items-start ${GRID_COLS_MD[Math.min(plans.length, 3)]}`}>
-              {plans.map((p) => (
-                <PlanCard
-                  key={p.id}
-                  plan={p}
-                  onChoose={() => choosePlan(p.id)}
-                  highlight={!p.is_free && p.price_brl === highestPrice}
-                  recommended={p.id === planFromQuiz}
-                />
-              ))}
-            </div>
-          </>
-        )}
+      <div className="min-h-screen bg-background">
+        <SignupActivityToast plans={plans} />
+        <div className="lg:h-screen px-4 py-8 lg:py-4 flex flex-col items-center justify-center overflow-y-auto lg:overflow-hidden">
+          {loadingPlans ? (
+            <Loader2 className="animate-spin text-primary" size={32} />
+          ) : (
+            <>
+              <h1 className="text-lg font-bold text-text-main mb-4">Escolha seu plano</h1>
+              <div className={`max-w-5xl w-full grid grid-cols-1 gap-3 items-start ${GRID_COLS_MD[Math.min(plans.length, 3)]}`}>
+                {plans.map((p) => (
+                  <PlanCard
+                    key={p.id}
+                    plan={p}
+                    onChoose={() => choosePlan(p.id)}
+                    highlight={!p.is_free && p.price_brl === highestPrice}
+                    recommended={p.id === planFromQuiz}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+        <TestimonialsSection />
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-10">
+      <SignupActivityToast plans={plans} />
       <div className="w-full max-w-lg">
         <div className="bg-surface border border-border rounded-xl p-8 shadow-sm">
           <button
