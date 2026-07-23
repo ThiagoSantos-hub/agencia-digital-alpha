@@ -379,11 +379,7 @@ function AssinarForm() {
             <div>
               <RequiredLabel text="Perfil do Facebook" filled={!!form.facebookProfile.trim()} />
               <input className={inputCls} value={form.facebookProfile} onChange={(e) => setField('facebookProfile', e.target.value)} placeholder="facebook.com/seuperfil" />
-              <p className="text-xs text-text-muted mt-1">
-                {isFree
-                  ? 'Usamos isso pra identificar seu cadastro e evitar que o plano Gratuito seja renovado com e-mails diferentes.'
-                  : 'Precisamos disso pra liberar seu acesso ao Meta Ads/Instagram depois.'}
-              </p>
+              <p className="text-xs text-text-muted mt-1">Precisamos disso pra liberar seu acesso ao Meta Ads/Instagram depois.</p>
             </div>
 
             {!isFree && (
