@@ -79,10 +79,10 @@ function PlanCard({ plan, onChoose, highlight }: { plan: PublicPlan; onChoose: (
       </div>
 
       {plan.description && (
-        <p className="mt-1 text-[10.5px] leading-snug text-text-muted whitespace-pre-line">{plan.description}</p>
+        <p className="mt-2 mb-2 text-[10.5px] leading-snug text-text-muted whitespace-pre-line">{plan.description}</p>
       )}
 
-      <ul className="mt-1.5 space-y-0.5">
+      <ul className="mt-2 space-y-0.5">
         {limitsList(plan).map((l) => (
           <li key={l} className="flex items-center gap-1.5 text-[11px] leading-tight text-text-main">
             <Check size={11} className="text-cta shrink-0" /> {l}
