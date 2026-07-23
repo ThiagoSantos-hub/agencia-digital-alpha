@@ -15,6 +15,16 @@ const supabaseAdmin = createClient(
 const BAD_STATUSES = ['past_due', 'unpaid', 'canceled']
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+  // Pix é um método de pagamento assíncrono: o cliente pode fechar a aba sem
+  // pagar, ou o pagamento só confirmar minutos depois. Nesse caso o evento
+  // checkout.session.completed chega com payment_status 'unpaid' e o Stripe
+  // dispara checkout.session.async_payment_succeeded depois (chamando essa
+  // mesma função de novo, já com 'paid'), então não libera acesso antes do
+  // dinheiro confirmar. Cartão sempre chega 'paid' aqui, nunca cai nesse retorno.
+  if (session.payment_status !== 'paid' && session.payment_status !== 'no_payment_required') {
+    return
+  }
+
   const metadata = session.metadata ?? {}
 
   // Renovação Pix de empresa já existente (metadata.company_id vem de
@@ -130,7 +140,13 @@ export async function POST(request: Request) {
   try {
     switch (event.type) {
       case 'checkout.session.completed':
+      case 'checkout.session.async_payment_succeeded':
         await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session)
+        break
+      case 'checkout.session.async_payment_failed':
+        // Pix não pago a tempo (QR expirou). A empresa nunca chegou a ser
+        // criada nesse fluxo, então não tem nada pra reverter. Cliente pode
+        // tentar de novo em /assinar.
         break
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted':
