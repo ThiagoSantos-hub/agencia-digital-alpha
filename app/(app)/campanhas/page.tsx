@@ -157,9 +157,11 @@ const CampaignCard = React.memo(function CampaignCard({ campaign, fetchMetrics, 
         </td>
         <td className="px-4 py-3 text-right">
           <div className="flex items-center justify-end gap-2">
-            <button onClick={abrirConfig} className="w-8 h-8 rounded-lg bg-background border border-border flex items-center justify-center text-text-muted hover:text-primary hover:border-primary/30 transition-all" title="Configurar métricas">
-              <Settings2 size={14} />
-            </button>
+            <FeatureLock featureKey="campanhas.metricas_personalizadas" variant="replace">
+              <button onClick={abrirConfig} className="w-8 h-8 rounded-lg bg-background border border-border flex items-center justify-center text-text-muted hover:text-primary hover:border-primary/30 transition-all" title="Configurar métricas">
+                <Settings2 size={14} />
+              </button>
+            </FeatureLock>
             <button onClick={loadMetrics} className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
               expandido
                 ? 'bg-primary text-white'

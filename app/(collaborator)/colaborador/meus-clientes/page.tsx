@@ -5,6 +5,7 @@ import { useClientes, Client } from '@/hooks/useClientes'
 import { useAuth } from '@/hooks/useAuth'
 import { useColaboradorFinance } from '@/hooks/useColaboradorFinance'
 import { Search, UserPlus, X, Loader2, Pencil, Clock, CheckCircle2, Ban, Target, Eye, EyeOff } from 'lucide-react'
+import { FeatureLock } from '@/components/ui/FeatureLock'
 
 type ClienteForm = {
   name: string
@@ -47,20 +48,22 @@ function FormFields({ form, set }: { form: ClienteForm; set: (f: keyof ClienteFo
         <label className="block text-[11px] font-medium text-text-muted">E-mail de contato</label>
         <input type="email" placeholder="contato@empresa.com" value={form.email} onChange={(e) => set('email', e.target.value)} className={inputCls} />
       </div>
-      <div className="bg-background border border-border rounded-lg p-3 space-y-2">
-        <p className="text-[10px] font-bold text-primary uppercase tracking-wider flex items-center gap-1.5"><Target size={12} /> Integração Meta Ads</p>
-        <div className="space-y-1.5">
-          <label className="block text-[10px] font-medium text-text-muted">ID da Conta (act_...)</label>
-          <input type="text" placeholder="act_123456789" value={form.meta_ad_account_id} onChange={(e) => set('meta_ad_account_id', e.target.value)} className={inputCls + ' text-xs'} />
+      <FeatureLock featureKey="clientes.exibir_campanhas">
+        <div className="bg-background border border-border rounded-lg p-3 space-y-2">
+          <p className="text-[10px] font-bold text-primary uppercase tracking-wider flex items-center gap-1.5"><Target size={12} /> Integração Meta Ads</p>
+          <div className="space-y-1.5">
+            <label className="block text-[10px] font-medium text-text-muted">ID da Conta (act_...)</label>
+            <input type="text" placeholder="act_123456789" value={form.meta_ad_account_id} onChange={(e) => set('meta_ad_account_id', e.target.value)} className={inputCls + ' text-xs'} />
+          </div>
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-medium text-text-muted">Exibir em Campanhas</label>
+            <button type="button" onClick={() => set('show_campaigns', !form.show_campaigns)}
+              className={`p-1.5 rounded-lg transition-colors ${form.show_campaigns ? 'bg-primary/10 text-primary' : 'bg-hover-bg text-text-muted'}`}>
+              {form.show_campaigns ? <Eye size={16} /> : <EyeOff size={16} />}
+            </button>
+          </div>
         </div>
-        <div className="flex items-center justify-between">
-          <label className="text-[10px] font-medium text-text-muted">Exibir em Campanhas</label>
-          <button type="button" onClick={() => set('show_campaigns', !form.show_campaigns)}
-            className={`p-1.5 rounded-lg transition-colors ${form.show_campaigns ? 'bg-primary/10 text-primary' : 'bg-hover-bg text-text-muted'}`}>
-            {form.show_campaigns ? <Eye size={16} /> : <EyeOff size={16} />}
-          </button>
-        </div>
-      </div>
+      </FeatureLock>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
           <label className="block text-[11px] font-medium text-text-muted">Valor Mensal (R$)</label>

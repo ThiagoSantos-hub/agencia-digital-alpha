@@ -405,28 +405,30 @@ export default function ColaboradoresPage() {
                 )}
               </div>
 
-              <div className="pt-2 border-t border-border space-y-2.5">
-                <p className="text-[10px] font-bold text-primary uppercase tracking-wider">Financeiro</p>
-                <div className="grid grid-cols-3 gap-2.5">
-                  <div className="space-y-1">
-                    <label className="block text-[11px] font-medium text-text-muted">Salário</label>
-                    <input type="number" value={form.salary || ''} onChange={(e) => setForm({ ...form, salary: e.target.value ? Number(e.target.value) : undefined })} placeholder="2500" className={inputCls} />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-[11px] font-medium text-text-muted">Frequência</label>
-                    <select value={form.salary_frequency || ''} onChange={(e) => setForm({ ...form, salary_frequency: (e.target.value as any) || undefined })} className={inputCls}>
-                      <option value="">—</option>
-                      <option value="mensal">Mensal</option>
-                      <option value="quinzenal">Quinzenal</option>
-                      <option value="semanal">Semanal</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-[11px] font-medium text-text-muted">Dia</label>
-                    <input type="number" min="1" max="31" value={form.salary_day || ''} onChange={(e) => setForm({ ...form, salary_day: e.target.value ? Number(e.target.value) : undefined })} placeholder="5" className={inputCls} />
+              <FeatureLock featureKey="colaboradores.financeiro_automatico">
+                <div className="pt-2 border-t border-border space-y-2.5">
+                  <p className="text-[10px] font-bold text-primary uppercase tracking-wider">Financeiro</p>
+                  <div className="grid grid-cols-3 gap-2.5">
+                    <div className="space-y-1">
+                      <label className="block text-[11px] font-medium text-text-muted">Salário</label>
+                      <input type="number" value={form.salary || ''} onChange={(e) => setForm({ ...form, salary: e.target.value ? Number(e.target.value) : undefined })} placeholder="2500" className={inputCls} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="block text-[11px] font-medium text-text-muted">Frequência</label>
+                      <select value={form.salary_frequency || ''} onChange={(e) => setForm({ ...form, salary_frequency: (e.target.value as any) || undefined })} className={inputCls}>
+                        <option value="">—</option>
+                        <option value="mensal">Mensal</option>
+                        <option value="quinzenal">Quinzenal</option>
+                        <option value="semanal">Semanal</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="block text-[11px] font-medium text-text-muted">Dia</label>
+                      <input type="number" min="1" max="31" value={form.salary_day || ''} onChange={(e) => setForm({ ...form, salary_day: e.target.value ? Number(e.target.value) : undefined })} placeholder="5" className={inputCls} />
+                    </div>
                   </div>
                 </div>
-              </div>
+              </FeatureLock>
 
               {formError && (
                 <p className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{formError}</p>

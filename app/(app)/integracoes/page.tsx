@@ -552,13 +552,14 @@ export default function IntegracoesPage() {
           {integrations
             .filter(i => i.type === 'elevenlabs')
             .map(integration => (
-              <ElevenLabsCard
-                key={integration.type}
-                integration={integration}
-                onSave={saveElevenLabs}
-                onDisconnect={() => disconnect('elevenlabs')}
-                saving={savingKey === 'elevenlabs'}
-              />
+              <FeatureLock key={integration.type} featureKey="integracoes.elevenlabs">
+                <ElevenLabsCard
+                  integration={integration}
+                  onSave={saveElevenLabs}
+                  onDisconnect={() => disconnect('elevenlabs')}
+                  saving={savingKey === 'elevenlabs'}
+                />
+              </FeatureLock>
             ))}
           {integrations
             .filter(i => i.type === 'assinafy')

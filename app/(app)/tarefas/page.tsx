@@ -304,10 +304,12 @@ export default function AdminTasksPage() {
                   <input type="date" value={newTask.due_date} onChange={e => setNewTask({...newTask, due_date: e.target.value})} className={inputCls} />
                 </div>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Link do Google Drive (Opcional)</label>
-                <input type="url" value={newTask.drive_link} onChange={e => setNewTask({...newTask, drive_link: e.target.value})} className={inputCls} placeholder="https://drive.google.com/..." />
-              </div>
+              <FeatureLock featureKey="tarefas.anexo_drive">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Link do Google Drive (Opcional)</label>
+                  <input type="url" value={newTask.drive_link} onChange={e => setNewTask({...newTask, drive_link: e.target.value})} className={inputCls} placeholder="https://drive.google.com/..." />
+                </div>
+              </FeatureLock>
 
               <FeatureLock featureKey="tarefas.aviso_whatsapp">
               <div className="bg-surface border border-border rounded-lg p-3 space-y-2">
@@ -415,10 +417,12 @@ export default function AdminTasksPage() {
                   <input type="date" value={editingTask.due_date ? editingTask.due_date.split('T')[0] : ''} onChange={e => setEditingTask({...editingTask, due_date: e.target.value})} className={inputCls} />
                 </div>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Link do Google Drive (Opcional)</label>
-                <input type="url" value={editingTask.drive_link || ''} onChange={e => setEditingTask({...editingTask, drive_link: e.target.value})} className={inputCls} placeholder="https://drive.google.com/..." />
-              </div>
+              <FeatureLock featureKey="tarefas.anexo_drive">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Link do Google Drive (Opcional)</label>
+                  <input type="url" value={editingTask.drive_link || ''} onChange={e => setEditingTask({...editingTask, drive_link: e.target.value})} className={inputCls} placeholder="https://drive.google.com/..." />
+                </div>
+              </FeatureLock>
               <button type="submit" className={primaryBtnFull}>Salvar Alterações</button>
             </form>
           </div>

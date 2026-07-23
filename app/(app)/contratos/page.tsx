@@ -111,14 +111,16 @@ export default function ContratosPage() {
           {actingId === c.id ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
         </button>
         {(c.status === 'rascunho' || c.status === 'aguardando_assinatura') && (
-          <button
-            onClick={() => handleResend(c.id)}
-            disabled={actingId === c.id}
-            title="Reenviar"
-            className="p-1.5 rounded-lg text-text-muted hover:text-primary hover:bg-hover-bg disabled:opacity-50"
-          >
-            <RotateCcw size={15} />
-          </button>
+          <FeatureLock featureKey="contratos.reenviar" variant="replace">
+            <button
+              onClick={() => handleResend(c.id)}
+              disabled={actingId === c.id}
+              title="Reenviar"
+              className="p-1.5 rounded-lg text-text-muted hover:text-primary hover:bg-hover-bg disabled:opacity-50"
+            >
+              <RotateCcw size={15} />
+            </button>
+          </FeatureLock>
         )}
         {c.status !== 'assinado' && c.status !== 'cancelado' && (
           <button

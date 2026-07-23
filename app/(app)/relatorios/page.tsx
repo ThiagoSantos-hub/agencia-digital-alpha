@@ -346,20 +346,24 @@ export default function RelatoriosPage() {
                       >
                         <Edit2 size={15} />
                       </button>
-                      <button
-                        onClick={() => handleDuplicate(report)}
-                        title="Duplicar"
-                        className={btnAction}
-                      >
-                        <Copy size={15} />
-                      </button>
-                      <button
-                        onClick={() => handleOpenHistory(report)}
-                        title="Histórico"
-                        className={btnAction}
-                      >
-                        <Clock size={15} />
-                      </button>
+                      <FeatureLock featureKey="relatorios.duplicar" variant="replace">
+                        <button
+                          onClick={() => handleDuplicate(report)}
+                          title="Duplicar"
+                          className={btnAction}
+                        >
+                          <Copy size={15} />
+                        </button>
+                      </FeatureLock>
+                      <FeatureLock featureKey="relatorios.historico" variant="replace">
+                        <button
+                          onClick={() => handleOpenHistory(report)}
+                          title="Histórico"
+                          className={btnAction}
+                        >
+                          <Clock size={15} />
+                        </button>
+                      </FeatureLock>
                       <button
                         onClick={() => setDeleteConfirmReport(report)}
                         title="Excluir"

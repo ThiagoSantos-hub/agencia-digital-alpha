@@ -131,13 +131,15 @@ export default function ModelosDeContratoPage() {
                 </button>
                 <div className="flex items-center gap-1.5">
                   {t.active && (
-                    <button
-                      onClick={() => handleCopyLink(t.slug, t.id)}
-                      title="Copiar link pro cliente preencher"
-                      className="p-2 text-text-muted hover:text-primary hover:bg-hover-bg rounded-xl"
-                    >
-                      {copiedId === t.id ? <Check size={15} className="text-cta" /> : <Link2 size={15} />}
-                    </button>
+                    <FeatureLock featureKey="contratos.link_publico" variant="replace">
+                      <button
+                        onClick={() => handleCopyLink(t.slug, t.id)}
+                        title="Copiar link pro cliente preencher"
+                        className="p-2 text-text-muted hover:text-primary hover:bg-hover-bg rounded-xl"
+                      >
+                        {copiedId === t.id ? <Check size={15} className="text-cta" /> : <Link2 size={15} />}
+                      </button>
+                    </FeatureLock>
                   )}
                   <button
                     onClick={() => handleDuplicateOwn(t.id)}

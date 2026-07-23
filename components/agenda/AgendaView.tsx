@@ -442,14 +442,16 @@ export function AgendaView() {
           >
             <Plus size={14} /> Nova reunião
           </button>
-          <button
-            onClick={() => setShowNewEmail(true)}
-            disabled={!data.gmailConnected}
-            title={!data.gmailConnected ? 'Conecte o Gmail primeiro' : ''}
-            className="flex items-center gap-1.5 text-xs px-3.5 py-2 rounded-lg bg-surface border border-border hover:border-primary/40 disabled:opacity-40 disabled:cursor-not-allowed text-text-main font-medium transition-colors"
-          >
-            <Send size={14} /> Novo e-mail
-          </button>
+          <FeatureLock featureKey="agenda.enviar_email" variant="replace">
+            <button
+              onClick={() => setShowNewEmail(true)}
+              disabled={!data.gmailConnected}
+              title={!data.gmailConnected ? 'Conecte o Gmail primeiro' : ''}
+              className="flex items-center gap-1.5 text-xs px-3.5 py-2 rounded-lg bg-surface border border-border hover:border-primary/40 disabled:opacity-40 disabled:cursor-not-allowed text-text-main font-medium transition-colors"
+            >
+              <Send size={14} /> Novo e-mail
+            </button>
+          </FeatureLock>
         </div>
       </div>
 
@@ -487,13 +489,15 @@ export function AgendaView() {
       )}
 
       {data.resumoIA && (
-        <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 p-5">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles size={16} className="text-primary" />
-            <h2 className="text-text-main text-sm font-bold uppercase tracking-wide">Resumo da IA</h2>
+        <FeatureLock featureKey="agenda.resumo_ia">
+          <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles size={16} className="text-primary" />
+              <h2 className="text-text-main text-sm font-bold uppercase tracking-wide">Resumo da IA</h2>
+            </div>
+            <p className="text-text-main text-sm leading-relaxed">{data.resumoIA}</p>
           </div>
-          <p className="text-text-main text-sm leading-relaxed">{data.resumoIA}</p>
-        </div>
+        </FeatureLock>
       )}
 
       <div>

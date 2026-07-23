@@ -158,22 +158,24 @@ export function SortableChecklistCard({
               className="w-full bg-surface border border-border rounded-lg px-2 py-1 text-[10px] text-text-main focus:outline-none focus:border-primary truncate"
               autoFocus
             />
-            <div className="flex flex-wrap gap-0.5">
-              {DIAS_SEMANA.map(day => (
-                <button
-                  key={day.id}
-                  onClick={() => {
-                    if (days.includes(day.id)) setDays(days.filter(d => d !== day.id))
-                    else setDays([...days, day.id].sort())
-                  }}
-                  className={`w-5 h-5 rounded-lg text-[8px] font-black border transition-all ${
-                    days.includes(day.id) ? 'bg-primary text-white border-primary' : 'bg-surface text-text-disabled border-border'
-                  }`}
-                >
-                  {day.label}
-                </button>
-              ))}
-            </div>
+            <FeatureLock featureKey="checklists.reset_automatico">
+              <div className="flex flex-wrap gap-0.5">
+                {DIAS_SEMANA.map(day => (
+                  <button
+                    key={day.id}
+                    onClick={() => {
+                      if (days.includes(day.id)) setDays(days.filter(d => d !== day.id))
+                      else setDays([...days, day.id].sort())
+                    }}
+                    className={`w-5 h-5 rounded-lg text-[8px] font-black border transition-all ${
+                      days.includes(day.id) ? 'bg-primary text-white border-primary' : 'bg-surface text-text-disabled border-border'
+                    }`}
+                  >
+                    {day.label}
+                  </button>
+                ))}
+              </div>
+            </FeatureLock>
             <div className="flex gap-1">
               <button 
                 onClick={async () => {
