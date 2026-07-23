@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Loader2, AlertCircle, CreditCard, QrCode, Check, X as XIcon, ChevronLeft } from 'lucide-react'
+import { Suspense, useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Loader2, AlertCircle, CreditCard, QrCode, Check, X as XIcon, ChevronLeft, Sparkles } from 'lucide-react'
 import { maskPhone } from '@/lib/validators'
 import { FEATURES } from '@/lib/features'
 
@@ -118,10 +119,21 @@ function PlanCard({ plan, onChoose, highlight }: { plan: PublicPlan; onChoose: (
 }
 
 export default function AssinarPage() {
-  const [step, setStep] = useState<'plan' | 'form'>('plan')
+  return (
+    <Suspense fallback={null}>
+      <AssinarForm />
+    </Suspense>
+  )
+}
+
+function AssinarForm() {
+  const searchParams = useSearchParams()
+  const planFromQuiz = searchParams.get('plan')
+
+  const [step, setStep] = useState<'plan' | 'form'>(planFromQuiz ? 'form' : 'plan')
   const [plans, setPlans] = useState<PublicPlan[]>([])
   const [loadingPlans, setLoadingPlans] = useState(true)
-  const [plan, setPlan] = useState<string>('')
+  const [plan, setPlan] = useState<string>(planFromQuiz ?? '')
 
   const [form, setForm] = useState({
     companyName: '',
@@ -137,9 +149,15 @@ export default function AssinarPage() {
   useEffect(() => {
     fetch('/api/public/plans', { cache: 'no-store' })
       .then((res) => res.json())
-      .then((data: PublicPlan[]) => setPlans(data))
+      .then((data: PublicPlan[]) => {
+        setPlans(data)
+        if (planFromQuiz && !data.some((p) => p.id === planFromQuiz)) {
+          setStep('plan')
+          setPlan('')
+        }
+      })
       .finally(() => setLoadingPlans(false))
-  }, [])
+  }, [planFromQuiz])
 
   const selectedPlan = plans.find((p) => p.id === plan) ?? null
   const isFree = !!selectedPlan?.is_free
@@ -213,6 +231,11 @@ export default function AssinarPage() {
           </button>
 
           <h1 className="text-xl font-bold text-text-main mb-1">Assine a Digital Alpha</h1>
+          {planFromQuiz && (
+            <p className="flex items-center gap-1.5 text-xs text-primary font-medium mb-2">
+              <Sparkles size={13} /> Recomendado com base nas suas respostas
+            </p>
+          )}
           <p className="text-sm text-text-muted mb-6">
             Plano escolhido: <strong className="text-text-main">{selectedPlan?.name}</strong>
             {selectedPlan && !selectedPlan.is_free && ` — R$ ${selectedPlan.price_brl.toFixed(2).replace('.', ',')}/mês`}
