@@ -14,8 +14,8 @@ const MSG_INICIAL: ChatMsg = {
 }
 
 // Assistente de FAQ sobre o sistema, separado da Alpha AI pessoal (que tem
-// acesso aos dados da empresa) — fica no canto oposto ao botão de voz da
-// Alpha pra não sobrepor nada.
+// acesso aos dados da empresa). Fica encaixado ao lado do menu lateral,
+// perto do botão "Sair do sistema", junto com o botão de voz da Alpha.
 export function SupportChatWidget() {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<ChatMsg[]>([MSG_INICIAL])
@@ -52,7 +52,7 @@ export function SupportChatWidget() {
   }
 
   return (
-    <div className="fixed bottom-6 right-24 z-[60] flex flex-col items-end gap-3 pointer-events-none">
+    <div className="fixed bottom-8 left-[340px] z-[60] flex flex-col items-start gap-3 pointer-events-none">
       {open && (
         <div className="pointer-events-auto w-[340px] h-[440px] bg-surface border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background shrink-0">

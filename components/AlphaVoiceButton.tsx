@@ -144,8 +144,8 @@ export function AlphaVoiceButton() {
         title={isActive ? 'Desativar Alpha AI' : 'Ativar Alpha AI'}
         style={{
           position: 'fixed',
-          bottom: 24,
-          right: 24,
+          bottom: 32,
+          left: 268,
           zIndex: 60,
           width: 56,
           height: 56,
