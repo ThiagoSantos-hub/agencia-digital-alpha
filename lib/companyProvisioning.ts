@@ -46,6 +46,7 @@ export interface ProvisionCompanyInput {
   stripeSubscriptionId?: string | null
   subscriptionStatus?: string | null
   accessExpiresAt?: string | null
+  termsAcceptedAt?: string | null
 }
 
 export type ProvisionCompanyResult =
@@ -72,6 +73,7 @@ export async function provisionCompany(input: ProvisionCompanyInput): Promise<Pr
       stripe_subscription_id: input.stripeSubscriptionId || null,
       subscription_status: input.subscriptionStatus || null,
       access_expires_at: input.accessExpiresAt || null,
+      terms_accepted_at: input.termsAcceptedAt || null,
     })
     .select()
     .single()

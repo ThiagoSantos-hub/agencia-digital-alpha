@@ -257,6 +257,11 @@ function LoginForm() {
           <p className="text-center text-text-disabled text-xs mt-3">
             © 2026 <span className="text-primary font-medium">Digital Alpha</span>. Todos os direitos reservados.
           </p>
+          <p className="text-center text-text-disabled text-[11px] mt-1">
+            <a href="/termos" className="hover:text-primary transition-colors">Termos de Uso</a>
+            {' · '}
+            <a href="/privacidade" className="hover:text-primary transition-colors">Política de Privacidade</a>
+          </p>
         </div>
       </div>
     </div>
