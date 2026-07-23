@@ -10,6 +10,7 @@ import { NotificationPermissionPrompt } from '@/components/layout/NotificationPe
 import { VoiceAssistantWidget } from '@/components/VoiceAssistantWidget'
 import { BillingAlertsModal } from '@/components/billing/BillingAlertsModal'
 import { SupportChatWidget } from '@/components/support/SupportChatWidget'
+import { OnboardingMascot } from '@/components/OnboardingMascot'
 import { PageFade } from '@/components/ui/Motion'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -94,6 +95,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <VoiceAssistantWidget />
       <BillingAlertsModal />
       <SupportChatWidget />
+      <OnboardingMascot />
     </div>
   )
 }

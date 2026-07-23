@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Users, Megaphone, BarChart2, Bell,
   CheckSquare, List, Wallet, UserCog, Bot, Plug,
   Sparkles, MessageSquare, UserCircle, LogOut, Settings,
-  FileSignature, Building2, CreditCard, Rocket, CalendarClock, Lock, Layers
+  FileSignature, Building2, CreditCard, Rocket, CalendarClock, Lock, Layers, Video
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/hooks/useAuth'
@@ -99,6 +99,7 @@ export function Sidebar() {
           { label: 'Empresas', href: '/superadmin/empresas', icon: Building2, ativo: true },
           { label: 'Pagamentos', href: '/superadmin/pagamentos', icon: CreditCard, ativo: true },
           { label: 'Planos', href: '/superadmin/planos', icon: Layers, ativo: true },
+          { label: 'Tutoriais', href: '/superadmin/tutoriais', icon: Video, ativo: true },
         ],
       }]
     : menuGroups
