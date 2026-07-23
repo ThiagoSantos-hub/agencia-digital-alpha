@@ -1,8 +1,7 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { Loader2, AlertCircle, CreditCard, QrCode, Facebook } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Loader2, AlertCircle, CreditCard, QrCode } from 'lucide-react'
 import { maskPhone } from '@/lib/validators'
 
 const inputCls = 'w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-text-main text-sm placeholder:text-text-disabled focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors'
@@ -36,16 +35,6 @@ function planDesc(p: PublicPlan): string {
 }
 
 export default function AssinarPage() {
-  return (
-    <Suspense fallback={null}>
-      <AssinarForm />
-    </Suspense>
-  )
-}
-
-function AssinarForm() {
-  const searchParams = useSearchParams()
-
   const [plans, setPlans] = useState<PublicPlan[]>([])
   const [loadingPlans, setLoadingPlans] = useState(true)
   const [plan, setPlan] = useState<string>('')
@@ -61,9 +50,6 @@ function AssinarForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [fbToken, setFbToken] = useState<string | null>(null)
-  const [fbName, setFbName] = useState<string | null>(null)
-
   useEffect(() => {
     fetch('/api/public/plans')
       .then((res) => res.json())
@@ -74,14 +60,6 @@ function AssinarForm() {
       .finally(() => setLoadingPlans(false))
   }, [])
 
-  useEffect(() => {
-    const token = searchParams.get('fb_token')
-    const name = searchParams.get('fb_name')
-    const fbError = searchParams.get('fb_error')
-    if (token) { setFbToken(token); setFbName(name) }
-    if (fbError) setError('Não conseguimos confirmar o login com Facebook. Tente de novo.')
-  }, [searchParams])
-
   const selectedPlan = plans.find((p) => p.id === plan) ?? null
   const isFree = !!selectedPlan?.is_free
 
@@ -91,16 +69,8 @@ function AssinarForm() {
     e.preventDefault()
     setError(null)
 
-    if (!form.companyName || !form.adminName || !form.adminEmail || !form.phone) {
+    if (!form.companyName || !form.adminName || !form.adminEmail || !form.phone || !form.facebookProfile) {
       setError('Preencha todos os campos.')
-      return
-    }
-    if (!isFree && !form.facebookProfile) {
-      setError('Informe seu perfil do Facebook.')
-      return
-    }
-    if (isFree && !fbToken) {
-      setError('Entre com o Facebook pra continuar o cadastro gratuito.')
       return
     }
 
@@ -109,7 +79,7 @@ function AssinarForm() {
       const res = await fetch('/api/public/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, paymentMethod, plan, fbToken }),
+        body: JSON.stringify({ ...form, paymentMethod, plan }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -148,14 +118,15 @@ function AssinarForm() {
               <RequiredLabel text="Telefone/WhatsApp" filled={!!form.phone.trim()} />
               <input className={inputCls} value={form.phone} onChange={(e) => setField('phone', maskPhone(e.target.value))} placeholder="(11) 99999-9999" />
             </div>
-
-            {!isFree && (
-              <div>
-                <RequiredLabel text="Perfil do Facebook" filled={!!form.facebookProfile.trim()} />
-                <input className={inputCls} value={form.facebookProfile} onChange={(e) => setField('facebookProfile', e.target.value)} placeholder="facebook.com/seuperfil" />
-                <p className="text-xs text-text-muted mt-1">Precisamos disso pra liberar seu acesso ao Meta Ads/Instagram depois.</p>
-              </div>
-            )}
+            <div>
+              <RequiredLabel text="Perfil do Facebook" filled={!!form.facebookProfile.trim()} />
+              <input className={inputCls} value={form.facebookProfile} onChange={(e) => setField('facebookProfile', e.target.value)} placeholder="facebook.com/seuperfil" />
+              <p className="text-xs text-text-muted mt-1">
+                {isFree
+                  ? 'Usamos isso pra identificar seu cadastro e evitar que o plano Gratuito seja renovado com e-mails diferentes.'
+                  : 'Precisamos disso pra liberar seu acesso ao Meta Ads/Instagram depois.'}
+              </p>
+            </div>
 
             <div>
               <label className={labelCls}>Escolha seu plano</label>
@@ -181,25 +152,7 @@ function AssinarForm() {
               )}
             </div>
 
-            {isFree ? (
-              <div>
-                <label className={labelCls}>Identidade verificada</label>
-                {fbToken ? (
-                  <div className="flex items-center gap-2 bg-cta/10 border border-cta/20 rounded-xl px-3.5 py-2.5 text-sm text-text-main">
-                    <Facebook size={16} className="text-primary shrink-0" />
-                    <span>Conectado como {fbName || 'perfil do Facebook'}.</span>
-                  </div>
-                ) : (
-                  <a
-                    href="/api/public/facebook-login"
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border bg-[#1877F2] text-white text-sm font-medium hover:opacity-90 transition-opacity"
-                  >
-                    <Facebook size={16} /> Entrar com Facebook pra continuar
-                  </a>
-                )}
-                <p className="text-xs text-text-muted mt-1">O plano Gratuito exige login com Facebook pra confirmar que é uma pessoa nova, sem cartão nenhum.</p>
-              </div>
-            ) : (
+            {!isFree && (
               <div>
                 <label className={labelCls}>Forma de pagamento</label>
                 <div className="grid grid-cols-2 gap-3">

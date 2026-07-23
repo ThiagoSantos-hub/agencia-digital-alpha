@@ -25,6 +25,27 @@ export async function isFacebookProfileInBadStanding(facebookProfile: string): P
   })
 }
 
+// Bloqueia um SEGUNDO cadastro no plano Gratuito com o mesmo perfil do
+// Facebook (mesmo com e-mail novo) — é justamente o plano grátis que atrai
+// gente trocando de e-mail pra tentar renovar os 20 relatórios/20 alertas do
+// mês. Só olha empresas que JÁ estiveram no plano Gratuito (qualquer status),
+// não afeta quem quer migrar do Gratuito pra um plano pago.
+export async function hasFacebookProfileUsedFreePlan(facebookProfile: string): Promise<boolean> {
+  const normalized = normalizeFacebookProfile(facebookProfile)
+
+  const { data: freePlans } = await supabaseAdmin.from('plans').select('id').eq('is_free', true)
+  const freePlanIds = (freePlans ?? []).map((p) => p.id)
+  if (freePlanIds.length === 0) return false
+
+  const { data } = await supabaseAdmin
+    .from('companies')
+    .select('meta_tester_profile')
+    .in('plan', freePlanIds)
+    .not('meta_tester_profile', 'is', null)
+
+  return (data ?? []).some((c) => c.meta_tester_profile && normalizeFacebookProfile(c.meta_tester_profile) === normalized)
+}
+
 // Dias de trial pro cartão: 0 se esse perfil do Facebook já foi usado em
 // QUALQUER cadastro anterior (o trial é por pessoa, não por empresa — criar
 // uma empresa nova não "reseta" o trial de quem já usou, mesmo que a empresa
