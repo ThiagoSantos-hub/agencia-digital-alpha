@@ -204,13 +204,13 @@ function AssinarForm() {
 
   if (step === 'plan') {
     return (
-      <div className="h-screen bg-background px-4 flex flex-col items-center justify-center overflow-hidden">
+      <div className="min-h-screen md:h-screen bg-background px-4 py-8 md:py-4 flex flex-col items-center justify-center overflow-y-auto md:overflow-hidden">
         {loadingPlans ? (
           <Loader2 className="animate-spin text-primary" size={32} />
         ) : (
           <>
             <h1 className="text-lg font-bold text-text-main mb-4">Escolha seu plano</h1>
-            <div className="max-w-5xl w-full grid gap-3 items-start" style={{ gridTemplateColumns: `repeat(${Math.min(plans.length, 3)}, minmax(0, 1fr))` }}>
+            <div className="max-w-5xl w-full grid gap-3 items-start" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
               {plans.map((p) => (
                 <PlanCard
                   key={p.id}
