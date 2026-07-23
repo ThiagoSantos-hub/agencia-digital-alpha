@@ -20,7 +20,7 @@ export async function GET() {
 
   const { data, error } = await supabaseAdmin
     .from('plans')
-    .select('id, name, price_brl, client_limit, monthly_reports_limit, monthly_alerts_limit, is_free, display_order, features')
+    .select('id, name, price_brl, client_limit, monthly_reports_limit, monthly_alerts_limit, is_free, display_order, features, description')
     .eq('active', true)
     .order('display_order')
 

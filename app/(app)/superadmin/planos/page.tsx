@@ -19,6 +19,7 @@ interface PlanRow {
   active: boolean
   display_order: number
   features: Record<string, boolean>
+  description: string | null
 }
 
 const inputCls = 'w-full px-3 py-2 bg-background border border-border rounded-lg text-text-main text-sm focus:outline-none focus:border-primary/50 transition-colors'
@@ -62,6 +63,7 @@ const emptyForm = {
   stripePriceId: '',
   isFree: false,
   displayOrder: 0,
+  description: '',
 }
 
 export default function SuperAdminPlanosPage() {
@@ -117,6 +119,7 @@ export default function SuperAdminPlanosPage() {
       stripePriceId: p.stripe_price_id ?? '',
       isFree: p.is_free,
       displayOrder: p.display_order,
+      description: p.description ?? '',
     })
     setEditFeatures(p.features ?? {})
     setEditPlan(p)
@@ -140,6 +143,7 @@ export default function SuperAdminPlanosPage() {
         isFree: editForm.isFree,
         displayOrder: editForm.displayOrder,
         features: editFeatures,
+        description: editForm.description,
       }),
     })
     setSavingEdit(false)
@@ -229,6 +233,18 @@ export default function SuperAdminPlanosPage() {
           <div>
             <label className={labelCls}>Ordem de exibição</label>
             <input type="number" className={inputCls} value={form.displayOrder} onChange={(e) => setForm({ ...form, displayOrder: Number(e.target.value) })} />
+          </div>
+
+          <div>
+            <label className={labelCls}>Descrição (benefícios / problema que resolve)</label>
+            <textarea
+              className={inputCls}
+              rows={3}
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              placeholder="Ex: Ideal pra quem está começando e quer testar sem compromisso — gerencia seus primeiros clientes sem gastar nada."
+            />
+            <p className="text-[11px] text-text-muted mt-1">Aparece na tela pública /assinar, embaixo do preço do plano.</p>
           </div>
 
           {error && <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-red-600 text-sm">{error}</div>}
@@ -354,6 +370,18 @@ export default function SuperAdminPlanosPage() {
                 <div>
                   <label className={labelCls}>Ordem de exibição</label>
                   <input type="number" className={inputCls} value={editForm.displayOrder} onChange={(e) => setEditForm({ ...editForm, displayOrder: Number(e.target.value) })} />
+                </div>
+
+                <div>
+                  <label className={labelCls}>Descrição (benefícios / problema que resolve)</label>
+                  <textarea
+                    className={inputCls}
+                    rows={3}
+                    value={editForm.description}
+                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                    placeholder="Ex: Ideal pra quem está começando e quer testar sem compromisso — gerencia seus primeiros clientes sem gastar nada."
+                  />
+                  <p className="text-[11px] text-text-muted mt-1">Aparece na tela pública /assinar, embaixo do preço do plano.</p>
                 </div>
 
                 <div className="border-t border-border pt-3 mt-1">
