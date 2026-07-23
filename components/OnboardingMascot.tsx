@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { usePathname } from 'next/navigation'
-import { Bot, PlayCircle } from 'lucide-react'
+import { Bot, PlayCircle, Sparkles, X, ArrowRight } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Modal } from '@/components/ui/Modal'
 import { toEmbedUrl } from '@/lib/videoEmbed'
 
@@ -67,6 +68,19 @@ export function OnboardingMascot() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentModule?.key])
 
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setExpanded(false)
+    }
+    if (expanded) document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [expanded])
+
+  useEffect(() => {
+    document.body.style.overflow = expanded || videoOpen ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [expanded, videoOpen])
+
   if (!currentModule) return null
 
   const markSeen = () => {
@@ -94,68 +108,110 @@ export function OnboardingMascot() {
 
   const embedUrl = currentModule.video_url ? toEmbedUrl(currentModule.video_url) : null
 
+  const mascotImg = !imgFailed && (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/mascot-robot.png"
+      alt="Assistente"
+      className="w-full h-full object-contain"
+      onError={() => setImgFailed(true)}
+    />
+  )
+
   return (
     <>
-      <div className="fixed bottom-6 left-6 z-[60]">
+      {/* Ícone flutuante: canto inferior direito, empilhado acima dos outros
+          widgets (SupportChatWidget em bottom-6 right-24, VoiceAssistant em
+          bottom-6 right-6). Nunca no canto esquerdo, onde fica o menu
+          lateral e o botão "Sair do sistema". */}
+      <div className="fixed bottom-24 right-6 z-[60]">
         <button
           onClick={() => setExpanded(true)}
           title="Ajuda deste módulo"
-          className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95 border-2 bg-surface border-border text-primary overflow-hidden"
+          className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95 border-2 bg-surface border-border text-primary overflow-hidden p-1.5"
         >
-          {imgFailed ? (
-            <Bot size={24} />
-          ) : (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src="/mascot-robot.png"
-              alt="Assistente"
-              className="w-full h-full object-cover"
-              onError={() => setImgFailed(true)}
-            />
-          )}
+          {imgFailed ? <Bot size={24} /> : mascotImg}
         </button>
       </div>
 
-      <Modal open={expanded} onClose={handleDismiss} title={currentModule.label} size="sm">
-        <div className="flex flex-col items-center text-center gap-4">
-          <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-border bg-background flex items-center justify-center">
-            {imgFailed ? (
-              <Bot size={28} className="text-primary" />
-            ) : (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src="/mascot-robot.png"
-                alt="Assistente"
-                className="w-full h-full object-cover"
-                onError={() => setImgFailed(true)}
-              />
-            )}
-          </div>
-          <p className="text-sm text-text-muted">
-            Conheça o módulo <span className="font-semibold text-text-main">{currentModule.label}</span> e aprenda a usar todos os recursos.
-          </p>
+      <AnimatePresence>
+        {expanded && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              onClick={handleDismiss}
+            />
 
-          {currentModule.video_url ? (
-            <button
-              onClick={handleWatchVideo}
-              className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white py-2.5 rounded-xl font-semibold text-sm transition-colors"
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 8 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+              className="relative flex items-end justify-center"
             >
-              <PlayCircle size={18} /> Assistir vídeo
-            </button>
-          ) : (
-            <p className="text-xs text-text-disabled bg-hover-bg border border-border rounded-xl py-2.5 w-full">
-              Vídeo em breve
-            </p>
-          )}
+              <div className="hidden sm:block w-40 md:w-48 -mr-10 mb-0 pointer-events-none select-none drop-shadow-2xl">
+                {mascotImg}
+              </div>
 
-          <button
-            onClick={handleDismiss}
-            className="text-xs text-text-muted hover:text-text-main transition-colors"
-          >
-            Fechar
-          </button>
-        </div>
-      </Modal>
+              <div className="relative bg-surface border border-border rounded-2xl shadow-2xl w-full max-w-sm p-6">
+                <button
+                  onClick={handleDismiss}
+                  className="absolute top-4 right-4 text-text-disabled hover:text-text-main transition-colors"
+                  aria-label="Fechar"
+                >
+                  <X size={16} />
+                </button>
+
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <Sparkles size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-text-main font-bold text-base leading-tight">{currentModule.label}</h2>
+                    <p className="text-text-muted text-xs">Seu assistente do sistema</p>
+                  </div>
+                </div>
+
+                <p className="text-sm text-text-muted mb-4">
+                  Vamos te mostrar como aproveitar ao máximo os recursos de <span className="font-semibold text-text-main">{currentModule.label}</span>.
+                </p>
+
+                <div className="bg-primary/5 border border-primary/10 rounded-xl p-3 space-y-2 mb-5">
+                  <div className="flex items-center gap-2 text-xs text-text-main">
+                    <Sparkles size={14} className="text-primary shrink-0" /> Recursos e funções explicados
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-text-main">
+                    <PlayCircle size={14} className="text-primary shrink-0" /> Vídeo rápido sempre que precisar
+                  </div>
+                </div>
+
+                {currentModule.video_url ? (
+                  <button
+                    onClick={handleWatchVideo}
+                    className="w-full flex items-center justify-center gap-2 bg-cta hover:bg-cta-hover text-white py-3 rounded-xl font-bold text-sm transition-colors"
+                  >
+                    Assistir vídeo <ArrowRight size={16} />
+                  </button>
+                ) : (
+                  <div className="w-full text-center text-xs text-text-disabled bg-hover-bg border border-border rounded-xl py-3">
+                    Vídeo em breve
+                  </div>
+                )}
+
+                <button
+                  onClick={handleDismiss}
+                  className="w-full text-center text-xs text-text-muted hover:text-text-main transition-colors mt-3"
+                >
+                  Fechar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <Modal open={videoOpen} onClose={() => setVideoOpen(false)} title={currentModule.label} size="xl">
         {embedUrl ? (
