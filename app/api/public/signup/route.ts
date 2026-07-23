@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Muitas tentativas. Aguarde alguns minutos e tente de novo.' }, { status: 429 })
     }
 
-    const { companyName, adminName, adminEmail, phone, facebookProfile, paymentMethod, plan } = await request.json()
+    const { companyName, adminName, adminEmail, phone, facebookProfile, paymentMethod, plan, acceptedTerms } = await request.json()
 
     if (!companyName || !adminName || !adminEmail || !phone || !facebookProfile) {
       return NextResponse.json({ error: 'Todos os campos são obrigatórios.' }, { status: 400 })
@@ -35,6 +35,12 @@ export async function POST(request: Request) {
     if (!EMAIL_REGEX.test(adminEmail)) {
       return NextResponse.json({ error: 'E-mail inválido.' }, { status: 400 })
     }
+    if (!acceptedTerms) {
+      return NextResponse.json({ error: 'É preciso aceitar os Termos de Uso e a Política de Privacidade.' }, { status: 400 })
+    }
+    // Horário do servidor, não o do navegador de quem se cadastrou. Vira
+    // evidência de quando o consentimento foi de fato registrado.
+    const termsAcceptedAt = new Date().toISOString()
 
     const planRow = await getPlanById(plan)
     if (!planRow || !planRow.active) {
@@ -66,6 +72,7 @@ export async function POST(request: Request) {
         companyName, adminName, adminEmail, phone, adminPassword: tempPassword,
         metaTesterProfile: facebookProfile,
         plan: planRow.id,
+        termsAcceptedAt,
       })
 
       if (!result.success) {
@@ -99,7 +106,7 @@ export async function POST(request: Request) {
         customer_email: adminEmail,
         success_url: successUrl,
         cancel_url: cancelUrl,
-        metadata: { companyName, adminName, adminEmail, phone, facebookProfile, paymentMethod, plan: planRow.id },
+        metadata: { companyName, adminName, adminEmail, phone, facebookProfile, paymentMethod, plan: planRow.id, termsAcceptedAt },
       })
       return NextResponse.json({ url: session.url })
     }

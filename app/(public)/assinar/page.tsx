@@ -256,6 +256,7 @@ function AssinarForm() {
     facebookProfile: '',
   })
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'pix'>('card')
+  const [aceitouTermos, setAceitouTermos] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -287,12 +288,17 @@ function AssinarForm() {
       return
     }
 
+    if (!aceitouTermos) {
+      setError('Você precisa aceitar os Termos de Uso e a Política de Privacidade pra continuar.')
+      return
+    }
+
     setLoading(true)
     try {
       const res = await fetch('/api/public/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, paymentMethod, plan }),
+        body: JSON.stringify({ ...form, paymentMethod, plan, acceptedTerms: aceitouTermos }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -332,6 +338,11 @@ function AssinarForm() {
           )}
         </div>
         <TestimonialsSection />
+        <p className="text-center text-text-disabled text-[11px] py-6">
+          <a href="/termos" className="hover:text-primary transition-colors">Termos de Uso</a>
+          {' · '}
+          <a href="/privacidade" className="hover:text-primary transition-colors">Política de Privacidade</a>
+        </p>
       </div>
     )
   }
@@ -413,6 +424,21 @@ function AssinarForm() {
               </div>
             )}
 
+            <label className="flex items-start gap-2 text-xs text-text-muted cursor-pointer">
+              <input
+                type="checkbox"
+                checked={aceitouTermos}
+                onChange={(e) => setAceitouTermos(e.target.checked)}
+                className="mt-0.5"
+              />
+              <span>
+                Li e aceito os{' '}
+                <a href="/termos" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Termos de Uso</a>
+                {' '}e a{' '}
+                <a href="/privacidade" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Política de Privacidade</a>.
+              </span>
+            </label>
+
             {error && (
               <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-3.5 py-2.5 text-red-600 text-sm">
                 <AlertCircle size={16} className="shrink-0 mt-0.5" />
@@ -422,7 +448,7 @@ function AssinarForm() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !aceitouTermos}
               className="w-full py-3.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
             >
               {loading ? <Loader2 size={18} className="animate-spin" /> : null}
