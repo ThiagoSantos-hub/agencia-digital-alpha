@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json()
-    const { name, priceBrl, clientLimit, monthlyReportsLimit, monthlyAlertsLimit, stripePriceId, isFree, active, displayOrder, features } = body
+    const { name, priceBrl, clientLimit, monthlyReportsLimit, monthlyAlertsLimit, stripePriceId, isFree, active, displayOrder, features, description } = body
 
     if (!name) return NextResponse.json({ error: 'Nome é obrigatório.' }, { status: 400 })
 
@@ -68,6 +68,7 @@ export async function POST(request: Request) {
         active: active ?? true,
         display_order: displayOrder ?? 0,
         features: features ?? {},
+        description: description || null,
       })
       .select()
       .single()
@@ -86,7 +87,7 @@ export async function PATCH(request: Request) {
 
   try {
     const body = await request.json()
-    const { id, name, priceBrl, clientLimit, monthlyReportsLimit, monthlyAlertsLimit, stripePriceId, isFree, active, displayOrder, features } = body
+    const { id, name, priceBrl, clientLimit, monthlyReportsLimit, monthlyAlertsLimit, stripePriceId, isFree, active, displayOrder, features, description } = body
     if (!id) return NextResponse.json({ error: 'id é obrigatório.' }, { status: 400 })
 
     const update: Record<string, unknown> = { updated_at: new Date().toISOString() }
@@ -100,6 +101,7 @@ export async function PATCH(request: Request) {
     if (active !== undefined) update.active = !!active
     if (displayOrder !== undefined) update.display_order = displayOrder
     if (features !== undefined) update.features = features
+    if (description !== undefined) update.description = description || null
 
     const { data, error } = await supabaseAdmin.from('plans').update(update).eq('id', id).select().single()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })

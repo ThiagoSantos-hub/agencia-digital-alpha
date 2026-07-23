@@ -26,6 +26,7 @@ interface PublicPlan {
   is_free: boolean
   display_order: number
   features: Record<string, boolean>
+  description: string | null
 }
 
 function isIncluded(plan: PublicPlan, key: string): boolean {
@@ -76,6 +77,10 @@ function PlanCard({ plan, onChoose, highlight }: { plan: PublicPlan; onChoose: (
           {!plan.is_free && <span className="text-[10px] font-medium text-text-muted">/mês</span>}
         </p>
       </div>
+
+      {plan.description && (
+        <p className="mt-1 text-[10.5px] leading-snug text-text-muted line-clamp-3">{plan.description}</p>
+      )}
 
       <ul className="mt-1.5 space-y-0.5">
         {limitsList(plan).map((l) => (
