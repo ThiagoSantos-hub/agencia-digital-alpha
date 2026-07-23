@@ -4,8 +4,17 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Loader2, Layers, Pencil, Power, Trash2, X, AlertTriangle } from 'lucide-react'
+import { Loader2, Layers, Pencil, Power, Trash2, X, AlertTriangle, Plus } from 'lucide-react'
 import { FEATURES, FEATURE_GROUPS } from '@/lib/features'
+
+interface TestimonialRow {
+  id: string
+  name: string
+  role: string | null
+  quote: string
+  display_order: number
+  active: boolean
+}
 
 interface PlanRow {
   id: string
@@ -84,6 +93,13 @@ export default function SuperAdminPlanosPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
 
+  const [testimonials, setTestimonials] = useState<TestimonialRow[]>([])
+  const [loadingTestimonials, setLoadingTestimonials] = useState(true)
+  const [newTestimonial, setNewTestimonial] = useState({ name: '', role: '', quote: '' })
+  const [creatingTestimonial, setCreatingTestimonial] = useState(false)
+  const [testimonialError, setTestimonialError] = useState<string | null>(null)
+  const [savingTestimonialId, setSavingTestimonialId] = useState<string | null>(null)
+
   const fetchPlans = async () => {
     setLoading(true)
     const res = await fetch('/api/superadmin/plans')
@@ -91,7 +107,61 @@ export default function SuperAdminPlanosPage() {
     setLoading(false)
   }
 
-  useEffect(() => { fetchPlans() }, [])
+  const fetchTestimonials = async () => {
+    setLoadingTestimonials(true)
+    const res = await fetch('/api/superadmin/testimonials')
+    if (res.ok) setTestimonials(await res.json())
+    setLoadingTestimonials(false)
+  }
+
+  useEffect(() => { fetchPlans(); fetchTestimonials() }, [])
+
+  const handleCreateTestimonial = async () => {
+    if (!newTestimonial.name || !newTestimonial.quote) return
+    setCreatingTestimonial(true)
+    setTestimonialError(null)
+    const res = await fetch('/api/superadmin/testimonials', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...newTestimonial, displayOrder: testimonials.length }),
+    })
+    setCreatingTestimonial(false)
+    if (!res.ok) {
+      const data = await res.json()
+      setTestimonialError(data.error || 'Erro ao criar depoimento.')
+      return
+    }
+    setNewTestimonial({ name: '', role: '', quote: '' })
+    fetchTestimonials()
+  }
+
+  const updateTestimonialField = (id: string, field: 'name' | 'role' | 'quote', value: string) => {
+    setTestimonials((prev) => prev.map((t) => (t.id === id ? { ...t, [field]: value } : t)))
+  }
+
+  const handleSaveTestimonial = async (t: TestimonialRow) => {
+    setSavingTestimonialId(t.id)
+    await fetch('/api/superadmin/testimonials', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: t.id, name: t.name, role: t.role, quote: t.quote }),
+    })
+    setSavingTestimonialId(null)
+  }
+
+  const toggleTestimonialActive = async (t: TestimonialRow) => {
+    setTestimonials((prev) => prev.map((x) => (x.id === t.id ? { ...x, active: !t.active } : x)))
+    await fetch('/api/superadmin/testimonials', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: t.id, active: !t.active }),
+    })
+  }
+
+  const handleDeleteTestimonial = async (id: string) => {
+    setTestimonials((prev) => prev.filter((t) => t.id !== id))
+    await fetch(`/api/superadmin/testimonials?id=${id}`, { method: 'DELETE' })
+  }
 
   const handleCreate = async () => {
     setCreating(true)
@@ -319,6 +389,55 @@ export default function SuperAdminPlanosPage() {
             </table>
           </div>
         )}
+      </Card>
+
+      <Card padding="md" animate={false}>
+        <CardHeader title="Depoimentos" description="Aparecem em /assinar. Escreva o texto real de clientes quando tiver." />
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <input className={inputCls} placeholder="Nome" value={newTestimonial.name} onChange={(e) => setNewTestimonial({ ...newTestimonial, name: e.target.value })} />
+            <input className={inputCls} placeholder="Cargo/agência (opcional)" value={newTestimonial.role} onChange={(e) => setNewTestimonial({ ...newTestimonial, role: e.target.value })} />
+          </div>
+          <textarea className={inputCls} rows={2} placeholder="Depoimento" value={newTestimonial.quote} onChange={(e) => setNewTestimonial({ ...newTestimonial, quote: e.target.value })} />
+          {testimonialError && <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-red-600 text-sm">{testimonialError}</div>}
+          <Button onClick={handleCreateTestimonial} disabled={creatingTestimonial || !newTestimonial.name || !newTestimonial.quote} icon={creatingTestimonial ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}>
+            {creatingTestimonial ? 'Adicionando...' : 'Adicionar depoimento'}
+          </Button>
+
+          <div className="border-t border-border pt-3 space-y-3">
+            {loadingTestimonials ? (
+              <p className="text-text-muted text-sm">Carregando...</p>
+            ) : testimonials.length === 0 ? (
+              <p className="text-text-muted text-sm">Nenhum depoimento cadastrado ainda.</p>
+            ) : (
+              testimonials.map((t) => (
+                <div key={t.id} className="border border-border rounded-lg p-3 space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <input className={inputCls} value={t.name} onChange={(e) => updateTestimonialField(t.id, 'name', e.target.value)} />
+                    <input className={inputCls} value={t.role ?? ''} onChange={(e) => updateTestimonialField(t.id, 'role', e.target.value)} placeholder="Cargo/agência" />
+                  </div>
+                  <textarea className={inputCls} rows={2} value={t.quote} onChange={(e) => updateTestimonialField(t.id, 'quote', e.target.value)} />
+                  <div className="flex items-center justify-between">
+                    <span className={`text-xs px-2 py-1 rounded-lg border whitespace-nowrap ${t.active ? 'text-cta bg-cta/10 border-cta/30' : 'text-text-disabled bg-slate-100 border-slate-200'}`}>
+                      {t.active ? 'Ativo' : 'Inativo'}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <button onClick={() => handleSaveTestimonial(t)} disabled={savingTestimonialId === t.id} className="p-1.5 rounded-lg border border-border text-text-muted hover:text-primary hover:border-primary/30 transition-colors">
+                        {savingTestimonialId === t.id ? <Loader2 size={14} className="animate-spin" /> : <Pencil size={14} />}
+                      </button>
+                      <button onClick={() => toggleTestimonialActive(t)} title={t.active ? 'Desativar' : 'Ativar'} className={`p-1.5 rounded-lg border transition-colors ${t.active ? 'border-border text-text-muted hover:text-red-600 hover:border-red-200' : 'border-cta/30 text-cta hover:bg-cta/10'}`}>
+                        <Power size={14} />
+                      </button>
+                      <button onClick={() => handleDeleteTestimonial(t.id)} className="p-1.5 rounded-lg border border-border text-text-muted hover:text-red-600 hover:border-red-200 transition-colors">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </Card>
 
       {editPlan && (
