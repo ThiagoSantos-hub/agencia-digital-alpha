@@ -79,7 +79,7 @@ function PlanCard({ plan, onChoose, highlight }: { plan: PublicPlan; onChoose: (
       </div>
 
       {plan.description && (
-        <p className="mt-1 text-[10.5px] leading-snug text-text-muted line-clamp-3">{plan.description}</p>
+        <p className="mt-1 text-[10.5px] leading-snug text-text-muted line-clamp-4">{plan.description}</p>
       )}
 
       <ul className="mt-1.5 space-y-0.5">
