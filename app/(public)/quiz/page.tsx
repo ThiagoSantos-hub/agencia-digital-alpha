@@ -77,7 +77,7 @@ export default function QuizPage() {
 
   if (result) {
     return (
-      <div className="h-screen bg-background px-4 flex flex-col items-center justify-center overflow-hidden">
+      <div className="min-h-screen bg-background px-4 py-8 flex flex-col items-center justify-center overflow-y-auto">
         <div className="w-full max-w-sm text-center">
           <Sparkles size={28} className="text-primary mx-auto mb-3" />
           <p className="text-sm text-text-muted mb-1">Baseado nas suas respostas, o plano ideal pra você é</p>
@@ -96,7 +96,7 @@ export default function QuizPage() {
   const current = QUESTIONS[step]
 
   return (
-    <div className="h-screen bg-background px-4 flex flex-col items-center justify-center overflow-hidden">
+    <div className="min-h-screen bg-background px-4 py-8 flex flex-col items-center justify-center overflow-y-auto">
       <div className="w-full max-w-md">
         <div className="flex items-center gap-1.5 mb-4">
           {QUESTIONS.map((_, i) => (
