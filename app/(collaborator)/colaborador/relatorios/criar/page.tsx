@@ -173,6 +173,29 @@ function CreateEditReportContent() {
                     className={`py-2.5 rounded-xl border text-xs font-bold uppercase transition-all ${formData.periodo === opt.value ? 'bg-primary/10 border-primary text-primary' : 'bg-background border-border text-text-muted'}`}>{opt.label}</button>
                 ))}
               </div>
+              {formData.periodo === 'personalizado' && (
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <div>
+                    <label className="text-xs text-text-muted mb-1 block">Data início</label>
+                    <input
+                      type="date"
+                      value={formData.data_inicio ?? ''}
+                      onChange={e => setFormData({ ...formData, data_inicio: e.target.value })}
+                      className="w-full bg-background border border-border rounded-xl px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors text-text-main"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-text-muted mb-1 block">Data fim</label>
+                    <input
+                      type="date"
+                      value={formData.data_fim ?? ''}
+                      onChange={e => setFormData({ ...formData, data_fim: e.target.value })}
+                      className="w-full bg-background border border-border rounded-xl px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors text-text-main"
+                    />
+                  </div>
+                </div>
+              )}
+
               <div className="mt-2">
                 <label className="text-xs text-text-muted mb-1 block">Dias de envio</label>
                 <div className="grid grid-cols-7 gap-1">
