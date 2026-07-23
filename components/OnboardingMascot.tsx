@@ -120,11 +120,12 @@ export function OnboardingMascot() {
 
   return (
     <>
-      {/* Ícone flutuante: canto inferior direito, empilhado acima dos outros
-          widgets (SupportChatWidget em bottom-6 right-24, VoiceAssistant em
-          bottom-6 right-6). Nunca no canto esquerdo, onde fica o menu
-          lateral e o botão "Sair do sistema". */}
-      <div className="fixed bottom-24 right-6 z-[60]">
+      {/* Ícone flutuante: mesma fileira dos outros widgets do canto inferior
+          direito (SupportChatWidget em bottom-6 right-24, VoiceAssistant em
+          bottom-6 right-6), encaixado ao lado em vez de empilhado em cima.
+          Nunca no canto esquerdo, onde fica o menu lateral e o botão "Sair
+          do sistema". */}
+      <div className="fixed bottom-6 right-[172px] z-[60]">
         <button
           onClick={() => setExpanded(true)}
           title="Ajuda deste módulo"
