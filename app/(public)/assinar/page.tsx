@@ -173,21 +173,18 @@ export default function AssinarPage() {
 
   if (step === 'plan') {
     return (
-      <div className="h-screen bg-background px-4 py-3 flex flex-col overflow-hidden">
-        <div className="text-center mb-2 shrink-0">
-          <h1 className="text-lg font-bold text-text-main">Escolha seu plano</h1>
-        </div>
-
+      <div className="h-screen bg-background px-4 flex flex-col items-center justify-center overflow-hidden">
         {loadingPlans ? (
-          <div className="flex-1 flex items-center justify-center"><Loader2 className="animate-spin text-primary" size={32} /></div>
+          <Loader2 className="animate-spin text-primary" size={32} />
         ) : (
-          <div className="flex-1 min-h-0 flex items-center justify-center">
+          <>
+            <h1 className="text-lg font-bold text-text-main mb-4">Escolha seu plano</h1>
             <div className="max-w-5xl w-full grid gap-3 items-start" style={{ gridTemplateColumns: `repeat(${Math.min(plans.length, 3)}, minmax(0, 1fr))` }}>
               {plans.map((p) => (
                 <PlanCard key={p.id} plan={p} onChoose={() => choosePlan(p.id)} highlight={!p.is_free && p.price_brl === highestPrice} />
               ))}
             </div>
-          </div>
+          </>
         )}
       </div>
     )
