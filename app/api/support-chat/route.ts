@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
 import { OpenAIProvider } from '@/lib/ai/providers/openai.provider'
 import type { Message } from '@/lib/ai/types'
+import { checkRateLimit } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,6 +31,12 @@ export async function POST(request: NextRequest) {
   const supabase = createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+
+  // Por usuário, não por IP. Cada chamada custa dinheiro de API da OpenAI.
+  const dentroDoLimite = await checkRateLimit(`support-chat:${user.id}`, 15, 300)
+  if (!dentroDoLimite) {
+    return NextResponse.json({ error: 'Muitas mensagens em pouco tempo. Aguarde um pouco.' }, { status: 429 })
+  }
 
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json({ error: 'Suporte por IA indisponível no momento.' }, { status: 503 })

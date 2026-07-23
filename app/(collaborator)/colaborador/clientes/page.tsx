@@ -1,8 +1,15 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { useClientes, Client } from '@/hooks/useClientes'
+import { useState, useMemo, useEffect } from 'react'
+import { createClient } from '@/lib/supabase'
 import { Search, Loader2 } from 'lucide-react'
+
+interface ClienteDiretorio {
+  id: string
+  name: string
+  company: string | null
+  status: 'ativo' | 'inativo' | 'atrasado'
+}
 
 /**
  * Clientes da Agência (visão colaborador)
@@ -11,10 +18,29 @@ import { Search, Loader2 } from 'lucide-react'
  * - telefones
  * - e-mails
  * - status atrasado / dias de atraso
+ *
+ * Por isso lê de clients_directory (view sem colunas sensíveis) em vez do
+ * hook useClientes: a tabela clients de verdade agora só libera o registro
+ * completo pra quem gerencia aquele cliente (ver migration
+ * 20260731_clients_rls_hardening.sql), então um select direto na tabela só
+ * traria os clientes do próprio colaborador, não da agência inteira.
  */
 export default function ColaboradorClientesPage() {
-  const { clients, loading } = useClientes()
+  const [clients, setClients] = useState<ClienteDiretorio[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase
+      .from('clients_directory')
+      .select('id, name, company, status')
+      .order('name')
+      .then(({ data }) => {
+        setClients(data ?? [])
+        setLoading(false)
+      })
+  }, [])
 
   // Apenas ativos (atrasados aparecem como ativos, sem badge de atraso)
   const filteredActive = useMemo(() =>
@@ -22,12 +48,11 @@ export default function ColaboradorClientesPage() {
       c.status !== 'inativo' &&
       (
         c.name.toLowerCase().includes(search.toLowerCase()) ||
-        (c.company ?? '').toLowerCase().includes(search.toLowerCase()) ||
-        (c.email ?? '').toLowerCase().includes(search.toLowerCase())
+        (c.company ?? '').toLowerCase().includes(search.toLowerCase())
       )
     ), [clients, search])
 
-  const renderTable = (list: Client[]) => (
+  const renderTable = (list: ClienteDiretorio[]) => (
     <div className="space-y-4">
       <div className="flex items-center gap-2 px-1">
         <h2 className="text-text-main font-bold text-lg">Clientes da Agência</h2>
@@ -80,7 +105,7 @@ export default function ColaboradorClientesPage() {
         <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
         <input
           type="text"
-          placeholder="Buscar por nome, empresa ou e-mail..."
+          placeholder="Buscar por nome ou empresa..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full pl-12 pr-4 py-3 bg-surface border border-border rounded-xl text-text-main placeholder:text-text-disabled focus:outline-none focus:border-primary/50 transition-all"

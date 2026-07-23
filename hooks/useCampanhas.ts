@@ -125,8 +125,14 @@ export function useCampanhas() {
   const syncAllMetaCampaigns = useCallback(async () => {
     setLoading(true)
     try {
+      // clients_directory, não a tabela clients direto: esse hook é usado
+      // tanto pelo admin quanto pelo colaborador, e sincronizar precisa
+      // alcançar todos os clientes da agência com conta de anúncio
+      // vinculada, não só os que o colaborador que clicou gerencia (RLS de
+      // clients agora restringe o registro completo por manager_id, ver
+      // migration 20260731_clients_rls_hardening.sql).
       const { data: clients } = await supabase
-        .from('clients')
+        .from('clients_directory')
         .select('id, meta_ad_account_id')
         .not('meta_ad_account_id', 'is', null)
       if (!clients || clients.length === 0) return

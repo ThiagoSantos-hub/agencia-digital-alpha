@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@/lib/supabase-server';
 import { calcularProximoEnvio, calcularPeriodo } from '@/lib/reportSchedule';
 import { dispatchWebhook } from '@/lib/webhookDispatch';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 const EVO_URL = process.env.EVOLUTION_API_URL || '';
 const EVO_KEY = process.env.EVOLUTION_API_KEY || '';
@@ -20,8 +22,44 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Autentica a chamada: OU é o cron do Postgres (020_reports_cron.sql/
+// 20260731_reports_send_auth.sql), que manda Authorization: Bearer com o
+// segredo guardado em vault.secrets, OU é um envio manual pelo navegador com
+// sessão válida. Nesse segundo caso ainda falta confirmar, mais abaixo, que
+// o relatório pedido pertence à mesma empresa de quem está logado. Sem essa
+// checagem, qualquer sessão válida de qualquer empresa conseguia disparar o
+// relatório de qualquer outra só sabendo o report_id.
+async function autenticarChamada(request: Request): Promise<
+  { ok: true; sessionUserId: string | null } | { ok: false; response: NextResponse }
+> {
+  const authHeader = request.headers.get('authorization');
+  const cronSecret = process.env.REPORTS_CRON_SECRET;
+  if (cronSecret && authHeader === `Bearer ${cronSecret}`) {
+    return { ok: true, sessionUserId: null };
+  }
+
+  const session = createServerClient();
+  const { data: { user } } = await session.auth.getUser();
+  if (!user) {
+    return { ok: false, response: NextResponse.json({ error: 'Não autenticado' }, { status: 401 }) };
+  }
+  return { ok: true, sessionUserId: user.id };
+}
+
 export async function POST(request: Request) {
   try {
+    const auth = await autenticarChamada(request);
+    if (!auth.ok) return auth.response;
+
+    // Só limita o envio manual pelo navegador. A chamada do cron já é
+    // controlada pela própria frequência do agendamento (de hora em hora).
+    if (auth.sessionUserId) {
+      const dentroDoLimite = await checkRateLimit(`reports-send:${auth.sessionUserId}`, 20, 60);
+      if (!dentroDoLimite) {
+        return NextResponse.json({ error: 'Muitos envios em pouco tempo. Aguarde um pouco.' }, { status: 429 });
+      }
+    }
+
     const { report_id, preview } = await request.json();
     if (!report_id) {
       return NextResponse.json({ error: 'report_id é obrigatório' }, { status: 400 });
@@ -48,6 +86,22 @@ export async function POST(request: Request) {
       .eq('id', report.user_id)
       .single();
     const reportCompanyId = reportOwner?.company_id ?? null;
+
+    // Chamada com sessão (envio manual pelo navegador): confirma que quem
+    // está logado é da MESMA empresa dona do relatório, senão qualquer
+    // empresa conseguiria disparar o relatório de outra só sabendo o
+    // report_id. Chamada do cron (sessionUserId null) já veio autenticada
+    // pelo segredo acima, sem usuário associado.
+    if (auth.sessionUserId) {
+      const { data: callerProfile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', auth.sessionUserId)
+        .single();
+      if (!callerProfile?.company_id || callerProfile.company_id !== reportCompanyId) {
+        return NextResponse.json({ error: 'Relatório não encontrado' }, { status: 404 });
+      }
+    }
 
     const { data: integration } = await supabase
       .from('integrations')

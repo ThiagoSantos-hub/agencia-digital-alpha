@@ -158,7 +158,7 @@ export default function CollaboratorDashboardPage() {
         tarefasRes,
         checklistsRes,
       ] = await Promise.all([
-        supabase.from('clients').select('id', { count: 'exact', head: true }).eq('status', 'ativo'),
+        supabase.from('clients_directory').select('id', { count: 'exact', head: true }).eq('status', 'ativo'),
         supabase.from('campaigns').select('id', { count: 'exact', head: true }).eq('status', 'ativa'),
         supabase.from('report_history').select('id', { count: 'exact', head: true })
           .eq('status', 'enviado')
