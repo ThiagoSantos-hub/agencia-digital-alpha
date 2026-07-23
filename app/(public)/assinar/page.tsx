@@ -32,104 +32,77 @@ function isIncluded(plan: PublicPlan, key: string): boolean {
   return plan.features?.[key] !== false
 }
 
-// Tabela comparativa: uma linha por item (limite ou funcionalidade), planos
-// nas colunas — bem mais compacto na vertical do que repetir a lista inteira
-// dentro de cada card (o formato anterior obrigava rolar a tela).
-function PlansTable({ plans, onChoose, highlightId }: { plans: PublicPlan[]; onChoose: (id: string) => void; highlightId: string | null }) {
-  const cellCls = (highlight: boolean) => `px-3 py-1 text-center ${highlight ? 'bg-primary/5' : ''}`
-
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-xs mx-auto" style={{ maxWidth: 720 }}>
-        <thead>
-          <tr>
-            <th className="w-40" />
-            {plans.map((p) => (
-              <th key={p.id} className={`px-3 pb-2 align-bottom ${p.id === highlightId ? 'bg-primary/5 rounded-t-lg' : ''}`}>
-                {p.id === highlightId && (
-                  <span className="block mx-auto mb-1 w-fit text-[9px] font-bold uppercase tracking-wide bg-primary text-white px-1.5 py-0.5 rounded-full">
-                    Mais completo
-                  </span>
-                )}
-                <p className="text-sm font-bold text-text-main">{p.name}</p>
-                <p className="text-base font-extrabold text-text-main">
-                  {p.is_free ? 'Grátis' : `R$ ${p.price_brl.toFixed(2).replace('.', ',')}`}
-                  {!p.is_free && <span className="text-[10px] font-medium text-text-muted">/mês</span>}
-                </p>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {['Clientes', 'Relatórios/mês', 'Alertas/mês'].map((label, i) => (
-            <tr key={label} className="border-t border-border">
-              <td className="py-1 pr-2 text-text-muted font-medium whitespace-nowrap">{label}</td>
-              {plans.map((p) => (
-                <td key={p.id} className={cellCls(p.id === highlightId)}>
-                  {[
-                    p.client_limit === null ? 'Ilimitado' : p.client_limit,
-                    p.monthly_reports_limit === null ? 'Ilimitado' : p.monthly_reports_limit,
-                    p.monthly_alerts_limit === null ? 'Ilimitado' : p.monthly_alerts_limit,
-                  ][i]}
-                </td>
-              ))}
-            </tr>
-          ))}
-
-          {FEATURE_GROUPS.map((group) => (
-            <FragmentGroup key={group} group={group} plans={plans} highlightId={highlightId} cellCls={cellCls} />
-          ))}
-
-          <tr>
-            <td />
-            {plans.map((p) => (
-              <td key={p.id} className={`pt-3 px-2 ${p.id === highlightId ? 'bg-primary/5 rounded-b-lg' : ''}`}>
-                <button
-                  onClick={() => onChoose(p.id)}
-                  className={`w-full py-2 rounded-xl text-xs font-semibold transition-colors ${
-                    p.id === highlightId ? 'bg-primary hover:bg-primary-hover text-white' : 'bg-background border border-border text-text-main hover:border-primary/40'
-                  }`}
-                >
-                  Escolher
-                </button>
-              </td>
-            ))}
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  )
+function limitsList(p: PublicPlan): string[] {
+  return [
+    p.client_limit === null ? 'Clientes ilimitados' : `Até ${p.client_limit} clientes`,
+    p.monthly_reports_limit === null ? 'Relatórios ilimitados' : `${p.monthly_reports_limit} relatórios/mês`,
+    p.monthly_alerts_limit === null ? 'Alertas ilimitados' : `${p.monthly_alerts_limit} alertas/mês`,
+  ]
 }
 
-function FragmentGroup({
-  group, plans, highlightId, cellCls,
-}: {
-  group: string
-  plans: PublicPlan[]
-  highlightId: string | null
-  cellCls: (highlight: boolean) => string
-}) {
+// Card por plano (visual original) — bem mais compacto que a primeira versão
+// (fontes e espaçamentos menores) pra caber numa tela só, sem rolagem.
+function PlanCard({ plan, onChoose, highlight }: { plan: PublicPlan; onChoose: () => void; highlight: boolean }) {
   return (
-    <>
-      <tr className="border-t border-border">
-        <td colSpan={plans.length + 1} className="pt-1.5 pb-0.5 text-[9px] font-bold uppercase tracking-widest text-text-disabled">
-          {group}
-        </td>
-      </tr>
-      {FEATURES.filter((f) => f.group === group).map((f) => (
-        <tr key={f.key}>
-          <td className="py-0.5 pr-2 text-text-muted whitespace-nowrap">{f.label}</td>
-          {plans.map((p) => {
-            const included = isIncluded(p, f.key)
-            return (
-              <td key={p.id} className={cellCls(p.id === highlightId)}>
-                {included ? <Check size={13} className="text-cta inline" /> : <XIcon size={13} className="text-text-disabled inline" />}
-              </td>
-            )
-          })}
-        </tr>
-      ))}
-    </>
+    <div
+      className={`flex flex-col rounded-xl border p-3 transition-colors ${
+        highlight ? 'border-primary bg-primary/5 shadow-md' : 'border-border bg-surface'
+      }`}
+    >
+      {highlight ? (
+        <span className="self-start mb-1 text-[9px] font-bold uppercase tracking-wide bg-primary text-white px-1.5 py-0.5 rounded-full">
+          Mais completo
+        </span>
+      ) : (
+        <span className="mb-1 h-[15px]" />
+      )}
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className="text-sm font-bold text-text-main">{plan.name}</h3>
+        <p className="text-sm font-extrabold text-text-main whitespace-nowrap">
+          {plan.is_free ? 'Grátis' : `R$ ${plan.price_brl.toFixed(2).replace('.', ',')}`}
+          {!plan.is_free && <span className="text-[10px] font-medium text-text-muted">/mês</span>}
+        </p>
+      </div>
+
+      <ul className="mt-1.5 space-y-0.5">
+        {limitsList(plan).map((l) => (
+          <li key={l} className="flex items-center gap-1.5 text-[11px] leading-tight text-text-main">
+            <Check size={11} className="text-cta shrink-0" /> {l}
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-1.5 pt-1.5 border-t border-border space-y-1 flex-1">
+        {FEATURE_GROUPS.map((group) => (
+          <div key={group}>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-text-disabled mb-0.5">{group}</p>
+            <ul className="space-y-0.5">
+              {FEATURES.filter((f) => f.group === group).map((f) => {
+                const included = isIncluded(plan, f.key)
+                return (
+                  <li
+                    key={f.key}
+                    className={`flex items-center gap-1.5 text-[11px] leading-tight ${included ? 'text-text-main' : 'text-text-disabled line-through'}`}
+                  >
+                    {included ? <Check size={11} className="text-cta shrink-0" /> : <XIcon size={11} className="shrink-0" />}
+                    {f.label}
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={onChoose}
+        className={`mt-2 w-full py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+          highlight ? 'bg-primary hover:bg-primary-hover text-white' : 'bg-background border border-border text-text-main hover:border-primary/40'
+        }`}
+      >
+        Escolher {plan.name}
+      </button>
+    </div>
   )
 }
 
@@ -199,19 +172,19 @@ export default function AssinarPage() {
   }
 
   if (step === 'plan') {
-    const highlightId = plans.find((p) => !p.is_free && p.price_brl === highestPrice)?.id ?? null
     return (
-      <div className="h-screen bg-background px-4 py-4 flex flex-col overflow-hidden">
-        <div className="text-center mb-3 shrink-0">
-          <h1 className="text-xl font-bold text-text-main">Escolha seu plano</h1>
-          <p className="text-xs text-text-muted mt-0.5">Comece agora na Digital Alpha. Você preenche seus dados no próximo passo.</p>
+      <div className="h-screen bg-background px-4 py-3 flex flex-col overflow-hidden">
+        <div className="text-center mb-2 shrink-0">
+          <h1 className="text-lg font-bold text-text-main">Escolha seu plano</h1>
         </div>
 
         {loadingPlans ? (
           <div className="flex-1 flex items-center justify-center"><Loader2 className="animate-spin text-primary" size={32} /></div>
         ) : (
-          <div className="flex-1 flex items-center justify-center min-h-0">
-            <PlansTable plans={plans} onChoose={choosePlan} highlightId={highlightId} />
+          <div className="flex-1 min-h-0 max-w-5xl w-full mx-auto grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(plans.length, 3)}, minmax(0, 1fr))` }}>
+            {plans.map((p) => (
+              <PlanCard key={p.id} plan={p} onChoose={() => choosePlan(p.id)} highlight={!p.is_free && p.price_brl === highestPrice} />
+            ))}
           </div>
         )}
       </div>
