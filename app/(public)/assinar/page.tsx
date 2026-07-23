@@ -44,7 +44,7 @@ const MODULOS = FEATURES.filter((f) => f.group === 'Módulos')
 // baseado em largura mínima decidia sozinho encaixar 2 colunas em celulares
 // maiores, ficando espremido. Uma coluna em qualquer celular, só vira lado a
 // lado a partir de tablet/desktop (md).
-const GRID_COLS_MD: Record<number, string> = { 1: 'md:grid-cols-1', 2: 'md:grid-cols-2', 3: 'md:grid-cols-3' }
+const GRID_COLS_MD: Record<number, string> = { 1: 'lg:grid-cols-1', 2: 'lg:grid-cols-2', 3: 'lg:grid-cols-3' }
 
 function isModuleAvailable(plan: PublicPlan, moduloKey: string, moduloLabel: string): boolean {
   if (isIncluded(plan, moduloKey)) return true
@@ -210,7 +210,7 @@ function AssinarForm() {
 
   if (step === 'plan') {
     return (
-      <div className="min-h-screen md:h-screen bg-background px-4 py-8 md:py-4 flex flex-col items-center justify-center overflow-y-auto md:overflow-hidden">
+      <div className="min-h-screen lg:h-screen bg-background px-4 py-8 lg:py-4 flex flex-col items-center justify-center overflow-y-auto lg:overflow-hidden">
         {loadingPlans ? (
           <Loader2 className="animate-spin text-primary" size={32} />
         ) : (
