@@ -246,7 +246,7 @@ function AssinarForm() {
           )}
           <p className="text-sm text-text-muted mb-6">
             Plano escolhido: <strong className="text-text-main">{selectedPlan?.name}</strong>
-            {selectedPlan && !selectedPlan.is_free && ` — R$ ${selectedPlan.price_brl.toFixed(2).replace('.', ',')}/mês`}
+            {selectedPlan && !selectedPlan.is_free && `, R$ ${selectedPlan.price_brl.toFixed(2).replace('.', ',')}/mês`}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">

@@ -226,7 +226,7 @@ export default function SuperAdminPlanosPage() {
             <div>
               <label className={labelCls}>Stripe Price ID</label>
               <input className={inputCls} value={form.stripePriceId} onChange={(e) => setForm({ ...form, stripePriceId: e.target.value })} placeholder="price_..." />
-              <p className="text-[11px] text-text-muted mt-1">Se mudar o preço aqui, crie um novo Price no Stripe e cole o ID novo — o Stripe não deixa editar preço de um Price existente.</p>
+              <p className="text-[11px] text-text-muted mt-1">Se mudar o preço aqui, crie um novo Price no Stripe e cole o ID novo. O Stripe não deixa editar preço de um Price existente.</p>
             </div>
           )}
 
@@ -242,10 +242,10 @@ export default function SuperAdminPlanosPage() {
               rows={3}
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Ex: Ideal pra quem está começando e quer testar sem compromisso — gerencia seus primeiros clientes sem gastar nada."
+              placeholder="Ex: Ideal pra quem está começando e quer testar sem compromisso, gerencia seus primeiros clientes sem gastar nada."
             />
             <p className={`text-[11px] mt-1 ${form.description.length > 200 ? 'text-amber-600' : 'text-text-muted'}`}>
-              {form.description.length} caracteres — aparece na tela pública /assinar, embaixo do preço do plano.
+              {form.description.length} caracteres. Aparece na tela pública /assinar, embaixo do preço do plano.
               {form.description.length > 200 && ' Textos longos deixam o card mais alto e podem forçar rolagem na tela.'}
             </p>
           </div>
@@ -382,10 +382,10 @@ export default function SuperAdminPlanosPage() {
                     rows={3}
                     value={editForm.description}
                     onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                    placeholder="Ex: Ideal pra quem está começando e quer testar sem compromisso — gerencia seus primeiros clientes sem gastar nada."
+                    placeholder="Ex: Ideal pra quem está começando e quer testar sem compromisso, gerencia seus primeiros clientes sem gastar nada."
                   />
                   <p className={`text-[11px] mt-1 ${editForm.description.length > 200 ? 'text-amber-600' : 'text-text-muted'}`}>
-                    {editForm.description.length} caracteres — aparece na tela pública /assinar, embaixo do preço do plano.
+                    {editForm.description.length} caracteres. Aparece na tela pública /assinar, embaixo do preço do plano.
                     {editForm.description.length > 200 && ' Textos longos deixam o card mais alto e podem forçar rolagem na tela.'}
                   </p>
                 </div>
