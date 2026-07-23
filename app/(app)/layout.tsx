@@ -7,9 +7,7 @@ import { Header } from '@/components/layout/Header'
 import { NotificationSound } from '@/components/layout/NotificationSound'
 import { NotificationToasts } from '@/components/layout/NotificationToasts'
 import { NotificationPermissionPrompt } from '@/components/layout/NotificationPermissionPrompt'
-import { VoiceAssistantWidget } from '@/components/VoiceAssistantWidget'
 import { BillingAlertsModal } from '@/components/billing/BillingAlertsModal'
-import { SupportChatWidget } from '@/components/support/SupportChatWidget'
 import { OnboardingMascot } from '@/components/OnboardingMascot'
 import { PageFade } from '@/components/ui/Motion'
 
@@ -92,9 +90,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <NotificationSound />
       <NotificationToasts />
       <NotificationPermissionPrompt />
-      <VoiceAssistantWidget />
       <BillingAlertsModal />
-      <SupportChatWidget />
       <OnboardingMascot />
     </div>
   )

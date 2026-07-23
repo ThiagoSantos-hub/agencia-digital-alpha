@@ -14,8 +14,11 @@ const MSG_INICIAL: ChatMsg = {
 }
 
 // Assistente de FAQ sobre o sistema, separado da Alpha AI pessoal (que tem
-// acesso aos dados da empresa). Fica encaixado ao lado do menu lateral,
-// perto do botão "Sair do sistema", junto com o botão de voz da Alpha.
+// acesso aos dados da empresa). O botão em si é renderizado dentro do
+// rodapé do menu lateral, ao lado do botão "Sair do sistema" (ver
+// Sidebar.tsx e app/(collaborator)/layout.tsx); só o painel de conversa
+// abre como um overlay fixo separado, pra não ficar espremido nos 256px
+// do menu.
 export function SupportChatWidget() {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<ChatMsg[]>([MSG_INICIAL])
@@ -52,9 +55,9 @@ export function SupportChatWidget() {
   }
 
   return (
-    <div className="fixed bottom-8 left-[340px] z-[60] flex flex-col items-start gap-3 pointer-events-none">
+    <>
       {open && (
-        <div className="pointer-events-auto w-[340px] h-[440px] bg-surface border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+        <div className="fixed bottom-20 left-3 z-[70] w-[340px] h-[440px] bg-surface border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background shrink-0">
             <div className="flex items-center gap-2">
               <HelpCircle size={16} className="text-text-muted" />
@@ -107,10 +110,10 @@ export function SupportChatWidget() {
       <button
         onClick={() => setOpen((prev) => !prev)}
         title="Suporte"
-        className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all pointer-events-auto hover:scale-110 active:scale-95 border-2 bg-surface border-border text-text-muted hover:text-primary"
+        className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors border border-border text-text-muted hover:text-primary hover:bg-hover-bg"
       >
-        {open ? <X size={20} /> : <HelpCircle size={20} />}
+        {open ? <X size={16} /> : <HelpCircle size={16} />}
       </button>
-    </div>
+    </>
   )
 }

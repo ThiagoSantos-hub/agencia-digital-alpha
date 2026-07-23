@@ -110,24 +110,22 @@ function AlphaButton({ userName, agentId }: { userName: string; agentId: string 
         lastResponse={active ? 'Alpha está ouvindo e respondendo em tempo real.' : ''}
       />
 
-      <div className="fixed bottom-8 left-[268px] z-[60] flex flex-col items-start gap-3 pointer-events-none">
-        <button
-          onClick={handleClick}
-          disabled={loading}
-          className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all disabled:opacity-50 pointer-events-auto hover:scale-110 active:scale-95 border-2 ${
-            active
-              ? 'bg-ai border-ai text-white shadow-ai/40'
-              : 'bg-primary border-primary text-white shadow-primary/20'
-          }`}
-        >
-          {loading
-            ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            : active
-              ? <MicOff size={22} />
-              : <Mic size={22} />
-          }
-        </button>
-      </div>
+      <button
+        onClick={handleClick}
+        disabled={loading}
+        className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors disabled:opacity-50 border ${
+          active
+            ? 'bg-ai border-ai text-white'
+            : 'bg-primary border-primary text-white'
+        }`}
+      >
+        {loading
+          ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          : active
+            ? <MicOff size={16} />
+            : <Mic size={16} />
+        }
+      </button>
     </>
   )
 }
@@ -186,15 +184,13 @@ export function AlphaWidget() {
 
   if (!agentId) {
     return (
-      <div className="fixed bottom-8 left-[268px] z-[60] pointer-events-none">
-        <a
-          href="/integracoes"
-          title="Configure seu assistente de voz em Integrações"
-          className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg pointer-events-auto bg-hover-bg border-2 border-border text-text-disabled hover:text-text-muted transition-colors"
-        >
-          <Mic size={22} />
-        </a>
-      </div>
+      <a
+        href="/integracoes"
+        title="Configure seu assistente de voz em Integrações"
+        className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-hover-bg border border-border text-text-disabled hover:text-text-muted transition-colors"
+      >
+        <Mic size={16} />
+      </a>
     )
   }
 

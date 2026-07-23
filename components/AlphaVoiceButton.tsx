@@ -143,26 +143,20 @@ export function AlphaVoiceButton() {
         onClick={handleClick}
         title={isActive ? 'Desativar Alpha AI' : 'Ativar Alpha AI'}
         style={{
-          position: 'fixed',
-          bottom: 32,
-          left: 268,
-          zIndex: 60,
-          width: 56,
-          height: 56,
-          borderRadius: '50%',
-          border: `2px solid ${btnBg[voiceState]}`,
+          width: 36,
+          height: 36,
+          flexShrink: 0,
+          borderRadius: 8,
+          border: `1px solid ${btnBg[voiceState]}`,
           cursor: 'pointer',
           background: btnBg[voiceState],
           color: '#FFFFFF',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          transition: 'background 0.2s, transform 0.15s, border-color 0.2s',
+          transition: 'background 0.2s, border-color 0.2s',
           animation: voiceState === 'listening' ? 'alphaPulseAi 1.4s ease-in-out infinite' : 'none',
-          boxShadow: '0 4px 20px rgba(26,86,219,0.35)',
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.1)')}
-        onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
       >
         {voiceState === 'idle' && <IconMic />}
         {voiceState === 'listening' && <IconX />}
