@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Loader2, AlertCircle, CreditCard, QrCode, Check, X as XIcon, ChevronLeft } from 'lucide-react'
 import { maskPhone } from '@/lib/validators'
-import { FEATURES, FEATURE_GROUPS } from '@/lib/features'
+import { FEATURES } from '@/lib/features'
 
 const inputCls = 'w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-text-main text-sm placeholder:text-text-disabled focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors'
 const labelCls = 'block text-sm font-medium text-text-main mb-1.5'
@@ -30,6 +30,19 @@ interface PublicPlan {
 
 function isIncluded(plan: PublicPlan, key: string): boolean {
   return plan.features?.[key] !== false
+}
+
+// Na tela pública só mostra o módulo inteiro (não cada trava granular de
+// dentro dele) — só aparece riscado se o módulo E todas as travas internas
+// dele estiverem bloqueadas. Se sobrar qualquer coisa liberada lá dentro, o
+// módulo continua aparecendo como disponível.
+const MODULOS = FEATURES.filter((f) => f.group === 'Módulos')
+
+function isModuleAvailable(plan: PublicPlan, moduloKey: string, moduloLabel: string): boolean {
+  if (isIncluded(plan, moduloKey)) return true
+  const grupoInterno = moduloLabel.replace('Módulo ', '')
+  const itensInternos = FEATURES.filter((f) => f.group === grupoInterno)
+  return itensInternos.some((f) => isIncluded(plan, f.key))
 }
 
 function limitsList(p: PublicPlan): string[] {
@@ -72,27 +85,20 @@ function PlanCard({ plan, onChoose, highlight }: { plan: PublicPlan; onChoose: (
         ))}
       </ul>
 
-      <div className="mt-1.5 pt-1.5 border-t border-border space-y-1">
-        {FEATURE_GROUPS.map((group) => (
-          <div key={group}>
-            <p className="text-[9px] font-bold uppercase tracking-widest text-text-disabled mb-0.5">{group}</p>
-            <ul className="space-y-0.5">
-              {FEATURES.filter((f) => f.group === group).map((f) => {
-                const included = isIncluded(plan, f.key)
-                return (
-                  <li
-                    key={f.key}
-                    className={`flex items-center gap-1.5 text-[11px] leading-tight ${included ? 'text-text-main' : 'text-text-disabled line-through'}`}
-                  >
-                    {included ? <Check size={11} className="text-cta shrink-0" /> : <XIcon size={11} className="shrink-0" />}
-                    {f.label}
-                  </li>
-                )
-              })}
-            </ul>
-          </div>
-        ))}
-      </div>
+      <ul className="mt-1.5 pt-1.5 border-t border-border space-y-0.5">
+        {MODULOS.map((m) => {
+          const available = isModuleAvailable(plan, m.key, m.label)
+          return (
+            <li
+              key={m.key}
+              className={`flex items-center gap-1.5 text-[11px] leading-tight ${available ? 'text-text-main' : 'text-text-disabled line-through'}`}
+            >
+              {available ? <Check size={11} className="text-cta shrink-0" /> : <XIcon size={11} className="shrink-0" />}
+              {m.label}
+            </li>
+          )
+        })}
+      </ul>
 
       <button
         onClick={onChoose}
