@@ -40,6 +40,12 @@ function isIncluded(plan: PublicPlan, key: string): boolean {
 // módulo continua aparecendo como disponível.
 const MODULOS = FEATURES.filter((f) => f.group === 'Módulos')
 
+// Colunas fixas por breakpoint (não por largura exata da tela) — o "auto-fit"
+// baseado em largura mínima decidia sozinho encaixar 2 colunas em celulares
+// maiores, ficando espremido. Uma coluna em qualquer celular, só vira lado a
+// lado a partir de tablet/desktop (md).
+const GRID_COLS_MD: Record<number, string> = { 1: 'md:grid-cols-1', 2: 'md:grid-cols-2', 3: 'md:grid-cols-3' }
+
 function isModuleAvailable(plan: PublicPlan, moduloKey: string, moduloLabel: string): boolean {
   if (isIncluded(plan, moduloKey)) return true
   const grupoInterno = moduloLabel.replace('Módulo ', '')
@@ -210,7 +216,7 @@ function AssinarForm() {
         ) : (
           <>
             <h1 className="text-lg font-bold text-text-main mb-4">Escolha seu plano</h1>
-            <div className="max-w-5xl w-full grid gap-3 items-start" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
+            <div className={`max-w-5xl w-full grid grid-cols-1 gap-3 items-start ${GRID_COLS_MD[Math.min(plans.length, 3)]}`}>
               {plans.map((p) => (
                 <PlanCard
                   key={p.id}
