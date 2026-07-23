@@ -35,6 +35,7 @@ import { NotificationPermissionPrompt } from '@/components/layout/NotificationPe
 import { VoiceAssistantWidget } from '@/components/VoiceAssistantWidget'
 import { BillingAlertsModal } from '@/components/billing/BillingAlertsModal'
 import { SupportChatWidget } from '@/components/support/SupportChatWidget'
+import { OnboardingMascot } from '@/components/OnboardingMascot'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { springSoft } from '@/lib/motion'
 
@@ -415,6 +416,7 @@ export default function CollaboratorLayout({
       <VoiceAssistantWidget />
       <BillingAlertsModal />
       <SupportChatWidget />
+      <OnboardingMascot />
     </div>
   )
 }
