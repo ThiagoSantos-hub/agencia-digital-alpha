@@ -23,5 +23,8 @@ export async function GET() {
   if (!company?.plan) return NextResponse.json({ features: {} })
 
   const { data: plan } = await supabaseAdmin.from('plans').select('features, name').eq('id', company.plan).maybeSingle()
-  return NextResponse.json({ features: plan?.features ?? {}, planName: plan?.name ?? null })
+  return NextResponse.json(
+    { features: plan?.features ?? {}, planName: plan?.name ?? null },
+    { headers: { 'Cache-Control': 'no-store' } }
+  )
 }

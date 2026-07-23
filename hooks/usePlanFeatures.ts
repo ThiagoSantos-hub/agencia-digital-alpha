@@ -3,30 +3,47 @@
 import { useEffect, useState } from 'react'
 import { isFeatureLocked } from '@/lib/features'
 
-let cachedFeatures: Record<string, boolean> | null = null
-let cachedPlanName: string | null = null
+interface PlanFeaturesResponse {
+  features: Record<string, boolean>
+  planName: string | null
+}
 
-// Busca uma vez (cache simples de módulo, mesmo padrão de cachedProfile em
-// useAuth) o JSONB de features do plano da empresa logada.
+// Só deduplica chamadas simultâneas (várias <FeatureLock>/Sidebar montando na
+// mesma tela) — não guarda em cache entre navegações, senão um bloqueio novo
+// feito pelo superadmin em /superadmin/planos não aparecia sem dar refresh
+// na página (era o mesmo bug de cache que afetava /assinar).
+let inFlight: Promise<PlanFeaturesResponse> | null = null
+
+function fetchPlanFeatures(): Promise<PlanFeaturesResponse> {
+  if (!inFlight) {
+    inFlight = fetch('/api/plan-features', { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : { features: {}, planName: null }))
+      .finally(() => {
+        inFlight = null
+      })
+  }
+  return inFlight
+}
+
 export function usePlanFeatures() {
-  const [features, setFeatures] = useState<Record<string, boolean> | null>(cachedFeatures)
-  const [planName, setPlanName] = useState<string | null>(cachedPlanName)
-  const [loading, setLoading] = useState(cachedFeatures === null)
+  const [features, setFeatures] = useState<Record<string, boolean>>({})
+  const [planName, setPlanName] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (cachedFeatures !== null) return
-    fetch('/api/plan-features')
-      .then((res) => res.ok ? res.json() : { features: {}, planName: null })
-      .then((data) => {
-        cachedFeatures = data.features ?? {}
-        cachedPlanName = data.planName ?? null
-        setFeatures(cachedFeatures)
-        setPlanName(cachedPlanName)
-      })
-      .finally(() => setLoading(false))
+    let active = true
+    fetchPlanFeatures().then((data) => {
+      if (!active) return
+      setFeatures(data.features ?? {})
+      setPlanName(data.planName ?? null)
+      setLoading(false)
+    })
+    return () => {
+      active = false
+    }
   }, [])
 
   const isLocked = (key: string) => isFeatureLocked(features, key)
 
-  return { features: features ?? {}, planName, isLocked, loading }
+  return { features, planName, isLocked, loading }
 }
