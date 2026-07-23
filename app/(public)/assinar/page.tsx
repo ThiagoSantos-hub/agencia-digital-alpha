@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Loader2, AlertCircle, CreditCard, QrCode } from 'lucide-react'
+import { Loader2, AlertCircle, CreditCard, QrCode, Check, X as XIcon, ChevronLeft } from 'lucide-react'
 import { maskPhone } from '@/lib/validators'
+import { FEATURES, FEATURE_GROUPS } from '@/lib/features'
 
 const inputCls = 'w-full px-3.5 py-2.5 bg-background border border-border rounded-xl text-text-main text-sm placeholder:text-text-disabled focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors'
 const labelCls = 'block text-sm font-medium text-text-main mb-1.5'
@@ -24,17 +25,83 @@ interface PublicPlan {
   monthly_alerts_limit: number | null
   is_free: boolean
   display_order: number
+  features: Record<string, boolean>
 }
 
-function planDesc(p: PublicPlan): string {
-  const partes: string[] = []
-  partes.push(p.client_limit === null ? 'clientes ilimitados' : `até ${p.client_limit} clientes`)
-  if (p.monthly_reports_limit !== null) partes.push(`${p.monthly_reports_limit} relatórios/mês`)
-  if (p.monthly_alerts_limit !== null) partes.push(`${p.monthly_alerts_limit} alertas/mês`)
-  return partes.join(' · ')
+function isIncluded(plan: PublicPlan, key: string): boolean {
+  return plan.features?.[key] !== false
+}
+
+function limitsList(p: PublicPlan): string[] {
+  return [
+    p.client_limit === null ? 'Clientes ilimitados' : `Até ${p.client_limit} clientes`,
+    p.monthly_reports_limit === null ? 'Relatórios ilimitados' : `${p.monthly_reports_limit} relatórios/mês`,
+    p.monthly_alerts_limit === null ? 'Alertas ilimitados' : `${p.monthly_alerts_limit} alertas/mês`,
+  ]
+}
+
+function PlanCard({ plan, onChoose, highlight }: { plan: PublicPlan; onChoose: () => void; highlight: boolean }) {
+  return (
+    <div
+      className={`flex flex-col rounded-2xl border p-5 transition-colors ${
+        highlight ? 'border-primary bg-primary/5 shadow-md' : 'border-border bg-surface'
+      }`}
+    >
+      {highlight && (
+        <span className="self-start mb-2 text-[10px] font-bold uppercase tracking-wide bg-primary text-white px-2 py-0.5 rounded-full">
+          Mais completo
+        </span>
+      )}
+      <h3 className="text-lg font-bold text-text-main">{plan.name}</h3>
+      <p className="text-2xl font-extrabold text-text-main mt-1">
+        {plan.is_free ? 'Grátis' : `R$ ${plan.price_brl.toFixed(2).replace('.', ',')}`}
+        {!plan.is_free && <span className="text-sm font-medium text-text-muted">/mês</span>}
+      </p>
+
+      <ul className="mt-3 space-y-1">
+        {limitsList(plan).map((l) => (
+          <li key={l} className="flex items-center gap-2 text-xs text-text-main">
+            <Check size={13} className="text-cta shrink-0" /> {l}
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-4 pt-4 border-t border-border space-y-3 flex-1">
+        {FEATURE_GROUPS.map((group) => (
+          <div key={group}>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-text-disabled mb-1">{group}</p>
+            <ul className="space-y-1">
+              {FEATURES.filter((f) => f.group === group).map((f) => {
+                const included = isIncluded(plan, f.key)
+                return (
+                  <li
+                    key={f.key}
+                    className={`flex items-center gap-2 text-xs ${included ? 'text-text-main' : 'text-text-disabled line-through'}`}
+                  >
+                    {included ? <Check size={13} className="text-cta shrink-0" /> : <XIcon size={13} className="shrink-0" />}
+                    {f.label}
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={onChoose}
+        className={`mt-5 w-full py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+          highlight ? 'bg-primary hover:bg-primary-hover text-white' : 'bg-background border border-border text-text-main hover:border-primary/40'
+        }`}
+      >
+        Escolher {plan.name}
+      </button>
+    </div>
+  )
 }
 
 export default function AssinarPage() {
+  const [step, setStep] = useState<'plan' | 'form'>('plan')
   const [plans, setPlans] = useState<PublicPlan[]>([])
   const [loadingPlans, setLoadingPlans] = useState(true)
   const [plan, setPlan] = useState<string>('')
@@ -53,17 +120,21 @@ export default function AssinarPage() {
   useEffect(() => {
     fetch('/api/public/plans')
       .then((res) => res.json())
-      .then((data: PublicPlan[]) => {
-        setPlans(data)
-        if (data.length > 0) setPlan(data[0].id)
-      })
+      .then((data: PublicPlan[]) => setPlans(data))
       .finally(() => setLoadingPlans(false))
   }, [])
 
   const selectedPlan = plans.find((p) => p.id === plan) ?? null
   const isFree = !!selectedPlan?.is_free
+  const highestPrice = Math.max(0, ...plans.map((p) => p.price_brl))
 
   const setField = (key: keyof typeof form, value: string) => setForm((prev) => ({ ...prev, [key]: value }))
+
+  const choosePlan = (id: string) => {
+    setPlan(id)
+    setStep('form')
+    setError(null)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -94,12 +165,45 @@ export default function AssinarPage() {
     }
   }
 
+  if (step === 'plan') {
+    return (
+      <div className="min-h-screen bg-background px-4 py-12">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-text-main">Escolha seu plano</h1>
+            <p className="text-sm text-text-muted mt-1">Comece agora na Digital Alpha. Você preenche seus dados no próximo passo.</p>
+          </div>
+
+          {loadingPlans ? (
+            <div className="flex justify-center py-20"><Loader2 className="animate-spin text-primary" size={32} /></div>
+          ) : (
+            <div className="grid gap-5" style={{ gridTemplateColumns: `repeat(${Math.min(plans.length, 3)}, minmax(0, 1fr))` }}>
+              {plans.map((p) => (
+                <PlanCard key={p.id} plan={p} onChoose={() => choosePlan(p.id)} highlight={!p.is_free && p.price_brl === highestPrice} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-lg">
         <div className="bg-surface border border-border rounded-xl p-8 shadow-sm">
+          <button
+            onClick={() => setStep('plan')}
+            className="flex items-center gap-1 text-xs text-text-muted hover:text-primary mb-4 transition-colors"
+          >
+            <ChevronLeft size={14} /> Trocar plano
+          </button>
+
           <h1 className="text-xl font-bold text-text-main mb-1">Assine a Digital Alpha</h1>
-          <p className="text-sm text-text-muted mb-6">Preencha seus dados e escolha o plano pra começar.</p>
+          <p className="text-sm text-text-muted mb-6">
+            Plano escolhido: <strong className="text-text-main">{selectedPlan?.name}</strong>
+            {selectedPlan && !selectedPlan.is_free && ` — R$ ${selectedPlan.price_brl.toFixed(2).replace('.', ',')}/mês`}
+          </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -126,30 +230,6 @@ export default function AssinarPage() {
                   ? 'Usamos isso pra identificar seu cadastro e evitar que o plano Gratuito seja renovado com e-mails diferentes.'
                   : 'Precisamos disso pra liberar seu acesso ao Meta Ads/Instagram depois.'}
               </p>
-            </div>
-
-            <div>
-              <label className={labelCls}>Escolha seu plano</label>
-              {loadingPlans ? (
-                <p className="text-sm text-text-muted">Carregando planos...</p>
-              ) : (
-                <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(plans.length, 3)}, 1fr)` }}>
-                  {plans.map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => setPlan(p.id)}
-                      className={`flex flex-col items-center justify-center gap-0.5 py-3 rounded-xl border text-center transition-colors ${
-                        plan === p.id ? 'bg-primary/10 border-primary text-primary' : 'bg-background border-border text-text-muted hover:border-primary/40'
-                      }`}
-                    >
-                      <span className="text-sm font-semibold">{p.name}</span>
-                      <span className="text-xs">{p.is_free ? 'Grátis' : `R$ ${p.price_brl.toFixed(2).replace('.', ',')}/mês`}</span>
-                      <span className="text-[10px] text-text-muted px-2 text-center">{planDesc(p)}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
 
             {!isFree && (
@@ -192,7 +272,7 @@ export default function AssinarPage() {
 
             <button
               type="submit"
-              disabled={loading || loadingPlans}
+              disabled={loading}
               className="w-full py-3.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
             >
               {loading ? <Loader2 size={18} className="animate-spin" /> : null}
