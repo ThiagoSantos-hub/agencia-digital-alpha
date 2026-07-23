@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
+import { checkAndStoreMetaAdsIdentity } from '@/lib/metaAdsIdentity'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -51,6 +52,16 @@ export async function GET(request: NextRequest) {
 
     if (!collaborator) {
       return NextResponse.redirect(new URL('/colaborador/integracoes?error=collaborator_not_found', request.url))
+    }
+
+    // Mesma trava do plano Gratuito do callback principal (app/api/auth/callback/meta) —
+    // um colaborador conectando não pode contornar o limite.
+    const { data: profile } = await supabase.from('profiles').select('company_id').eq('id', user.id).single()
+    if (profile?.company_id) {
+      const { blocked } = await checkAndStoreMetaAdsIdentity(profile.company_id, finalToken)
+      if (blocked) {
+        return NextResponse.redirect(new URL('/colaborador/integracoes?error=meta_free_plan_duplicate', request.url))
+      }
     }
 
     // Salvar token na tabela collaborator_integrations
