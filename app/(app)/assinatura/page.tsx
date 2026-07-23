@@ -244,7 +244,7 @@ export default function AssinaturaPage() {
                 <h2 className="text-lg font-bold text-text-main">Apagar perfil do Facebook?</h2>
               </div>
               <p className="text-sm text-text-muted mb-4">
-                Sem esse perfil cadastrado, o suporte não consegue verificar automaticamente seu histórico de teste grátis/pagamento caso precise recadastrar a conta no futuro. Essa ação não afeta seu acesso atual.
+                Sem esse perfil cadastrado, o suporte não consegue verificar automaticamente seu histórico de cadastro/pagamento caso precise recadastrar a conta no futuro. Essa ação não afeta seu acesso atual.
               </p>
               <p className="text-xs text-text-muted mb-2">
                 Pra confirmar, digite exatamente o perfil cadastrado: <strong className="text-text-main">{company.meta_tester_profile}</strong>

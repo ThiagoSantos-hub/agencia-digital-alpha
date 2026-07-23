@@ -53,7 +53,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     if (existing) return
   }
 
-  const { companyName, adminName, adminEmail, phone, facebookProfile, paymentMethod, plan, trialDays } = metadata as Record<string, string>
+  const { companyName, adminName, adminEmail, phone, facebookProfile, paymentMethod, plan } = metadata as Record<string, string>
   const tempPassword = generateTempPassword()
 
   const provisionInput = paymentMethod === 'pix'
@@ -73,7 +73,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
         paymentMethod: 'card' as const,
         stripeCustomerId,
         stripeSubscriptionId: typeof session.subscription === 'string' ? session.subscription : session.subscription?.id,
-        subscriptionStatus: 'trialing',
+        subscriptionStatus: 'active',
       }
 
   const result = await provisionCompany(provisionInput)
@@ -94,7 +94,6 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     tempPassword,
     plan: plan as 'basico' | 'pro' | 'premium',
     paymentMethod: paymentMethod as 'card' | 'pix',
-    trialDays: trialDays ? parseInt(trialDays, 10) : 0,
   })
 }
 
