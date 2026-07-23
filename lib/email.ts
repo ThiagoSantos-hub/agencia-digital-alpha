@@ -35,7 +35,7 @@ async function sendBrevoEmail(payload: {
   }
 }
 
-function planDetalhesHtml(planRow: PlanRow | null, paymentMethod: 'card' | 'pix' | null, trialDays: number): string {
+function planDetalhesHtml(planRow: PlanRow | null, paymentMethod: 'card' | 'pix' | null): string {
   if (!planRow) return ''
 
   const preco = paymentMethod === 'pix' ? planRow.price_brl * 1.1 : planRow.price_brl
@@ -45,9 +45,7 @@ function planDetalhesHtml(planRow: PlanRow | null, paymentMethod: 'card' | 'pix'
     ? 'Plano gratuito, sem cobrança nenhuma.'
     : paymentMethod === 'pix'
       ? 'Pagamento único via Pix, válido por 30 dias. Para continuar usando depois desse prazo, é só pagar de novo dentro do sistema, em "Assinatura".'
-      : trialDays > 0
-        ? `Você está com ${trialDays} dias de teste grátis. Depois desse período, a cobrança de R$ ${preco.toFixed(2).replace('.', ',')} por mês começa automaticamente no cartão cadastrado.`
-        : `Assinatura mensal recorrente de R$ ${preco.toFixed(2).replace('.', ',')}, cobrada automaticamente todo mês no cartão cadastrado.`
+      : `Assinatura mensal recorrente de R$ ${preco.toFixed(2).replace('.', ',')}, cobrada automaticamente todo mês no cartão cadastrado.`
 
   return `
     <table role="presentation" width="100%" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; margin: 24px 0;">
@@ -69,9 +67,8 @@ export async function sendWelcomeEmail(params: {
   tempPassword: string
   plan?: Plan | null
   paymentMethod?: 'card' | 'pix' | null
-  trialDays?: number
 }): Promise<{ ok: boolean }> {
-  const { companyName, adminName, adminEmail, tempPassword, plan = null, paymentMethod = null, trialDays = 0 } = params
+  const { companyName, adminName, adminEmail, tempPassword, plan = null, paymentMethod = null } = params
   const planRow = await getPlanById(plan)
 
   return sendBrevoEmail({
@@ -97,7 +94,7 @@ export async function sendWelcomeEmail(params: {
                 O acesso da empresa <strong>${companyName}</strong> à plataforma foi criado com sucesso.
               </p>
 
-              ${planDetalhesHtml(planRow, paymentMethod, trialDays)}
+              ${planDetalhesHtml(planRow, paymentMethod)}
 
               <table role="presentation" width="100%" style="background: #f3f4f6; border-radius: 10px; margin: 8px 0 24px 0;">
                 <tr>

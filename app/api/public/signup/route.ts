@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
-import { getTrialDaysForSignup, isFacebookProfileInBadStanding, hasFacebookProfileUsedFreePlan } from '@/lib/billing'
+import { isFacebookProfileInBadStanding, hasFacebookProfileUsedFreePlan } from '@/lib/billing'
 import { getPlanById, priceIdForPlan } from '@/lib/plans'
 import { provisionCompany, generateTempPassword } from '@/lib/companyProvisioning'
 import { sendWelcomeEmail } from '@/lib/email'
@@ -84,21 +84,19 @@ export async function POST(request: Request) {
     const priceId = await priceIdForPlan(planRow.id)
 
     if (paymentMethod === 'card') {
-      const trialDays = await getTrialDaysForSignup(facebookProfile)
       const session = await stripe.checkout.sessions.create({
         mode: 'subscription',
         line_items: [{ price: priceId, quantity: 1 }],
-        subscription_data: trialDays > 0 ? { trial_period_days: trialDays } : undefined,
         customer_email: adminEmail,
         success_url: successUrl,
         cancel_url: cancelUrl,
-        metadata: { companyName, adminName, adminEmail, phone, facebookProfile, paymentMethod, plan: planRow.id, trialDays: String(trialDays) },
+        metadata: { companyName, adminName, adminEmail, phone, facebookProfile, paymentMethod, plan: planRow.id },
       })
       return NextResponse.json({ url: session.url })
     }
 
     // Pix: pagamento avulso (não é Pix Automático, sem mandato recorrente),
-    // preço do plano escolhido + 10%, libera 30 dias, sem trial.
+    // preço do plano escolhido + 10%, libera 30 dias.
     const basePrice = await stripe.prices.retrieve(priceId)
     const pixAmount = Math.round((basePrice.unit_amount ?? 0) * 1.1)
 

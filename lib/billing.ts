@@ -45,30 +45,3 @@ export async function hasFacebookProfileUsedFreePlan(facebookProfile: string): P
 
   return (data ?? []).some((c) => c.meta_tester_profile && normalizeFacebookProfile(c.meta_tester_profile) === normalized)
 }
-
-// Dias de trial pro cartão: 0 se esse perfil do Facebook já foi usado em
-// QUALQUER cadastro anterior (o trial é por pessoa, não por empresa — criar
-// uma empresa nova não "reseta" o trial de quem já usou, mesmo que a empresa
-// anterior esteja ativa e em dia). Senão, 30 dias pras primeiras 20 empresas
-// cadastradas via cartão, 15 dias da 21ª em diante. Pix nunca tem trial
-// (decisão separada, tratada em app/api/public/signup/route.ts).
-export async function getTrialDaysForSignup(facebookProfile: string): Promise<number> {
-  const normalized = normalizeFacebookProfile(facebookProfile)
-
-  const { data: comFacebook } = await supabaseAdmin
-    .from('companies')
-    .select('meta_tester_profile')
-    .not('meta_tester_profile', 'is', null)
-
-  const jaUsouEssePerfil = (comFacebook ?? []).some(
-    (c) => c.meta_tester_profile && normalizeFacebookProfile(c.meta_tester_profile) === normalized
-  )
-  if (jaUsouEssePerfil) return 0
-
-  const { count } = await supabaseAdmin
-    .from('companies')
-    .select('id', { count: 'exact', head: true })
-    .eq('payment_method', 'card')
-
-  return (count ?? 0) < 20 ? 30 : 15
-}
