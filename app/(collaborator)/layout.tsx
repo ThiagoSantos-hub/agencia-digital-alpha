@@ -276,17 +276,19 @@ export default function CollaboratorLayout({
           ))}
         </nav>
 
-        <div className="px-3 py-4 border-t border-border">
+        <div className="px-3 py-4 border-t border-border flex items-center gap-2">
           <motion.button
             onClick={() => signOut()}
             whileHover={{ x: 2 }}
             whileTap={{ scale: 0.98 }}
             transition={springSoft}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:text-red-600 hover:bg-red-50"
+            className="flex-1 min-w-0 flex items-center gap-2 px-3 py-2.5 rounded-xl text-red-500 hover:text-red-600 hover:bg-red-50"
           >
-            <LogOut size={18} />
-            <span className="text-sm font-semibold">Sair do sistema</span>
+            <LogOut size={18} className="shrink-0" />
+            <span className="text-sm font-semibold truncate">Sair do sistema</span>
           </motion.button>
+          <VoiceAssistantWidget />
+          <SupportChatWidget />
         </div>
       </aside>
 
@@ -413,9 +415,7 @@ export default function CollaboratorLayout({
 
       <NotificationToasts />
       <NotificationPermissionPrompt />
-      <VoiceAssistantWidget />
       <BillingAlertsModal />
-      <SupportChatWidget />
       <OnboardingMascot />
     </div>
   )
