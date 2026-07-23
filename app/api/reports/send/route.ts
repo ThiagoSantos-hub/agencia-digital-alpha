@@ -457,9 +457,22 @@ async function getInstagramMetrics(
     // fallback silenciosamente. follower_count = novos seguidores por dia
     // (time_series, soma no período); profile_views só aceita total_value
     // (já vem somado pro período inteiro, sem precisar somar dia a dia).
+    //
+    // Esse endpoint de insights do Instagram trata since/until como uma janela
+    // meio-aberta [since, until), diferente do time_range das campanhas do Meta
+    // Ads, que é inclusivo dos dois lados. Quando o período é um único dia
+    // (ex: "ontem", since === until), a janela fica com largura zero e a API
+    // volta sem nenhum valor pro dia. Por isso o until usado aqui é sempre
+    // dateEnd + 1 dia, garantindo que o próprio dateEnd entre na janela.
+    const umDiaDepois = (dataStr: string) => {
+      const d = new Date(`${dataStr}T00:00:00`)
+      d.setDate(d.getDate() + 1)
+      return d.toISOString().slice(0, 10)
+    }
+    const untilInsights = umDiaDepois(dateEnd)
     const [followerRes, viewsRes] = await Promise.all([
-      fetch(`https://graph.facebook.com/v19.0/${igAccountId}/insights?metric=follower_count&period=day&metric_type=time_series&since=${dateStart}&until=${dateEnd}&access_token=${accessToken}`),
-      fetch(`https://graph.facebook.com/v19.0/${igAccountId}/insights?metric=profile_views&period=day&metric_type=total_value&since=${dateStart}&until=${dateEnd}&access_token=${accessToken}`),
+      fetch(`https://graph.facebook.com/v19.0/${igAccountId}/insights?metric=follower_count&period=day&metric_type=time_series&since=${dateStart}&until=${untilInsights}&access_token=${accessToken}`),
+      fetch(`https://graph.facebook.com/v19.0/${igAccountId}/insights?metric=profile_views&period=day&metric_type=total_value&since=${dateStart}&until=${untilInsights}&access_token=${accessToken}`),
     ]);
     const followerData = await followerRes.json();
     const viewsData = await viewsRes.json();
