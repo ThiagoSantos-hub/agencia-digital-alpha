@@ -57,14 +57,18 @@ function limitsList(p: PublicPlan): string[] {
 
 // Card por plano (visual original) — bem mais compacto que a primeira versão
 // (fontes e espaçamentos menores) pra caber numa tela só, sem rolagem.
-function PlanCard({ plan, onChoose, highlight }: { plan: PublicPlan; onChoose: () => void; highlight: boolean }) {
+function PlanCard({ plan, onChoose, highlight, recommended }: { plan: PublicPlan; onChoose: () => void; highlight: boolean; recommended: boolean }) {
   return (
     <div
       className={`flex flex-col rounded-xl border p-3 transition-colors ${
-        highlight ? 'border-primary bg-primary/5 shadow-md' : 'border-border bg-surface'
+        recommended ? 'border-cta bg-cta/5 shadow-md ring-1 ring-cta/30' : highlight ? 'border-primary bg-primary/5 shadow-md' : 'border-border bg-surface'
       }`}
     >
-      {highlight ? (
+      {recommended ? (
+        <span className="self-start mb-1 flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide bg-cta text-white px-1.5 py-0.5 rounded-full">
+          <Sparkles size={9} /> Recomendado pra você
+        </span>
+      ) : highlight ? (
         <span className="self-start mb-1 text-[9px] font-bold uppercase tracking-wide bg-primary text-white px-1.5 py-0.5 rounded-full">
           Mais completo
         </span>
@@ -109,7 +113,11 @@ function PlanCard({ plan, onChoose, highlight }: { plan: PublicPlan; onChoose: (
       <button
         onClick={onChoose}
         className={`mt-2 w-full py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-          highlight ? 'bg-primary hover:bg-primary-hover text-white' : 'bg-background border border-border text-text-main hover:border-primary/40'
+          recommended
+            ? 'bg-cta hover:bg-cta-hover text-white'
+            : highlight
+              ? 'bg-primary hover:bg-primary-hover text-white'
+              : 'bg-background border border-border text-text-main hover:border-primary/40'
         }`}
       >
         Escolher {plan.name}
@@ -130,10 +138,10 @@ function AssinarForm() {
   const searchParams = useSearchParams()
   const planFromQuiz = searchParams.get('plan')
 
-  const [step, setStep] = useState<'plan' | 'form'>(planFromQuiz ? 'form' : 'plan')
+  const [step, setStep] = useState<'plan' | 'form'>('plan')
   const [plans, setPlans] = useState<PublicPlan[]>([])
   const [loadingPlans, setLoadingPlans] = useState(true)
-  const [plan, setPlan] = useState<string>(planFromQuiz ?? '')
+  const [plan, setPlan] = useState<string>('')
 
   const [form, setForm] = useState({
     companyName: '',
@@ -149,15 +157,9 @@ function AssinarForm() {
   useEffect(() => {
     fetch('/api/public/plans', { cache: 'no-store' })
       .then((res) => res.json())
-      .then((data: PublicPlan[]) => {
-        setPlans(data)
-        if (planFromQuiz && !data.some((p) => p.id === planFromQuiz)) {
-          setStep('plan')
-          setPlan('')
-        }
-      })
+      .then((data: PublicPlan[]) => setPlans(data))
       .finally(() => setLoadingPlans(false))
-  }, [planFromQuiz])
+  }, [])
 
   const selectedPlan = plans.find((p) => p.id === plan) ?? null
   const isFree = !!selectedPlan?.is_free
@@ -210,7 +212,13 @@ function AssinarForm() {
             <h1 className="text-lg font-bold text-text-main mb-4">Escolha seu plano</h1>
             <div className="max-w-5xl w-full grid gap-3 items-start" style={{ gridTemplateColumns: `repeat(${Math.min(plans.length, 3)}, minmax(0, 1fr))` }}>
               {plans.map((p) => (
-                <PlanCard key={p.id} plan={p} onChoose={() => choosePlan(p.id)} highlight={!p.is_free && p.price_brl === highestPrice} />
+                <PlanCard
+                  key={p.id}
+                  plan={p}
+                  onChoose={() => choosePlan(p.id)}
+                  highlight={!p.is_free && p.price_brl === highestPrice}
+                  recommended={p.id === planFromQuiz}
+                />
               ))}
             </div>
           </>
@@ -231,8 +239,8 @@ function AssinarForm() {
           </button>
 
           <h1 className="text-xl font-bold text-text-main mb-1">Assine a Digital Alpha</h1>
-          {planFromQuiz && (
-            <p className="flex items-center gap-1.5 text-xs text-primary font-medium mb-2">
+          {plan === planFromQuiz && (
+            <p className="flex items-center gap-1.5 text-xs text-cta font-medium mb-2">
               <Sparkles size={13} /> Recomendado com base nas suas respostas
             </p>
           )}
