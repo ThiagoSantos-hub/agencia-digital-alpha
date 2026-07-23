@@ -244,7 +244,10 @@ export default function SuperAdminPlanosPage() {
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="Ex: Ideal pra quem está começando e quer testar sem compromisso — gerencia seus primeiros clientes sem gastar nada."
             />
-            <p className="text-[11px] text-text-muted mt-1">Aparece na tela pública /assinar, embaixo do preço do plano.</p>
+            <p className={`text-[11px] mt-1 ${form.description.length > 200 ? 'text-amber-600' : 'text-text-muted'}`}>
+              {form.description.length} caracteres — aparece na tela pública /assinar, embaixo do preço do plano.
+              {form.description.length > 200 && ' Textos longos deixam o card mais alto e podem forçar rolagem na tela.'}
+            </p>
           </div>
 
           {error && <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-red-600 text-sm">{error}</div>}
@@ -381,7 +384,10 @@ export default function SuperAdminPlanosPage() {
                     onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                     placeholder="Ex: Ideal pra quem está começando e quer testar sem compromisso — gerencia seus primeiros clientes sem gastar nada."
                   />
-                  <p className="text-[11px] text-text-muted mt-1">Aparece na tela pública /assinar, embaixo do preço do plano.</p>
+                  <p className={`text-[11px] mt-1 ${editForm.description.length > 200 ? 'text-amber-600' : 'text-text-muted'}`}>
+                    {editForm.description.length} caracteres — aparece na tela pública /assinar, embaixo do preço do plano.
+                    {editForm.description.length > 200 && ' Textos longos deixam o card mais alto e podem forçar rolagem na tela.'}
+                  </p>
                 </div>
 
                 <div className="border-t border-border pt-3 mt-1">
