@@ -152,7 +152,7 @@ export function OnboardingMascot() {
               transition={{ type: 'spring', stiffness: 400, damping: 28 }}
               className="relative flex items-end justify-center"
             >
-              <div className="hidden sm:block w-40 md:w-48 -mr-10 mb-0 pointer-events-none select-none drop-shadow-2xl">
+              <div className="hidden sm:block w-64 md:w-80 -mr-16 mb-0 pointer-events-none select-none drop-shadow-2xl">
                 {mascotImg}
               </div>
 
