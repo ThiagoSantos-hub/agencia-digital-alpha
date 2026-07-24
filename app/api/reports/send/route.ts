@@ -4,6 +4,7 @@ import { createServerClient } from '@/lib/supabase-server';
 import { calcularProximoEnvio, calcularPeriodo } from '@/lib/reportSchedule';
 import { dispatchWebhook } from '@/lib/webhookDispatch';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { getInstagramMetrics } from '@/lib/metaInsights';
 
 const EVO_URL = process.env.EVOLUTION_API_URL || '';
 const EVO_KEY = process.env.EVOLUTION_API_KEY || '';
@@ -476,84 +477,5 @@ export async function POST(request: Request) {
 function formatarDataBR(dateStr: string): string {
   const [ano, mes, dia] = dateStr.split('-');
   return `${dia}/${mes}/${ano}`;
-}
-
-// Seguidores e visitas ao perfil do Instagram, usando a conta do Instagram
-// vinculada à mesma conta de anúncios do Meta Ads já conectada — não precisa
-// de uma conexão separada. "Visitas ao perfil" é a métrica oficial do
-// Instagram profile_views.
-async function getInstagramMetrics(
-  adAccountId: string,
-  accessToken: string,
-  dateStart: string,
-  dateEnd: string
-): Promise<{ seguidores: string; visitas: string }> {
-  const fallback = { seguidores: '—', visitas: '—' };
-  try {
-    const igAccountsRes = await fetch(
-      `https://graph.facebook.com/v19.0/${adAccountId}/instagram_accounts?access_token=${accessToken}`
-    );
-    const igAccountsData = await igAccountsRes.json();
-
-    if (igAccountsData?.error) {
-      console.error(`[getInstagramMetrics] erro ao buscar instagram_accounts de ${adAccountId}:`, igAccountsData.error.message ?? igAccountsData.error);
-      return fallback;
-    }
-    const igAccountId = igAccountsData?.data?.[0]?.id;
-    if (!igAccountId) {
-      console.error(`[getInstagramMetrics] conta de anúncios ${adAccountId} não tem Instagram vinculado (instagram_accounts veio vazio)`);
-      return fallback;
-    }
-
-    // follower_count e profile_views exigem metric_type diferentes — combinar os
-    // dois numa única chamada faz o Instagram recusar a requisição inteira com
-    // erro #100 ("metric incompatible with the metric type"), aí caía tudo pro
-    // fallback silenciosamente. follower_count = novos seguidores por dia
-    // (time_series, soma no período); profile_views só aceita total_value
-    // (já vem somado pro período inteiro, sem precisar somar dia a dia).
-    //
-    // Esse endpoint de insights do Instagram trata since/until como uma janela
-    // meio-aberta [since, until), diferente do time_range das campanhas do Meta
-    // Ads, que é inclusivo dos dois lados. Quando o período é um único dia
-    // (ex: "ontem", since === until), a janela fica com largura zero e a API
-    // volta sem nenhum valor pro dia. Por isso o until usado aqui é sempre
-    // dateEnd + 1 dia, garantindo que o próprio dateEnd entre na janela.
-    const umDiaDepois = (dataStr: string) => {
-      const d = new Date(`${dataStr}T00:00:00`)
-      d.setDate(d.getDate() + 1)
-      return d.toISOString().slice(0, 10)
-    }
-    const untilInsights = umDiaDepois(dateEnd)
-    const [followerRes, viewsRes] = await Promise.all([
-      fetch(`https://graph.facebook.com/v19.0/${igAccountId}/insights?metric=follower_count&period=day&metric_type=time_series&since=${dateStart}&until=${untilInsights}&access_token=${accessToken}`),
-      fetch(`https://graph.facebook.com/v19.0/${igAccountId}/insights?metric=profile_views&period=day&metric_type=total_value&since=${dateStart}&until=${untilInsights}&access_token=${accessToken}`),
-    ]);
-    const followerData = await followerRes.json();
-    const viewsData = await viewsRes.json();
-
-    if (followerData?.error) {
-      console.error(`[getInstagramMetrics] erro ao buscar follower_count de ${igAccountId}:`, followerData.error.message ?? followerData.error);
-    }
-    if (viewsData?.error) {
-      console.error(`[getInstagramMetrics] erro ao buscar profile_views de ${igAccountId}:`, viewsData.error.message ?? viewsData.error);
-    }
-
-    const valoresFollower: Array<{ value?: number }> = followerData?.data?.[0]?.values ?? [];
-    const novosSeguidores = followerData?.data
-      ? valoresFollower.reduce((soma, v) => soma + (v.value ?? 0), 0)
-      : null;
-
-    const visitasTotal = typeof viewsData?.data?.[0]?.total_value?.value === 'number'
-      ? viewsData.data[0].total_value.value
-      : null;
-
-    const seguidores = novosSeguidores !== null ? novosSeguidores.toLocaleString('pt-BR') : '—';
-    const visitas = visitasTotal !== null ? visitasTotal.toLocaleString('pt-BR') : '—';
-
-    return { seguidores, visitas };
-  } catch (err) {
-    console.error('[getInstagramMetrics] falha ao buscar métricas do Instagram:', err);
-    return fallback;
-  }
 }
 
