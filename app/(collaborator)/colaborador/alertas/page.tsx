@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Plus, Bell, Facebook, Globe, Trash2, Edit2, Copy, Smartphone, Users, AlertTriangle, DollarSign, Wallet, CheckCircle2, X, Save, Loader2 } from 'lucide-react'
 import { useAlertas, Alert, AlertInput } from '@/hooks/useAlertas'
 import { useWhatsApp } from '@/hooks/useWhatsApp'
@@ -9,6 +9,7 @@ import { FeatureLock } from '@/components/ui/FeatureLock'
 
 const fmtData = (d: string | null) => d ? new Date(`${d}T00:00:00`).toLocaleDateString('pt-BR') : '—'
 const hojeISO = () => new Date().toISOString().split('T')[0]
+const isVencido = (alert: Alert) => alert.tipo === 'fundo_cliente' && !!alert.proximo_vencimento && alert.proximo_vencimento <= hojeISO()
 
 const PERIODICIDADE_LABELS: Record<string, string> = {
   semanal: 'Semanal',
@@ -27,6 +28,15 @@ const inputVazio: AlertInput = {
 
 export default function ColaboradorAlertasPage() {
   const { alerts, loading, createAlerta, updateAlerta, deleteAlerta, toggleAtivo, marcarFundoColocado } = useAlertas()
+
+  // Fundo vencido sempre na frente, pra chamar atenção antes dos que ainda
+  // estão em dia, mantém a ordem original (mais recente primeiro) dentro de
+  // cada grupo.
+  const sortedAlerts = useMemo(
+    () => [...alerts].sort((a, b) => Number(isVencido(b)) - Number(isVencido(a))),
+    [alerts]
+  )
+
   const { groups: gruposAgencia, loadingGroups: carregandoGruposAgencia } = useWhatsApp('agency')
   const { groups: gruposProprios, loadingGroups: carregandoGruposProprios } = useWhatsApp('own')
 
@@ -152,8 +162,8 @@ export default function ColaboradorAlertasPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {alerts.map((alert) => {
-            const vencido = alert.tipo === 'fundo_cliente' && !!alert.proximo_vencimento && alert.proximo_vencimento <= hojeISO()
+          {sortedAlerts.map((alert) => {
+            const vencido = isVencido(alert)
             return (
             <div key={alert.id} className="bg-surface border border-border p-6 rounded-xl flex flex-col justify-between hover:border-primary/40 transition-colors shadow-sm">
               <div>

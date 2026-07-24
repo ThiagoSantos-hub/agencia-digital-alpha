@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Plus,
   Bell,
@@ -26,6 +26,7 @@ import { FeatureLock } from '@/components/ui/FeatureLock'
 
 const fmtData = (d: string | null) => d ? new Date(`${d}T00:00:00`).toLocaleDateString('pt-BR') : '—'
 const hojeISO = () => new Date().toISOString().split('T')[0]
+const isVencido = (alert: Alert) => alert.tipo === 'fundo_cliente' && !!alert.proximo_vencimento && alert.proximo_vencimento <= hojeISO()
 
 const PERIODICIDADE_LABELS: Record<string, string> = {
   semanal: 'Semanal',
@@ -55,6 +56,14 @@ const inputVazio: AlertInput = {
 export default function AlertasPage() {
   const { alerts, loading, createAlerta, updateAlerta, deleteAlerta, toggleAtivo, marcarFundoColocado } = useAlertas()
   const { groups: wpGroups, loadingGroups: wpLoadingGroups, fetchGroups: wpFetchGroups } = useWhatsApp()
+
+  // Fundo vencido sempre na frente, pra chamar atenção antes dos que ainda
+  // estão em dia, mantém a ordem original (mais recente primeiro) dentro de
+  // cada grupo.
+  const sortedAlerts = useMemo(
+    () => [...alerts].sort((a, b) => Number(isVencido(b)) - Number(isVencido(a))),
+    [alerts]
+  )
 
   const [clients, setClients] = useState<{ id: string; name: string; meta_ad_account_id: string | null }[]>([])
   useEffect(() => {
@@ -204,8 +213,8 @@ export default function AlertasPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {alerts.map((alert) => {
-            const vencido = alert.tipo === 'fundo_cliente' && !!alert.proximo_vencimento && alert.proximo_vencimento <= hojeISO()
+          {sortedAlerts.map((alert) => {
+            const vencido = isVencido(alert)
             return (
             <div key={alert.id} className="bg-surface border border-border p-6 rounded-xl flex flex-col justify-between hover:border-primary/40 transition-colors group shadow-sm">
               <div>
