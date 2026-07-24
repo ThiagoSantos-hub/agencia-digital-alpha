@@ -48,6 +48,8 @@ const inputVazio: AlertInput = {
   periodicidade: null,
   valor_fundo: null,
   proximo_vencimento: null,
+  horario_envio: '09:00',
+  forma_pagamento: null,
 }
 
 export default function AlertasPage() {
@@ -156,7 +158,7 @@ export default function AlertasPage() {
 
   const handleTipoFundo = () => handleTipoChange(
     'fundo_cliente',
-    '💰 LEMBRETE DE FUNDO\n\nCliente: <CLIENTE>\nValor: <VALOR>\nVencimento: <VENCIMENTO>',
+    '💰 LEMBRETE DE FUNDO\n\nCliente: <CLIENTE>\nValor: <VALOR>\nPagamento: <PAGAMENTO>\nVencimento: <VENCIMENTO>',
     'meta'
   )
 
@@ -243,7 +245,8 @@ export default function AlertasPage() {
                     <>
                       <p>Cliente: <span className="text-text-main">{alert.client?.name ?? '—'}</span></p>
                       <p>Valor: <span className="text-cta font-bold">R$ {Number(alert.valor_fundo ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></p>
-                      <p>Repete: <span className="text-text-main">{alert.periodicidade ? PERIODICIDADE_LABELS[alert.periodicidade] : '—'}</span></p>
+                      <p>Pagamento: <span className="text-text-main">{alert.forma_pagamento === 'boleto' ? 'Boleto' : alert.forma_pagamento === 'pix' ? 'Pix' : '—'}</span></p>
+                      <p>Repete: <span className="text-text-main">{alert.periodicidade ? PERIODICIDADE_LABELS[alert.periodicidade] : '—'}</span> às <span className="text-text-main">{alert.horario_envio || '—'}</span></p>
                       <p>Próximo vencimento: <span className={vencido ? 'text-red-600 font-bold' : 'text-text-main'}>{fmtData(alert.proximo_vencimento)}</span></p>
                     </>
                   ) : (
@@ -393,6 +396,41 @@ export default function AlertasPage() {
                       />
                     </div>
                   </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-text-muted uppercase">Horário do Lembrete</label>
+                      <input
+                        required
+                        type="time"
+                        value={formData.horario_envio ?? '09:00'}
+                        onChange={e => setFormData({...formData, horario_envio: e.target.value})}
+                        className="w-full bg-background border border-border rounded-xl px-4 py-2.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors text-sm text-text-main"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-text-muted uppercase">Forma de Pagamento</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setFormData({...formData, forma_pagamento: 'pix'})}
+                          className={`py-2 rounded-xl border text-xs font-medium transition-colors ${
+                            formData.forma_pagamento === 'pix' ? 'border-primary/40 text-primary bg-primary/10' : 'border-border text-text-muted'
+                          }`}
+                        >
+                          Pix
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormData({...formData, forma_pagamento: 'boleto'})}
+                          className={`py-2 rounded-xl border text-xs font-medium transition-colors ${
+                            formData.forma_pagamento === 'boleto' ? 'border-primary/40 text-primary bg-primary/10' : 'border-border text-text-muted'
+                          }`}
+                        >
+                          Boleto
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-text-muted uppercase">Repetir</label>
                     <div className="grid grid-cols-4 gap-2">
@@ -536,7 +574,7 @@ export default function AlertasPage() {
                       ? ['<CA>', '<SALDO>', '<TARGET>']
                       : formData.tipo === 'erro_conta'
                       ? ['<CA>', '<ACT_STATUS>', '<STATUS_DESCRIPTION>']
-                      : ['<CLIENTE>', '<VALOR>', '<VENCIMENTO>']
+                      : ['<CLIENTE>', '<VALOR>', '<PAGAMENTO>', '<VENCIMENTO>']
                     ).map(v => (
                       <button key={v} type="button" onClick={() => insertVariable(v)} className="text-[9px] bg-hover-bg px-1.5 py-0.5 rounded text-text-muted hover:text-text-main border border-border">{v}</button>
                     ))}
