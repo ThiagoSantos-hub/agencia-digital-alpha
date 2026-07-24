@@ -8,13 +8,15 @@ import { WhatsAppConnect } from '@/components/whatsapp/WhatsAppConnect'
 import { PersonalAIKeysCard } from '@/components/ai/PersonalAIKeysCard'
 import { getIntegrationErrorMessage } from '@/lib/integrationErrorMessages'
 
+// Logos hospedadas localmente (public/logos/), não linkadas de terceiro. Ver
+// comentário equivalente em app/(app)/integracoes/page.tsx.
 const INTEGRATION_ICONS: Record<string, string> = {
-  meta_ads: 'https://cdn.simpleicons.org/meta',
-  google_ads: 'https://www.gstatic.com/images/branding/product/2x/google_ads_48dp.png',
+  meta_ads: '/logos/meta.svg',
+  google_ads: '/logos/google-ads.svg',
   google_drive: 'https://www.gstatic.com/images/branding/product/2x/drive_2020q4_48dp.png',
-  openai: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/OpenAI_Logo.svg/200px-OpenAI_Logo.svg.png',
+  openai: '/logos/openai.svg',
   elevenlabs: 'https://cdn.simpleicons.org/elevenlabs',
-  whatsapp: 'https://cdn.simpleicons.org/whatsapp',
+  whatsapp: '/logos/whatsapp.svg',
   email: 'https://www.gstatic.com/images/branding/product/2x/gmail_2020q4_48dp.png',
 }
 

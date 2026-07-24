@@ -175,7 +175,8 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-cta/10 border border-cta/20">
-                <span className="text-xl">💬</span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logos/whatsapp.svg" alt="WhatsApp" className="w-5 h-5" />
               </div>
               <div>
                 <p className="text-text-main text-sm font-medium">WhatsApp Conectado</p>
@@ -348,7 +349,12 @@ export function WhatsAppConnect({ compact = false, showGroupsButton = false }: W
             onClick={handleConnect}
             className="text-sm px-6 py-3 rounded-xl font-semibold transition-all hover:opacity-90 flex items-center gap-2 mx-auto bg-[#25D366] text-white shadow-sm"
           >
-            {state.status === 'loading' ? <Loader2 size={18} className="animate-spin" /> : '📱'} 
+            {state.status === 'loading' ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src="/logos/whatsapp.svg" alt="" className="w-[18px] h-[18px] brightness-0 invert" />
+            )}{' '}
             Conectar WhatsApp
           </button>
           <p className="text-xs mt-3 text-text-disabled">

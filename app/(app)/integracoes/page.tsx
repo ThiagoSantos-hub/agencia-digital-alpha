@@ -35,18 +35,23 @@ const OAUTH_INTEGRATIONS = [
 const GOOGLE_INTEGRATIONS = ['google_ads', 'google_drive']
 const EXTRA_META_SLOTS = ['meta_ads_2', 'meta_ads_3', 'meta_ads_4']
 
+// Logos hospedadas localmente (public/logos/), não linkadas de terceiro.
+// Já pegamos 3 quebras diferentes de hotlink em produção (Wikipedia rejeitando
+// o tamanho de thumbnail, Brevo removendo o arquivo do WordPress deles, até a
+// própria gstatic.com do Google Ads sumindo), então parou de valer a pena
+// confiar em link externo pra isso.
 const INTEGRATION_ICONS: Record<string, string> = {
-  google_ads: 'https://www.gstatic.com/images/branding/product/2x/google_ads_48dp.png',
+  google_ads: '/logos/google-ads.svg',
   gmail: 'https://www.gstatic.com/images/branding/product/2x/gmail_2020q4_48dp.png',
   google_drive: 'https://www.gstatic.com/images/branding/product/2x/drive_2020q4_48dp.png',
   google_calendar: 'https://www.gstatic.com/images/branding/product/2x/calendar_2020q4_48dp.png',
-  meta_ads: 'https://cdn.simpleicons.org/meta',
-  meta_ads_2: 'https://cdn.simpleicons.org/meta',
-  meta_ads_3: 'https://cdn.simpleicons.org/meta',
-  meta_ads_4: 'https://cdn.simpleicons.org/meta',
-  brevo: 'https://www.brevo.com/wp-content/uploads/2023/01/brevo-logo.svg',
-  openai: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/OpenAI_Logo.svg/200px-OpenAI_Logo.svg.png',
-  evolution_api: 'https://cdn.simpleicons.org/whatsapp',
+  meta_ads: '/logos/meta.svg',
+  meta_ads_2: '/logos/meta.svg',
+  meta_ads_3: '/logos/meta.svg',
+  meta_ads_4: '/logos/meta.svg',
+  brevo: '/logos/brevo.svg',
+  openai: '/logos/openai.svg',
+  evolution_api: '/logos/whatsapp.svg',
   n8n: 'https://cdn.simpleicons.org/n8n',
   elevenlabs: 'https://cdn.simpleicons.org/elevenlabs',
   autentique: 'https://www.autentique.com.br/favicon.ico',
