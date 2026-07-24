@@ -3,6 +3,7 @@ import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { createServerClient } from '@/lib/supabase-server'
 import { alphaAI } from '@/lib/ai/AIService'
 import { buildClientMetricsSummary } from '@/lib/clientMetricsSummary'
+import { getReadClientFor } from '@/lib/superAdminDataClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +17,9 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
-  const { data } = await supabase
+  const dataClient = await getReadClientFor(supabase, user.id)
+
+  const { data } = await dataClient
     .from('client_ai_analyses')
     .select('content, generated_at')
     .eq('client_id', params.id)
@@ -44,7 +47,8 @@ export async function POST(_request: NextRequest, { params }: { params: { id: st
     return NextResponse.json({ error: 'Conecte sua chave da OpenAI em Integrações antes de gerar o diagnóstico.' }, { status: 403 })
   }
 
-  const resumo = await buildClientMetricsSummary(supabase, params.id)
+  const dataClient = await getReadClientFor(supabase, user.id)
+  const resumo = await buildClientMetricsSummary(dataClient, params.id)
   if (resumo === 'Cliente não encontrado.') {
     return NextResponse.json({ error: 'Cliente não encontrado' }, { status: 404 })
   }

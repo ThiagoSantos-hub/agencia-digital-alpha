@@ -3,6 +3,7 @@ import { createServerClient } from '@/lib/supabase-server'
 import { buildClientMetricsSummary } from '@/lib/clientMetricsSummary'
 import { OpenAIProvider } from '@/lib/ai/providers/openai.provider'
 import { TRAFFIC_CHIEF, SQUAD_MEMBERS, ALL_SQUAD, findSquadMember } from '@/lib/ai/trafficMastersSquad'
+import { getReadClientFor } from '@/lib/superAdminDataClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -50,7 +51,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     return NextResponse.json({ error: 'Escreva uma pergunta.' }, { status: 400 })
   }
 
-  const resumo = await buildClientMetricsSummary(supabase, params.id)
+  const dataClient = await getReadClientFor(supabase, user.id)
+  const resumo = await buildClientMetricsSummary(dataClient, params.id)
   if (resumo === 'Cliente não encontrado.') {
     return NextResponse.json({ error: 'Cliente não encontrado' }, { status: 404 })
   }
