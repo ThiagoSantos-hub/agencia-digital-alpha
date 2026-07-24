@@ -93,6 +93,73 @@ export async function POST(request: Request) {
 
   for (const alert of alerts) {
     try {
+      if (alert.tipo === 'fundo_cliente') {
+        const hojeStr = new Date().toISOString().split('T')[0]
+        const vencido = !!alert.proximo_vencimento && alert.proximo_vencimento <= hojeStr
+
+        if (!alert.client_id || !alert.proximo_vencimento) {
+          results.push({ id: alert.id, nome: alert.nome, status: 'skip', detail: 'Fundo sem cliente ou data configurada' })
+          continue
+        }
+        if (!vencido || alert.last_status === 'triggered') {
+          results.push({ id: alert.id, nome: alert.nome, status: vencido ? 'ja_disparado' : 'ok' })
+          continue
+        }
+
+        const { data: profile } = await supabase.from('profiles').select('company_id').eq('id', alert.user_id).single()
+        const { data: client } = await supabase.from('clients').select('name').eq('id', alert.client_id).maybeSingle()
+
+        // Mesmo limite mensal de disparos do plano usado pelos alertas de saldo/erro.
+        let dentroDoLimite = true
+        if (profile?.company_id) {
+          const { data: company } = await supabase.from('companies').select('plan').eq('id', profile.company_id).maybeSingle()
+          const { data: planRow } = company?.plan
+            ? await supabase.from('plans').select('monthly_alerts_limit').eq('id', company.plan).maybeSingle()
+            : { data: null }
+          const limite = planRow?.monthly_alerts_limit ?? null
+
+          if (limite !== null) {
+            const inicioMes = new Date()
+            inicioMes.setDate(1)
+            inicioMes.setHours(0, 0, 0, 0)
+            const { count } = await supabase
+              .from('alert_triggers')
+              .select('id', { count: 'exact', head: true })
+              .eq('company_id', profile.company_id)
+              .gte('triggered_at', inicioMes.toISOString())
+            dentroDoLimite = (count ?? 0) < limite
+          }
+        }
+
+        await supabase.from('alerts').update({
+          last_status: 'triggered',
+          last_triggered_at: new Date().toISOString(),
+        }).eq('id', alert.id)
+
+        if (!dentroDoLimite) {
+          results.push({ id: alert.id, nome: alert.nome, status: 'limite_plano_atingido' })
+          continue
+        }
+
+        const tokenValues: Record<string, string> = {
+          '<CLIENTE>': client?.name ?? 'Cliente',
+          '<VALOR>': Number(alert.valor_fundo ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+          '<VENCIMENTO>': new Date(`${alert.proximo_vencimento}T00:00:00`).toLocaleDateString('pt-BR'),
+        }
+        let mensagem = alert.mensagem_template
+        for (const [token, valor] of Object.entries(tokenValues)) mensagem = mensagem.replaceAll(token, valor)
+
+        const sendResult = await sendWhatsApp(alert.user_id, alert.recebedor_numero, mensagem)
+
+        if (profile?.company_id) {
+          await supabase.from('alert_triggers').insert({ alert_id: alert.id, company_id: profile.company_id })
+        }
+
+        triggeredCount++
+        results.push({ id: alert.id, nome: alert.nome, status: sendResult.sent ? 'disparado' : 'disparo_falhou', detail: sendResult.reason })
+        continue
+      }
+
       const { data: profile } = await supabase
         .from('profiles')
         .select('company_id')
