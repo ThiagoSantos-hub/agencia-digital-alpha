@@ -5,7 +5,6 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import {
   LayoutDashboard,
-  UsersRound,
   CheckSquare,
   Megaphone,
   Plug,
@@ -51,7 +50,6 @@ const menuGroups = [
     label: 'CLIENTES & CAMPANHAS',
     items: [
       { label: 'Acompanhamento',   href: '/colaborador/acompanhamento',   icon: TrendingUp, ativo: true },
-      { label: 'Clientes Agência', href: '/colaborador/clientes',         icon: UsersRound, ativo: true },
       { label: 'Campanhas',        href: '/colaborador/campanhas',        icon: Megaphone,  ativo: true  },
       { label: 'Relatórios',       href: '/colaborador/relatorios',       icon: BarChart2,  ativo: true },
       { label: 'Alertas',          href: '/colaborador/alertas',          icon: Bell,       ativo: true },
