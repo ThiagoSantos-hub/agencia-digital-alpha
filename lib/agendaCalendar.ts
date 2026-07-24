@@ -4,6 +4,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 export interface AgendaEvent {
   id: string
   title: string
+  description: string | null
   start: string | null
   end: string | null
   location: string | null
@@ -69,6 +70,7 @@ export async function fetchCalendarEvents(accessToken: string, timeMin: string, 
   return (data.items ?? []).map((item: any) => ({
     id: item.id,
     title: item.summary || '(sem título)',
+    description: item.description || null,
     start: item.start?.dateTime || item.start?.date || null,
     end: item.end?.dateTime || item.end?.date || null,
     location: item.location || null,

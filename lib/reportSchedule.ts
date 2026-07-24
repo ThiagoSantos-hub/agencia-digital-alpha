@@ -67,6 +67,14 @@ export function calcularPeriodo(
       ontem.setDate(hoje.getDate() - 1)
       return { dateStart: fmt(ontem), dateEnd: fmt(ontem), diasAtivo: 1 }
     }
+    case 'hoje': {
+      return { dateStart: fmt(hoje), dateEnd: fmt(hoje), diasAtivo: 1 }
+    }
+    case 'ultimos_15_dias': {
+      const ontem = new Date(hoje); ontem.setDate(hoje.getDate() - 1)
+      const inicio = new Date(hoje); inicio.setDate(hoje.getDate() - 15)
+      return { dateStart: fmt(inicio), dateEnd: fmt(ontem), diasAtivo: 15 }
+    }
     case 'personalizado': {
       if (dataInicio && dataFim) {
         const inicio = new Date(dataInicio)

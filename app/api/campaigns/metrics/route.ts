@@ -1,26 +1,44 @@
 import { createServerClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
+import { getInstagramMetrics } from '@/lib/metaInsights'
 
+// Mesma lista de variáveis colada em Relatórios (app/(app)/relatorios/criar),
+// filtrada pra só o que faz sentido como métrica de UMA campanha específica,
+// sem <DATA>/<CA>/<ORC> (metadado do relatório) nem <CAMP_1..10> (numeração
+// de campanhas dentro do relatório, não se aplica aqui).
 const ALL_META_METRICS = [
-  { key: 'impressions',                label: 'Impressões'            },
-  { key: 'reach',                      label: 'Alcance'               },
-  { key: 'clicks',                     label: 'Cliques'               },
-  { key: 'ctr',                        label: 'CTR'                   },
-  { key: 'spend',                      label: 'Gasto Total'           },
-  { key: 'cpm',                        label: 'CPM'                   },
-  { key: 'cpc',                        label: 'CPC'                   },
-  { key: 'frequency',                  label: 'Frequência'            },
-  { key: 'actions_lead',               label: 'Leads'                 },
-  { key: 'actions_purchase',           label: 'Compras'               },
-  { key: 'actions_whatsapp',           label: 'Mensagens WhatsApp'    },
-  { key: 'actions_link_click',         label: 'Cliques no Link'       },
-  { key: 'actions_page_engagement',    label: 'Engajamento'           },
-  { key: 'actions_post_engagement',    label: 'Engajamento no Post'   },
-  { key: 'actions_video_view',         label: 'Visualizações de Vídeo'},
-  { key: 'actions_omni_purchase',      label: 'Compras (Omni)'        },
-  { key: 'cost_per_action_lead',       label: 'Custo por Lead'        },
-  { key: 'cost_per_action_purchase',   label: 'Custo por Compra'      },
-  { key: 'cost_per_action_whatsapp',   label: 'Custo por WhatsApp'    },
+  { key: 'inv',              label: 'Investido'              },
+  { key: 'impressions',      label: 'Impressões'             },
+  { key: 'reach',            label: 'Alcance'                },
+  { key: 'clicks',           label: 'Cliques'                },
+  { key: 'frequency',        label: 'Frequência'             },
+  { key: 'cpm',              label: 'CPM'                    },
+  { key: 'cpc',              label: 'CPC'                    },
+  { key: 'ctr',              label: 'CTR'                    },
+  { key: 'ctr_link',         label: 'CTR do Link'            },
+  { key: 'cpc_link',         label: 'CPC do Link'            },
+  { key: 'result',           label: 'Resultados'             },
+  { key: 'cost_per_result',  label: 'Custo por Resultado'    },
+  { key: 'add_to_cart',      label: 'Adic. Carrinho'         },
+  { key: 'cost_add_to_cart', label: 'Custo por Carrinho'     },
+  { key: 'view_dest_site',   label: 'View Destino Site'      },
+  { key: 'view_dest',        label: 'View Destino'           },
+  { key: 'cost_view_dest',   label: 'Custo por View Destino' },
+  { key: 'inic_compra',      label: 'Início de Compra'       },
+  { key: 'cost_inic_compra', label: 'Custo por Início de Compra' },
+  { key: 'compras',          label: 'Compras'                },
+  { key: 'cost_compra',      label: 'Custo por Compra'       },
+  { key: 'conv_compra',      label: 'Valor de Conversão'     },
+  { key: 'roas',             label: 'ROAS'                   },
+  { key: 'lucro',            label: 'Lucro'                  },
+  { key: 'gancho',           label: 'Taxa de Gancho'         },
+  { key: 'conv_whats',       label: 'Conversas WhatsApp'     },
+  { key: 'conv_form',        label: 'Conversão Formulário'   },
+  { key: 'conv_total',       label: 'Conversões Totais'      },
+  { key: 'taxa_conv',        label: 'Taxa de Conversão'      },
+  { key: 'ticket_medio',     label: 'Ticket Médio'           },
+  { key: 'ig_seguidores',    label: 'Seguidores Instagram'   },
+  { key: 'ig_visitas',       label: 'Visitas ao Perfil (IG)' },
 ]
 
 export async function GET() {
@@ -67,7 +85,7 @@ export async function POST(req: Request) {
     const inicio = dateStart || fmt(trintaDiasAtras)
     const fim    = dateEnd   || fmt(hoje)
 
-    const fields = 'impressions,reach,clicks,ctr,spend,cpm,cpc,frequency,actions,cost_per_action_type'
+    const fields = 'impressions,reach,clicks,ctr,spend,cpm,cpc,frequency,actions,cost_per_action_type,purchase_roas,conversion_values,video_30_sec_watched_actions,outbound_clicks_ctr,cost_per_outbound_click'
     const metaUrl = new URL(`https://graph.facebook.com/v19.0/${metaCampaignId}/insights`)
     metaUrl.searchParams.set('fields', fields)
     metaUrl.searchParams.set('time_range', JSON.stringify({ since: inicio, until: fim }))
@@ -88,40 +106,89 @@ export async function POST(req: Request) {
     const getCost = (key: string) =>
       insight.cost_per_action_type?.find((a: any) => a.action_type === key)?.value ?? null
 
-    const fmtBRL = (v: string | null) =>
-      v ? parseFloat(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : null
-    const fmtNum = (v: string | null) =>
-      v ? parseInt(v).toLocaleString('pt-BR') : null
-    const fmtDec = (v: string | null) =>
-      v ? parseFloat(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : null
-    const fmtPct = (v: string | null) =>
-      v ? `${parseFloat(v).toFixed(2)}%` : null
+    const fmtBRL = (v: string | number | null) =>
+      v ? parseFloat(String(v)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : null
+    const fmtNum = (v: string | number | null) =>
+      v ? Math.round(parseFloat(String(v))).toLocaleString('pt-BR') : null
+    const fmtDec = (v: string | number | null) =>
+      v ? parseFloat(String(v)).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : null
+    const fmtPct = (v: string | number | null) =>
+      v ? `${parseFloat(String(v)).toFixed(2)}%` : null
+
+    const convValues = parseFloat(insight.conversion_values ?? '0')
+    const lucro = convValues - parseFloat(insight.spend ?? '0')
+    const video3s = parseFloat(insight.video_30_sec_watched_actions?.[0]?.value ?? '0')
+    const taxaGancho = insight.impressions > 0 ? (video3s / parseFloat(insight.impressions)) * 100 : 0
+
+    const resultValue =
+      getAction('onsite_conversion.messaging_conversation_started_7d') ||
+      getAction('lead') ||
+      getAction('purchase')
+    const resultCost =
+      getCost('onsite_conversion.messaging_conversation_started_7d') ||
+      getCost('lead') ||
+      getCost('purchase')
+
+    const convWhats = Number(getAction('onsite_conversion.messaging_conversation_started_7d') ?? 0)
+    const convForm = Number(getAction('lead') ?? 0)
+    const convPurchase = Number(getAction('purchase') ?? 0)
+    const convTotal = convWhats + convForm + convPurchase
+    const cliques = parseFloat(insight.clicks ?? '0')
+    const taxaConv = cliques > 0 ? (convTotal / cliques) * 100 : 0
+    const ticketMedio = convPurchase > 0 ? convValues / convPurchase : 0
+
+    // Seguidores/visitas do Instagram são da conta de anúncios do cliente, não
+    // da campanha em si, mesmo valor pra qualquer campanha desse cliente.
+    let igSeguidores: string | null = null
+    let igVisitas: string | null = null
+    const { data: campaignRow } = await supabase.from('campaigns').select('client_id').eq('id', campaignId).maybeSingle()
+    if (campaignRow?.client_id) {
+      const { data: clientRow } = await supabase.from('clients').select('meta_ad_account_id').eq('id', campaignRow.client_id).maybeSingle()
+      if (clientRow?.meta_ad_account_id) {
+        const ig = await getInstagramMetrics(clientRow.meta_ad_account_id, integration.access_token, inicio, fim)
+        igSeguidores = ig.seguidores
+        igVisitas = ig.visitas
+      }
+    }
 
     const allValues: Record<string, string | null> = {
-      impressions:               fmtNum(insight.impressions),
-      reach:                     fmtNum(insight.reach),
-      clicks:                    fmtNum(insight.clicks),
-      ctr:                       fmtPct(insight.ctr),
-      spend:                     fmtBRL(insight.spend),
-      cpm:                       fmtBRL(insight.cpm),
-      cpc:                       fmtBRL(insight.cpc),
-      frequency:                 fmtDec(insight.frequency),
-      actions_lead:              fmtNum(getAction('lead')),
-      actions_purchase:          fmtNum(getAction('purchase')),
-      actions_whatsapp:          fmtNum(getAction('onsite_conversion.messaging_conversation_started_7d')),
-      actions_link_click:        fmtNum(getAction('link_click')),
-      actions_page_engagement:   fmtNum(getAction('page_engagement')),
-      actions_post_engagement:   fmtNum(getAction('post_engagement')),
-      actions_video_view:        fmtNum(getAction('video_view')),
-      actions_omni_purchase:     fmtNum(getAction('omni_purchase')),
-      cost_per_action_lead:      fmtBRL(getCost('lead')),
-      cost_per_action_purchase:  fmtBRL(getCost('purchase')),
-      cost_per_action_whatsapp:  fmtBRL(getCost('onsite_conversion.messaging_conversation_started_7d')),
+      inv:              fmtBRL(insight.spend),
+      impressions:      fmtNum(insight.impressions),
+      reach:            fmtNum(insight.reach),
+      clicks:           fmtNum(insight.clicks),
+      frequency:        fmtDec(insight.frequency),
+      cpm:              fmtBRL(insight.cpm),
+      cpc:              fmtBRL(insight.cpc),
+      ctr:              fmtPct(insight.ctr),
+      ctr_link:         fmtPct(insight.outbound_clicks_ctr?.[0]?.value ?? null),
+      cpc_link:         fmtBRL(insight.cost_per_outbound_click?.[0]?.value ?? null),
+      result:           fmtNum(resultValue),
+      cost_per_result:  fmtBRL(resultCost),
+      add_to_cart:      fmtNum(getAction('add_to_cart')),
+      cost_add_to_cart: fmtBRL(getCost('add_to_cart')),
+      view_dest_site:   fmtNum(getAction('landing_page_view')),
+      view_dest:        fmtNum(getAction('view_content')),
+      cost_view_dest:   fmtBRL(getCost('view_content')),
+      inic_compra:      fmtNum(getAction('initiate_checkout')),
+      cost_inic_compra: fmtBRL(getCost('initiate_checkout')),
+      compras:          fmtNum(getAction('purchase')),
+      cost_compra:      fmtBRL(getCost('purchase')),
+      conv_compra:      fmtBRL(convValues > 0 ? convValues : null),
+      roas:             insight.purchase_roas?.[0]?.value ? `${parseFloat(insight.purchase_roas[0].value).toFixed(2)}x` : null,
+      lucro:            fmtBRL(lucro > 0 ? lucro : null),
+      gancho:           fmtPct(taxaGancho > 0 ? taxaGancho : null),
+      conv_whats:       fmtNum(getAction('onsite_conversion.messaging_conversation_started_7d')),
+      conv_form:        fmtNum(getAction('lead')),
+      conv_total:       fmtNum(convTotal > 0 ? convTotal : null),
+      taxa_conv:        fmtPct(taxaConv > 0 ? taxaConv : null),
+      ticket_medio:     fmtBRL(ticketMedio > 0 ? ticketMedio : null),
+      ig_seguidores:    igSeguidores,
+      ig_visitas:       igVisitas,
     }
 
     const keys: string[] = selectedMetrics?.length
       ? selectedMetrics
-      : ['impressions', 'reach', 'clicks', 'ctr', 'spend', 'cpm', 'cpc']
+      : ['impressions', 'reach', 'clicks', 'ctr', 'inv', 'cpm', 'cpc']
 
     const agora = new Date().toISOString()
 

@@ -245,6 +245,30 @@ export function useClientes() {
 
       dispararEvento('cliente.atualizado', { id: data.id, name: data.name, status: data.status })
 
+      // Cliente renomeado: lançamentos já criados (pagos ou não) guardam o nome
+      // antigo na descrição, ex: "Mensalidade - Nome Antigo", sem isso o
+      // Financeiro fica com o nome desatualizado pra sempre.
+      if (input.name !== undefined && clienteAtual && input.name !== clienteAtual.name) {
+        const nomeAntigo = clienteAtual.name
+        const nomeNovo = data.name
+
+        const { data: lancamentos } = await supabase
+          .from('finances')
+          .select('id, descricao')
+          .eq('client_id', id)
+
+        if (lancamentos) {
+          for (const l of lancamentos) {
+            if (l.descricao?.includes(nomeAntigo)) {
+              await supabase
+                .from('finances')
+                .update({ descricao: l.descricao.replaceAll(nomeAntigo, nomeNovo) })
+                .eq('id', l.id)
+            }
+          }
+        }
+      }
+
       // Se marcou como ativo (pagou), atualizar o financeiro
       if (estaMarcandoComoPago) {
         const hoje = new Date()

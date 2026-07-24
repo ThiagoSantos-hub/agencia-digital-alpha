@@ -160,6 +160,7 @@ export async function POST(request: Request) {
           costs: {} as Record<string, number>,
           roas: 0,
           count: 0,
+          outbound_ctr_sum: 0, outbound_cpc_sum: 0,
         };
         // Só entra na lista quem realmente teve dado da Meta no período — sem
         // reservar posição pra quem não tem meta_campaign_id ou não teve
@@ -170,7 +171,7 @@ export async function POST(request: Request) {
 
         for (const campaign of campaigns) {
           if (!campaign.meta_campaign_id) continue;
-          const fields = 'impressions,reach,clicks,ctr,spend,cpm,cpc,frequency,actions,cost_per_action_type,purchase_roas,conversion_values,video_30_sec_watched_actions';
+          const fields = 'impressions,reach,clicks,ctr,spend,cpm,cpc,frequency,actions,cost_per_action_type,purchase_roas,conversion_values,video_30_sec_watched_actions,outbound_clicks_ctr,cost_per_outbound_click';
           const metaUrl = new URL(`https://graph.facebook.com/v19.0/${campaign.meta_campaign_id}/insights`);
           metaUrl.searchParams.set('fields', fields);
           metaUrl.searchParams.set('time_range', JSON.stringify({ since: dateStart, until: dateEnd }));
@@ -195,6 +196,8 @@ export async function POST(request: Request) {
           acc.conv_values   += parseFloat(d.conversion_values ?? '0');
           acc.video3s       += parseFloat(d.video_30_sec_watched_actions?.[0]?.value ?? '0');
           acc.roas          += parseFloat(d.purchase_roas?.[0]?.value ?? '0');
+          acc.outbound_ctr_sum += parseFloat(d.outbound_clicks_ctr?.[0]?.value ?? '0');
+          acc.outbound_cpc_sum += parseFloat(d.cost_per_outbound_click?.[0]?.value ?? '0');
 
           for (const action of (d.actions ?? [])) {
             acc.actions[action.action_type] = (acc.actions[action.action_type] ?? 0) + parseFloat(action.value ?? '0');
@@ -233,6 +236,8 @@ export async function POST(request: Request) {
 
           const granaNoB   = acc.conv_values - acc.spend;
           const taxaGancho = acc.impressions > 0 ? (acc.video3s / acc.impressions) * 100 : 0;
+          const ctrLinkMedio = acc.outbound_ctr_sum / acc.count;
+          const cpcLinkMedio = acc.outbound_cpc_sum / acc.count;
 
           const resultValue =
             getAction('onsite_conversion.messaging_conversation_started_7d') ||
@@ -242,6 +247,15 @@ export async function POST(request: Request) {
             getCost('onsite_conversion.messaging_conversation_started_7d') ||
             getCost('lead') ||
             getCost('purchase');
+
+          // Soma das 3 conversões que o sistema já rastreia (WhatsApp, formulário/lead,
+          // compra), usada em <CONV_TOTAL> e <TAXA_CONV>.
+          const convWhats = Number(getAction('onsite_conversion.messaging_conversation_started_7d') ?? 0);
+          const convForm = Number(getAction('lead') ?? 0);
+          const convPurchase = Number(getAction('purchase') ?? 0);
+          const convTotal = convWhats + convForm + convPurchase;
+          const taxaConv = acc.clicks > 0 ? (convTotal / acc.clicks) * 100 : 0;
+          const ticketMedio = convPurchase > 0 ? acc.conv_values / convPurchase : 0;
 
           metaValues = {
             '<DATA>':              `${formatarDataBR(dateStart)} a ${formatarDataBR(dateEnd)}`,
@@ -270,6 +284,15 @@ export async function POST(request: Request) {
             '<ROAS>':              roasMedio > 0 ? `${roasMedio.toFixed(2).replace('.', ',')}x` : '—',
             '<GRANA>':             fmtBRL(granaNoB > 0 ? granaNoB : null),
             '<GANCHO>':            fmtPct(taxaGancho > 0 ? taxaGancho : null),
+            '<CLICKS>':            fmtNum(acc.clicks),
+            '<CONV_WHATS>':        fmtNum(getAction('onsite_conversion.messaging_conversation_started_7d')),
+            '<CONV_FORM>':         fmtNum(getAction('lead')),
+            '<CONV_TOTAL>':        fmtNum(convTotal > 0 ? String(convTotal) : null),
+            '<TAXA_CONV>':         fmtPct(taxaConv > 0 ? taxaConv : null),
+            '<TICKET_MEDIO>':      fmtBRL(ticketMedio > 0 ? ticketMedio : null),
+            '<LUCRO>':             fmtBRL(granaNoB > 0 ? granaNoB : null),
+            '<CTR_LINK>':          fmtPct(ctrLinkMedio > 0 ? ctrLinkMedio : null),
+            '<CPC_LINK>':          fmtBRL(cpcLinkMedio > 0 ? cpcLinkMedio : null),
             ...Object.fromEntries(
               Array.from({ length: 10 }, (_, i) => [
                 `<CAMP_${i + 1}>`,

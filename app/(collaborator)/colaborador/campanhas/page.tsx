@@ -11,6 +11,16 @@ import {
   ChevronUp, User, Settings2, X, Check, CreditCard,
   Wallet,
 } from 'lucide-react'
+import { calcularPeriodo } from '@/lib/reportSchedule'
+
+const PERIODO_OPTIONS = [
+  { value: 'ontem', label: 'Ontem' },
+  { value: 'hoje', label: 'Hoje' },
+  { value: 'ultimos_3_dias', label: 'Últ. 3 dias' },
+  { value: 'ultimos_15_dias', label: 'Últ. 15 dias' },
+  { value: 'ultimos_30_dias', label: 'Últ. 30 dias' },
+  { value: 'personalizado', label: '📅 Custom' },
+]
 
 const statusConfig = {
   ativa:      { label: 'Ativa',      className: 'text-cta bg-cta/10 border-cta/30' },
@@ -344,10 +354,18 @@ export default function ColaboradorCampanhasPage() {
   }, [])
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('ativa')
+  const [periodoPreset, setPeriodoPreset] = useState('ultimos_30_dias')
   const [dateStart, setDateStart] = useState('')
   const [dateEnd, setDateEnd] = useState('')
   const [localError, setLocalError] = useState<string | null>(null)
   const [blockedClientIds, setBlockedClientIds] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    if (periodoPreset === 'personalizado') return
+    const { dateStart: ds, dateEnd: de } = calcularPeriodo(periodoPreset)
+    setDateStart(ds)
+    setDateEnd(de)
+  }, [periodoPreset])
 
   // IMPORTANTE: só atualiza o Set quando o valor realmente muda — evita loop infinito de re-render
   const handleStatusDetected = useCallback((clienteId: string, bloqueada: boolean) => {
@@ -456,11 +474,29 @@ export default function ColaboradorCampanhasPage() {
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-background border border-border rounded-xl">
+        <div className="flex items-center gap-2 flex-wrap">
           <Calendar size={16} className="text-primary" />
-          <input type="date" value={dateStart} onChange={e => setDateStart(e.target.value)} className="bg-transparent text-text-main text-sm focus:outline-none" />
-          <span className="text-text-disabled">—</span>
-          <input type="date" value={dateEnd} onChange={e => setDateEnd(e.target.value)} className="bg-transparent text-text-main text-sm focus:outline-none" />
+          {PERIODO_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setPeriodoPreset(opt.value)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                periodoPreset === opt.value
+                  ? 'bg-primary/10 border border-primary text-primary'
+                  : 'bg-background border border-border text-text-muted hover:text-text-main'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+          {periodoPreset === 'personalizado' && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-background border border-border rounded-xl">
+              <input type="date" value={dateStart} onChange={e => setDateStart(e.target.value)} className="bg-transparent text-text-main text-sm focus:outline-none" />
+              <span className="text-text-disabled">—</span>
+              <input type="date" value={dateEnd} onChange={e => setDateEnd(e.target.value)} className="bg-transparent text-text-main text-sm focus:outline-none" />
+            </div>
+          )}
         </div>
       </div>
 
