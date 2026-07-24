@@ -111,10 +111,12 @@ export default function AlertasPage() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este alerta?')) {
-      await deleteAlerta(id)
-    }
+  const [deletingAlert, setDeletingAlert] = useState<Alert | null>(null)
+
+  const confirmDelete = async () => {
+    if (!deletingAlert) return
+    await deleteAlerta(deletingAlert.id)
+    setDeletingAlert(null)
   }
 
   const handleMarcarFundo = async (alert: Alert) => {
@@ -287,7 +289,7 @@ export default function AlertasPage() {
                       <Copy size={16} />
                     </button>
                   </FeatureLock>
-                  <button onClick={() => handleDelete(alert.id)} className="p-1.5 hover:bg-red-50 rounded-lg text-text-muted hover:text-red-600 transition-colors">
+                  <button onClick={() => setDeletingAlert(alert)} className="p-1.5 hover:bg-red-50 rounded-lg text-text-muted hover:text-red-600 transition-colors">
                     <Trash2 size={16} />
                   </button>
                 </div>
@@ -607,6 +609,25 @@ export default function AlertasPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {deletingAlert && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDeletingAlert(null)} />
+          <div className="relative w-full max-w-sm bg-surface border border-red-200 rounded-xl p-6 shadow-2xl">
+            <div className="w-12 h-12 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center mx-auto mb-4">
+              <Trash2 size={20} className="text-red-500" />
+            </div>
+            <h3 className="text-text-main font-semibold text-center mb-1">Excluir alerta?</h3>
+            <p className="text-text-muted text-sm text-center mb-6">
+              Tem certeza que deseja excluir <span className="font-semibold text-text-main">{deletingAlert.nome}</span>? Essa ação não pode ser desfeita.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeletingAlert(null)} className="flex-1 py-2.5 rounded-xl border border-border text-text-muted text-sm hover:text-text-main transition-colors">Não</button>
+              <button onClick={confirmDelete} className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors">Sim, excluir</button>
+            </div>
           </div>
         </div>
       )}
