@@ -17,6 +17,8 @@ export interface Task {
   assigned_to: string
   due_date: string | null
   drive_link: string | null
+  whatsapp_destino: string | null
+  whatsapp_fonte: 'own' | 'agency' | null
   created_at: string
   updated_at: string
   creator?: { name: string | null; email: string }
@@ -115,7 +117,9 @@ export function useTasks() {
         created_by: user.id,
         assigned_to: task.assigned_to || user.id,
         due_date: task.due_date || null,
-        drive_link: task.drive_link || null
+        drive_link: task.drive_link || null,
+        whatsapp_destino: task.whatsapp_destino || null,
+        whatsapp_fonte: task.whatsapp_fonte || null,
       }
 
       const { data, error: insertError } = await supabase

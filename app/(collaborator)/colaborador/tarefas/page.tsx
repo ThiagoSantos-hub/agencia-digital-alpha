@@ -114,9 +114,18 @@ export default function CollaboratorTasksPage() {
       return
     }
     try {
-      await createTask({ ...newTask, assigned_to: newTask.assigned_to })
-
       const destino = whatsappTipo === 'privado' ? whatsappNumero.replace(/\D/g, '') : whatsappTipo === 'grupo' ? whatsappGrupo : ''
+      const fonte = whatsappTipo === 'grupo' && grupoEscolhidoNaAgencia ? 'agency' : 'own'
+
+      await createTask({
+        ...newTask,
+        assigned_to: newTask.assigned_to,
+        // Guarda o destino escolhido na própria tarefa, reaproveitado depois
+        // pra mandar mais um aviso automático se ela virar "urgente".
+        whatsapp_destino: destino || null,
+        whatsapp_fonte: destino ? fonte : null,
+      })
+
       if (destino) {
         const assignee = allUsers.find((u) => u.id === newTask.assigned_to)
         fetch('/api/tasks/notify-whatsapp', {
@@ -124,7 +133,7 @@ export default function CollaboratorTasksPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             destino,
-            fonte: whatsappTipo === 'grupo' && grupoEscolhidoNaAgencia ? 'agency' : 'own',
+            fonte,
             taskTitle: newTask.title,
             assigneeName: assignee?.name || assignee?.email,
           }),
