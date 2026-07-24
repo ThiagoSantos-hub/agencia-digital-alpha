@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
+import { getReadClientFor } from '@/lib/superAdminDataClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,10 +29,14 @@ function bucketKey(dateStr: string, granularity: Granularity): string {
 // RLS de client_metrics_daily (client_metrics_daily_select_company) já
 // restringe a leitura à empresa de quem está logado, não precisa checar
 // company_id manualmente aqui, uma consulta pra outra empresa só volta vazia.
+// Exceção: superadmin não tem empresa própria, então usa service-role pra
+// conseguir acompanhar cliente de qualquer agência (getReadClientFor).
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const supabase = createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+
+  const dataClient = await getReadClientFor(supabase, user.id)
 
   const granularity = (request.nextUrl.searchParams.get('granularity') ?? 'daily') as Granularity
   if (!DAYS_BACK[granularity]) {
@@ -41,7 +46,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   const desde = new Date()
   desde.setDate(desde.getDate() - DAYS_BACK[granularity])
 
-  const { data: rows, error } = await supabase
+  const { data: rows, error } = await dataClient
     .from('client_metrics_daily')
     .select('metric_date, source, impressions, reach, clicks, spend, leads, purchases, followers_count, profile_views')
     .eq('client_id', params.id)
