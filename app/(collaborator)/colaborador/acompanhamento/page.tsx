@@ -23,10 +23,13 @@ export default function ColaboradorAcompanhamentoPage() {
   useEffect(() => {
     if (!profile?.id) return
     async function fetch() {
+      // clients_directory, não a tabela clients direto: já traz os próprios
+      // clientes do colaborador MAIS os clientes cadastrados pela agência
+      // (RLS da view cobre isso). Só filtrar por manager_id aqui escondia os
+      // clientes da agência, que o colaborador também precisa acompanhar.
       const { data } = await supabase
-        .from('clients')
+        .from('clients_directory')
         .select('id, name, company, meta_ad_account_id')
-        .eq('manager_id', profile!.id)
         .neq('status', 'inativo')
         .order('name', { ascending: true })
       setClients(data ?? [])
@@ -43,14 +46,14 @@ export default function ColaboradorAcompanhamentoPage() {
         <h1 className="text-text-main text-xl font-bold flex items-center gap-2">
           <TrendingUp size={20} className="text-primary" /> Acompanhamento do Cliente
         </h1>
-        <p className="text-text-muted text-sm mt-1">Escolha um dos seus clientes pra ver crescimento, métricas e diagnóstico com IA.</p>
+        <p className="text-text-muted text-sm mt-1">Escolha um cliente pra ver crescimento, métricas e diagnóstico com IA.</p>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12"><Loader2 size={24} className="animate-spin text-text-muted" /></div>
       ) : clients.length === 0 ? (
         <div className="bg-surface border border-border rounded-xl p-6 text-text-muted text-sm">
-          Você ainda não tem clientes cadastrados em Meus Clientes.
+          Nenhum cliente disponível ainda (nem seu, nem da agência).
         </div>
       ) : (
         <>
