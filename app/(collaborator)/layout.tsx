@@ -23,7 +23,8 @@ import {
   Rocket,
   CalendarClock,
   Bot,
-  Settings
+  Settings,
+  TrendingUp
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase'
@@ -52,6 +53,7 @@ const menuGroups = [
     label: 'CLIENTES & CAMPANHAS',
     items: [
       { label: 'Meus Clientes',    href: '/colaborador/meus-clientes',    icon: Users,      ativo: true },
+      { label: 'Acompanhamento',   href: '/colaborador/acompanhamento',   icon: TrendingUp, ativo: true },
       { label: 'Clientes Agência', href: '/colaborador/clientes',         icon: UsersRound, ativo: true },
       { label: 'Campanhas',        href: '/colaborador/campanhas',        icon: Megaphone,  ativo: true  },
       { label: 'Relatórios',       href: '/colaborador/relatorios',       icon: BarChart2,  ativo: true },

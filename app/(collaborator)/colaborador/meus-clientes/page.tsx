@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { useClientes, Client } from '@/hooks/useClientes'
 import { useAuth } from '@/hooks/useAuth'
 import { useColaboradorFinance } from '@/hooks/useColaboradorFinance'
@@ -183,7 +182,6 @@ function ModalEditarCliente({ client, onClose }: { client: Client; onClose: () =
 }
 
 export default function MeusClientesPage() {
-  const router = useRouter()
   const { profile } = useAuth()
   const { clients, loading, updateCliente } = useClientes()
   const [search, setSearch] = useState('')
@@ -232,16 +230,12 @@ export default function MeusClientesPage() {
             {list.length === 0 ? (
               <tr><td colSpan={5} className="px-3 py-6 text-center text-text-disabled text-sm">Nenhum cliente cadastrado por você.</td></tr>
             ) : list.map((c) => (
-              <tr
-                key={c.id}
-                onClick={() => router.push(`/colaborador/meus-clientes/${c.id}`)}
-                className="hover:bg-hover-bg transition-colors cursor-pointer"
-              >
+              <tr key={c.id} className="hover:bg-hover-bg transition-colors">
                 <td className="px-3 py-2 whitespace-nowrap">
                   <span className="text-text-main font-bold text-xs">{c.name}</span>
                   <span className="text-text-muted text-[10px] ml-1.5">{c.company || '—'}</span>
                 </td>
-                <td className="px-3 py-2 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                <td className="px-3 py-2 whitespace-nowrap">
                   <div className="inline-flex items-center gap-1.5">
                     {contatoRevelado.has(c.id) ? (
                       <>
@@ -256,7 +250,7 @@ export default function MeusClientesPage() {
                     </button>
                   </div>
                 </td>
-                <td className="px-3 py-2 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                <td className="px-3 py-2 whitespace-nowrap">
                   <div className="inline-flex items-center gap-1.5">
                     {financeiroRevelado.has(c.id) ? (
                       <>
@@ -279,7 +273,7 @@ export default function MeusClientesPage() {
                     )}
                   </div>
                 </td>
-                <td className="px-3 py-2 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                <td className="px-3 py-2 whitespace-nowrap">
                   <div className="inline-flex items-center gap-1">
                     <div className="inline-flex items-center bg-background border border-border rounded-lg p-0.5">
                       <button onClick={() => handleQuickStatus(c.id, 'ativo')} title="Ativo" className={`p-1 rounded-md ${c.status === 'ativo' ? 'bg-cta/15 text-cta' : 'text-text-disabled hover:text-cta'}`}><CheckCircle2 size={12} /></button>
