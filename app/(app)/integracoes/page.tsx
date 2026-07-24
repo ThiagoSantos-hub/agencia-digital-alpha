@@ -40,13 +40,13 @@ const INTEGRATION_ICONS: Record<string, string> = {
   gmail: 'https://www.gstatic.com/images/branding/product/2x/gmail_2020q4_48dp.png',
   google_drive: 'https://www.gstatic.com/images/branding/product/2x/drive_2020q4_48dp.png',
   google_calendar: 'https://www.gstatic.com/images/branding/product/2x/calendar_2020q4_48dp.png',
-  meta_ads: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/200px-Meta_Platforms_Inc._logo.svg.png',
-  meta_ads_2: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/200px-Meta_Platforms_Inc._logo.svg.png',
-  meta_ads_3: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/200px-Meta_Platforms_Inc._logo.svg.png',
-  meta_ads_4: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/200px-Meta_Platforms_Inc._logo.svg.png',
+  meta_ads: 'https://cdn.simpleicons.org/meta',
+  meta_ads_2: 'https://cdn.simpleicons.org/meta',
+  meta_ads_3: 'https://cdn.simpleicons.org/meta',
+  meta_ads_4: 'https://cdn.simpleicons.org/meta',
   brevo: 'https://www.brevo.com/wp-content/uploads/2023/01/brevo-logo.svg',
   openai: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/OpenAI_Logo.svg/200px-OpenAI_Logo.svg.png',
-  evolution_api: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/200px-WhatsApp.svg.png',
+  evolution_api: 'https://cdn.simpleicons.org/whatsapp',
   n8n: 'https://cdn.simpleicons.org/n8n',
   elevenlabs: 'https://cdn.simpleicons.org/elevenlabs',
   autentique: 'https://www.autentique.com.br/favicon.ico',
@@ -543,6 +543,12 @@ export default function IntegracoesPage() {
               </button>
             ))}
           </div>
+          <p className="text-xs text-text-muted mb-4">
+            Ainda não tem conta em nenhum dos dois? Cadastre-se direto:{' '}
+            <a href="https://www.autentique.com.br" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Autentique</a>
+            {' · '}
+            <a href="https://www.assinafy.com.br" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Assinafy</a>
+          </p>
         </FeatureLock>
       </section>
 
