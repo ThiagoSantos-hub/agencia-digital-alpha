@@ -94,13 +94,43 @@ export function markNotificationPermissionAsked(): void {
   markNotificationPermissionDeclinedToday()
 }
 
+let sharedAudioCtx: AudioContext | null = null
+let unlockListenersAttached = false
+
+/**
+ * Contexto único reaproveitado entre chamadas. Criar um AudioContext novo a
+ * cada toque faz o navegador entregá-lo "suspended" (política de autoplay),
+ * e como o toque aqui é disparado por um evento de rede (Realtime), nunca por
+ * um clique, o som saía mudo sem nenhum erro, por isso o sino "nunca tocava".
+ */
+function getSharedAudioContext(): AudioContext | null {
+  if (typeof window === 'undefined') return null
+  const Ctx = window.AudioContext || (window as any).webkitAudioContext
+  if (!Ctx) return null
+  if (!sharedAudioCtx) sharedAudioCtx = new Ctx()
+  return sharedAudioCtx
+}
+
+/** Qualquer interação na página tenta destravar o áudio, mesmo antes de existir notificação */
+function attachUnlockListeners(): void {
+  if (typeof window === 'undefined' || unlockListenersAttached) return
+  unlockListenersAttached = true
+  const unlock = () => {
+    const ctx = getSharedAudioContext()
+    if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {})
+  }
+  document.addEventListener('click', unlock)
+  document.addEventListener('keydown', unlock)
+  document.addEventListener('touchstart', unlock)
+}
+attachUnlockListeners()
+
 /** Toca campainha curta (Web Audio — sem arquivo externo) */
 export function playNotificationChime(): void {
-  if (typeof window === 'undefined') return
-  try {
-    const Ctx = window.AudioContext || (window as any).webkitAudioContext
-    if (!Ctx) return
-    const ctx = new Ctx()
+  const ctx = getSharedAudioContext()
+  if (!ctx) return
+
+  const schedule = () => {
     const now = ctx.currentTime
 
     const beep = (freq: number, start: number, dur: number, gain = 0.12) => {
@@ -119,10 +149,14 @@ export function playNotificationChime(): void {
 
     beep(880, now, 0.18, 0.14)
     beep(1174, now + 0.16, 0.22, 0.11)
+  }
 
-    setTimeout(() => {
-      ctx.close().catch(() => {})
-    }, 800)
+  try {
+    if (ctx.state === 'suspended') {
+      ctx.resume().then(schedule).catch(() => {})
+    } else {
+      schedule()
+    }
   } catch {
     /* ignore */
   }
