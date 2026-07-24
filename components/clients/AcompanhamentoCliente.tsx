@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { GrowthChart } from './GrowthChart'
 import { MeetingMode } from './MeetingMode'
+import { TrafficSquad } from './TrafficSquad'
 import {
   TrendingUp, Instagram, Target, Sparkles, Loader2,
   Presentation, Lock, RefreshCw, Users as UsersIcon,
@@ -105,9 +106,11 @@ function MetricStat({ label, value }: { label: string; value: string }) {
 
 export function AcompanhamentoCards({
   data,
+  clientId,
   size = 'normal',
 }: {
   data: ReturnType<typeof useAcompanhamentoData>
+  clientId: string
   size?: 'normal' | 'large'
 }) {
   const { granularity, setGranularity, growth, loadingGrowth, analysis, loadingAnalysis, generating, analysisError, gerarAnalise } = data
@@ -219,6 +222,8 @@ export function AcompanhamentoCards({
           <p className="text-text-muted text-sm">Nenhum diagnóstico gerado ainda. Clique em "Gerar novo diagnóstico".</p>
         )}
       </div>
+
+      <TrafficSquad clientId={clientId} />
     </div>
   )
 }
@@ -239,11 +244,11 @@ export function AcompanhamentoCliente({ clientId, clientName }: { clientId: stri
         </button>
       </div>
 
-      <AcompanhamentoCards data={data} />
+      <AcompanhamentoCards data={data} clientId={clientId} />
 
       {modoReuniao && (
         <MeetingMode clientName={clientName} onClose={() => setModoReuniao(false)}>
-          <AcompanhamentoCards data={data} size="large" />
+          <AcompanhamentoCards data={data} clientId={clientId} size="large" />
         </MeetingMode>
       )}
     </div>
