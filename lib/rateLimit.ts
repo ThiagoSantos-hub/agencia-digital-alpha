@@ -32,3 +32,9 @@ export async function checkRateLimit(key: string, limit: number, windowSeconds: 
 
   return (data as number) <= limit
 }
+
+// Zera o contador de uma chave (ex: depois de um login que deu certo, pra
+// não deixar tentativas falhas antigas bloqueando o próximo login legítimo).
+export async function resetRateLimit(key: string): Promise<void> {
+  await supabaseAdmin.from('rate_limits').delete().eq('key', key)
+}

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createPasswordResetToken } from '@/lib/passwordReset'
 import { sendPasswordResetEmail } from '@/lib/email'
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,6 +16,12 @@ const supabaseAdmin = createClient(
 // descobrir quais e-mails têm conta no sistema.
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request)
+    const dentroDoLimite = await checkRateLimit(`forgot-password:${ip}`, 10, 600)
+    if (!dentroDoLimite) {
+      return NextResponse.json({ error: 'Muitas tentativas. Aguarde alguns minutos.' }, { status: 429 })
+    }
+
     const { email } = await request.json()
     if (!email) {
       return NextResponse.json({ error: 'E-mail é obrigatório.' }, { status: 400 })

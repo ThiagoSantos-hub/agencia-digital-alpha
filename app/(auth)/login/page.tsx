@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { createClient } from '@/lib/supabase'
+import { Modal } from '@/components/ui/Modal'
 import {
   Mail,
   Lock,
@@ -34,6 +35,10 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null)
   const [resetSent, setResetSent] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+  const [showLockoutModal, setShowLockoutModal] = useState(false)
+  const [lockoutEmail, setLockoutEmail] = useState('')
+  const [lockoutSubmitting, setLockoutSubmitting] = useState(false)
+  const [lockoutSent, setLockoutSent] = useState(false)
   const { signIn, signInWithGoogle } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -68,9 +73,35 @@ function LoginForm() {
     const { error } = await signIn(email, password)
 
     if (error) {
-      setError('E-mail ou senha inválidos. Tente novamente.')
       setLoading(false)
+
+      let blocked = false
+      try {
+        const res = await fetch('/api/auth/login-attempt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        })
+        const data = await res.json()
+        blocked = !!data.blocked
+      } catch {
+        // Se a checagem falhar, não bloqueia o login por causa disso, só
+        // mostra o erro normal.
+      }
+
+      if (blocked) {
+        setShowLockoutModal(true)
+      } else {
+        setError('E-mail ou senha inválidos. Tente novamente.')
+      }
     } else {
+      // Login deu certo, zera as tentativas falhas desse e-mail (fire-and-forget).
+      fetch('/api/auth/login-attempt', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      }).catch(() => {})
+
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const { data: profile } = await supabase
@@ -78,7 +109,7 @@ function LoginForm() {
           .select('*')
           .eq('id', user.id)
           .single()
-        
+
         if (profile?.role === 'collaborator') {
           router.replace('/colaborador/dashboard')
         } else {
@@ -87,6 +118,22 @@ function LoginForm() {
       } else {
         router.replace('/dashboard')
       }
+    }
+  }
+
+  const handleLockoutSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!lockoutEmail) return
+    setLockoutSubmitting(true)
+    try {
+      await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: lockoutEmail }),
+      })
+    } finally {
+      setLockoutSubmitting(false)
+      setLockoutSent(true)
     }
   }
 
@@ -264,6 +311,48 @@ function LoginForm() {
           </p>
         </div>
       </div>
+
+      <Modal
+        open={showLockoutModal}
+        onClose={() => {
+          setShowLockoutModal(false)
+          setLockoutEmail('')
+          setLockoutSent(false)
+        }}
+        title="Muitas tentativas de login"
+        description="Por segurança, bloqueamos novas tentativas nesse acesso."
+        size="sm"
+      >
+        {lockoutSent ? (
+          <p className="text-sm text-text-main">
+            Se esse e-mail estiver cadastrado no sistema, você vai receber um link de redefinição de senha em
+            instantes. Confira sua caixa de entrada (e o spam).
+          </p>
+        ) : (
+          <form onSubmit={handleLockoutSubmit} className="space-y-3">
+            <p className="text-sm text-text-muted">
+              Digite o e-mail cadastrado na sua conta pra receber um link de redefinição de senha.
+            </p>
+            <input
+              type="email"
+              value={lockoutEmail}
+              onChange={(e) => setLockoutEmail(e.target.value)}
+              placeholder="Digite o e-mail cadastrado"
+              autoComplete="off"
+              autoFocus
+              required
+              className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-text-main placeholder:text-text-disabled focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+            />
+            <button
+              type="submit"
+              disabled={lockoutSubmitting}
+              className="w-full py-2.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white font-semibold rounded-xl transition-colors"
+            >
+              {lockoutSubmitting ? 'Enviando...' : 'Enviar link de redefinição'}
+            </button>
+          </form>
+        )}
+      </Modal>
     </div>
   )
 }
