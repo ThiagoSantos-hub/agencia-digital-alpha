@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getInstagramMetrics } from '@/lib/metaInsights';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -48,6 +49,7 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     let nomeConta = '—';
+    let clientAdAccountId: string | null = null;
 
     if (report.client_id) {
       const { data: client } = await supabase
@@ -58,6 +60,7 @@ export async function POST(request: Request) {
 
       if (client) {
         nomeConta = client.name;
+        clientAdAccountId = client.meta_ad_account_id;
 
         if (integration?.access_token && client.meta_ad_account_id) {
           try {
@@ -99,6 +102,8 @@ export async function POST(request: Request) {
           actions: {} as Record<string, number>,
           costs: {} as Record<string, number>,
           roas: 0,
+          outbound_ctr_sum: 0,
+          outbound_cpc_sum: 0,
           count: 0,
         };
         const conversasPorCampanha: number[] = [];
@@ -110,7 +115,7 @@ export async function POST(request: Request) {
           }
 
           const fields =
-            'impressions,reach,clicks,ctr,spend,cpm,cpc,frequency,actions,cost_per_action_type,purchase_roas,conversion_values,video_30_sec_watched_actions';
+            'impressions,reach,clicks,ctr,spend,cpm,cpc,frequency,actions,cost_per_action_type,purchase_roas,conversion_values,video_30_sec_watched_actions,outbound_clicks_ctr,cost_per_outbound_click';
           const metaUrl = new URL(
             `https://graph.facebook.com/v19.0/${campaign.meta_campaign_id}/insights`
           );
@@ -142,6 +147,8 @@ export async function POST(request: Request) {
             data.video_30_sec_watched_actions?.[0]?.value ?? '0'
           );
           acc.roas += parseFloat(data.purchase_roas?.[0]?.value ?? '0');
+          acc.outbound_ctr_sum += parseFloat(data.outbound_clicks_ctr?.[0]?.value ?? '0');
+          acc.outbound_cpc_sum += parseFloat(data.cost_per_outbound_click?.[0]?.value ?? '0');
 
           for (const action of data.actions ?? []) {
             acc.actions[action.action_type] =
@@ -197,6 +204,8 @@ export async function POST(request: Request) {
           const granaNoBolso = acc.conv_values - acc.spend;
           const taxaGancho =
             acc.impressions > 0 ? (acc.video3s / acc.impressions) * 100 : 0;
+          const ctrLinkMedio = acc.outbound_ctr_sum / acc.count;
+          const cpcLinkMedio = acc.outbound_cpc_sum / acc.count;
 
           const resultValue =
             getAction('onsite_conversion.messaging_conversation_started_7d') ||
@@ -206,6 +215,13 @@ export async function POST(request: Request) {
             getCost('onsite_conversion.messaging_conversation_started_7d') ||
             getCost('lead') ||
             getCost('purchase');
+
+          const convWhats = Number(getAction('onsite_conversion.messaging_conversation_started_7d') ?? 0);
+          const convForm = Number(getAction('lead') ?? 0);
+          const convPurchase = Number(getAction('purchase') ?? 0);
+          const convTotal = convWhats + convForm + convPurchase;
+          const taxaConv = acc.clicks > 0 ? (convTotal / acc.clicks) * 100 : 0;
+          const ticketMedio = convPurchase > 0 ? acc.conv_values / convPurchase : 0;
 
           metaValues = {
             '<DATA>': `${formatarDataBR(dateStart)} a ${formatarDataBR(dateEnd)}`,
@@ -239,6 +255,15 @@ export async function POST(request: Request) {
                 : '—',
             '<GRANA>': fmtBRL(granaNoBolso > 0 ? granaNoBolso : null),
             '<GANCHO>': fmtPct(taxaGancho > 0 ? taxaGancho : null),
+            '<CLICKS>': fmtNum(acc.clicks),
+            '<CONV_WHATS>': fmtNum(getAction('onsite_conversion.messaging_conversation_started_7d')),
+            '<CONV_FORM>': fmtNum(getAction('lead')),
+            '<CONV_TOTAL>': fmtNum(convTotal > 0 ? String(convTotal) : null),
+            '<TAXA_CONV>': fmtPct(taxaConv > 0 ? taxaConv : null),
+            '<TICKET_MEDIO>': fmtBRL(ticketMedio > 0 ? ticketMedio : null),
+            '<LUCRO>': fmtBRL(granaNoBolso > 0 ? granaNoBolso : null),
+            '<CTR_LINK>': fmtPct(ctrLinkMedio > 0 ? ctrLinkMedio : null),
+            '<CPC_LINK>': fmtBRL(cpcLinkMedio > 0 ? cpcLinkMedio : null),
             ...Object.fromEntries(
               Array.from({ length: 10 }, (_, index) => [
                 `<CAMP_${index + 1}>`,
@@ -248,6 +273,14 @@ export async function POST(request: Request) {
           };
         }
       }
+    }
+
+    // Seguidores e visitas ao perfil do Instagram, independe de ter campanha
+    // ativa (por isso fica fora do bloco acima), usa a conta do Instagram
+    // vinculada à mesma conta de anúncios já conectada do cliente.
+    if (integration?.access_token && clientAdAccountId) {
+      const igMetrics = await getInstagramMetrics(clientAdAccountId, integration.access_token, dateStart, dateEnd);
+      metaValues = { ...metaValues, '<IG_SEGUIDORES>': igMetrics.seguidores, '<IG_VISITAS>': igMetrics.visitas };
     }
 
     let mensagem = report.mensagem_template;
@@ -291,6 +324,24 @@ function calcularPeriodo(
         dateStart: formatarData(ontem),
         dateEnd: formatarData(ontem),
         diasAtivo: 1,
+      };
+    }
+    case 'hoje': {
+      return {
+        dateStart: formatarData(hoje),
+        dateEnd: formatarData(hoje),
+        diasAtivo: 1,
+      };
+    }
+    case 'ultimos_15_dias': {
+      const ontem = new Date(hoje);
+      ontem.setDate(hoje.getDate() - 1);
+      const inicio = new Date(hoje);
+      inicio.setDate(hoje.getDate() - 15);
+      return {
+        dateStart: formatarData(inicio),
+        dateEnd: formatarData(ontem),
+        diasAtivo: 15,
       };
     }
     case 'personalizado': {

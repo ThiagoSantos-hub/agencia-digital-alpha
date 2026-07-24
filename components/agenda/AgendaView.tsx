@@ -35,6 +35,7 @@ const PLATFORM_LOGOS: Record<'gmail' | 'google_calendar', string> = {
 interface AgendaEvent {
   id: string
   title: string
+  description: string | null
   start: string | null
   end: string | null
   location: string | null
@@ -164,18 +165,31 @@ function CalendarGrid({
   onDeleteRequest,
   dismissing,
   refreshKey,
+  focusEventId,
+  focusDate,
 }: {
   calendarConnected: boolean
   onDeleteRequest: (event: AgendaEvent) => void
   dismissing: string | null
   refreshKey: number
+  focusEventId?: string | null
+  focusDate?: Date | null
 }) {
   const [viewMonth, setViewMonth] = useState(() => {
-    const now = new Date()
-    return new Date(now.getFullYear(), now.getMonth(), 1)
+    const base = focusDate ?? new Date()
+    return new Date(base.getFullYear(), base.getMonth(), 1)
   })
   const [events, setEvents] = useState<AgendaEvent[]>([])
-  const [selectedDay, setSelectedDay] = useState<Date | null>(null)
+  const [selectedDay, setSelectedDay] = useState<Date | null>(focusDate ?? null)
+
+  // Veio de um link de "abrir no sistema" mandado pelo WhatsApp, já pula
+  // direto pro dia da reunião em vez de deixar a pessoa procurar no mês.
+  useEffect(() => {
+    if (focusDate) {
+      setViewMonth(new Date(focusDate.getFullYear(), focusDate.getMonth(), 1))
+      setSelectedDay(focusDate)
+    }
+  }, [focusDate])
 
   const gridDays = useMemo(() => {
     const lastOfMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 0)
@@ -291,10 +305,18 @@ function CalendarGrid({
           ) : (
             <div className="space-y-2">
               {selectedEvents.map((event) => (
-                <div key={event.id} className="group bg-surface border border-border rounded-xl p-3.5 flex gap-3 hover:border-primary/30 transition-colors">
+                <div
+                  key={event.id}
+                  className={`group bg-surface border rounded-xl p-3.5 flex gap-3 hover:border-primary/30 transition-colors ${
+                    focusEventId === event.id ? 'border-primary ring-1 ring-primary/30' : 'border-border'
+                  }`}
+                >
                   <div className="w-14 shrink-0 text-xs font-semibold text-primary pt-0.5">{formatTime(event.start, event.allDay)}</div>
                   <div className="flex-1 min-w-0">
                     <p className="text-text-main text-sm font-semibold truncate">{event.title}</p>
+                    {event.description && (
+                      <p className="text-text-muted text-xs mt-1 whitespace-pre-wrap">{event.description}</p>
+                    )}
                     {event.location && (
                       <p className="text-text-muted text-xs mt-1 flex items-center gap-1">
                         <MapPin size={11} className="shrink-0" /> <span className="truncate">{event.location}</span>
@@ -403,6 +425,9 @@ export function AgendaView() {
   }
 
   const success = searchParams.get('success')
+  const focusEventId = searchParams.get('evento')
+  const focusDateParam = searchParams.get('data')
+  const focusDate = focusDateParam ? new Date(focusDateParam) : null
 
   if (loading) {
     return (
@@ -507,6 +532,8 @@ export function AgendaView() {
             calendarConnected={data.calendarConnected}
             dismissing={dismissing}
             refreshKey={calendarRefreshKey}
+            focusEventId={focusEventId}
+            focusDate={focusDate}
             onDeleteRequest={(event) =>
               setConfirmTarget({ type: 'event', id: event.id, title: event.title, createdBySystem: event.createdBySystem })
             }

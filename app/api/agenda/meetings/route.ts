@@ -24,7 +24,9 @@ async function avisarWhatsApp(params: {
   callerId: string
   fonte: 'own' | 'agency'
   destino: string
+  eventId: string
   title: string
+  description?: string
   start: string
   location?: string
   meetLink?: string
@@ -32,12 +34,19 @@ async function avisarWhatsApp(params: {
   const instanceName = await resolveWhatsAppInstance(supabaseAdmin, params.callerId, params.fonte)
   if (!instanceName) return
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sistema.digitalalpha.store'
+  const linkSistema = `${appUrl}/agenda?evento=${encodeURIComponent(params.eventId)}&data=${encodeURIComponent(params.start)}`
+
   const linhas = [
     `📅 Nova reunião agendada: *${params.title}*`,
     `🗓 ${formatarDataHora(params.start)}`,
   ]
-  if (params.meetLink) linhas.push(`🔗 Videochamada: ${params.meetLink}`)
   if (params.location) linhas.push(`📍 ${params.location}`)
+  // Pauta vira o resumo da mensagem em vez de só os dados soltos, assim dá
+  // pra entender do que se trata a reunião sem abrir o sistema.
+  if (params.description) linhas.push('', '📝 *Pauta:*', params.description)
+  if (params.meetLink) linhas.push('', `🔗 Videochamada: ${params.meetLink}`)
+  linhas.push('', `👉 Ver detalhes no sistema: ${linkSistema}`)
 
   await sendWhatsAppText(instanceName, params.destino, linhas.join('\n'))
 }
@@ -89,7 +98,9 @@ export async function POST(request: NextRequest) {
       callerId: user.id,
       fonte,
       destino: whatsappDestino,
+      eventId: created.id,
       title,
+      description: description || undefined,
       start,
       location: location || undefined,
       meetLink: created.meetLink || undefined,
