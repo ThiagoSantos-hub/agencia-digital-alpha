@@ -37,9 +37,20 @@ export async function POST(req: Request) {
 
     const supabase = createServerClient()
 
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+
+    const { data: profile } = await supabase.from('profiles').select('company_id').eq('id', user.id).single()
+    if (!profile?.company_id) return NextResponse.json({ error: 'Empresa não encontrada' }, { status: 403 })
+
+    // Sem o filtro de company_id, com 2+ agências conectadas isso pegava a
+    // integração Meta Ads de QUALQUER empresa (a primeira que o Postgres
+    // retornasse), vazando token de uma empresa pro fetch de métricas de outra,
+    // ou quebrando de vez (maybeSingle falha se mais de 1 linha bater).
     const { data: integration } = await supabase
       .from('integrations')
       .select('access_token')
+      .eq('company_id', profile.company_id)
       .eq('type', 'meta_ads')
       .eq('status', 'connected')
       .maybeSingle()

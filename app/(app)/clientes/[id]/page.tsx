@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { Client } from '@/hooks/useClientes'
+import { AcompanhamentoCliente } from '@/components/clients/AcompanhamentoCliente'
 import {
   ArrowLeft, Pencil, Trash2, Loader2, X,
   Building2, Mail, Phone, CalendarDays, DollarSign, CreditCard, Clock, Target, Eye, EyeOff
@@ -181,7 +182,7 @@ export default function ClientePerfilPage() {
         />
       )}
 
-      <div className="max-w-2xl space-y-6">
+      <div className="max-w-5xl space-y-6">
         <div className="flex items-center gap-3">
           <button onClick={() => router.push('/clientes')}
             className="p-1.5 rounded-lg text-text-muted hover:text-text-main hover:bg-white/5 transition-colors">
@@ -200,6 +201,7 @@ export default function ClientePerfilPage() {
           </button>
         </div>
 
+        <div className="max-w-2xl space-y-6">
         <div className="bg-surface border border-border rounded-xl p-6 space-y-1">
           <div className="flex items-start justify-between mb-4">
             <div>
@@ -274,6 +276,18 @@ export default function ClientePerfilPage() {
           <h3 className="text-text-main font-medium text-sm mb-3">Campanhas Ativas</h3>
           <p className="text-text-muted text-sm">Use a aba de Campanhas para ver os dados reais do Meta Ads.</p>
         </div>
+        </div>
+
+        {client.meta_ad_account_id ? (
+          <AcompanhamentoCliente clientId={id} clientName={client.name} />
+        ) : (
+          <div className="bg-surface border border-border rounded-xl p-6">
+            <h2 className="text-text-main text-lg font-bold mb-1">Acompanhamento do Cliente</h2>
+            <p className="text-text-muted text-sm">
+              Configure o ID da Conta de Anúncios acima (em Editar) para habilitar o crescimento, métricas e diagnóstico com IA deste cliente.
+            </p>
+          </div>
+        )}
       </div>
     </>
   )
