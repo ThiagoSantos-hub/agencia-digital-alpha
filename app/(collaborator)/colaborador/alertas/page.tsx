@@ -101,16 +101,23 @@ export default function ColaboradorAlertasPage() {
     }))
   }
 
-  const handleTipoFundo = () => {
+  // Troca o tipo de alerta e já ajusta o template padrão pra combinar com as
+  // variáveis daquele tipo, sem isso trocar de tipo mantinha o texto (e as
+  // variáveis) do tipo anterior, que não faziam sentido pro novo.
+  const handleTipoChange = (tipo: AlertInput['tipo'], defaultTemplate: string, canal?: AlertInput['canal']) => {
     setFormData(prev => ({
       ...prev,
-      tipo: 'fundo_cliente',
-      canal: 'meta',
-      mensagem_template: prev.mensagem_template && prev.tipo === 'fundo_cliente'
-        ? prev.mensagem_template
-        : '💰 LEMBRETE DE FUNDO\n\nCliente: <CLIENTE>\nValor: <VALOR>\nVencimento: <VENCIMENTO>',
+      tipo,
+      ...(canal ? { canal } : {}),
+      mensagem_template: prev.mensagem_template && prev.tipo === tipo ? prev.mensagem_template : defaultTemplate,
     }))
   }
+
+  const handleTipoFundo = () => handleTipoChange(
+    'fundo_cliente',
+    '💰 LEMBRETE DE FUNDO\n\nCliente: <CLIENTE>\nValor: <VALOR>\nVencimento: <VENCIMENTO>',
+    'meta'
+  )
 
   const inputCls = 'w-full bg-background border border-border rounded-xl px-4 py-2.5 outline-none focus:border-primary/50 transition-colors text-sm text-text-main'
 
@@ -229,8 +236,8 @@ export default function ColaboradorAlertasPage() {
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-text-muted uppercase">Tipo</label>
                 <div className="grid gap-2">
-                  <button type="button" onClick={() => setFormData({...formData, tipo: 'saldo_minimo'})} className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm ${formData.tipo === 'saldo_minimo' ? 'bg-amber-50 border-amber-300 text-amber-700' : 'bg-background border-border text-text-muted'}`}><DollarSign size={14} /> Saldo Mínimo</button>
-                  <button type="button" onClick={() => setFormData({...formData, tipo: 'erro_conta'})} className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm ${formData.tipo === 'erro_conta' ? 'bg-red-50 border-red-300 text-red-600' : 'bg-background border-border text-text-muted'}`}><AlertTriangle size={14} /> Erro na Conta</button>
+                  <button type="button" onClick={() => handleTipoChange('saldo_minimo', '⚠️ ALERTA DE SALDO MÍNIMO\n\nConta: <CA>\nSaldo Atual: <SALDO>\nLimite: <TARGET>')} className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm ${formData.tipo === 'saldo_minimo' ? 'bg-amber-50 border-amber-300 text-amber-700' : 'bg-background border-border text-text-muted'}`}><DollarSign size={14} /> Saldo Mínimo</button>
+                  <button type="button" onClick={() => handleTipoChange('erro_conta', '🚨 ERRO NA CONTA\n\nConta: <CA>\nStatus: <STATUS_DESCRIPTION>')} className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm ${formData.tipo === 'erro_conta' ? 'bg-red-50 border-red-300 text-red-600' : 'bg-background border-border text-text-muted'}`}><AlertTriangle size={14} /> Erro na Conta</button>
                   <button type="button" onClick={handleTipoFundo} className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm ${formData.tipo === 'fundo_cliente' ? 'bg-cta/10 border-cta/40 text-cta' : 'bg-background border-border text-text-muted'}`}><Wallet size={14} /> Fundo de Cliente</button>
                 </div>
               </div>

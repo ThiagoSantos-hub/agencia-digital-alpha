@@ -142,16 +142,23 @@ export default function AlertasPage() {
     }))
   }
 
-  const handleTipoFundo = () => {
+  // Troca o tipo de alerta e já ajusta o template padrão pra combinar com as
+  // variáveis daquele tipo, sem isso trocar de tipo mantinha o texto (e as
+  // variáveis) do tipo anterior, que não faziam sentido pro novo.
+  const handleTipoChange = (tipo: AlertInput['tipo'], defaultTemplate: string, canal?: AlertInput['canal']) => {
     setFormData(prev => ({
       ...prev,
-      tipo: 'fundo_cliente',
-      canal: 'meta',
-      mensagem_template: prev.mensagem_template && prev.tipo === 'fundo_cliente'
-        ? prev.mensagem_template
-        : '💰 LEMBRETE DE FUNDO\n\nCliente: <CLIENTE>\nValor: <VALOR>\nVencimento: <VENCIMENTO>',
+      tipo,
+      ...(canal ? { canal } : {}),
+      mensagem_template: prev.mensagem_template && prev.tipo === tipo ? prev.mensagem_template : defaultTemplate,
     }))
   }
+
+  const handleTipoFundo = () => handleTipoChange(
+    'fundo_cliente',
+    '💰 LEMBRETE DE FUNDO\n\nCliente: <CLIENTE>\nValor: <VALOR>\nVencimento: <VENCIMENTO>',
+    'meta'
+  )
 
   return (
     <div className="min-h-full bg-background text-text-main">
@@ -319,7 +326,7 @@ export default function AlertasPage() {
                 <div className="grid grid-cols-1 gap-2">
                   <button
                     type="button"
-                    onClick={() => setFormData({...formData, tipo: 'saldo_minimo'})}
+                    onClick={() => handleTipoChange('saldo_minimo', '⚠️ ALERTA DE SALDO MÍNIMO\n\nConta: <CA>\nSaldo Atual: <SALDO>\nLimite: <TARGET>')}
                     className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all text-sm ${
                       formData.tipo === 'saldo_minimo' ? 'bg-amber-50 border-amber-300 text-amber-700' : 'bg-background border-border text-text-muted'
                     }`}
@@ -328,7 +335,7 @@ export default function AlertasPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setFormData({...formData, tipo: 'erro_conta'})}
+                    onClick={() => handleTipoChange('erro_conta', '🚨 ERRO NA CONTA\n\nConta: <CA>\nStatus: <STATUS_DESCRIPTION>')}
                     className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all text-sm ${
                       formData.tipo === 'erro_conta' ? 'bg-red-50 border-red-300 text-red-600' : 'bg-background border-border text-text-muted'
                     }`}

@@ -94,15 +94,27 @@ export async function POST(request: Request) {
   for (const alert of alerts) {
     try {
       if (alert.tipo === 'fundo_cliente') {
-        const hojeStr = new Date().toISOString().split('T')[0]
-        const vencido = !!alert.proximo_vencimento && alert.proximo_vencimento <= hojeStr
-
         if (!alert.client_id || !alert.proximo_vencimento) {
           results.push({ id: alert.id, nome: alert.nome, status: 'skip', detail: 'Fundo sem cliente ou data configurada' })
           continue
         }
-        if (!vencido || alert.last_status === 'triggered') {
-          results.push({ id: alert.id, nome: alert.nome, status: vencido ? 'ja_disparado' : 'ok' })
+
+        const hojeStr = new Date().toISOString().split('T')[0]
+        const vencido = alert.proximo_vencimento <= hojeStr
+        if (!vencido) {
+          results.push({ id: alert.id, nome: alert.nome, status: 'ok' })
+          continue
+        }
+
+        // Sem data de vencimento por dia: repete o aviso a cada 24h enquanto
+        // continuar vencido, até o admin marcar "fundo colocado" (que reseta
+        // last_triggered_at). Sem esse controle o cron reenviaria a cada
+        // execução, e com ele sozinho (sem o "!vencido" acima) nunca pararia
+        // de mandar mensagem mesmo depois de resolvido.
+        const passou24h = !alert.last_triggered_at ||
+          (Date.now() - new Date(alert.last_triggered_at).getTime()) >= 24 * 60 * 60 * 1000
+        if (!passou24h) {
+          results.push({ id: alert.id, nome: alert.nome, status: 'aguardando_proximo_lembrete' })
           continue
         }
 
@@ -148,6 +160,12 @@ export async function POST(request: Request) {
         }
         let mensagem = alert.mensagem_template
         for (const [token, valor] of Object.entries(tokenValues)) mensagem = mensagem.replaceAll(token, valor)
+
+        // No dia exato do vencimento manda o lembrete normal; a partir do dia
+        // seguinte (ainda não marcado como colocado) cada reenvio de 24h em
+        // 24h deixa claro que já passou do prazo.
+        const atrasado = alert.proximo_vencimento < hojeStr
+        if (atrasado) mensagem = `⚠️ VENCIDO\n\n${mensagem}`
 
         const sendResult = await sendWhatsApp(alert.user_id, alert.recebedor_numero, mensagem)
 
