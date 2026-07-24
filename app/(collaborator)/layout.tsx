@@ -3,15 +3,13 @@
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { 
-  LayoutDashboard, 
-  Users,
+import {
+  LayoutDashboard,
   UsersRound,
-  CheckSquare, 
-  Megaphone, 
-  Wallet, 
-  Plug, 
-  UserCircle, 
+  CheckSquare,
+  Megaphone,
+  Plug,
+  UserCircle,
   LogOut,
   Bell,
   CheckCheck,
@@ -52,7 +50,6 @@ const menuGroups = [
   {
     label: 'CLIENTES & CAMPANHAS',
     items: [
-      { label: 'Meus Clientes',    href: '/colaborador/meus-clientes',    icon: Users,      ativo: true },
       { label: 'Acompanhamento',   href: '/colaborador/acompanhamento',   icon: TrendingUp, ativo: true },
       { label: 'Clientes Agência', href: '/colaborador/clientes',         icon: UsersRound, ativo: true },
       { label: 'Campanhas',        href: '/colaborador/campanhas',        icon: Megaphone,  ativo: true  },
@@ -66,7 +63,6 @@ const menuGroups = [
       { label: 'Agenda',     href: '/colaborador/agenda',     icon: CalendarClock, ativo: true },
       { label: 'Tarefas',    href: '/colaborador/tarefas',    icon: CheckSquare, ativo: true },
       { label: 'Checklists', href: '/colaborador/checklists', icon: List,        ativo: true },
-      { label: 'Financeiro', href: '/colaborador/financeiro', icon: Wallet,      ativo: true },
     ],
   },
   {

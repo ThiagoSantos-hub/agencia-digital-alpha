@@ -23,6 +23,7 @@ export interface Report {
   dia_semana_envio?: number | null;
   created_at: string;
   updated_at: string;
+  creator?: { name: string | null; email: string };
 }
 
 export interface ReportHistory {
@@ -48,7 +49,7 @@ export const useRelatorios = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('reports')
-        .select('*')
+        .select('*, creator:profiles!reports_user_id_profiles_fkey(name, email)')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -82,7 +83,7 @@ export const useRelatorios = () => {
         .single();
 
       if (error) throw error;
-      setReports([data, ...reports]);
+      await fetchRelatorios();
       return data;
     } catch (err: any) {
       setError(err.message);
