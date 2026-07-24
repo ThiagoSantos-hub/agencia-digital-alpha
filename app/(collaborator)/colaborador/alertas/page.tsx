@@ -92,10 +92,11 @@ export default function ColaboradorAlertasPage() {
           {alerts.map((alert) => (
             <div key={alert.id} className="bg-surface border border-border p-6 rounded-xl flex flex-col justify-between hover:border-primary/40 transition-colors shadow-sm">
               <div>
-                <div className="flex justify-between items-start mb-4">
+                <div className="flex justify-between items-start mb-1">
                   <h3 className="font-bold text-lg text-text-main">{alert.nome}</h3>
                   {alert.canal === 'meta' ? <Facebook size={18} className="text-primary" /> : <Globe size={18} className="text-red-500" />}
                 </div>
+                <p className="text-xs text-text-muted mb-4">Criado por: {alert.creator?.name || alert.creator?.email || 'Desconhecido'}</p>
                 <div className="flex flex-wrap gap-2 mb-4">
                   {alert.tipo === 'saldo_minimo' ? (
                     <span className="bg-amber-50 text-amber-700 text-[10px] font-bold uppercase px-2 py-1 rounded-md flex items-center gap-1"><DollarSign size={10} /> Saldo Mínimo</span>

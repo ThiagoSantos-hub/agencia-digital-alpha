@@ -308,6 +308,7 @@ export default function RelatoriosPage() {
                   <td className="p-4">
                     <div className="font-medium text-text-main">{report.nome}</div>
                     <div className="text-xs text-text-muted">Criado em {formatDate(report.created_at)}</div>
+                    <div className="text-xs text-text-muted">Criado por: {report.creator?.name || report.creator?.email || 'Desconhecido'}</div>
                   </td>
                   <td className="p-4">
                     {report.canal === 'meta' ? (

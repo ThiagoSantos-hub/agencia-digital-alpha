@@ -15,6 +15,7 @@ export interface Alert {
   ativo: boolean;
   created_at: string;
   updated_at: string;
+  creator?: { name: string | null; email: string };
 }
 
 export type AlertInput = Omit<Alert, 'id' | 'user_id' | 'created_at' | 'updated_at'>;
@@ -31,7 +32,7 @@ export const useAlertas = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('alerts')
-        .select('*')
+        .select('*, creator:profiles!alerts_user_id_profiles_fkey(name, email)')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -56,7 +57,7 @@ export const useAlertas = () => {
         .single();
 
       if (error) throw error;
-      setAlerts([data, ...alerts]);
+      await fetchAlertas();
       return data;
     } catch (err: any) {
       setError(err.message);
