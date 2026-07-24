@@ -12,11 +12,15 @@ import {
   Wallet,
 } from 'lucide-react'
 import { calcularPeriodo } from '@/lib/reportSchedule'
+import { DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core'
+import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable'
+import { SortableMetricCard } from '@/components/campanhas/SortableMetricCard'
 
 const PERIODO_OPTIONS = [
   { value: 'ontem', label: 'Ontem' },
   { value: 'hoje', label: 'Hoje' },
   { value: 'ultimos_3_dias', label: 'Últ. 3 dias' },
+  { value: 'ultimos_7_dias', label: 'Últ. 7 dias' },
   { value: 'ultimos_15_dias', label: 'Últ. 15 dias' },
   { value: 'ultimos_30_dias', label: 'Últ. 30 dias' },
   { value: 'personalizado', label: '📅 Custom' },
@@ -109,6 +113,26 @@ const CampaignCard = React.memo(function CampaignCard({ campaign, fetchMetrics, 
   const [modalAberto, setModalAberto] = useState(false)
   const [allOptions, setAllOptions] = useState<MetaMetricOption[]>([])
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+
+  // Reordena os cards de métrica e salva a nova ordem em selected_metrics,
+  // assim ela fica valendo da próxima vez que a campanha for aberta.
+  const handleDragEndMetrics = (event: any) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    setMetrics(prev => {
+      const oldIndex = prev.findIndex(m => m.metric_key === active.id)
+      const newIndex = prev.findIndex(m => m.metric_key === over.id)
+      const reordenado = arrayMove(prev, oldIndex, newIndex)
+      saveSelectedMetrics(campaign.id, reordenado.map(m => m.metric_key))
+      return reordenado
+    })
+  }
+
   useEffect(() => {
     if (!expandido) return
     let cancelled = false
@@ -196,14 +220,15 @@ const CampaignCard = React.memo(function CampaignCard({ campaign, fetchMetrics, 
                 Nenhuma métrica encontrada. Configure as métricas clicando no ícone <Settings2 size={11} className="inline" /> ao lado.
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 pt-3">
-                {metrics.map((m) => (
-                  <div key={m.id} className="bg-surface border border-border rounded-xl p-3 shadow-sm">
-                    <p className="text-text-muted text-[10px] uppercase font-bold tracking-wider mb-1">{m.metric_label}</p>
-                    <p className="text-text-main font-bold text-sm">{m.metric_value ?? '—'}</p>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEndMetrics}>
+                <SortableContext items={metrics.map(m => m.metric_key)} strategy={rectSortingStrategy}>
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 pt-3">
+                    {metrics.map((m) => (
+                      <SortableMetricCard key={m.metric_key} metric={m} />
+                    ))}
                   </div>
-                ))}
-              </div>
+                </SortableContext>
+              </DndContext>
             )}
             <div className="mt-4 flex justify-end">
               <a href={`https://www.facebook.com/adsmanager/manage/campaigns?act=${campaign.meta_campaign_id}`} target="_blank" rel="noopener noreferrer"
