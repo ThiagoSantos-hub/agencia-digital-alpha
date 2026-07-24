@@ -106,6 +106,17 @@ export async function POST(request: Request) {
           continue
         }
 
+        // Só dispara a partir do horário escolhido pro lembrete (o cron roda
+        // de hora em hora, sem isso o primeiro aviso do dia saía a qualquer
+        // hora em que o cron passasse por aqui, mesmo de madrugada).
+        const agoraBR = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
+        const horaAtual = `${String(agoraBR.getHours()).padStart(2, '0')}:${String(agoraBR.getMinutes()).padStart(2, '0')}`
+        const horarioConfigurado = alert.horario_envio || '00:00'
+        if (horaAtual < horarioConfigurado) {
+          results.push({ id: alert.id, nome: alert.nome, status: 'aguardando_horario' })
+          continue
+        }
+
         // Sem data de vencimento por dia: repete o aviso a cada 24h enquanto
         // continuar vencido, até o admin marcar "fundo colocado" (que reseta
         // last_triggered_at). Sem esse controle o cron reenviaria a cada
@@ -157,6 +168,7 @@ export async function POST(request: Request) {
           '<CLIENTE>': client?.name ?? 'Cliente',
           '<VALOR>': Number(alert.valor_fundo ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
           '<VENCIMENTO>': new Date(`${alert.proximo_vencimento}T00:00:00`).toLocaleDateString('pt-BR'),
+          '<PAGAMENTO>': alert.forma_pagamento === 'boleto' ? 'Boleto' : alert.forma_pagamento === 'pix' ? 'Pix' : '—',
         }
         let mensagem = alert.mensagem_template
         for (const [token, valor] of Object.entries(tokenValues)) mensagem = mensagem.replaceAll(token, valor)

@@ -19,6 +19,8 @@ export interface Alert {
   periodicidade: PeriodicidadeFundo | null;
   valor_fundo: number | null;
   proximo_vencimento: string | null;
+  horario_envio: string | null;
+  forma_pagamento: 'pix' | 'boleto' | null;
   last_status?: 'ok' | 'triggered' | null;
   created_at: string;
   updated_at: string;
@@ -30,6 +32,7 @@ export type AlertInput = Pick<Alert,
   | 'nome' | 'tipo' | 'canal' | 'conta_anuncio' | 'saldo_minimo'
   | 'recebedor_tipo' | 'recebedor_numero' | 'mensagem_template' | 'ativo'
   | 'client_id' | 'periodicidade' | 'valor_fundo' | 'proximo_vencimento'
+  | 'horario_envio' | 'forma_pagamento'
 >;
 
 const supabase = createClient();

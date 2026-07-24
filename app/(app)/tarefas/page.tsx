@@ -117,13 +117,19 @@ export default function AdminTasksPage() {
       return
     }
     try {
+      const destino = whatsappTipo === 'privado' ? whatsappNumero.replace(/\D/g, '') : whatsappTipo === 'grupo' ? whatsappGrupo : ''
+      const fonte = whatsappTipo === 'grupo' && grupoEscolhidoNaAgencia ? 'agency' : 'own'
+
       await createTask({
         ...newTask,
         description: newTask.description.trim() || null,
-        due_date: newTask.due_date || null
+        due_date: newTask.due_date || null,
+        // Guarda o destino escolhido na própria tarefa, reaproveitado depois
+        // pra mandar mais um aviso automático se ela virar "urgente".
+        whatsapp_destino: destino || null,
+        whatsapp_fonte: destino ? fonte : null,
       })
 
-      const destino = whatsappTipo === 'privado' ? whatsappNumero.replace(/\D/g, '') : whatsappTipo === 'grupo' ? whatsappGrupo : ''
       if (destino) {
         const assignee = allUsers.find((u) => u.id === newTask.assigned_to)
         fetch('/api/tasks/notify-whatsapp', {
@@ -131,7 +137,7 @@ export default function AdminTasksPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             destino,
-            fonte: whatsappTipo === 'grupo' && grupoEscolhidoNaAgencia ? 'agency' : 'own',
+            fonte,
             taskTitle: newTask.title,
             assigneeName: assignee?.name || assignee?.email,
           }),

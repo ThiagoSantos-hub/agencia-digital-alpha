@@ -22,6 +22,7 @@ const inputVazio: AlertInput = {
   recebedor_tipo: 'privado', recebedor_numero: '',
   mensagem_template: '⚠️ ALERTA DE SALDO MÍNIMO\n\nConta: <CA>\nSaldo Atual: <SALDO>\nLimite: <TARGET>', ativo: true,
   client_id: null, periodicidade: null, valor_fundo: null, proximo_vencimento: null,
+  horario_envio: '09:00', forma_pagamento: null,
 }
 
 export default function ColaboradorAlertasPage() {
@@ -73,8 +74,12 @@ export default function ColaboradorAlertasPage() {
     try { await createAlerta({ ...rest, nome: `${rest.nome} (Cópia)` }) } catch (e) { console.error(e) }
   }
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este alerta?')) await deleteAlerta(id)
+  const [deletingAlert, setDeletingAlert] = useState<Alert | null>(null)
+
+  const confirmDelete = async () => {
+    if (!deletingAlert) return
+    await deleteAlerta(deletingAlert.id)
+    setDeletingAlert(null)
   }
 
   const handleMarcarFundo = async (alert: Alert) => {
@@ -115,7 +120,7 @@ export default function ColaboradorAlertasPage() {
 
   const handleTipoFundo = () => handleTipoChange(
     'fundo_cliente',
-    '💰 LEMBRETE DE FUNDO\n\nCliente: <CLIENTE>\nValor: <VALOR>\nVencimento: <VENCIMENTO>',
+    '💰 LEMBRETE DE FUNDO\n\nCliente: <CLIENTE>\nValor: <VALOR>\nPagamento: <PAGAMENTO>\nVencimento: <VENCIMENTO>',
     'meta'
   )
 
@@ -180,7 +185,8 @@ export default function ColaboradorAlertasPage() {
                     <>
                       <p>Cliente: <span className="text-text-main">{alert.client?.name ?? '—'}</span></p>
                       <p>Valor: <span className="text-cta font-bold">R$ {Number(alert.valor_fundo ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></p>
-                      <p>Repete: <span className="text-text-main">{alert.periodicidade ? PERIODICIDADE_LABELS[alert.periodicidade] : '—'}</span></p>
+                      <p>Pagamento: <span className="text-text-main">{alert.forma_pagamento === 'boleto' ? 'Boleto' : alert.forma_pagamento === 'pix' ? 'Pix' : '—'}</span></p>
+                      <p>Repete: <span className="text-text-main">{alert.periodicidade ? PERIODICIDADE_LABELS[alert.periodicidade] : '—'}</span> às <span className="text-text-main">{alert.horario_envio || '—'}</span></p>
                       <p>Próximo vencimento: <span className={vencido ? 'text-red-600 font-bold' : 'text-text-main'}>{fmtData(alert.proximo_vencimento)}</span></p>
                     </>
                   ) : (
@@ -211,7 +217,7 @@ export default function ColaboradorAlertasPage() {
                   <FeatureLock featureKey="alertas.duplicar" variant="replace">
                     <button onClick={() => handleDuplicate(alert)} className="p-1.5 hover:bg-hover-bg rounded-lg text-text-muted hover:text-text-main"><Copy size={16} /></button>
                   </FeatureLock>
-                  <button onClick={() => handleDelete(alert.id)} className="p-1.5 hover:bg-red-50 rounded-lg text-text-muted hover:text-red-500"><Trash2 size={16} /></button>
+                  <button onClick={() => setDeletingAlert(alert)} className="p-1.5 hover:bg-red-50 rounded-lg text-text-muted hover:text-red-500"><Trash2 size={16} /></button>
                 </div>
               </div>
             </div>
@@ -259,6 +265,19 @@ export default function ColaboradorAlertasPage() {
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-text-muted uppercase">Próximo Vencimento</label>
                       <input required type="date" value={formData.proximo_vencimento ?? ''} onChange={e => setFormData({...formData, proximo_vencimento: e.target.value})} className={inputCls} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-text-muted uppercase">Horário do Lembrete</label>
+                      <input required type="time" value={formData.horario_envio ?? '09:00'} onChange={e => setFormData({...formData, horario_envio: e.target.value})} className={inputCls} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-text-muted uppercase">Forma de Pagamento</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button type="button" onClick={() => setFormData({...formData, forma_pagamento: 'pix'})} className={`py-2 rounded-xl border text-xs font-medium transition-colors ${formData.forma_pagamento === 'pix' ? 'border-primary/40 text-primary bg-primary/10' : 'border-border text-text-muted'}`}>Pix</button>
+                        <button type="button" onClick={() => setFormData({...formData, forma_pagamento: 'boleto'})} className={`py-2 rounded-xl border text-xs font-medium transition-colors ${formData.forma_pagamento === 'boleto' ? 'border-primary/40 text-primary bg-primary/10' : 'border-border text-text-muted'}`}>Boleto</button>
+                      </div>
                     </div>
                   </div>
                   <div className="space-y-1.5">
@@ -349,7 +368,7 @@ export default function ColaboradorAlertasPage() {
                       ? ['<CA>', '<SALDO>', '<TARGET>']
                       : formData.tipo === 'erro_conta'
                       ? ['<CA>', '<ACT_STATUS>']
-                      : ['<CLIENTE>', '<VALOR>', '<VENCIMENTO>']
+                      : ['<CLIENTE>', '<VALOR>', '<PAGAMENTO>', '<VENCIMENTO>']
                     ).map(v => (
                       <button key={v} type="button" onClick={() => insertVariable(v)} className="text-[9px] bg-hover-bg px-1.5 py-0.5 rounded text-text-muted hover:text-text-main">{v}</button>
                     ))}
@@ -364,6 +383,25 @@ export default function ColaboradorAlertasPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {deletingAlert && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDeletingAlert(null)} />
+          <div className="relative w-full max-w-sm bg-surface border border-red-200 rounded-xl p-6 shadow-2xl">
+            <div className="w-12 h-12 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center mx-auto mb-4">
+              <Trash2 size={20} className="text-red-500" />
+            </div>
+            <h3 className="text-text-main font-semibold text-center mb-1">Excluir alerta?</h3>
+            <p className="text-text-muted text-sm text-center mb-6">
+              Tem certeza que deseja excluir <span className="font-semibold text-text-main">{deletingAlert.nome}</span>? Essa ação não pode ser desfeita.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeletingAlert(null)} className="flex-1 py-2.5 rounded-xl border border-border text-text-muted text-sm hover:text-text-main transition-colors">Não</button>
+              <button onClick={confirmDelete} className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors">Sim, excluir</button>
+            </div>
           </div>
         </div>
       )}
