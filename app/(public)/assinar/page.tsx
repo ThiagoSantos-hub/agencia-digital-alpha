@@ -93,6 +93,19 @@ function PlanCard({ plan, onChoose, highlight, recommended }: { plan: PublicPlan
         <p className="mt-2 mb-2 text-[10.5px] leading-snug text-text-muted whitespace-pre-line">{plan.description}</p>
       )}
 
+      <button
+        onClick={onChoose}
+        className={`mt-1 w-full py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+          recommended
+            ? 'bg-cta hover:bg-cta-hover text-white'
+            : highlight
+              ? 'bg-primary hover:bg-primary-hover text-white'
+              : 'bg-background border border-border text-text-main hover:border-primary/40'
+        }`}
+      >
+        Escolher {plan.name}
+      </button>
+
       <ul className="mt-2 space-y-0.5">
         {limitsList(plan).map((l) => (
           <li key={l} className="flex items-center gap-1.5 text-[11px] leading-tight text-text-main">
@@ -115,19 +128,6 @@ function PlanCard({ plan, onChoose, highlight, recommended }: { plan: PublicPlan
           )
         })}
       </ul>
-
-      <button
-        onClick={onChoose}
-        className={`mt-2 w-full py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-          recommended
-            ? 'bg-cta hover:bg-cta-hover text-white'
-            : highlight
-              ? 'bg-primary hover:bg-primary-hover text-white'
-              : 'bg-background border border-border text-text-main hover:border-primary/40'
-        }`}
-      >
-        Escolher {plan.name}
-      </button>
     </div>
   )
 }
