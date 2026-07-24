@@ -20,6 +20,9 @@ import {
 import { useRelatorios, Report, ReportHistory } from '@/hooks/useRelatorios'
 import { useWhatsApp } from '@/hooks/useWhatsApp'
 import { FeatureLock } from '@/components/ui/FeatureLock'
+import { useViewMode } from '@/hooks/useViewMode'
+import { ViewModeToggle } from '@/components/ui/ViewModeToggle'
+import { ReportCards } from '@/components/relatorios/ReportCards'
 
 export default function ColaboradorRelatoriosPage() {
   const router = useRouter()
@@ -34,6 +37,7 @@ export default function ColaboradorRelatoriosPage() {
   const { groups: ownGroups } = useWhatsApp('own')
   const { groups: agencyGroups } = useWhatsApp('agency')
 
+  const [viewMode, setViewMode] = useViewMode('view_mode_relatorios', 'tabela')
   const [filterStatus, setFilterStatus] = useState<'todos' | 'ativo' | 'inativo'>('todos')
   const [filterCanal, setFilterCanal] = useState<'todos' | 'meta' | 'google'>('todos')
   const [searchQuery, setSearchQuery] = useState('')
@@ -250,8 +254,23 @@ export default function ColaboradorRelatoriosPage() {
             <option value="google">Google Ads</option>
           </select>
         </div>
+        <ViewModeToggle mode={viewMode} onChange={setViewMode} />
       </div>
 
+      {viewMode === 'cards' ? (
+        <ReportCards
+          reports={filteredReports}
+          loading={loading}
+          basePath="/colaborador/relatorios"
+          accentActive="bg-cta"
+          sendingId={sendingId}
+          onToggleAtivo={toggleAtivo}
+          onSend={handleOpenConfirm}
+          onDuplicate={handleDuplicate}
+          onHistory={handleOpenHistory}
+          onDelete={setDeleteConfirmReport}
+        />
+      ) : (
       <div className="bg-surface border border-border rounded-xl overflow-x-auto shadow-sm">
         <table className="w-full text-left border-collapse min-w-[720px]">
           <thead>
@@ -380,6 +399,7 @@ export default function ColaboradorRelatoriosPage() {
           </tbody>
         </table>
       </div>
+      )}
 
       {historyReport && (
         <>

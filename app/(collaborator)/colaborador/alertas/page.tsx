@@ -1,14 +1,18 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Plus, Bell, Facebook, Globe, Trash2, Edit2, Copy, Smartphone, Users, AlertTriangle, DollarSign, Wallet, CheckCircle2, X, Save, Loader2 } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { Plus, Bell, Facebook, Globe, Trash2, Edit2, Copy, Smartphone, Users, AlertTriangle, DollarSign, Wallet, CheckCircle2, X, Save, Loader2, Search } from 'lucide-react'
 import { useAlertas, Alert, AlertInput } from '@/hooks/useAlertas'
 import { useWhatsApp } from '@/hooks/useWhatsApp'
 import { createClient } from '@/lib/supabase'
 import { FeatureLock } from '@/components/ui/FeatureLock'
+import { useViewMode } from '@/hooks/useViewMode'
+import { ViewModeToggle } from '@/components/ui/ViewModeToggle'
+import { AlertsTable } from '@/components/alertas/AlertsTable'
 
 const fmtData = (d: string | null) => d ? new Date(`${d}T00:00:00`).toLocaleDateString('pt-BR') : '—'
 const hojeISO = () => new Date().toISOString().split('T')[0]
+const isVencido = (alert: Alert) => alert.tipo === 'fundo_cliente' && !!alert.proximo_vencimento && alert.proximo_vencimento <= hojeISO()
 
 const PERIODICIDADE_LABELS: Record<string, string> = {
   semanal: 'Semanal',
@@ -27,6 +31,20 @@ const inputVazio: AlertInput = {
 
 export default function ColaboradorAlertasPage() {
   const { alerts, loading, createAlerta, updateAlerta, deleteAlerta, toggleAtivo, marcarFundoColocado } = useAlertas()
+  const [viewMode, setViewMode] = useViewMode('view_mode_alertas', 'cards')
+  const [searchQuery, setSearchQuery] = useState('')
+
+  // Fundo vencido sempre na frente, pra chamar atenção antes dos que ainda
+  // estão em dia, mantém a ordem original (mais recente primeiro) dentro de
+  // cada grupo.
+  const sortedAlerts = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+    const filtrados = !query
+      ? alerts
+      : alerts.filter(a => a.nome.toLowerCase().includes(query) || a.client?.name?.toLowerCase().includes(query))
+    return [...filtrados].sort((a, b) => Number(isVencido(b)) - Number(isVencido(a)))
+  }, [alerts, searchQuery])
+
   const { groups: gruposAgencia, loadingGroups: carregandoGruposAgencia } = useWhatsApp('agency')
   const { groups: gruposProprios, loadingGroups: carregandoGruposProprios } = useWhatsApp('own')
 
@@ -140,20 +158,47 @@ export default function ColaboradorAlertasPage() {
         </button>
       </div>
 
-      {loading ? (
+      <div className="flex flex-wrap items-center gap-4 mb-6">
+        <div className="flex items-center gap-2 bg-surface border border-border px-3 py-2 rounded-xl flex-1 min-w-[220px]">
+          <Search size={16} className="text-text-muted shrink-0" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Buscar alerta pelo nome ou cliente..."
+            className="bg-transparent outline-none text-sm text-text-main placeholder:text-text-disabled w-full"
+          />
+        </div>
+        <ViewModeToggle mode={viewMode} onChange={setViewMode} />
+      </div>
+
+      {viewMode === 'tabela' ? (
+        <AlertsTable
+          alerts={sortedAlerts}
+          loading={loading}
+          accentActive="bg-cta"
+          marcandoId={marcandoId}
+          onToggleAtivo={toggleAtivo}
+          onEdit={handleOpenModal}
+          onDuplicate={handleDuplicate}
+          onDelete={setDeletingAlert}
+          onMarcarFundo={handleMarcarFundo}
+          onCreateFirst={() => handleOpenModal()}
+        />
+      ) : loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {[...Array(3)].map((_, i) => <div key={i} className="bg-surface border border-border h-48 rounded-xl animate-pulse" />)}
         </div>
-      ) : alerts.length === 0 ? (
+      ) : sortedAlerts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 bg-surface border border-border rounded-xl shadow-sm">
           <Bell size={48} className="text-text-disabled mb-4" />
-          <p className="text-text-main font-medium">Nenhum alerta criado ainda</p>
+          <p className="text-text-main font-medium">{alerts.length === 0 ? 'Nenhum alerta criado ainda' : 'Nenhum alerta encontrado'}</p>
           <button onClick={() => handleOpenModal()} className="mt-4 text-primary hover:underline text-sm font-medium">Criar meu primeiro alerta</button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {alerts.map((alert) => {
-            const vencido = alert.tipo === 'fundo_cliente' && !!alert.proximo_vencimento && alert.proximo_vencimento <= hojeISO()
+          {sortedAlerts.map((alert) => {
+            const vencido = isVencido(alert)
             return (
             <div key={alert.id} className="bg-surface border border-border p-6 rounded-xl flex flex-col justify-between hover:border-primary/40 transition-colors shadow-sm">
               <div>
