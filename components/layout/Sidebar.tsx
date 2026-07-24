@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Users, Megaphone, BarChart2, Bell,
   CheckSquare, List, Wallet, UserCog, Bot, Plug,
   Sparkles, MessageSquare, UserCircle, LogOut, Settings,
-  FileSignature, Building2, CreditCard, Rocket, CalendarClock, Lock, Layers, Video
+  FileSignature, Building2, CreditCard, Rocket, CalendarClock, Lock, Layers, Video, TrendingUp
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/hooks/useAuth'
@@ -28,6 +28,7 @@ const menuGroups = [
     label: 'CLIENTES & CAMPANHAS',
     items: [
       { label: 'Clientes',   href: '/clientes',   icon: Users,      ativo: true, featureKey: 'modulo.clientes' },
+      { label: 'Acompanhamento', href: '/acompanhamento', icon: TrendingUp, ativo: true, featureKey: 'modulo.acompanhamento' },
       { label: 'Campanhas',  href: '/campanhas',  icon: Megaphone,  ativo: true, featureKey: 'modulo.campanhas' },
       { label: 'Relatórios', href: '/relatorios', icon: BarChart2,  ativo: true, featureKey: 'modulo.relatorios' },
       { label: 'Alertas',    href: '/alertas',    icon: Bell,       ativo: true, featureKey: 'modulo.alertas' },

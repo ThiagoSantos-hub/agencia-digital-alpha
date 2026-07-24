@@ -12,6 +12,7 @@ export interface FeatureDef {
 
 export const FEATURES: FeatureDef[] = [
   { key: 'modulo.clientes', label: 'Módulo Clientes', group: 'Módulos' },
+  { key: 'modulo.acompanhamento', label: 'Módulo Acompanhamento do Cliente', group: 'Módulos' },
   { key: 'modulo.campanhas', label: 'Módulo Campanhas', group: 'Módulos' },
   { key: 'modulo.relatorios', label: 'Módulo Relatórios', group: 'Módulos' },
   { key: 'modulo.alertas', label: 'Módulo Alertas', group: 'Módulos' },
