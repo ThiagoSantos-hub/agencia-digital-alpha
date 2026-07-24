@@ -1,11 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Loader2, Building2, ExternalLink, Eye, Pencil, Power, X, Trash2, AlertTriangle, Users } from 'lucide-react'
+import { Loader2, Building2, ExternalLink, Eye, Pencil, Power, X, Trash2, AlertTriangle } from 'lucide-react'
 type Plan = string
 
 interface Company {
@@ -46,7 +45,6 @@ function slugify(value: string): string {
 }
 
 export default function SuperAdminEmpresasPage() {
-  const router = useRouter()
   const { profile, loading: authLoading } = useAuth()
   const [companies, setCompanies] = useState<Company[]>([])
   const [plans, setPlans] = useState<PlanOption[]>([])
@@ -320,9 +318,6 @@ export default function SuperAdminEmpresasPage() {
                       <div className="flex items-center justify-end gap-1.5">
                         <button onClick={() => setViewCompany(c)} title="Ver informações" className="p-1.5 rounded-lg border border-border text-text-muted hover:text-primary hover:border-primary/30 transition-colors">
                           <Eye size={14} />
-                        </button>
-                        <button onClick={() => router.push(`/superadmin/empresas/${c.id}/clientes`)} title="Ver clientes" className="p-1.5 rounded-lg border border-border text-text-muted hover:text-primary hover:border-primary/30 transition-colors">
-                          <Users size={14} />
                         </button>
                         <button onClick={() => openEdit(c)} title="Editar" className="p-1.5 rounded-lg border border-border text-text-muted hover:text-primary hover:border-primary/30 transition-colors">
                           <Pencil size={14} />
