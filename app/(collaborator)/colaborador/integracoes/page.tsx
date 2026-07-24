@@ -9,12 +9,12 @@ import { PersonalAIKeysCard } from '@/components/ai/PersonalAIKeysCard'
 import { getIntegrationErrorMessage } from '@/lib/integrationErrorMessages'
 
 const INTEGRATION_ICONS: Record<string, string> = {
-  meta_ads: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/200px-Meta_Platforms_Inc._logo.svg.png',
+  meta_ads: 'https://cdn.simpleicons.org/meta',
   google_ads: 'https://www.gstatic.com/images/branding/product/2x/google_ads_48dp.png',
   google_drive: 'https://www.gstatic.com/images/branding/product/2x/drive_2020q4_48dp.png',
   openai: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/OpenAI_Logo.svg/200px-OpenAI_Logo.svg.png',
   elevenlabs: 'https://cdn.simpleicons.org/elevenlabs',
-  whatsapp: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/200px-WhatsApp.svg.png',
+  whatsapp: 'https://cdn.simpleicons.org/whatsapp',
   email: 'https://www.gstatic.com/images/branding/product/2x/gmail_2020q4_48dp.png',
 }
 
