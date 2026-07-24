@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { useClientes, Client } from '@/hooks/useClientes'
 import { useAuth } from '@/hooks/useAuth'
 import { Search, UserPlus, X, Loader2, Pencil, Trash2, Download, Upload, Clock, CheckCircle2, Ban, Target, Eye, EyeOff } from 'lucide-react'
@@ -287,6 +288,7 @@ function ModalConfirmarExclusao({ name, onClose, onConfirm }: { name: string; on
 }
 
 export default function ClientesPage() {
+  const router = useRouter()
   const { profile } = useAuth()
   const isCollaborator = profile?.role === 'collaborator'
   const { clients, loading, deleteCliente, updateCliente, createCliente, refetch } = useClientes()
@@ -392,7 +394,11 @@ export default function ClientesPage() {
               {list.length === 0 ? (
                 <tr><td colSpan={isCollaborator ? 4 : 6} className="px-5 py-10 text-center text-text-disabled">Nenhum cliente encontrado nesta seção.</td></tr>
               ) : list.map((c) => (
-                <tr key={c.id} className="hover:bg-hover-bg transition-colors group">
+                <tr
+                  key={c.id}
+                  onClick={() => router.push(`/clientes/${c.id}`)}
+                  className="hover:bg-hover-bg transition-colors group cursor-pointer"
+                >
                   <td className="px-5 py-4">
                     <div className="flex flex-col">
                       <span className="text-text-main font-bold text-sm">{c.name}</span>
@@ -427,7 +433,7 @@ export default function ClientesPage() {
                     <td className="px-5 py-4 text-text-muted text-xs">{c.inativo_em ? new Date(c.inativo_em).toLocaleDateString('pt-BR') : '—'}</td>
                   )}
                   {!isCollaborator && (
-                    <td className="px-5 py-4 pr-12">
+                    <td className="px-5 py-4 pr-12" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1">
                         <div className="flex items-center bg-background border border-border rounded-xl p-0.5 mr-2">
                           <button onClick={() => handleQuickStatus(c.id, 'ativo')} title="Ativo" className={`p-1 rounded-lg ${c.status === 'ativo' ? 'bg-cta/15 text-cta' : 'text-text-disabled hover:text-cta'}`}><CheckCircle2 size={13} /></button>
