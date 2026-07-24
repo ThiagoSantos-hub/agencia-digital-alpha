@@ -215,10 +215,6 @@ export function useAlphaVoice() {
         else maybeRestart()
       }
 
-      recorder.start()
-      mediaRecorderRef.current = recorder
-      setVoiceState('listening')
-
       const ctx = new AudioContext()
       const analyser = ctx.createAnalyser()
       analyser.fftSize = 512
@@ -227,33 +223,72 @@ export function useAlphaVoice() {
       audioCtxRef.current = ctx
 
       const dataArr = new Uint8Array(analyser.frequencyBinCount)
-      const THRESHOLD = 25
-      const settings = loadAlphaSettings()
-      const SILENCE_MS = settings.silenceMs
-      let silenceStart: number | null = null
-      let faleiAlgo = false
+      const nivelMedio = () => dataArr.reduce((a, b) => a + b, 0) / dataArr.length
 
-      const verificar = () => {
+      // Calibra o ruído ambiente (vento, ventilador, ar-condicionado) antes de
+      // começar a gravar de verdade, sem isso um THRESHOLD fixo confundia
+      // ruído de fundo constante com fala e nunca detectava silêncio, ficando
+      // "escutando" pra sempre sem transcrever nada.
+      let amostras: number[] = []
+      let frames = 0
+      const CALIBRACAO_FRAMES = 20
+
+      const calibrar = () => {
         if (userStoppedRef.current || !enabledRef.current) return
-
         analyser.getByteFrequencyData(dataArr)
-        const media = dataArr.reduce((a, b) => a + b, 0) / dataArr.length
+        amostras.push(nivelMedio())
+        frames++
+        if (frames < CALIBRACAO_FRAMES) {
+          rafRef.current = requestAnimationFrame(calibrar)
+          return
+        }
 
-        if (media >= THRESHOLD) {
-          faleiAlgo = true
-          silenceStart = null
-        } else if (faleiAlgo) {
-          if (silenceStart === null) silenceStart = Date.now()
-          else if (Date.now() - silenceStart >= SILENCE_MS) {
+        const ruidoAmbiente = amostras.reduce((a, b) => a + b, 0) / amostras.length
+        const THRESHOLD = Math.max(25, ruidoAmbiente + 15)
+        const settings = loadAlphaSettings()
+        const SILENCE_MS = settings.silenceMs
+        const MAX_GRAVACAO_MS = 15000
+        let silenceStart: number | null = null
+        let faleiAlgo = false
+        const inicioGravacao = Date.now()
+
+        recorder.start()
+        mediaRecorderRef.current = recorder
+        setVoiceState('listening')
+
+        const verificar = () => {
+          if (userStoppedRef.current || !enabledRef.current) return
+
+          // Trava de segurança: se o silêncio nunca for detectado (ex: ruído
+          // de fundo alto e instável), força o corte pra não ficar escutando
+          // pra sempre.
+          if (Date.now() - inicioGravacao >= MAX_GRAVACAO_MS) {
             if (mediaRecorderRef.current?.state === 'recording') {
               mediaRecorderRef.current.stop()
             }
             return
           }
+
+          analyser.getByteFrequencyData(dataArr)
+          const media = nivelMedio()
+
+          if (media >= THRESHOLD) {
+            faleiAlgo = true
+            silenceStart = null
+          } else if (faleiAlgo) {
+            if (silenceStart === null) silenceStart = Date.now()
+            else if (Date.now() - silenceStart >= SILENCE_MS) {
+              if (mediaRecorderRef.current?.state === 'recording') {
+                mediaRecorderRef.current.stop()
+              }
+              return
+            }
+          }
+          rafRef.current = requestAnimationFrame(verificar)
         }
         rafRef.current = requestAnimationFrame(verificar)
       }
-      rafRef.current = requestAnimationFrame(verificar)
+      rafRef.current = requestAnimationFrame(calibrar)
     } catch {
       setError('Permissão de microfone negada.')
       enabledRef.current = false
