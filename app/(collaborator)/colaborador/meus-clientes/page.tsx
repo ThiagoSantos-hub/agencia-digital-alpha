@@ -3,8 +3,7 @@
 import { useState, useMemo } from 'react'
 import { useClientes, Client } from '@/hooks/useClientes'
 import { useAuth } from '@/hooks/useAuth'
-import { useColaboradorFinance } from '@/hooks/useColaboradorFinance'
-import { Search, UserPlus, X, Loader2, Pencil, Clock, CheckCircle2, Ban, Target, Eye, EyeOff } from 'lucide-react'
+import { Search, X, Loader2, Pencil, Clock, CheckCircle2, Ban, Target, Eye, EyeOff } from 'lucide-react'
 import { FeatureLock } from '@/components/ui/FeatureLock'
 
 type ClienteForm = {
@@ -86,57 +85,6 @@ function FormFields({ form, set }: { form: ClienteForm; set: (f: keyof ClienteFo
   )
 }
 
-function ModalNovoCliente({ onClose }: { onClose: () => void }) {
-  const { createCliente } = useClientes()
-  const { profile } = useAuth()
-  const { createFinance } = useColaboradorFinance()
-  const [form, setForm] = useState<ClienteForm>({
-    name: '', company: '', email: '', phone: '', status: 'ativo',
-    meta_ad_account_id: '', show_campaigns: true, monthly_fee: '', payment_day: ''
-  })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const set = (field: keyof ClienteForm, value: string | boolean) => setForm((prev) => ({ ...prev, [field]: value }))
-
-  const handleSubmit = async () => {
-    if (!form.name.trim()) { setError('O nome é obrigatório.'); return }
-    setLoading(true); setError(null)
-    const { error: clientError } = await createCliente({
-      name: form.name.trim(), company: form.company.trim() || null, email: form.email.trim() || null,
-      phone: form.phone.trim() || null, status: form.status,
-      monthly_fee: form.monthly_fee ? parseFloat(form.monthly_fee) : null,
-      start_date: new Date().toISOString().split('T')[0],
-      payment_day: form.payment_day ? parseInt(form.payment_day) : null,
-      manager_id: profile?.id ?? null, inativo_em: null,
-      meta_ad_account_id: form.meta_ad_account_id.trim() || null, show_campaigns: form.show_campaigns
-    })
-    if (clientError) { setError(clientError.message || 'Erro ao salvar cliente.'); setLoading(false); return }
-    if (form.monthly_fee) {
-      await createFinance({ type: 'receita', description: `Cliente: ${form.name.trim()}`, amount: parseFloat(form.monthly_fee), date: new Date().toISOString().split('T')[0] })
-    }
-    onClose()
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/40" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="w-full max-w-md bg-surface border border-border rounded-xl p-5 space-y-3 shadow-2xl">
-        <div className="flex items-center justify-between">
-          <h2 className="text-text-main font-semibold text-base">Novo Cliente</h2>
-          <button onClick={onClose} className="text-text-muted hover:text-text-main p-1"><X size={18} /></button>
-        </div>
-        <FormFields form={form} set={set} />
-        {error && <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-red-600 text-sm">{error}</div>}
-        <div className="flex gap-2 pt-1">
-          <button onClick={onClose} disabled={loading} className="flex-1 py-2 rounded-lg text-sm font-medium text-text-muted bg-background border border-border hover:text-text-main">Cancelar</button>
-          <button onClick={handleSubmit} disabled={loading} className="flex-1 py-2 rounded-lg text-sm font-medium bg-primary hover:bg-primary-hover text-white flex items-center justify-center gap-2 disabled:opacity-50">
-            {loading ? <><Loader2 size={14} className="animate-spin" /> Salvando...</> : 'Salvar Cliente'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function ModalEditarCliente({ client, onClose }: { client: Client; onClose: () => void }) {
   const { updateCliente } = useClientes()
   const [form, setForm] = useState<ClienteForm>({
@@ -185,7 +133,6 @@ export default function MeusClientesPage() {
   const { profile } = useAuth()
   const { clients, loading, updateCliente } = useClientes()
   const [search, setSearch] = useState('')
-  const [modalNovo, setModalNovo] = useState(false)
   const [clienteEditar, setClienteEditar] = useState<Client | null>(null)
   // Contato e financeiro ficam ocultos por padrão, revelados por cliente ao
   // clicar no olhinho — evita expor telefone/e-mail/valores numa tela
@@ -295,11 +242,8 @@ export default function MeusClientesPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
           <h1 className="text-text-main text-lg font-bold">Meus Clientes</h1>
-          <p className="text-text-muted text-xs mt-0.5">Gerencie os clientes que você cadastrou pessoalmente.</p>
+          <p className="text-text-muted text-xs mt-0.5">Clientes que você acompanha. Só o admin cadastra clientes novos.</p>
         </div>
-        <button onClick={() => setModalNovo(true)} className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-xl text-sm font-bold shadow-sm">
-          <UserPlus size={16} /> Novo Cliente
-        </button>
       </div>
       <div className="relative max-w-md">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
@@ -319,7 +263,6 @@ export default function MeusClientesPage() {
           </>
         )}
       </div>
-      {modalNovo && <ModalNovoCliente onClose={() => setModalNovo(false)} />}
       {clienteEditar && <ModalEditarCliente client={clienteEditar} onClose={() => setClienteEditar(null)} />}
     </div>
   )
